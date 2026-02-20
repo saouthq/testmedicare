@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,30 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    // Mock login - simulate redirect based on email
+    setTimeout(() => {
+      setLoading(false);
+      if (email.includes("doctor") || email.includes("dr")) {
+        navigate("/dashboard/doctor");
+      } else if (email.includes("pharma")) {
+        navigate("/dashboard/pharmacy");
+      } else if (email.includes("labo")) {
+        navigate("/dashboard/laboratory");
+      } else if (email.includes("admin")) {
+        navigate("/dashboard/admin");
+      } else if (email.includes("secr")) {
+        navigate("/dashboard/secretary");
+      } else {
+        navigate("/dashboard/patient");
+      }
+    }, 800);
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -27,7 +51,7 @@ const Login = () => {
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-center p-8 lg:w-1/2">
+      <div className="flex w-full items-center justify-center p-6 sm:p-8 lg:w-1/2">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary"><Stethoscope className="h-5 w-5 text-primary-foreground" /></div>
@@ -37,7 +61,7 @@ const Login = () => {
           <h1 className="text-2xl font-bold text-foreground">Connexion</h1>
           <p className="mt-2 text-muted-foreground">Entrez vos identifiants pour accéder à votre espace</p>
 
-          <div className="mt-8 space-y-4">
+          <form onSubmit={handleLogin} className="mt-8 space-y-4">
             <div><Label htmlFor="email">Email</Label><Input id="email" type="email" placeholder="votre@email.tn" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5" /></div>
             <div><Label htmlFor="password">Mot de passe</Label>
               <div className="relative mt-1.5">
@@ -51,8 +75,10 @@ const Login = () => {
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="rounded border-input" /><span className="text-muted-foreground">Se souvenir de moi</span></label>
               <a href="#" className="text-sm text-primary hover:underline">Mot de passe oublié ?</a>
             </div>
-            <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11">Se connecter</Button>
-          </div>
+            <Button type="submit" className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11" disabled={loading}>
+              {loading ? "Connexion..." : "Se connecter"}
+            </Button>
+          </form>
 
           <div className="mt-8">
             <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t" /></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Accès rapide (démo)</span></div></div>
@@ -61,7 +87,8 @@ const Login = () => {
               <Link to="/dashboard/doctor"><Button variant="outline" className="w-full" size="sm">Médecin</Button></Link>
               <Link to="/dashboard/pharmacy"><Button variant="outline" className="w-full" size="sm">Pharmacie</Button></Link>
               <Link to="/dashboard/secretary"><Button variant="outline" className="w-full" size="sm">Secrétaire</Button></Link>
-              <Link to="/dashboard/laboratory"><Button variant="outline" className="w-full col-span-2" size="sm">Laboratoire</Button></Link>
+              <Link to="/dashboard/laboratory"><Button variant="outline" className="w-full" size="sm">Laboratoire</Button></Link>
+              <Link to="/dashboard/admin"><Button variant="outline" className="w-full" size="sm">Admin</Button></Link>
             </div>
           </div>
 

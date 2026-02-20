@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -13,11 +13,10 @@ import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientAppointments from "./pages/patient/PatientAppointments";
 import SearchDoctors from "./pages/patient/SearchDoctors";
 import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
-import PatientProfile from "./pages/patient/PatientProfile";
 import PatientBooking from "./pages/patient/PatientBooking";
-import PatientRecords from "./pages/patient/PatientRecords";
 import PatientNotifications from "./pages/patient/PatientNotifications";
 import PatientHealth from "./pages/patient/PatientHealth";
+import PatientSettings from "./pages/patient/PatientSettings";
 
 // Doctor
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -37,12 +36,14 @@ import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
 import PharmacyPrescriptions from "./pages/pharmacy/PharmacyPrescriptions";
 import PharmacyStock from "./pages/pharmacy/PharmacyStock";
 import PharmacyHistory from "./pages/pharmacy/PharmacyHistory";
+import PharmacySettings from "./pages/pharmacy/PharmacySettings";
 
 // Laboratory
 import LaboratoryDashboard from "./pages/laboratory/LaboratoryDashboard";
 import LaboratoryAnalyses from "./pages/laboratory/LaboratoryAnalyses";
 import LaboratoryResults from "./pages/laboratory/LaboratoryResults";
 import LaboratoryPatients from "./pages/laboratory/LaboratoryPatients";
+import LaboratorySettings from "./pages/laboratory/LaboratorySettings";
 
 // Secretary
 import SecretaryDashboard from "./pages/secretary/SecretaryDashboard";
@@ -51,6 +52,7 @@ import SecretaryPatients from "./pages/secretary/SecretaryPatients";
 import SecretaryOffice from "./pages/secretary/SecretaryOffice";
 import SecretaryDocuments from "./pages/secretary/SecretaryDocuments";
 import SecretaryBilling from "./pages/secretary/SecretaryBilling";
+import SecretarySettings from "./pages/secretary/SecretarySettings";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -60,11 +62,6 @@ import AdminModeration from "./pages/admin/AdminModeration";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogs from "./pages/admin/AdminLogs";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
-
-// Settings
-import PatientSettings from "./pages/patient/PatientSettings";
-import PharmacySettings from "./pages/pharmacy/PharmacySettings";
-import LaboratorySettings from "./pages/laboratory/LaboratorySettings";
 
 // Public
 import DoctorPublicProfile from "./pages/public/DoctorPublicProfile";
@@ -94,13 +91,15 @@ const App = () => (
           <Route path="/dashboard/patient/appointments" element={<PatientAppointments />} />
           <Route path="/dashboard/patient/search" element={<SearchDoctors />} />
           <Route path="/dashboard/patient/prescriptions" element={<PatientPrescriptions />} />
-          <Route path="/dashboard/patient/profile" element={<PatientProfile />} />
           <Route path="/dashboard/patient/booking" element={<PatientBooking />} />
-          <Route path="/dashboard/patient/records" element={<PatientRecords />} />
           <Route path="/dashboard/patient/notifications" element={<PatientNotifications />} />
           <Route path="/dashboard/patient/health" element={<PatientHealth />} />
+          <Route path="/dashboard/patient/settings" element={<PatientSettings />} />
           <Route path="/dashboard/patient/messages" element={<Messages role="patient" />} />
           <Route path="/dashboard/patient/teleconsultation" element={<Teleconsultation role="patient" />} />
+          {/* Redirects for removed/merged pages */}
+          <Route path="/dashboard/patient/profile" element={<Navigate to="/dashboard/patient/settings" replace />} />
+          <Route path="/dashboard/patient/records" element={<Navigate to="/dashboard/patient/health" replace />} />
 
           {/* Doctor */}
           <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
@@ -122,6 +121,7 @@ const App = () => (
           <Route path="/dashboard/pharmacy/prescriptions" element={<PharmacyPrescriptions />} />
           <Route path="/dashboard/pharmacy/stock" element={<PharmacyStock />} />
           <Route path="/dashboard/pharmacy/history" element={<PharmacyHistory />} />
+          <Route path="/dashboard/pharmacy/settings" element={<PharmacySettings />} />
           <Route path="/dashboard/pharmacy/messages" element={<Messages role="pharmacy" />} />
 
           {/* Laboratory */}
@@ -129,6 +129,7 @@ const App = () => (
           <Route path="/dashboard/laboratory/analyses" element={<LaboratoryAnalyses />} />
           <Route path="/dashboard/laboratory/results" element={<LaboratoryResults />} />
           <Route path="/dashboard/laboratory/patients" element={<LaboratoryPatients />} />
+          <Route path="/dashboard/laboratory/settings" element={<LaboratorySettings />} />
           <Route path="/dashboard/laboratory/messages" element={<Messages role="laboratory" />} />
 
           {/* Secretary */}
@@ -138,6 +139,7 @@ const App = () => (
           <Route path="/dashboard/secretary/office" element={<SecretaryOffice />} />
           <Route path="/dashboard/secretary/documents" element={<SecretaryDocuments />} />
           <Route path="/dashboard/secretary/billing" element={<SecretaryBilling />} />
+          <Route path="/dashboard/secretary/settings" element={<SecretarySettings />} />
           <Route path="/dashboard/secretary/messages" element={<Messages role="secretary" />} />
 
           {/* Admin */}
@@ -148,11 +150,6 @@ const App = () => (
           <Route path="/dashboard/admin/settings" element={<AdminSettings />} />
           <Route path="/dashboard/admin/logs" element={<AdminLogs />} />
           <Route path="/dashboard/admin/analytics" element={<AdminAnalytics />} />
-
-          {/* Settings */}
-          <Route path="/dashboard/patient/settings" element={<PatientSettings />} />
-          <Route path="/dashboard/pharmacy/settings" element={<PharmacySettings />} />
-          <Route path="/dashboard/laboratory/settings" element={<LaboratorySettings />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

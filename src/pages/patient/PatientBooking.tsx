@@ -99,7 +99,7 @@ const PatientBooking = () => {
               </div>
               <div />
             </div>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {weekDays.map((day) => (
                 <div key={day} className="text-center">
                   <p className="text-sm font-medium text-foreground mb-3 pb-2 border-b">{day}</p>
