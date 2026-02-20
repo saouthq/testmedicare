@@ -14,6 +14,9 @@ import PatientAppointments from "./pages/patient/PatientAppointments";
 import SearchDoctors from "./pages/patient/SearchDoctors";
 import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
 import PatientProfile from "./pages/patient/PatientProfile";
+import PatientBooking from "./pages/patient/PatientBooking";
+import PatientRecords from "./pages/patient/PatientRecords";
+import PatientNotifications from "./pages/patient/PatientNotifications";
 
 // Doctor
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -21,6 +24,10 @@ import DoctorSchedule from "./pages/doctor/DoctorSchedule";
 import DoctorPatients from "./pages/doctor/DoctorPatients";
 import DoctorConsultations from "./pages/doctor/DoctorConsultations";
 import DoctorPrescriptions from "./pages/doctor/DoctorPrescriptions";
+import DoctorConsultationDetail from "./pages/doctor/DoctorConsultationDetail";
+import DoctorPatientDetail from "./pages/doctor/DoctorPatientDetail";
+import DoctorSettings from "./pages/doctor/DoctorSettings";
+import DoctorStats from "./pages/doctor/DoctorStats";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
@@ -40,6 +47,11 @@ import SecretaryAgenda from "./pages/secretary/SecretaryAgenda";
 import SecretaryPatients from "./pages/secretary/SecretaryPatients";
 import SecretaryOffice from "./pages/secretary/SecretaryOffice";
 import SecretaryDocuments from "./pages/secretary/SecretaryDocuments";
+import SecretaryBilling from "./pages/secretary/SecretaryBilling";
+
+// Shared
+import Messages from "./pages/messaging/Messages";
+import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
 
 const queryClient = new QueryClient();
 
@@ -60,25 +72,38 @@ const App = () => (
           <Route path="/dashboard/patient/search" element={<SearchDoctors />} />
           <Route path="/dashboard/patient/prescriptions" element={<PatientPrescriptions />} />
           <Route path="/dashboard/patient/profile" element={<PatientProfile />} />
+          <Route path="/dashboard/patient/booking" element={<PatientBooking />} />
+          <Route path="/dashboard/patient/records" element={<PatientRecords />} />
+          <Route path="/dashboard/patient/notifications" element={<PatientNotifications />} />
+          <Route path="/dashboard/patient/messages" element={<Messages role="patient" />} />
+          <Route path="/dashboard/patient/teleconsultation" element={<Teleconsultation role="patient" />} />
 
           {/* Doctor */}
           <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
           <Route path="/dashboard/doctor/schedule" element={<DoctorSchedule />} />
           <Route path="/dashboard/doctor/patients" element={<DoctorPatients />} />
+          <Route path="/dashboard/doctor/patients/:id" element={<DoctorPatientDetail />} />
           <Route path="/dashboard/doctor/consultations" element={<DoctorConsultations />} />
+          <Route path="/dashboard/doctor/consultation/new" element={<DoctorConsultationDetail />} />
           <Route path="/dashboard/doctor/prescriptions" element={<DoctorPrescriptions />} />
+          <Route path="/dashboard/doctor/stats" element={<DoctorStats />} />
+          <Route path="/dashboard/doctor/settings" element={<DoctorSettings />} />
+          <Route path="/dashboard/doctor/messages" element={<Messages role="doctor" />} />
+          <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
 
           {/* Pharmacy */}
           <Route path="/dashboard/pharmacy" element={<PharmacyDashboard />} />
           <Route path="/dashboard/pharmacy/prescriptions" element={<PharmacyPrescriptions />} />
           <Route path="/dashboard/pharmacy/stock" element={<PharmacyStock />} />
           <Route path="/dashboard/pharmacy/history" element={<PharmacyHistory />} />
+          <Route path="/dashboard/pharmacy/messages" element={<Messages role="pharmacy" />} />
 
           {/* Laboratory */}
           <Route path="/dashboard/laboratory" element={<LaboratoryDashboard />} />
           <Route path="/dashboard/laboratory/analyses" element={<LaboratoryAnalyses />} />
           <Route path="/dashboard/laboratory/results" element={<LaboratoryResults />} />
           <Route path="/dashboard/laboratory/patients" element={<LaboratoryPatients />} />
+          <Route path="/dashboard/laboratory/messages" element={<Messages role="laboratory" />} />
 
           {/* Secretary */}
           <Route path="/dashboard/secretary" element={<SecretaryDashboard />} />
@@ -86,6 +111,8 @@ const App = () => (
           <Route path="/dashboard/secretary/patients" element={<SecretaryPatients />} />
           <Route path="/dashboard/secretary/office" element={<SecretaryOffice />} />
           <Route path="/dashboard/secretary/documents" element={<SecretaryDocuments />} />
+          <Route path="/dashboard/secretary/billing" element={<SecretaryBilling />} />
+          <Route path="/dashboard/secretary/messages" element={<Messages role="secretary" />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

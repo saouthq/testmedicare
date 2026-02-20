@@ -39,8 +39,11 @@ const navItems: Record<string, NavItem[]> = {
   patient: [
     { title: "Tableau de bord", url: "/dashboard/patient", icon: LayoutDashboard },
     { title: "Mes rendez-vous", url: "/dashboard/patient/appointments", icon: Calendar },
-    { title: "Rechercher", url: "/dashboard/patient/search", icon: Search },
+    { title: "Prendre RDV", url: "/dashboard/patient/search", icon: Search },
+    { title: "Dossier médical", url: "/dashboard/patient/records", icon: ClipboardList },
     { title: "Ordonnances", url: "/dashboard/patient/prescriptions", icon: FileText },
+    { title: "Messagerie", url: "/dashboard/patient/messages", icon: Users },
+    { title: "Notifications", url: "/dashboard/patient/notifications", icon: Bell },
     { title: "Mon profil", url: "/dashboard/patient/profile", icon: UserCircle },
   ],
   doctor: [
@@ -49,25 +52,31 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Mes patients", url: "/dashboard/doctor/patients", icon: Users },
     { title: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
     { title: "Ordonnances", url: "/dashboard/doctor/prescriptions", icon: FileText },
+    { title: "Statistiques", url: "/dashboard/doctor/stats", icon: Clock },
+    { title: "Messagerie", url: "/dashboard/doctor/messages", icon: Users },
   ],
   pharmacy: [
     { title: "Tableau de bord", url: "/dashboard/pharmacy", icon: LayoutDashboard },
     { title: "Ordonnances", url: "/dashboard/pharmacy/prescriptions", icon: FileText },
     { title: "Stock", url: "/dashboard/pharmacy/stock", icon: Pill },
     { title: "Historique", url: "/dashboard/pharmacy/history", icon: Clock },
+    { title: "Messagerie", url: "/dashboard/pharmacy/messages", icon: Users },
   ],
   laboratory: [
     { title: "Tableau de bord", url: "/dashboard/laboratory", icon: LayoutDashboard },
     { title: "Analyses", url: "/dashboard/laboratory/analyses", icon: FlaskConical },
     { title: "Résultats", url: "/dashboard/laboratory/results", icon: FileText },
     { title: "Patients", url: "/dashboard/laboratory/patients", icon: Users },
+    { title: "Messagerie", url: "/dashboard/laboratory/messages", icon: Users },
   ],
   secretary: [
     { title: "Tableau de bord", url: "/dashboard/secretary", icon: LayoutDashboard },
     { title: "Agenda", url: "/dashboard/secretary/agenda", icon: Calendar },
     { title: "Patients", url: "/dashboard/secretary/patients", icon: Users },
+    { title: "Facturation", url: "/dashboard/secretary/billing", icon: FileText },
     { title: "Cabinet", url: "/dashboard/secretary/office", icon: Building2 },
     { title: "Documents", url: "/dashboard/secretary/documents", icon: FileText },
+    { title: "Messagerie", url: "/dashboard/secretary/messages", icon: Users },
   ],
 };
 
