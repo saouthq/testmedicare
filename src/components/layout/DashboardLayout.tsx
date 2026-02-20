@@ -90,6 +90,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
     { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
     { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
+    { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
   ],
 };
 
