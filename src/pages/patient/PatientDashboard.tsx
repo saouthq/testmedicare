@@ -1,43 +1,42 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
 import { 
   Calendar, Clock, FileText, Activity, ChevronRight, MapPin, 
   Video, Bell, Heart, Pill, Star, AlertTriangle, Phone,
-  ArrowRight, Plus, CheckCircle2, TrendingUp, Stethoscope
+  ArrowRight, Plus, CheckCircle2, TrendingUp, Stethoscope, Shield
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const upcomingAppointments = [
   { 
-    id: 1, doctor: "Dr. Sophie Martin", specialty: "Médecin généraliste", 
+    id: 1, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", 
     date: "Aujourd'hui", time: "14:30", type: "cabinet",
-    address: "12 rue de la Paix, 75002 Paris", avatar: "SM",
+    address: "15 Av. de la Liberté, El Manar, Tunis", avatar: "AB",
     status: "confirmed", motif: "Suivi diabète"
   },
   { 
-    id: 2, doctor: "Dr. Pierre Durand", specialty: "Cardiologue", 
+    id: 2, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", 
     date: "23 Fév", time: "10:00", type: "cabinet",
-    address: "45 av. Victor Hugo, Paris 16e", avatar: "PD",
+    address: "32 Rue Charles de Gaulle, Ariana", avatar: "SG",
     status: "confirmed", motif: "Bilan cardiaque annuel"
   },
   { 
-    id: 3, doctor: "Dr. Marie Lefebvre", specialty: "Dermatologue", 
+    id: 3, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", 
     date: "28 Fév", time: "16:15", type: "teleconsultation",
-    address: "", avatar: "ML",
+    address: "", avatar: "KH",
     status: "pending", motif: "Consultation dermatologie"
   },
 ];
 
 const recentPrescriptions = [
-  { id: "ORD-045", doctor: "Dr. Martin", date: "10 Fév", items: 3, status: "active" },
-  { id: "ORD-042", doctor: "Dr. Durand", date: "3 Fév", items: 1, status: "active" },
+  { id: "ORD-045", doctor: "Dr. Bouazizi", date: "10 Fév", items: 3, status: "active" },
+  { id: "ORD-042", doctor: "Dr. Gharbi", date: "3 Fév", items: 1, status: "active" },
 ];
 
 const notifications = [
-  { id: 1, type: "appointment", text: "Rappel : RDV avec Dr. Martin demain à 14h30", time: "1h", unread: true },
+  { id: 1, type: "appointment", text: "Rappel : RDV avec Dr. Bouazizi demain à 14h30", time: "1h", unread: true },
   { id: 2, type: "result", text: "Résultats d'analyses disponibles", time: "3h", unread: true },
-  { id: 3, type: "message", text: "Dr. Durand vous a envoyé un message", time: "5h", unread: false },
+  { id: 3, type: "message", text: "Dr. Gharbi vous a envoyé un message", time: "5h", unread: false },
 ];
 
 const healthSummary = {
@@ -45,7 +44,9 @@ const healthSummary = {
   vaccinations: 2,
   allergies: ["Pénicilline"],
   bloodType: "A+",
-  treatingDoctor: "Dr. Sophie Martin",
+  treatingDoctor: "Dr. Ahmed Bouazizi",
+  cnam: true,
+  cnamId: "12345678",
 };
 
 const PatientDashboard = () => {
@@ -56,7 +57,7 @@ const PatientDashboard = () => {
         <div className="relative overflow-hidden rounded-2xl gradient-primary p-6 text-primary-foreground">
           <div className="relative z-10">
             <p className="text-primary-foreground/80 text-sm">Bonjour,</p>
-            <h2 className="text-2xl font-bold mt-1">Jean Dupont</h2>
+            <h2 className="text-2xl font-bold mt-1">Amine Ben Ali</h2>
             <p className="text-primary-foreground/80 mt-2 text-sm max-w-md">
               Vous avez <span className="font-semibold text-primary-foreground">1 rendez-vous aujourd'hui</span> et 
               <span className="font-semibold text-primary-foreground"> 2 résultats d'analyses</span> en attente.
@@ -127,7 +128,7 @@ const PatientDashboard = () => {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Upcoming appointments - main content */}
+          {/* Upcoming appointments */}
           <div className="lg:col-span-2 space-y-6">
             <div className="rounded-xl border bg-card shadow-card">
               <div className="flex items-center justify-between border-b px-5 py-4">
@@ -179,12 +180,8 @@ const PatientDashboard = () => {
                               <Video className="h-3 w-3 mr-1" />Rejoindre
                             </Button>
                           )}
-                          <Button variant="outline" size="sm" className="h-7 text-xs">
-                            Détails
-                          </Button>
-                          <Button variant="outline" size="sm" className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/5">
-                            Annuler
-                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs">Détails</Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/5">Annuler</Button>
                         </div>
                       </div>
                     </div>
@@ -242,6 +239,12 @@ const PatientDashboard = () => {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Médecin traitant</span>
                   <span className="font-medium text-foreground text-xs">{healthSummary.treatingDoctor}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Assurance</span>
+                  <span className="flex items-center gap-1 text-primary text-xs font-medium">
+                    <Shield className="h-3 w-3" />CNAM · N° {healthSummary.cnamId}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Allergies</span>
