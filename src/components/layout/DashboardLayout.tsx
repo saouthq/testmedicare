@@ -67,7 +67,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
     { title: "Secrétaires", url: "/dashboard/doctor/secretary", icon: Building2 },
     { title: "Statistiques", url: "/dashboard/doctor/stats", icon: BarChart3 },
-    { title: "Abonnement", url: "/dashboard/doctor/subscription", icon: CreditCard },
+    
   ],
   pharmacy: [
     { title: "Tableau de bord", url: "/dashboard/pharmacy", icon: LayoutDashboard },

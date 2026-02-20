@@ -29,7 +29,7 @@ import DoctorPatientDetail from "./pages/doctor/DoctorPatientDetail";
 import DoctorSettings from "./pages/doctor/DoctorSettings";
 import DoctorStats from "./pages/doctor/DoctorStats";
 import DoctorSecretary from "./pages/doctor/DoctorSecretary";
-import DoctorSubscription from "./pages/doctor/DoctorSubscription";
+// DoctorSubscription removed — merged into DoctorBilling
 import DoctorOnboarding from "./pages/doctor/DoctorOnboarding";
 import DoctorBilling from "./pages/doctor/DoctorBilling";
 import DoctorConnect from "./pages/doctor/DoctorConnect";
@@ -120,7 +120,7 @@ const App = () => (
           <Route path="/dashboard/doctor/stats" element={<DoctorStats />} />
           <Route path="/dashboard/doctor/settings" element={<DoctorSettings />} />
           <Route path="/dashboard/doctor/secretary" element={<DoctorSecretary />} />
-          <Route path="/dashboard/doctor/subscription" element={<DoctorSubscription />} />
+          <Route path="/dashboard/doctor/subscription" element={<Navigate to="/dashboard/doctor/billing" replace />} />
           <Route path="/dashboard/doctor/messages" element={<Messages role="doctor" />} />
           <Route path="/dashboard/doctor/connect" element={<DoctorConnect />} />
           <Route path="/dashboard/doctor/billing" element={<DoctorBilling />} />

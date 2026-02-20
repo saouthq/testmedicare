@@ -2,16 +2,19 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { 
   Calendar, Clock, FileText, Activity, ChevronRight, MapPin, 
   Video, Heart, Pill, Star, AlertTriangle,
-  ArrowRight, Plus, CheckCircle2, Stethoscope, Shield, Search
+  ArrowRight, Plus, CheckCircle2, Stethoscope, Shield, Search,
+  X, Navigation, MessageSquare, RefreshCw, CalendarPlus, UserX
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
 
 const upcomingAppointments = [
-  { id: 1, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "Aujourd'hui", time: "14:30", type: "cabinet", address: "15 Av. de la Liberté, El Manar", avatar: "AB", status: "confirmed", motif: "Suivi diabète" },
-  { id: 2, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "23 Fév", time: "10:00", type: "cabinet", address: "32 Rue Charles de Gaulle, Ariana", avatar: "SG", status: "confirmed", motif: "Bilan cardiaque" },
-  { id: 3, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "28 Fév", time: "16:15", type: "teleconsultation", address: "", avatar: "KH", status: "pending", motif: "Consultation dermatologie" },
+  { id: 1, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "Aujourd'hui", time: "14:30", type: "cabinet", address: "15 Av. de la Liberté, El Manar", avatar: "AB", status: "confirmed" as AppointmentStatus, motif: "Suivi diabète", canModify: true, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Carte CNAM", "Pièce d'identité"], instructions: "Arrivez 10 min en avance." },
+  { id: 2, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "23 Fév", time: "10:00", type: "cabinet", address: "32 Rue Charles de Gaulle, Ariana", avatar: "SG", status: "confirmed" as AppointmentStatus, motif: "Bilan cardiaque", canModify: true, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 48h avant", documents: ["Carte CNAM"], instructions: "Venez à jeun." },
+  { id: 3, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "28 Fév", time: "16:15", type: "teleconsultation", address: "", avatar: "KH", status: "pending" as AppointmentStatus, motif: "Consultation dermatologie", canModify: false, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: [], instructions: "Préparez votre caméra." },
 ];
 
 const recentPrescriptions = [
@@ -35,6 +38,18 @@ const healthSummary = {
 };
 
 const PatientDashboard = () => {
+  const [drawerApt, setDrawerApt] = useState<number | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
+  const [appointments, setAppointments] = useState(upcomingAppointments);
+
+  const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
+
+  const handleCancel = (id: number) => {
+    setAppointments(prev => prev.filter(a => a.id !== id));
+    setShowCancelConfirm(null);
+    setDrawerApt(null);
+  };
+
   return (
     <DashboardLayout role="patient" title="Tableau de bord">
       <div className="space-y-5">
@@ -46,7 +61,6 @@ const PatientDashboard = () => {
             <p className="text-primary-foreground/80 mt-1 text-sm">
               <span className="font-semibold text-primary-foreground">1 RDV aujourd'hui</span> · <span className="font-semibold text-primary-foreground">2 résultats</span> en attente
             </p>
-            {/* Search bar inside banner */}
             <Link to="/search" className="block mt-4">
               <div className="flex items-center gap-2 bg-primary-foreground/15 hover:bg-primary-foreground/25 rounded-xl px-4 py-3 transition-colors backdrop-blur-sm border border-primary-foreground/10">
                 <Search className="h-4 w-4 text-primary-foreground/70" />
@@ -57,11 +71,11 @@ const PatientDashboard = () => {
           <div className="absolute top-0 right-0 w-48 h-48 bg-primary-foreground/5 rounded-full -translate-y-1/2 translate-x-1/4" />
         </div>
 
-        {/* Quick stats – compact */}
+        {/* Quick stats */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Prochain RDV", value: "Aujourd'hui 14h30", icon: Calendar, color: "bg-primary/10 text-primary" },
-            { label: "RDV à venir", value: "3", icon: Clock, color: "bg-accent/10 text-accent" },
+            { label: "RDV à venir", value: String(appointments.length), icon: Clock, color: "bg-accent/10 text-accent" },
             { label: "Ordonnances", value: "2 actives", icon: FileText, color: "bg-warning/10 text-warning" },
             { label: "Résultats", value: "2 nouveaux", icon: Activity, color: "bg-destructive/10 text-destructive" },
           ].map((s, i) => (
@@ -80,23 +94,21 @@ const PatientDashboard = () => {
         <div className="grid gap-5 lg:grid-cols-3">
           {/* Main col */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Upcoming appointments – compact clickable cards */}
+            {/* Upcoming appointments – compact clickable cards → opens DRAWER */}
             <div className="rounded-xl border bg-card shadow-card">
               <div className="flex items-center justify-between border-b px-4 py-3">
                 <h2 className="font-semibold text-foreground text-sm flex items-center gap-2"><Calendar className="h-4 w-4 text-primary" />Prochains rendez-vous</h2>
                 <Link to="/dashboard/patient/appointments" className="text-xs text-primary hover:underline flex items-center gap-1">Voir tout <ChevronRight className="h-3.5 w-3.5" /></Link>
               </div>
               <div className="divide-y">
-                {upcomingAppointments.map(a => (
-                  <Link key={a.id} to="/dashboard/patient/appointments" className="block p-3 hover:bg-muted/30 transition-colors">
+                {appointments.map(a => (
+                  <button key={a.id} onClick={() => setDrawerApt(a.id)} className="w-full text-left p-3 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-xs shrink-0">{a.avatar}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <h3 className="font-semibold text-foreground text-sm truncate">{a.doctor}</h3>
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${a.status === "confirmed" ? "bg-accent/10 text-accent" : "bg-warning/10 text-warning"}`}>
-                            {a.status === "confirmed" ? "Confirmé" : "En attente"}
-                          </span>
+                          <StatusBadge status={a.status} />
                         </div>
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
                           <span>{a.date} à {a.time}</span>
@@ -106,12 +118,12 @@ const PatientDashboard = () => {
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     </div>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Recent prescriptions – compact */}
+            {/* Recent prescriptions */}
             <div className="rounded-xl border bg-card shadow-card">
               <div className="flex items-center justify-between border-b px-4 py-3">
                 <h2 className="font-semibold text-foreground text-sm flex items-center gap-2"><Pill className="h-4 w-4 text-warning" />Ordonnances récentes</h2>
@@ -167,7 +179,7 @@ const PatientDashboard = () => {
               </div>
             </div>
 
-            {/* Quick actions – compact */}
+            {/* Quick actions */}
             <div className="rounded-xl border bg-card shadow-card p-4">
               <h3 className="font-semibold text-foreground text-sm mb-3">Actions rapides</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -187,6 +199,68 @@ const PatientDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ── RDV detail drawer (bottom sheet) ── */}
+      {currentApt && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => { setDrawerApt(null); setShowCancelConfirm(null); }}>
+          <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-foreground">{currentApt.doctor}</h3>
+                <button onClick={() => { setDrawerApt(null); setShowCancelConfirm(null); }} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+              </div>
+              <p className="text-sm text-primary">{currentApt.specialty}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Date</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.date} à {currentApt.time}</p></div>
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Type</p><p className="text-sm font-medium text-foreground mt-0.5 capitalize">{currentApt.type}</p></div>
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Motif</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.motif}</p></div>
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Statut</p><div className="mt-0.5"><StatusBadge status={currentApt.status} /></div></div>
+              </div>
+              {currentApt.address && (
+                <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+                  <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p></div>
+                </div>
+              )}
+              {currentApt.documents.length > 0 && (
+                <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+                  <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div><p className="text-xs font-medium text-foreground">Documents à apporter</p><ul className="text-xs text-muted-foreground mt-1 space-y-0.5">{currentApt.documents.map(d => <li key={d}>• {d}</li>)}</ul></div>
+                </div>
+              )}
+              {currentApt.instructions && (
+                <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+                  <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                  <div><p className="text-xs font-medium text-foreground">Consignes</p><p className="text-xs text-muted-foreground">{currentApt.instructions}</p></div>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground">📋 {currentApt.cancellationPolicy}</p>
+              <div className="space-y-2">
+                {currentApt.type === "teleconsultation" && <Link to="/dashboard/patient/teleconsultation" className="block"><Button className="w-full gradient-primary text-primary-foreground"><Video className="h-4 w-4 mr-2" />Rejoindre la téléconsultation</Button></Link>}
+                <div className="grid grid-cols-2 gap-2">
+                  <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
+                  {currentApt.canModify && <Link to={`/booking/${currentApt.id}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button></Link>}
+                </div>
+                <Button variant="outline" size="sm" className="w-full text-xs"><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                {currentApt.canCancel && (
+                  showCancelConfirm === currentApt.id ? (
+                    <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+                      <span className="text-xs text-destructive font-medium flex-1">Confirmer l'annulation ?</span>
+                      <Button size="sm" variant="ghost" className="h-6 text-xs text-destructive" onClick={() => handleCancel(currentApt.id)}>Oui</Button>
+                      <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowCancelConfirm(null)}>Non</Button>
+                    </div>
+                  ) : (
+                    <Button variant="outline" className="w-full text-xs text-destructive border-destructive/30 hover:bg-destructive/5" onClick={() => setShowCancelConfirm(currentApt.id)}>
+                      <X className="h-3.5 w-3.5 mr-1" />Annuler ce rendez-vous
+                    </Button>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
