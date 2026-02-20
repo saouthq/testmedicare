@@ -17,6 +17,7 @@ import PatientProfile from "./pages/patient/PatientProfile";
 import PatientBooking from "./pages/patient/PatientBooking";
 import PatientRecords from "./pages/patient/PatientRecords";
 import PatientNotifications from "./pages/patient/PatientNotifications";
+import PatientHealth from "./pages/patient/PatientHealth";
 
 // Doctor
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -28,6 +29,8 @@ import DoctorConsultationDetail from "./pages/doctor/DoctorConsultationDetail";
 import DoctorPatientDetail from "./pages/doctor/DoctorPatientDetail";
 import DoctorSettings from "./pages/doctor/DoctorSettings";
 import DoctorStats from "./pages/doctor/DoctorStats";
+import DoctorSecretary from "./pages/doctor/DoctorSecretary";
+import DoctorSubscription from "./pages/doctor/DoctorSubscription";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
@@ -49,6 +52,16 @@ import SecretaryOffice from "./pages/secretary/SecretaryOffice";
 import SecretaryDocuments from "./pages/secretary/SecretaryDocuments";
 import SecretaryBilling from "./pages/secretary/SecretaryBilling";
 
+// Admin
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminModeration from "./pages/admin/AdminModeration";
+import AdminSettings from "./pages/admin/AdminSettings";
+
+// Public
+import DoctorPublicProfile from "./pages/public/DoctorPublicProfile";
+
 // Shared
 import Messages from "./pages/messaging/Messages";
 import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
@@ -66,6 +79,9 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
+          {/* Public doctor profile */}
+          <Route path="/doctor/:id" element={<DoctorPublicProfile />} />
+
           {/* Patient */}
           <Route path="/dashboard/patient" element={<PatientDashboard />} />
           <Route path="/dashboard/patient/appointments" element={<PatientAppointments />} />
@@ -75,6 +91,7 @@ const App = () => (
           <Route path="/dashboard/patient/booking" element={<PatientBooking />} />
           <Route path="/dashboard/patient/records" element={<PatientRecords />} />
           <Route path="/dashboard/patient/notifications" element={<PatientNotifications />} />
+          <Route path="/dashboard/patient/health" element={<PatientHealth />} />
           <Route path="/dashboard/patient/messages" element={<Messages role="patient" />} />
           <Route path="/dashboard/patient/teleconsultation" element={<Teleconsultation role="patient" />} />
 
@@ -88,6 +105,8 @@ const App = () => (
           <Route path="/dashboard/doctor/prescriptions" element={<DoctorPrescriptions />} />
           <Route path="/dashboard/doctor/stats" element={<DoctorStats />} />
           <Route path="/dashboard/doctor/settings" element={<DoctorSettings />} />
+          <Route path="/dashboard/doctor/secretary" element={<DoctorSecretary />} />
+          <Route path="/dashboard/doctor/subscription" element={<DoctorSubscription />} />
           <Route path="/dashboard/doctor/messages" element={<Messages role="doctor" />} />
           <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
 
@@ -113,6 +132,13 @@ const App = () => (
           <Route path="/dashboard/secretary/documents" element={<SecretaryDocuments />} />
           <Route path="/dashboard/secretary/billing" element={<SecretaryBilling />} />
           <Route path="/dashboard/secretary/messages" element={<Messages role="secretary" />} />
+
+          {/* Admin */}
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route path="/dashboard/admin/users" element={<AdminUsers />} />
+          <Route path="/dashboard/admin/subscriptions" element={<AdminSubscriptions />} />
+          <Route path="/dashboard/admin/moderation" element={<AdminModeration />} />
+          <Route path="/dashboard/admin/settings" element={<AdminSettings />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
