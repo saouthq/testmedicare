@@ -1,29 +1,25 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer } from "lucide-react";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-type HealthTab = "overview" | "history" | "documents" | "antecedents" | "treatments" | "vaccinations";
+/* Health section = menu list (Doctolib / iOS style) */
+type HealthSection = "menu" | "documents" | "antecedents" | "treatments" | "allergies" | "habits" | "family" | "surgeries" | "vaccinations" | "measures" | "ai";
 
-const vitals = [
-  { label: "Tension artérielle", value: "13/8", unit: "mmHg", icon: Heart, trend: "stable" },
-  { label: "Glycémie", value: "1.05", unit: "g/L", icon: Activity, trend: "down" },
-  { label: "Poids", value: "75", unit: "kg", icon: Thermometer, trend: "stable" },
-  { label: "IMC", value: "24.2", unit: "", icon: Activity, trend: "stable" },
+const menuItems: { key: HealthSection; label: string; icon: any; count?: number }[] = [
+  { key: "documents", label: "Documents", icon: FileText, count: 5 },
+  { key: "antecedents", label: "Antécédents médicaux", icon: Shield, count: 4 },
+  { key: "treatments", label: "Traitements réguliers", icon: Pill, count: 2 },
+  { key: "allergies", label: "Allergies", icon: AlertTriangle, count: 2 },
+  { key: "habits", label: "Habitudes de vie", icon: Apple },
+  { key: "family", label: "Antécédents familiaux", icon: Users, count: 2 },
+  { key: "surgeries", label: "Opérations chirurgicales", icon: Scissors, count: 1 },
+  { key: "vaccinations", label: "Vaccins", icon: Syringe, count: 4 },
+  { key: "measures", label: "Mesures", icon: Thermometer },
 ];
 
-const healthReminders = [
-  { title: "Consultez votre dentiste", desc: "Recommandé une fois par an", icon: "🦷", action: "Prendre rendez-vous" },
-  { title: "Bilan sanguin annuel", desc: "Dernier bilan il y a 14 mois", icon: "🩸", action: "Prendre rendez-vous" },
-];
-
-const consultationHistory = [
-  { date: "10 Fév 2026", doctor: "Dr. Bouazizi", motif: "Suivi diabète", notes: "Glycémie stable 1.05 g/L. Maintien traitement. Contrôle dans 3 mois.", prescriptions: 1, analyses: 0 },
-  { date: "15 Jan 2026", doctor: "Dr. Gharbi", motif: "Bilan cardiaque annuel", notes: "ECG normal. TA 13/8. Aucune anomalie détectée.", prescriptions: 0, analyses: 1 },
-  { date: "5 Déc 2025", doctor: "Dr. Hammami", motif: "Consultation dermatologie", notes: "Eczéma atopique léger. Prescription crème dermocorticoïde.", prescriptions: 1, analyses: 0 },
-  { date: "20 Nov 2025", doctor: "Dr. Bouazizi", motif: "Gastro-entérite", notes: "Prescription antiacide et anti-émétique. Repos recommandé.", prescriptions: 1, analyses: 0 },
-];
-
+/* Mock data */
 const documents = [
   { name: "Résultats analyses - Glycémie", type: "Analyse", date: "15 Fév 2026", source: "Labo BioSanté", size: "245 Ko" },
   { name: "Ordonnance Dr. Bouazizi", type: "Ordonnance", date: "10 Fév 2026", source: "Dr. Ahmed Bouazizi", size: "120 Ko" },
@@ -33,16 +29,36 @@ const documents = [
 ];
 
 const antecedents = [
-  { category: "Chirurgicaux", items: [{ name: "Appendicectomie", date: "Mars 2015", details: "Hôpital Charles Nicolle, Tunis" }] },
-  { category: "Médicaux", items: [{ name: "Diabète type 2", date: "Depuis 2020", details: "Suivi régulier, traitement oral" }, { name: "Hypertension artérielle", date: "Depuis 2022", details: "Traitement par Amlodipine 5mg" }] },
-  { category: "Allergies", items: [{ name: "Pénicilline", date: "Depuis l'enfance", details: "Réaction cutanée sévère" }, { name: "Acariens", date: "Depuis 2010", details: "Rhinite allergique" }] },
-  { category: "Familiaux", items: [{ name: "Diabète (père)", date: "", details: "Type 2" }, { name: "Hypertension (mère)", date: "", details: "" }] },
+  { name: "Diabète type 2", date: "Depuis 2020", details: "Suivi régulier, traitement oral" },
+  { name: "Hypertension artérielle", date: "Depuis 2022", details: "Traitement par Amlodipine 5mg" },
+  { name: "Asthme léger", date: "Depuis l'enfance", details: "Ventoline en cas de crise" },
+  { name: "Appendicectomie", date: "Mars 2015", details: "Hôpital Charles Nicolle" },
 ];
 
 const treatments = [
-  { name: "Metformine 850mg", dose: "1 comprimé matin et soir", prescriber: "Dr. Ahmed Bouazizi", since: "Depuis Jan 2021", status: "active" },
-  { name: "Amlodipine 5mg", dose: "1 comprimé le matin", prescriber: "Dr. Ahmed Bouazizi", since: "Depuis Mar 2022", status: "active" },
-  { name: "Oméprazole 20mg", dose: "1 gélule avant le dîner", prescriber: "Dr. Sonia Gharbi", since: "Oct 2025 - Déc 2025", status: "ended" },
+  { name: "Metformine 850mg", dose: "1 cp matin et soir", prescriber: "Dr. Bouazizi", since: "Jan 2021", status: "active" },
+  { name: "Amlodipine 5mg", dose: "1 cp le matin", prescriber: "Dr. Bouazizi", since: "Mar 2022", status: "active" },
+];
+
+const allergies = [
+  { name: "Pénicilline", severity: "Sévère", reaction: "Réaction cutanée sévère" },
+  { name: "Acariens", severity: "Modéré", reaction: "Rhinite allergique" },
+];
+
+const habits = [
+  { label: "Tabac", value: "Non-fumeur" },
+  { label: "Alcool", value: "Occasionnel" },
+  { label: "Activité physique", value: "3x / semaine" },
+  { label: "Alimentation", value: "Régime diabétique" },
+];
+
+const familyHistory = [
+  { name: "Diabète (père)", details: "Type 2" },
+  { name: "Hypertension (mère)", details: "" },
+];
+
+const surgeries = [
+  { name: "Appendicectomie", date: "Mars 2015", hospital: "Hôpital Charles Nicolle, Tunis" },
 ];
 
 const vaccinations = [
@@ -52,166 +68,117 @@ const vaccinations = [
   { name: "Tétanos", doses: "Rappel", lastDate: "Mar 2020", nextDate: "Mar 2030" },
 ];
 
-const PatientHealth = () => {
-  const [tab, setTab] = useState<HealthTab>("overview");
-  const [showUpload, setShowUpload] = useState(false);
+const measures = [
+  { label: "Tension artérielle", value: "13/8 mmHg", date: "15 Fév 2026" },
+  { label: "Glycémie", value: "1.05 g/L", date: "15 Fév 2026" },
+  { label: "Poids", value: "75 kg", date: "10 Fév 2026" },
+  { label: "IMC", value: "24.2", date: "10 Fév 2026" },
+];
 
-  const tabs = [
-    { key: "overview" as HealthTab, label: "Vue d'ensemble", icon: Heart },
-    { key: "history" as HealthTab, label: "Historique", icon: Activity },
-    { key: "documents" as HealthTab, label: "Documents", icon: FileText },
-    { key: "antecedents" as HealthTab, label: "Antécédents", icon: Shield },
-    { key: "treatments" as HealthTab, label: "Traitements", icon: Pill },
-    { key: "vaccinations" as HealthTab, label: "Vaccinations", icon: Syringe },
-  ];
+/* AI chat */
+interface AiMessage { id: string; sender: "me" | "ai"; text: string; time: string; }
+const aiInitial: AiMessage[] = [{ id: "1", sender: "ai", text: "Bonjour ! Je suis l'assistant virtuel Medicare. Je peux vous aider à comprendre vos résultats ou vous orienter. Que puis-je faire pour vous ?", time: "—" }];
+const aiMockResponses = [
+  "D'après vos résultats, votre glycémie est dans les normes (1.05 g/L). Continuez votre traitement et vos contrôles réguliers. N'hésitez pas à consulter votre médecin traitant pour toute question.",
+  "Je vous recommande de consulter un spécialiste pour ce type de symptômes. Vous pouvez rechercher un praticien directement depuis l'onglet 'Prendre RDV'.",
+];
+
+const PatientHealth = () => {
+  const [section, setSection] = useState<HealthSection>("menu");
+  const [showUpload, setShowUpload] = useState(false);
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>(aiInitial);
+  const [aiInput, setAiInput] = useState("");
+  const [aiIdx, setAiIdx] = useState(0);
+
+  const sendAi = () => {
+    if (!aiInput.trim()) return;
+    const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    setAiMessages(prev => [...prev, { id: Date.now().toString(), sender: "me", text: aiInput, time }]);
+    setAiInput("");
+    setTimeout(() => {
+      setAiMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: "ai", text: aiMockResponses[aiIdx % aiMockResponses.length], time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) }]);
+      setAiIdx(prev => prev + 1);
+    }, 1000);
+  };
+
+  const SectionHeader = ({ title, onBack }: { title: string; onBack: () => void }) => (
+    <div className="flex items-center gap-3 mb-4">
+      <button onClick={onBack} className="text-primary hover:underline text-sm">← Retour</button>
+      <h3 className="font-semibold text-foreground">{title}</h3>
+    </div>
+  );
 
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
-      <div className="space-y-6">
-        {/* Vitals cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {vitals.map((v) => (
-            <div key={v.label} className="rounded-xl border bg-card p-4 shadow-card">
-              <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">{v.label}</p><v.icon className="h-4 w-4 text-primary" /></div>
-              <p className="mt-1 text-2xl font-bold text-foreground">{v.value} <span className="text-sm font-normal text-muted-foreground">{v.unit}</span></p>
-              <p className="text-xs text-accent mt-1">{v.trend === "stable" ? "↔ Stable" : v.trend === "down" ? "↓ En baisse" : "↑ En hausse"}</p>
-            </div>
-          ))}
-        </div>
+      <div className="max-w-2xl space-y-4">
 
-        {/* Tabs */}
-        <div className="flex gap-1 rounded-lg border bg-card p-1 overflow-x-auto">
-          {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${tab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-              <t.icon className="h-4 w-4" />{t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Overview */}
-        {tab === "overview" && (
-          <div className="space-y-6">
-            <div className="rounded-xl bg-primary/5 border border-primary/20 p-6">
-              <div className="flex items-start justify-between">
+        {/* ── MENU LIST (iOS style) ── */}
+        {section === "menu" && (
+          <div className="space-y-4">
+            {/* Health completion prompt */}
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+              <div className="flex items-center gap-3">
+                <Heart className="h-8 w-8 text-primary/40 shrink-0" />
                 <div>
-                  <h3 className="font-bold text-foreground">Complétez votre profil santé</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Recevez des rappels personnalisés et préparez au mieux vos consultations</p>
-                  <Button className="mt-4 gradient-primary text-primary-foreground">Commencer</Button>
+                  <h3 className="font-bold text-foreground text-sm">Complétez votre profil santé</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Recevez des rappels personnalisés et préparez vos consultations</p>
                 </div>
-                <Heart className="h-12 w-12 text-primary/30 shrink-0" />
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">Rappels santé <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">{healthReminders.length}</span></h3>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {healthReminders.map((r, i) => (
-                  <div key={i} className="rounded-xl border bg-card p-4 shadow-card">
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">{r.icon}</span>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm">{r.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">{r.desc}</p>
-                        <Button variant="outline" size="sm" className="mt-3 text-primary border-primary/30">
-                          <Calendar className="h-3 w-3 mr-1" />{r.action}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-3">Profil santé</h3>
-              <div className="space-y-2">
-                {[
-                  { label: "Historique consultations", count: consultationHistory.length, icon: Activity, tab: "history" as HealthTab },
-                  { label: "Documents médicaux", count: documents.length, icon: FileText, tab: "documents" as HealthTab },
-                  { label: "Antécédents médicaux", count: antecedents.reduce((a, c) => a + c.items.length, 0), icon: Shield, tab: "antecedents" as HealthTab },
-                  { label: "Traitements en cours", count: treatments.filter(t => t.status === "active").length, icon: Pill, tab: "treatments" as HealthTab },
-                  { label: "Vaccinations", count: vaccinations.length, icon: Syringe, tab: "vaccinations" as HealthTab },
-                ].map((s, i) => (
-                  <button key={i} onClick={() => setTab(s.tab)} className="w-full flex items-center gap-4 rounded-xl border bg-card p-4 shadow-card hover:bg-muted/20 transition-colors text-left">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <s.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground text-sm">{s.label}</p>
-                      <p className="text-xs text-muted-foreground">{s.count} élément(s)</p>
-                    </div>
+            {/* Menu items */}
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {menuItems.map(item => (
+                <button key={item.key} onClick={() => setSection(item.key)} className="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
+                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><item.icon className="h-4 w-4 text-primary" /></div>
+                  <div className="flex-1"><p className="text-sm font-medium text-foreground">{item.label}</p></div>
+                  <div className="flex items-center gap-2">
+                    {item.count !== undefined && <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">{item.count}</span>}
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* History (merged from PatientRecords) */}
-        {tab === "history" && (
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Historique des consultations</h3>
-            {consultationHistory.map((c, i) => (
-              <div key={i} className="rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                  <div className="flex items-start gap-4">
-                    <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Activity className="h-5 w-5 text-primary" /></div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{c.motif}</h3>
-                      <p className="text-sm text-muted-foreground">{c.doctor} · {c.date}</p>
-                      <p className="mt-2 text-sm text-foreground">{c.notes}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        {c.prescriptions > 0 && <span className="text-xs text-primary flex items-center gap-1"><FileText className="h-3 w-3" />{c.prescriptions} ordonnance(s)</span>}
-                        {c.analyses > 0 && <span className="text-xs text-accent flex items-center gap-1"><Activity className="h-3 w-3" />{c.analyses} analyse(s)</span>}
-                      </div>
-                    </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="shrink-0"><Eye className="h-4 w-4 mr-1" />Détail</Button>
-                </div>
+                </button>
+              ))}
+            </div>
+
+            {/* AI assistant entry */}
+            <button onClick={() => setSection("ai")} className="w-full rounded-xl border bg-card shadow-card p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left">
+              <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Bot className="h-4 w-4 text-primary" /></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Assistant virtuel IA</p>
+                <p className="text-[11px] text-muted-foreground">Aide à l'orientation · Ne remplace pas un diagnostic</p>
               </div>
-            ))}
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
           </div>
         )}
 
-        {/* Documents */}
-        {tab === "documents" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Mes documents médicaux</h3>
-              <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setShowUpload(!showUpload)}>
-                <Upload className="h-4 w-4 mr-1" />Importer
-              </Button>
+        {/* ── DOCUMENTS ── */}
+        {section === "documents" && (
+          <div>
+            <SectionHeader title="Documents" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3">
+              <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setShowUpload(!showUpload)}><Upload className="h-4 w-4 mr-1" />Importer</Button>
             </div>
-
             {showUpload && (
-              <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-8 text-center">
-                <Upload className="h-8 w-8 text-primary mx-auto mb-3" />
-                <p className="font-medium text-foreground">Glissez vos fichiers ici</p>
-                <p className="text-xs text-muted-foreground mt-1">PDF, images, documents (max 10 Mo)</p>
-                <Button variant="outline" size="sm" className="mt-4">Parcourir les fichiers</Button>
+              <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 text-center mb-3">
+                <Upload className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="font-medium text-foreground text-sm">Glissez vos fichiers ici</p>
+                <p className="text-xs text-muted-foreground mt-1">PDF, images (max 10 Mo)</p>
               </div>
             )}
-
-            <div className="space-y-2">
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {documents.map((d, i) => (
-                <div key={i} className="rounded-xl border bg-card p-4 shadow-card hover:bg-muted/20 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : d.type === "Imagerie" ? "bg-warning/10" : "bg-muted"}`}>
-                      <FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : d.type === "Imagerie" ? "text-warning" : "text-muted-foreground"}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground text-sm truncate">{d.name}</p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <span>{d.source}</span><span>•</span><span>{d.date}</span><span>•</span><span>{d.size}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><Eye className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><Download className="h-4 w-4" /></Button>
-                    </div>
+                <div key={i} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
+                  <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : "bg-muted"}`}>
+                    <FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{d.source} · {d.date}</p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5" /></Button>
                   </div>
                 </div>
               ))}
@@ -219,95 +186,174 @@ const PatientHealth = () => {
           </div>
         )}
 
-        {/* Antecedents */}
-        {tab === "antecedents" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Mes antécédents médicaux</h3>
-              <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button>
+        {/* ── ANTECEDENTS ── */}
+        {section === "antecedents" && (
+          <div>
+            <SectionHeader title="Antécédents médicaux" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {antecedents.map((a, i) => (
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{a.name}</p>{a.date && <span className="text-xs text-muted-foreground">{a.date}</span>}</div>
+                  {a.details && <p className="text-xs text-muted-foreground mt-0.5">{a.details}</p>}
+                </div>
+              ))}
             </div>
-            {antecedents.map((cat, i) => (
-              <div key={i} className="rounded-xl border bg-card p-5 shadow-card">
-                <h4 className="font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
-                  {cat.category === "Allergies" && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                  {cat.category}
-                </h4>
-                <div className="space-y-3">
-                  {cat.items.map((item, j) => (
-                    <div key={j} className={`rounded-lg p-3 ${cat.category === "Allergies" ? "bg-destructive/5 border border-destructive/20" : "bg-muted/50"}`}>
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-foreground text-sm">{item.name}</p>
-                        {item.date && <span className="text-xs text-muted-foreground">{item.date}</span>}
-                      </div>
-                      {item.details && <p className="text-xs text-muted-foreground mt-1">{item.details}</p>}
+          </div>
+        )}
+
+        {/* ── TREATMENTS ── */}
+        {section === "treatments" && (
+          <div>
+            <SectionHeader title="Traitements réguliers" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {treatments.map((t, i) => (
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">{t.name}</p>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">En cours</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t.dose} · Depuis {t.since}</p>
+                  <p className="text-[11px] text-muted-foreground">Prescrit par {t.prescriber}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── ALLERGIES ── */}
+        {section === "allergies" && (
+          <div>
+            <SectionHeader title="Allergies" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {allergies.map((a, i) => (
+                <div key={i} className="p-3 bg-destructive/5 hover:bg-destructive/10 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-destructive" />{a.name}</p>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">{a.severity}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{a.reaction}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── HABITS ── */}
+        {section === "habits" && (
+          <div>
+            <SectionHeader title="Habitudes de vie" onBack={() => setSection("menu")} />
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {habits.map((h, i) => (
+                <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
+                  <p className="text-sm text-foreground">{h.label}</p>
+                  <p className="text-sm font-medium text-foreground">{h.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── FAMILY ── */}
+        {section === "family" && (
+          <div>
+            <SectionHeader title="Antécédents familiaux" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {familyHistory.map((f, i) => (
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
+                  <p className="text-sm font-medium text-foreground">{f.name}</p>
+                  {f.details && <p className="text-xs text-muted-foreground mt-0.5">{f.details}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── SURGERIES ── */}
+        {section === "surgeries" && (
+          <div>
+            <SectionHeader title="Opérations chirurgicales" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {surgeries.map((s, i) => (
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{s.name}</p><span className="text-xs text-muted-foreground">{s.date}</span></div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{s.hospital}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── VACCINATIONS ── */}
+        {section === "vaccinations" && (
+          <div>
+            <SectionHeader title="Vaccins" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {vaccinations.map((v, i) => (
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
+                  <p className="text-sm font-medium text-foreground">{v.name}</p>
+                  <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
+                    <span>{v.doses}</span><span>·</span><span>Dernière : {v.lastDate}</span>
+                    {v.nextDate && <><span>·</span><span className="text-primary font-medium">Prochain : {v.nextDate}</span></>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── MEASURES ── */}
+        {section === "measures" && (
+          <div>
+            <SectionHeader title="Mesures" onBack={() => setSection("menu")} />
+            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {measures.map((m, i) => (
+                <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
+                  <div><p className="text-sm text-foreground">{m.label}</p><p className="text-[11px] text-muted-foreground">{m.date}</p></div>
+                  <p className="text-sm font-bold text-foreground">{m.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── AI ASSISTANT ── */}
+        {section === "ai" && (
+          <div>
+            <SectionHeader title="Assistant virtuel IA" onBack={() => setSection("menu")} />
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden flex flex-col" style={{ height: "calc(100vh - 280px)" }}>
+              <div className="bg-warning/5 border-b border-warning/20 px-4 py-2.5">
+                <p className="text-[11px] text-warning flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 shrink-0" />Cet assistant est informatif. Il ne remplace pas un diagnostic médical ni un avis professionnel.</p>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {aiMessages.map(msg => (
+                  <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                      msg.sender === "me" ? "gradient-primary text-primary-foreground rounded-br-sm" :
+                      "bg-primary/5 border border-primary/20 text-foreground rounded-bl-sm"
+                    }`}>
+                      {msg.sender === "ai" && <p className="text-[10px] font-semibold text-primary mb-1 flex items-center gap-1"><Bot className="h-3 w-3" />Assistant</p>}
+                      <p className="text-sm">{msg.text}</p>
                     </div>
-                  ))}
+                  </div>
+                ))}
+              </div>
+              <div className="border-t p-3">
+                <div className="flex items-center gap-2">
+                  <Input placeholder="Posez votre question..." value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendAi()} className="flex-1" />
+                  <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendAi} disabled={!aiInput.trim()}><Send className="h-4 w-4" /></Button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Treatments */}
-        {tab === "treatments" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Mes traitements</h3>
-              <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button>
-            </div>
-            <div className="space-y-3">
-              {treatments.map((t, i) => (
-                <div key={i} className={`rounded-xl border bg-card p-5 shadow-card ${t.status === "ended" ? "opacity-60" : ""}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${t.status === "active" ? "bg-accent/10" : "bg-muted"}`}>
-                        <Pill className={`h-4 w-4 ${t.status === "active" ? "text-accent" : "text-muted-foreground"}`} />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground text-sm">{t.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{t.dose}</p>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${t.status === "active" ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
-                      {t.status === "active" ? "En cours" : "Terminé"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                    <span>Prescrit par {t.prescriber}</span><span>•</span><span>{t.since}</span>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
 
-        {/* Vaccinations */}
-        {tab === "vaccinations" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Mon carnet de vaccination</h3>
-              <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button>
-            </div>
-            <div className="space-y-3">
-              {vaccinations.map((v, i) => (
-                <div key={i} className="rounded-xl border bg-card p-4 shadow-card">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Syringe className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground text-sm">{v.name}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{v.doses}</span><span>•</span><span>Dernière : {v.lastDate}</span>
-                        {v.nextDate && <><span>•</span><span className="text-primary font-medium">Prochain : {v.nextDate}</span></>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

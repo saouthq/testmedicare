@@ -33,6 +33,7 @@ import DoctorSubscription from "./pages/doctor/DoctorSubscription";
 import DoctorOnboarding from "./pages/doctor/DoctorOnboarding";
 import DoctorBilling from "./pages/doctor/DoctorBilling";
 import DoctorConnect from "./pages/doctor/DoctorConnect";
+import DoctorAIAssistant from "./pages/doctor/DoctorAIAssistant";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
@@ -123,6 +124,7 @@ const App = () => (
           <Route path="/dashboard/doctor/messages" element={<Messages role="doctor" />} />
           <Route path="/dashboard/doctor/connect" element={<DoctorConnect />} />
           <Route path="/dashboard/doctor/billing" element={<DoctorBilling />} />
+          <Route path="/dashboard/doctor/ai-assistant" element={<DoctorAIAssistant />} />
           <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
 
           {/* Pharmacy */}

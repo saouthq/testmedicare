@@ -28,6 +28,7 @@ import {
   MessageSquare,
   Plug,
   Banknote,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -63,6 +64,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Facturation", url: "/dashboard/doctor/billing", icon: Banknote },
     { title: "Messagerie", url: "/dashboard/doctor/messages", icon: MessageSquare },
     { title: "Connect", url: "/dashboard/doctor/connect", icon: Plug },
+    { title: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
     { title: "Secrétaires", url: "/dashboard/doctor/secretary", icon: Building2 },
     { title: "Statistiques", url: "/dashboard/doctor/stats", icon: BarChart3 },
     { title: "Abonnement", url: "/dashboard/doctor/subscription", icon: CreditCard },
