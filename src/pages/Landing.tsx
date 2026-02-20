@@ -26,7 +26,7 @@ const Landing = () => {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary"><Stethoscope className="h-5 w-5 text-primary-foreground" /></div>
-            <span className="text-xl font-bold text-foreground">MediConnect</span>
+            <span className="text-xl font-bold text-foreground">Medicare</span>
             <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium hidden sm:block">Tunisie 🇹🇳</span>
           </Link>
           <div className="hidden items-center gap-8 md:flex">
@@ -66,7 +66,7 @@ const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap items-center justify-center gap-3">
             {specialties.map((s) => (
-              <Link key={s} to="/dashboard/patient/search" className="rounded-full border bg-background px-4 py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary hover:shadow-card">{s}</Link>
+              <Link key={s} to="/search" className="rounded-full border bg-background px-4 py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary hover:shadow-card">{s}</Link>
             ))}
           </div>
         </div>
@@ -124,10 +124,10 @@ const Landing = () => {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary"><Stethoscope className="h-4 w-4 text-primary-foreground" /></div>
-              <span className="font-bold text-foreground">MediConnect</span>
+              <span className="font-bold text-foreground">Medicare</span>
               <span className="text-xs text-muted-foreground">Tunisie</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2026 MediConnect Tunisie. Tous droits réservés.</p>
+            <p className="text-sm text-muted-foreground">© 2026 Medicare Tunisie. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

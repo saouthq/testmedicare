@@ -22,9 +22,9 @@ const Register = () => {
         <div className="max-w-md text-primary-foreground">
           <div className="flex items-center gap-3 mb-8">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/20 backdrop-blur"><Stethoscope className="h-7 w-7 text-primary-foreground" /></div>
-            <div><span className="text-2xl font-bold">MediConnect</span><p className="text-primary-foreground/70 text-xs">Tunisie 🇹🇳</p></div>
+            <div><span className="text-2xl font-bold">Medicare</span><p className="text-primary-foreground/70 text-xs">Tunisie 🇹🇳</p></div>
           </div>
-          <h2 className="text-3xl font-bold">Rejoignez MediConnect</h2>
+          <h2 className="text-3xl font-bold">Rejoignez Medicare</h2>
           <p className="mt-4 text-primary-foreground/80">Créez votre compte et accédez à l'ensemble des services de la plateforme. Prise en charge CNAM incluse.</p>
         </div>
       </div>
@@ -33,7 +33,7 @@ const Register = () => {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary"><Stethoscope className="h-5 w-5 text-primary-foreground" /></div>
-            <span className="text-xl font-bold text-foreground">MediConnect</span>
+            <span className="text-xl font-bold text-foreground">Medicare</span>
           </div>
 
           <h1 className="text-2xl font-bold text-foreground">Créer un compte</h1>

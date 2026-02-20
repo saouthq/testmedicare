@@ -46,7 +46,7 @@ const navItems: Record<string, NavItem[]> = {
   patient: [
     { title: "Tableau de bord", url: "/dashboard/patient", icon: LayoutDashboard },
     { title: "Mes rendez-vous", url: "/dashboard/patient/appointments", icon: Calendar },
-    { title: "Prendre RDV", url: "/dashboard/patient/search", icon: Search },
+    { title: "Prendre RDV", url: "/search", icon: Search },
     { title: "Mon espace santé", url: "/dashboard/patient/health", icon: Activity },
     { title: "Ordonnances", url: "/dashboard/patient/prescriptions", icon: FileText },
     { title: "Messagerie", url: "/dashboard/patient/messages", icon: MessageSquare },
@@ -128,7 +128,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
               <Stethoscope className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-foreground">MediConnect</span>
+            <span className="font-bold text-foreground">Medicare</span>
           </Link>
           <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
