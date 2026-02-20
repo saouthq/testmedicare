@@ -118,7 +118,7 @@ const DoctorPublicProfile = () => {
             <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
               <Stethoscope className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-foreground">MediConnect</span>
+            <span className="font-bold text-foreground">Medicare</span>
           </Link>
           <div className="flex gap-2">
             <Link to="/login"><Button variant="outline" size="sm">Se connecter</Button></Link>
@@ -128,7 +128,7 @@ const DoctorPublicProfile = () => {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <Link to="/dashboard/patient/search" className="flex items-center gap-1 text-sm text-primary mb-4 hover:underline">
+        <Link to="/search" className="flex items-center gap-1 text-sm text-primary mb-4 hover:underline">
           <ChevronLeft className="h-4 w-4" />Retour aux résultats
         </Link>
 
@@ -495,12 +495,14 @@ const DoctorPublicProfile = () => {
                   </div>
                 )}
 
-                <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11"
-                  disabled={bookingStep === 3 ? (!selectedSlot || !selectedMotif) : false}
-                  onClick={handleBooking}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  {bookingStep === 3 ? "Confirmer le rendez-vous" : "Continuer"}
-                </Button>
+                <Link to="/booking/1">
+                  <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11"
+                    disabled={bookingStep === 3 ? (!selectedSlot || !selectedMotif) : false}
+                    onClick={handleBooking}>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {bookingStep === 3 ? "Confirmer le rendez-vous" : "Continuer"}
+                  </Button>
+                </Link>
 
                 <p className="text-[10px] text-muted-foreground text-center">
                   Prise en charge CNAM · Annulation gratuite 24h avant

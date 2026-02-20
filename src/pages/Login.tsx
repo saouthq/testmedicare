@@ -41,7 +41,7 @@ const Login = () => {
           <div className="flex items-center gap-3 mb-8">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/20 backdrop-blur"><Stethoscope className="h-7 w-7 text-primary-foreground" /></div>
             <div>
-              <span className="text-2xl font-bold">MediConnect</span>
+              <span className="text-2xl font-bold">Medicare</span>
               <p className="text-primary-foreground/70 text-xs">Tunisie 🇹🇳</p>
             </div>
           </div>
@@ -55,7 +55,7 @@ const Login = () => {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary"><Stethoscope className="h-5 w-5 text-primary-foreground" /></div>
-            <span className="text-xl font-bold text-foreground">MediConnect</span>
+            <span className="text-xl font-bold text-foreground">Medicare</span>
           </div>
           
           <h1 className="text-2xl font-bold text-foreground">Connexion</h1>

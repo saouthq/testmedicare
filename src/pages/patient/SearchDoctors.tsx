@@ -114,12 +114,12 @@ const SearchDoctors = () => {
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {d.slots.map(slot => (
-                        <Link key={slot} to="/dashboard/patient/booking">
+                        <Link key={slot} to={`/booking/${i + 1}`}>
                           <button className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-all">{slot}</button>
                         </Link>
                       ))}
                     </div>
-                    <Link to="/dashboard/patient/booking" className="block mt-3">
+                    <Link to={`/booking/${i + 1}`} className="block mt-3">
                       <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow" size="sm">Prendre rendez-vous</Button>
                     </Link>
                   </div>

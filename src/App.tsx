@@ -30,6 +30,7 @@ import DoctorSettings from "./pages/doctor/DoctorSettings";
 import DoctorStats from "./pages/doctor/DoctorStats";
 import DoctorSecretary from "./pages/doctor/DoctorSecretary";
 import DoctorSubscription from "./pages/doctor/DoctorSubscription";
+import DoctorOnboarding from "./pages/doctor/DoctorOnboarding";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
@@ -83,26 +84,30 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Public doctor profile */}
+          {/* Public doctor profile - clean route */}
           <Route path="/doctor/:id" element={<DoctorPublicProfile />} />
 
-          {/* Patient */}
+          {/* Patient - clean booking route */}
+          <Route path="/search" element={<SearchDoctors />} />
+          <Route path="/booking/:doctorId" element={<PatientBooking />} />
+          {/* Legacy redirects */}
+          <Route path="/dashboard/patient/search" element={<Navigate to="/search" replace />} />
+          <Route path="/dashboard/patient/booking" element={<Navigate to="/booking/1" replace />} />
+
           <Route path="/dashboard/patient" element={<PatientDashboard />} />
           <Route path="/dashboard/patient/appointments" element={<PatientAppointments />} />
-          <Route path="/dashboard/patient/search" element={<SearchDoctors />} />
           <Route path="/dashboard/patient/prescriptions" element={<PatientPrescriptions />} />
-          <Route path="/dashboard/patient/booking" element={<PatientBooking />} />
           <Route path="/dashboard/patient/notifications" element={<PatientNotifications />} />
           <Route path="/dashboard/patient/health" element={<PatientHealth />} />
           <Route path="/dashboard/patient/settings" element={<PatientSettings />} />
           <Route path="/dashboard/patient/messages" element={<Messages role="patient" />} />
           <Route path="/dashboard/patient/teleconsultation" element={<Teleconsultation role="patient" />} />
-          {/* Redirects for removed/merged pages */}
           <Route path="/dashboard/patient/profile" element={<Navigate to="/dashboard/patient/settings" replace />} />
           <Route path="/dashboard/patient/records" element={<Navigate to="/dashboard/patient/health" replace />} />
 
           {/* Doctor */}
           <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
+          <Route path="/dashboard/doctor/onboarding" element={<DoctorOnboarding />} />
           <Route path="/dashboard/doctor/schedule" element={<DoctorSchedule />} />
           <Route path="/dashboard/doctor/patients" element={<DoctorPatients />} />
           <Route path="/dashboard/doctor/patients/:id" element={<DoctorPatientDetail />} />
