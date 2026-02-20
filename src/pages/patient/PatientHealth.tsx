@@ -1,13 +1,27 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield } from "lucide-react";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type HealthTab = "overview" | "documents" | "antecedents" | "treatments" | "vaccinations";
+type HealthTab = "overview" | "history" | "documents" | "antecedents" | "treatments" | "vaccinations";
+
+const vitals = [
+  { label: "Tension artérielle", value: "13/8", unit: "mmHg", icon: Heart, trend: "stable" },
+  { label: "Glycémie", value: "1.05", unit: "g/L", icon: Activity, trend: "down" },
+  { label: "Poids", value: "75", unit: "kg", icon: Thermometer, trend: "stable" },
+  { label: "IMC", value: "24.2", unit: "", icon: Activity, trend: "stable" },
+];
 
 const healthReminders = [
   { title: "Consultez votre dentiste", desc: "Recommandé une fois par an", icon: "🦷", action: "Prendre rendez-vous" },
   { title: "Bilan sanguin annuel", desc: "Dernier bilan il y a 14 mois", icon: "🩸", action: "Prendre rendez-vous" },
+];
+
+const consultationHistory = [
+  { date: "10 Fév 2026", doctor: "Dr. Bouazizi", motif: "Suivi diabète", notes: "Glycémie stable 1.05 g/L. Maintien traitement. Contrôle dans 3 mois.", prescriptions: 1, analyses: 0 },
+  { date: "15 Jan 2026", doctor: "Dr. Gharbi", motif: "Bilan cardiaque annuel", notes: "ECG normal. TA 13/8. Aucune anomalie détectée.", prescriptions: 0, analyses: 1 },
+  { date: "5 Déc 2025", doctor: "Dr. Hammami", motif: "Consultation dermatologie", notes: "Eczéma atopique léger. Prescription crème dermocorticoïde.", prescriptions: 1, analyses: 0 },
+  { date: "20 Nov 2025", doctor: "Dr. Bouazizi", motif: "Gastro-entérite", notes: "Prescription antiacide et anti-émétique. Repos recommandé.", prescriptions: 1, analyses: 0 },
 ];
 
 const documents = [
@@ -21,7 +35,7 @@ const documents = [
 const antecedents = [
   { category: "Chirurgicaux", items: [{ name: "Appendicectomie", date: "Mars 2015", details: "Hôpital Charles Nicolle, Tunis" }] },
   { category: "Médicaux", items: [{ name: "Diabète type 2", date: "Depuis 2020", details: "Suivi régulier, traitement oral" }, { name: "Hypertension artérielle", date: "Depuis 2022", details: "Traitement par Amlodipine 5mg" }] },
-  { category: "Allergies", items: [{ name: "Pénicilline", date: "Depuis l'enfance", details: "Réaction cutanée sévère" }] },
+  { category: "Allergies", items: [{ name: "Pénicilline", date: "Depuis l'enfance", details: "Réaction cutanée sévère" }, { name: "Acariens", date: "Depuis 2010", details: "Rhinite allergique" }] },
   { category: "Familiaux", items: [{ name: "Diabète (père)", date: "", details: "Type 2" }, { name: "Hypertension (mère)", date: "", details: "" }] },
 ];
 
@@ -44,6 +58,7 @@ const PatientHealth = () => {
 
   const tabs = [
     { key: "overview" as HealthTab, label: "Vue d'ensemble", icon: Heart },
+    { key: "history" as HealthTab, label: "Historique", icon: Activity },
     { key: "documents" as HealthTab, label: "Documents", icon: FileText },
     { key: "antecedents" as HealthTab, label: "Antécédents", icon: Shield },
     { key: "treatments" as HealthTab, label: "Traitements", icon: Pill },
@@ -53,6 +68,17 @@ const PatientHealth = () => {
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
       <div className="space-y-6">
+        {/* Vitals cards */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {vitals.map((v) => (
+            <div key={v.label} className="rounded-xl border bg-card p-4 shadow-card">
+              <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">{v.label}</p><v.icon className="h-4 w-4 text-primary" /></div>
+              <p className="mt-1 text-2xl font-bold text-foreground">{v.value} <span className="text-sm font-normal text-muted-foreground">{v.unit}</span></p>
+              <p className="text-xs text-accent mt-1">{v.trend === "stable" ? "↔ Stable" : v.trend === "down" ? "↓ En baisse" : "↑ En hausse"}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Tabs */}
         <div className="flex gap-1 rounded-lg border bg-card p-1 overflow-x-auto">
           {tabs.map(t => (
@@ -65,7 +91,6 @@ const PatientHealth = () => {
         {/* Overview */}
         {tab === "overview" && (
           <div className="space-y-6">
-            {/* CTA Banner */}
             <div className="rounded-xl bg-primary/5 border border-primary/20 p-6">
               <div className="flex items-start justify-between">
                 <div>
@@ -77,11 +102,9 @@ const PatientHealth = () => {
               </div>
             </div>
 
-            {/* Rappels santé */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">Rappels santé <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">{healthReminders.length}</span></h3>
-                <button className="text-xs text-primary font-medium">Voir tout ({healthReminders.length})</button>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {healthReminders.map((r, i) => (
@@ -95,21 +118,20 @@ const PatientHealth = () => {
                           <Calendar className="h-3 w-3 mr-1" />{r.action}
                         </Button>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Profil santé sections */}
             <div>
               <h3 className="font-semibold text-foreground mb-3">Profil santé</h3>
               <div className="space-y-2">
                 {[
-                  { label: "Documents", count: documents.length, icon: FileText, tab: "documents" as HealthTab },
+                  { label: "Historique consultations", count: consultationHistory.length, icon: Activity, tab: "history" as HealthTab },
+                  { label: "Documents médicaux", count: documents.length, icon: FileText, tab: "documents" as HealthTab },
                   { label: "Antécédents médicaux", count: antecedents.reduce((a, c) => a + c.items.length, 0), icon: Shield, tab: "antecedents" as HealthTab },
-                  { label: "Traitements réguliers", count: treatments.filter(t => t.status === "active").length, icon: Pill, tab: "treatments" as HealthTab },
+                  { label: "Traitements en cours", count: treatments.filter(t => t.status === "active").length, icon: Pill, tab: "treatments" as HealthTab },
                   { label: "Vaccinations", count: vaccinations.length, icon: Syringe, tab: "vaccinations" as HealthTab },
                 ].map((s, i) => (
                   <button key={i} onClick={() => setTab(s.tab)} className="w-full flex items-center gap-4 rounded-xl border bg-card p-4 shadow-card hover:bg-muted/20 transition-colors text-left">
@@ -125,6 +147,32 @@ const PatientHealth = () => {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* History (merged from PatientRecords) */}
+        {tab === "history" && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-foreground">Historique des consultations</h3>
+            {consultationHistory.map((c, i) => (
+              <div key={i} className="rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex items-start gap-4">
+                    <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Activity className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{c.motif}</h3>
+                      <p className="text-sm text-muted-foreground">{c.doctor} · {c.date}</p>
+                      <p className="mt-2 text-sm text-foreground">{c.notes}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        {c.prescriptions > 0 && <span className="text-xs text-primary flex items-center gap-1"><FileText className="h-3 w-3" />{c.prescriptions} ordonnance(s)</span>}
+                        {c.analyses > 0 && <span className="text-xs text-accent flex items-center gap-1"><Activity className="h-3 w-3" />{c.analyses} analyse(s)</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" className="shrink-0"><Eye className="h-4 w-4 mr-1" />Détail</Button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -157,11 +205,7 @@ const PatientHealth = () => {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground text-sm truncate">{d.name}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <span>{d.source}</span>
-                        <span>•</span>
-                        <span>{d.date}</span>
-                        <span>•</span>
-                        <span>{d.size}</span>
+                        <span>{d.source}</span><span>•</span><span>{d.date}</span><span>•</span><span>{d.size}</span>
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
@@ -229,9 +273,7 @@ const PatientHealth = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                    <span>Prescrit par {t.prescriber}</span>
-                    <span>•</span>
-                    <span>{t.since}</span>
+                    <span>Prescrit par {t.prescriber}</span><span>•</span><span>{t.since}</span>
                   </div>
                 </div>
               ))}
@@ -256,9 +298,7 @@ const PatientHealth = () => {
                     <div className="flex-1">
                       <p className="font-medium text-foreground text-sm">{v.name}</p>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{v.doses}</span>
-                        <span>•</span>
-                        <span>Dernière : {v.lastDate}</span>
+                        <span>{v.doses}</span><span>•</span><span>Dernière : {v.lastDate}</span>
                         {v.nextDate && <><span>•</span><span className="text-primary font-medium">Prochain : {v.nextDate}</span></>}
                       </div>
                     </div>

@@ -68,9 +68,9 @@ const PatientDashboard = () => {
                   <Plus className="h-4 w-4 mr-1.5" />Prendre un RDV
                 </Button>
               </Link>
-              <Link to="/dashboard/patient/records">
+              <Link to="/dashboard/patient/health">
                 <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20 backdrop-blur-sm">
-                  Mon dossier médical
+                  Mon espace santé
                 </Button>
               </Link>
             </div>
@@ -259,7 +259,7 @@ const PatientDashboard = () => {
                   </span>
                 </div>
                 <div className="pt-2 border-t">
-                  <Link to="/dashboard/patient/records">
+                  <Link to="/dashboard/patient/health">
                     <Button variant="outline" size="sm" className="w-full text-xs">
                       Voir mon dossier complet <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
