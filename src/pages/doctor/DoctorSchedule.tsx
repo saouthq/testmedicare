@@ -8,7 +8,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
 
 type ViewMode = "week" | "day";
-type ModalType = null | "availability" | "block" | "appointment-action";
+type ModalType = null | "availability" | "block" | "appointment-action" | "empty-slot" | "create-rdv";
 
 const days = ["Lun 17", "Mar 18", "Mer 19", "Jeu 20", "Ven 21", "Sam 22"];
 const hours = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
@@ -52,6 +52,7 @@ const DoctorSchedule = () => {
   const [modal, setModal] = useState<ModalType>(null);
   const [selectedAppKey, setSelectedAppKey] = useState<string | null>(null);
   const [appointments, setAppointments] = useState(initialAppointments);
+  const [emptySlotKey, setEmptySlotKey] = useState<string | null>(null);
 
   // Availability creation state
   const [availDays, setAvailDays] = useState<string[]>(["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]);
@@ -146,7 +147,8 @@ const DoctorSchedule = () => {
                             <p className="opacity-70 truncate text-[10px]">{apt.motif}</p>
                           </div>
                         ) : (
-                          <div className="h-full rounded-lg hover:bg-primary/5 hover:border hover:border-dashed hover:border-primary/30 transition-colors cursor-pointer" />
+                          <div className="h-full rounded-lg hover:bg-primary/5 hover:border hover:border-dashed hover:border-primary/30 transition-colors cursor-pointer"
+                            onClick={() => { setEmptySlotKey(key); setModal("empty-slot"); }} />
                         )}
                       </td>
                     );
@@ -260,6 +262,80 @@ const DoctorSchedule = () => {
               <Button variant="outline" className="w-full justify-start h-9 text-sm"><MessageSquare className="h-4 w-4 mr-2 text-primary" />Envoyer un message</Button>
               <Button variant="outline" className="w-full justify-start h-9 text-sm text-destructive" onClick={() => handleAction("cancel")}><X className="h-4 w-4 mr-2" />Annuler le RDV</Button>
               <Button variant="outline" className="w-full justify-start h-9 text-sm text-destructive" onClick={() => handleAction("no-show")}><AlertTriangle className="h-4 w-4 mr-2" />Marquer absent (no-show)</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty slot menu */}
+      {modal === "empty-slot" && emptySlotKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => { setModal(null); setEmptySlotKey(null); }}>
+          <div className="w-full max-w-xs rounded-2xl border bg-card shadow-elevated p-5 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-foreground text-sm">Créneau libre</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{emptySlotKey.replace("-", " · ")}</p>
+              </div>
+              <button onClick={() => { setModal(null); setEmptySlotKey(null); }} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-2">
+              <Button variant="outline" className="w-full justify-start h-10 text-sm" onClick={() => { setModal("create-rdv"); }}>
+                <Plus className="h-4 w-4 mr-2 text-primary" />Créer un rendez-vous
+              </Button>
+              <Button variant="outline" className="w-full justify-start h-10 text-sm" onClick={() => {
+                if (emptySlotKey) {
+                  setAppointments(prev => ({ ...prev, [emptySlotKey]: { patient: "— Bloqué —", type: "Indisponible", duration: 1, color: "destructive", motif: "Créneau bloqué", status: "blocked" } }));
+                }
+                setModal(null); setEmptySlotKey(null);
+              }}>
+                <Ban className="h-4 w-4 mr-2 text-destructive" />Bloquer ce créneau
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create RDV modal */}
+      {modal === "create-rdv" && emptySlotKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => { setModal(null); setEmptySlotKey(null); }}>
+          <div className="w-full max-w-md rounded-2xl border bg-card shadow-elevated p-6 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-primary" />Nouveau RDV</h3>
+              <button onClick={() => { setModal(null); setEmptySlotKey(null); }} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4 bg-muted/50 rounded-lg p-2.5">{emptySlotKey.replace("-", " · ")}</p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground">Patient</label>
+                <Input placeholder="Rechercher un patient..." className="mt-1.5" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground">Motif</label>
+                <select className="mt-1.5 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                  <option>Consultation</option><option>Suivi</option><option>Contrôle</option><option>Première visite</option><option>Téléconsultation</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Type</label>
+                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                    <option>Présentiel</option><option>Téléconsultation</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Durée</label>
+                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                    <option>15 min</option><option>20 min</option><option>30 min</option><option>45 min</option><option>60 min</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Notes</label>
+                <textarea placeholder="Notes optionnelles..." className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" rows={2} />
+              </div>
+              <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow" onClick={() => { setModal(null); setEmptySlotKey(null); }}>
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />Créer le rendez-vous
+              </Button>
             </div>
           </div>
         </div>
