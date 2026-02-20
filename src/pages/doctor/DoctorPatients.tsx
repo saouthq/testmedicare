@@ -1,70 +1,175 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Search, ChevronRight, Phone, Mail } from "lucide-react";
+import { useState } from "react";
+import { Search, ChevronRight, Phone, Mail, Plus, Filter, AlertTriangle, Activity, Calendar, Eye, MoreHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+
+type PatientFilter = "all" | "recent" | "chronic" | "new";
 
 const patients = [
-  { name: "Marie Dupont", age: 34, lastVisit: "10 Fév 2026", phone: "06 12 34 56 78", email: "marie@email.com", condition: "Suivi diabète" },
-  { name: "Jean Martin", age: 56, lastVisit: "8 Fév 2026", phone: "06 98 76 54 32", email: "jean@email.com", condition: "Hypertension" },
-  { name: "Claire Petit", age: 28, lastVisit: "5 Fév 2026", phone: "06 11 22 33 44", email: "claire@email.com", condition: "Grossesse" },
-  { name: "Luc Bernard", age: 67, lastVisit: "1 Fév 2026", phone: "06 55 66 77 88", email: "luc@email.com", condition: "Arthrose" },
-  { name: "Sophie Moreau", age: 42, lastVisit: "28 Jan 2026", phone: "06 99 88 77 66", email: "sophie@email.com", condition: "Asthme" },
-  { name: "Paul Leroy", age: 51, lastVisit: "25 Jan 2026", phone: "06 44 33 22 11", email: "paul@email.com", condition: "Cholestérol" },
+  { 
+    name: "Marie Dupont", age: 34, lastVisit: "10 Fév 2026", phone: "06 12 34 56 78", 
+    email: "marie@email.com", condition: "Diabète type 2", avatar: "MD",
+    nextAppointment: "20 Fév 14:30", isNew: false, chronicConditions: ["Diabète type 2"],
+    allergies: ["Pénicilline"], lastVitals: { ta: "13/8", glycemia: "1.05" }
+  },
+  { 
+    name: "Jean Martin", age: 56, lastVisit: "8 Fév 2026", phone: "06 98 76 54 32", 
+    email: "jean@email.com", condition: "Hypertension", avatar: "JM",
+    nextAppointment: "23 Fév 10:00", isNew: false, chronicConditions: ["Hypertension", "Cholestérol"],
+    allergies: [], lastVitals: { ta: "14/8", glycemia: "0.95" }
+  },
+  { 
+    name: "Claire Petit", age: 28, lastVisit: "5 Fév 2026", phone: "06 11 22 33 44", 
+    email: "claire@email.com", condition: "Grossesse T2", avatar: "CP",
+    nextAppointment: "25 Fév 09:30", isNew: false, chronicConditions: [],
+    allergies: ["Aspirine"], lastVitals: { ta: "11/7", glycemia: "0.88" }
+  },
+  { 
+    name: "Luc Bernard", age: 67, lastVisit: "1 Fév 2026", phone: "06 55 66 77 88", 
+    email: "luc@email.com", condition: "Arthrose", avatar: "LB",
+    nextAppointment: null, isNew: false, chronicConditions: ["Arthrose", "HTA"],
+    allergies: [], lastVitals: { ta: "15/9", glycemia: "1.10" }
+  },
+  { 
+    name: "Sophie Moreau", age: 42, lastVisit: "28 Jan 2026", phone: "06 99 88 77 66", 
+    email: "sophie@email.com", condition: "Asthme", avatar: "SM",
+    nextAppointment: null, isNew: false, chronicConditions: ["Asthme"],
+    allergies: ["Acariens"], lastVitals: { ta: "12/7", glycemia: "0.92" }
+  },
+  { 
+    name: "Paul Leroy", age: 51, lastVisit: null, phone: "06 44 33 22 11", 
+    email: "paul@email.com", condition: "Nouveau patient", avatar: "PL",
+    nextAppointment: "28 Fév 14:00", isNew: true, chronicConditions: [],
+    allergies: [], lastVitals: { ta: "—", glycemia: "—" }
+  },
 ];
 
 const DoctorPatients = () => {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<PatientFilter>("all");
+
+  const filtered = patients.filter(p => {
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filter === "recent") return p.lastVisit !== null;
+    if (filter === "chronic") return p.chronicConditions.length > 0;
+    if (filter === "new") return p.isNew;
+    return true;
+  });
+
   return (
     <DashboardLayout role="doctor" title="Mes patients">
       <div className="space-y-6">
+        {/* Search and filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Rechercher un patient..." className="pl-10" />
+            <Input 
+              placeholder="Rechercher un patient (nom, prénom)..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-10 h-10" 
+            />
+          </div>
+          <div className="flex gap-2">
+            <div className="flex gap-1 rounded-lg border bg-card p-0.5">
+              {([
+                { key: "all" as PatientFilter, label: "Tous" },
+                { key: "recent" as PatientFilter, label: "Récents" },
+                { key: "chronic" as PatientFilter, label: "Chroniques" },
+                { key: "new" as PatientFilter, label: "Nouveaux" },
+              ]).map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <Button className="gradient-primary text-primary-foreground" size="sm">
+              <Plus className="h-4 w-4 mr-1" />Nouveau
+            </Button>
           </div>
         </div>
 
-        <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="p-4 text-sm font-medium text-muted-foreground">Patient</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground hidden sm:table-cell">Âge</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground hidden md:table-cell">Motif principal</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground hidden lg:table-cell">Dernière visite</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground">Contact</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {patients.map((p, i) => (
-                <tr key={i} className="hover:bg-muted/50 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
-                        {p.name.split(" ").map(n => n[0]).join("")}
-                      </div>
-                      <span className="font-medium text-foreground">{p.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">{p.age} ans</td>
-                  <td className="p-4 hidden md:table-cell">
-                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">{p.condition}</span>
-                  </td>
-                  <td className="p-4 text-sm text-muted-foreground hidden lg:table-cell">{p.lastVisit}</td>
-                  <td className="p-4">
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><Phone className="h-3.5 w-3.5 text-muted-foreground" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><Mail className="h-3.5 w-3.5 text-muted-foreground" /></Button>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <Button variant="ghost" size="icon" className="h-8 w-8"><ChevronRight className="h-4 w-4 text-muted-foreground" /></Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Stats */}
+        <div className="grid gap-3 grid-cols-4">
+          <div className="rounded-lg border bg-card px-4 py-3 text-center">
+            <p className="text-xl font-bold text-foreground">{patients.length}</p>
+            <p className="text-[11px] text-muted-foreground">Total patients</p>
+          </div>
+          <div className="rounded-lg border bg-card px-4 py-3 text-center">
+            <p className="text-xl font-bold text-primary">{patients.filter(p => p.chronicConditions.length > 0).length}</p>
+            <p className="text-[11px] text-muted-foreground">Pathologies chroniques</p>
+          </div>
+          <div className="rounded-lg border bg-card px-4 py-3 text-center">
+            <p className="text-xl font-bold text-accent">{patients.filter(p => p.nextAppointment).length}</p>
+            <p className="text-[11px] text-muted-foreground">RDV planifiés</p>
+          </div>
+          <div className="rounded-lg border bg-card px-4 py-3 text-center">
+            <p className="text-xl font-bold text-warning">{patients.filter(p => p.isNew).length}</p>
+            <p className="text-[11px] text-muted-foreground">Nouveaux</p>
+          </div>
         </div>
+
+        {/* Patient list */}
+        <div className="space-y-3">
+          {filtered.map((p, i) => (
+            <Link key={i} to="/dashboard/doctor/patient/1">
+              <div className="rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all cursor-pointer group">
+                <div className="flex items-start gap-4">
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
+                    p.isNew ? "bg-warning/10 text-warning border-2 border-warning/30" : "gradient-primary text-primary-foreground"
+                  }`}>
+                    {p.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground text-sm">{p.name}</h3>
+                          <span className="text-xs text-muted-foreground">{p.age} ans</span>
+                          {p.isNew && <span className="text-[10px] font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">Nouveau</span>}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {p.chronicConditions.map(c => (
+                            <span key={c} className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{c}</span>
+                          ))}
+                          {p.allergies.map(a => (
+                            <span key={a} className="flex items-center gap-0.5 text-[10px] font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
+                              <AlertTriangle className="h-2.5 w-2.5" />{a}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                    </div>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
+                      {p.lastVisit && <span>Dernière visite : {p.lastVisit}</span>}
+                      {p.nextAppointment && (
+                        <span className="flex items-center gap-1 text-accent font-medium">
+                          <Calendar className="h-3 w-3" />Prochain : {p.nextAppointment}
+                        </span>
+                      )}
+                      {p.lastVitals.ta !== "—" && (
+                        <span className="flex items-center gap-1">
+                          <Activity className="h-3 w-3" />TA {p.lastVitals.ta}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <p className="text-xs text-muted-foreground text-center">{filtered.length} patient(s) affiché(s)</p>
       </div>
     </DashboardLayout>
   );

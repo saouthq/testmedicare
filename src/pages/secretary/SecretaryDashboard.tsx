@@ -1,97 +1,237 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Calendar, Users, Phone, Clock, ChevronRight, Plus } from "lucide-react";
+import { 
+  Calendar, Users, Phone, Clock, ChevronRight, Plus, 
+  UserCheck, UserX, AlertCircle, CheckCircle2, Play,
+  Bell, TrendingUp, Video, ArrowRight, PhoneCall,
+  ArrowUpRight, ArrowDownRight, Euro
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const stats = [
-  { label: "RDV aujourd'hui", value: "24", icon: Calendar, color: "text-primary" },
-  { label: "Patients du jour", value: "18", icon: Users, color: "text-accent" },
-  { label: "Appels en attente", value: "5", icon: Phone, color: "text-warning" },
-  { label: "Salle d'attente", value: "3", icon: Clock, color: "text-destructive" },
+  { label: "RDV aujourd'hui", value: "24", change: "+3 vs hier", trend: "up", icon: Calendar, color: "bg-primary/10 text-primary" },
+  { label: "Patients du jour", value: "18", change: "2 nouveaux", trend: "up", icon: Users, color: "bg-accent/10 text-accent" },
+  { label: "Appels en attente", value: "5", change: "", trend: "neutral", icon: Phone, color: "bg-warning/10 text-warning" },
+  { label: "En salle d'attente", value: "3", change: "Moy. 8 min", trend: "neutral", icon: Clock, color: "bg-destructive/10 text-destructive" },
 ];
 
 const waitingRoom = [
-  { patient: "Marie Dupont", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Martin" },
-  { patient: "Jean Bernard", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Lefebvre" },
-  { patient: "Claire Moreau", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Martin" },
+  { patient: "Marie Dupont", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Martin", wait: "15 min", status: "waiting", avatar: "MD" },
+  { patient: "Jean Bernard", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Lefebvre", wait: "10 min", status: "called", avatar: "JB" },
+  { patient: "Claire Moreau", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Martin", wait: "5 min", status: "waiting", avatar: "CM" },
 ];
 
 const todayAppointments = [
-  { time: "09:30", patient: "Marie Dupont", doctor: "Dr. Martin", type: "Consultation", status: "waiting" },
-  { time: "09:45", patient: "Jean Bernard", doctor: "Dr. Lefebvre", type: "Suivi", status: "waiting" },
-  { time: "10:00", patient: "Claire Moreau", doctor: "Dr. Martin", type: "Contrôle", status: "upcoming" },
-  { time: "10:30", patient: "Paul Petit", doctor: "Dr. Durand", type: "Consultation", status: "upcoming" },
-  { time: "11:00", patient: "Sophie Leroy", doctor: "Dr. Martin", type: "Première visite", status: "upcoming" },
-  { time: "11:30", patient: "Luc Garcia", doctor: "Dr. Lefebvre", type: "Suivi", status: "upcoming" },
+  { time: "08:30", patient: "Pierre Duval", doctor: "Dr. Martin", type: "Consultation", status: "done", avatar: "PD" },
+  { time: "09:00", patient: "Lucie Fabre", doctor: "Dr. Lefebvre", type: "Suivi", status: "done", avatar: "LF" },
+  { time: "09:30", patient: "Marie Dupont", doctor: "Dr. Martin", type: "Consultation", status: "in_progress", avatar: "MD" },
+  { time: "09:45", patient: "Jean Bernard", doctor: "Dr. Lefebvre", type: "Suivi", status: "waiting", avatar: "JB" },
+  { time: "10:00", patient: "Claire Moreau", doctor: "Dr. Martin", type: "Contrôle", status: "upcoming", avatar: "CM" },
+  { time: "10:30", patient: "Paul Petit", doctor: "Dr. Durand", type: "Consultation", status: "upcoming", avatar: "PP" },
+  { time: "11:00", patient: "Sophie Leroy", doctor: "Dr. Martin", type: "Première visite", status: "upcoming", avatar: "SL" },
+  { time: "11:30", patient: "Luc Garcia", doctor: "Dr. Lefebvre", type: "Suivi", status: "upcoming", avatar: "LG" },
+  { time: "14:00", patient: "Anne Dubois", doctor: "Dr. Martin", type: "Téléconsultation", status: "upcoming", teleconsultation: true, avatar: "AD" },
+  { time: "14:30", patient: "Marc Roux", doctor: "Dr. Durand", type: "Consultation", status: "upcoming", avatar: "MR" },
 ];
 
+const recentCalls = [
+  { caller: "Marie Laurent", time: "09:15", type: "Prise de RDV", handled: true },
+  { caller: "Paul Durand", time: "09:05", type: "Annulation", handled: true },
+  { caller: "N° inconnu", time: "08:55", type: "Non répondu", handled: false },
+];
+
+const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
+  done: { label: "Terminé", class: "bg-muted text-muted-foreground", icon: CheckCircle2 },
+  in_progress: { label: "En cours", class: "bg-primary/10 text-primary", icon: Play },
+  waiting: { label: "En salle", class: "bg-warning/10 text-warning", icon: Clock },
+  called: { label: "Appelé", class: "bg-accent/10 text-accent", icon: UserCheck },
+  upcoming: { label: "À venir", class: "bg-muted/50 text-muted-foreground", icon: Clock },
+};
+
 const SecretaryDashboard = () => {
+  const doneCount = todayAppointments.filter(a => a.status === "done").length;
+
   return (
     <DashboardLayout role="secretary" title="Tableau de bord">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div />
-          <Button className="gradient-primary text-primary-foreground shadow-primary-glow">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau RDV
-          </Button>
+        {/* Top bar */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Cabinet Médical Saint-Honoré · Vendredi 20 Février 2026</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs">
+              <PhoneCall className="h-3.5 w-3.5 mr-1" />Journal d'appels
+            </Button>
+            <Link to="/dashboard/secretary/agenda">
+              <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm">
+                <Plus className="h-4 w-4 mr-1.5" />Nouveau RDV
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Stats */}
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
-            <div key={s.label} className="rounded-xl border bg-card p-5 shadow-card animate-fade-in">
+            <div key={s.label} className="rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-                <s.icon className={`h-5 w-5 ${s.color}`} />
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${s.color}`}>
+                  <s.icon className="h-5 w-5" />
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="mt-3 text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              {s.change && (
+                <p className="text-[11px] text-accent mt-1 flex items-center gap-0.5">
+                  {s.trend === "up" && <ArrowUpRight className="h-3 w-3" />}
+                  {s.change}
+                </p>
+              )}
             </div>
           ))}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Appointments */}
+          {/* Today's timeline */}
           <div className="lg:col-span-2 rounded-xl border bg-card shadow-card">
-            <div className="flex items-center justify-between border-b p-5">
-              <h2 className="font-semibold text-foreground">Rendez-vous du jour</h2>
-              <a href="/dashboard/secretary/agenda" className="text-sm text-primary hover:underline flex items-center">
-                Agenda complet <ChevronRight className="h-4 w-4 ml-1" />
-              </a>
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                Rendez-vous du jour
+                <span className="text-xs text-muted-foreground ml-2">{doneCount}/{todayAppointments.length}</span>
+              </h2>
+              <Link to="/dashboard/secretary/agenda" className="text-sm text-primary hover:underline flex items-center gap-1">
+                Agenda complet <ChevronRight className="h-4 w-4" />
+              </Link>
             </div>
-            <div className="divide-y">
-              {todayAppointments.map((a, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
-                  <div className="w-14 text-center">
-                    <p className="text-sm font-medium text-foreground">{a.time}</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">{a.patient}</p>
-                    <p className="text-sm text-muted-foreground">{a.doctor} · {a.type}</p>
-                  </div>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    a.status === "waiting" ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"
+            <div className="divide-y max-h-[450px] overflow-y-auto">
+              {todayAppointments.map((a, i) => {
+                const config = statusConfig[a.status];
+                return (
+                  <div key={i} className={`flex items-center gap-4 px-5 py-3 transition-colors ${
+                    a.status === "in_progress" ? "bg-primary/5" :
+                    a.status === "waiting" ? "bg-warning/5" :
+                    a.status === "done" ? "opacity-50" :
+                    "hover:bg-muted/30"
                   }`}>
-                    {a.status === "waiting" ? "En salle" : "À venir"}
-                  </span>
-                </div>
-              ))}
+                    <div className="w-12 text-center shrink-0">
+                      <p className={`text-sm font-semibold ${a.status === "in_progress" ? "text-primary" : "text-foreground"}`}>{a.time}</p>
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary shrink-0">
+                      {a.avatar}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground text-sm truncate">{a.patient}</p>
+                        {(a as any).teleconsultation && <Video className="h-3.5 w-3.5 text-primary shrink-0" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{a.doctor} · {a.type}</p>
+                    </div>
+                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 shrink-0 ${config.class}`}>
+                      <config.icon className="h-3 w-3" />
+                      {config.label}
+                    </span>
+                    {a.status === "upcoming" && (
+                      <Button variant="outline" size="sm" className="h-7 text-[11px] shrink-0">
+                        Accueillir
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Waiting room */}
-          <div className="rounded-xl border bg-card shadow-card">
-            <div className="border-b p-5">
-              <h2 className="font-semibold text-foreground">Salle d'attente</h2>
-            </div>
-            <div className="divide-y">
-              {waitingRoom.map((w, i) => (
-                <div key={i} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-foreground">{w.patient}</p>
-                    <span className="text-xs text-muted-foreground">Arrivée {w.arrivedAt}</span>
+          {/* Right sidebar */}
+          <div className="space-y-6">
+            {/* Waiting room */}
+            <div className="rounded-xl border bg-card shadow-card">
+              <div className="flex items-center justify-between border-b px-5 py-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-warning" />
+                  Salle d'attente
+                </h3>
+                <span className="text-xs font-semibold text-warning bg-warning/10 px-2.5 py-1 rounded-full">
+                  {waitingRoom.length}
+                </span>
+              </div>
+              <div className="divide-y">
+                {waitingRoom.map((w, i) => (
+                  <div key={i} className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold ${
+                        w.status === "called" ? "bg-accent/10 text-accent" : "bg-warning/10 text-warning"
+                      }`}>
+                        {w.avatar}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground truncate">{w.patient}</p>
+                          {w.status === "called" && (
+                            <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full font-medium">Appelé</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{w.doctor} · RDV {w.appointment}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className={`text-xs font-semibold ${parseInt(w.wait) > 10 ? "text-destructive" : "text-muted-foreground"}`}>
+                          {w.wait}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">RDV {w.appointment} · {w.doctor}</p>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Recent calls */}
+            <div className="rounded-xl border bg-card shadow-card p-5">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Phone className="h-4 w-4 text-primary" />
+                Appels récents
+              </h3>
+              <div className="space-y-3">
+                {recentCalls.map((c, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm">
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+                      c.handled ? "bg-accent/10" : "bg-destructive/10"
+                    }`}>
+                      <Phone className={`h-3.5 w-3.5 ${c.handled ? "text-accent" : "text-destructive"}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{c.caller}</p>
+                      <p className="text-[10px] text-muted-foreground">{c.time} · {c.type}</p>
+                    </div>
+                    {!c.handled && (
+                      <Button variant="outline" size="sm" className="h-6 text-[10px] shrink-0">
+                        Rappeler
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Doctor status */}
+            <div className="rounded-xl border bg-card shadow-card p-5">
+              <h3 className="font-semibold text-foreground mb-4">État des médecins</h3>
+              <div className="space-y-3">
+                {[
+                  { name: "Dr. Martin", status: "En consultation", patient: "Marie Dupont", color: "bg-primary" },
+                  { name: "Dr. Lefebvre", status: "Disponible", patient: null, color: "bg-accent" },
+                  { name: "Dr. Durand", status: "Absent ce matin", patient: null, color: "bg-muted-foreground" },
+                ].map((d, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className={`h-2 w-2 rounded-full ${d.color}`} />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-foreground">{d.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{d.status}{d.patient ? ` — ${d.patient}` : ""}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
