@@ -3,24 +3,25 @@ import { useState } from "react";
 import {
   FlaskConical, Clock, CheckCircle2, AlertCircle, Users,
   TrendingUp, ArrowUpRight, ChevronRight, FileText, Send,
-  Banknote, BarChart3, Activity, Eye, Printer, Beaker
+  Banknote, BarChart3, Activity, Eye, Beaker, Timer,
+  Package, AlertTriangle, UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const stats = [
   { label: "Analyses en cours", value: "28", change: "+5 aujourd'hui", icon: FlaskConical, color: "bg-primary/10 text-primary" },
-  { label: "Résultats prêts", value: "15", change: "à envoyer", icon: CheckCircle2, color: "bg-accent/10 text-accent" },
-  { label: "En attente prélèvement", value: "7", change: "3 urgents", icon: Clock, color: "bg-warning/10 text-warning" },
-  { label: "CA du jour", value: "2 340 DT", change: "+12%", icon: Banknote, color: "bg-primary/10 text-primary" },
+  { label: "Résultats prêts", value: "15", change: "8 à envoyer", icon: CheckCircle2, color: "bg-accent/10 text-accent" },
+  { label: "Prélèvements en attente", value: "7", change: "3 urgents", icon: Clock, color: "bg-warning/10 text-warning" },
+  { label: "CA du jour", value: "2 340 DT", change: "+12%", icon: Banknote, color: "bg-accent/10 text-accent" },
 ];
 
 const analyses = [
-  { patient: "Amine Ben Ali", type: "Bilan sanguin complet", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", avatar: "AB", amount: "85 DT" },
-  { patient: "Fatma Trabelsi", type: "Analyse d'urine", doctor: "Dr. Gharbi", status: "ready", date: "19 Fév", priority: "normal", avatar: "FT", amount: "35 DT" },
-  { patient: "Mohamed Sfar", type: "TSH - Thyroïde", doctor: "Dr. Hammami", status: "waiting", date: "20 Fév", priority: "urgent", avatar: "MS", amount: "45 DT" },
-  { patient: "Nadia Jemni", type: "Glycémie à jeun", doctor: "Dr. Bouazizi", status: "ready", date: "18 Fév", priority: "normal", avatar: "NJ", amount: "25 DT" },
-  { patient: "Sami Ayari", type: "Hémogramme (NFS)", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", avatar: "SA", amount: "40 DT" },
+  { patient: "Amine Ben Ali", type: "Bilan sanguin complet", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", avatar: "AB", amount: "85 DT", progress: 65 },
+  { patient: "Fatma Trabelsi", type: "Analyse d'urine", doctor: "Dr. Gharbi", status: "ready", date: "19 Fév", priority: "normal", avatar: "FT", amount: "35 DT", progress: 100 },
+  { patient: "Mohamed Sfar", type: "TSH - Thyroïde", doctor: "Dr. Hammami", status: "waiting", date: "20 Fév", priority: "urgent", avatar: "MS", amount: "45 DT", progress: 0 },
+  { patient: "Nadia Jemni", type: "Glycémie à jeun", doctor: "Dr. Bouazizi", status: "ready", date: "18 Fév", priority: "normal", avatar: "NJ", amount: "25 DT", progress: 100 },
+  { patient: "Sami Ayari", type: "Hémogramme (NFS)", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", avatar: "SA", amount: "40 DT", progress: 40 },
 ];
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
@@ -30,113 +31,146 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
 };
 
 const weeklyOutput = [
-  { day: "Lun", count: 45 },
-  { day: "Mar", count: 52 },
-  { day: "Mer", count: 38 },
-  { day: "Jeu", count: 48 },
-  { day: "Ven", count: 42 },
+  { day: "Lun", count: 45, revenue: 4200 },
+  { day: "Mar", count: 52, revenue: 4800 },
+  { day: "Mer", count: 38, revenue: 3500 },
+  { day: "Jeu", count: 48, revenue: 4400 },
+  { day: "Ven", count: 42, revenue: 3900 },
+];
+
+const pendingPrelevements = [
+  { patient: "Mohamed Sfar", type: "TSH", time: "09:30", urgent: true, avatar: "MS" },
+  { patient: "Leila Chahed", type: "NFS + CRP", time: "10:00", urgent: false, avatar: "LC" },
+  { patient: "Karim Mansour", type: "Bilan rénal", time: "10:30", urgent: true, avatar: "KM" },
 ];
 
 const LaboratoryDashboard = () => {
+  const [sentIds, setSentIds] = useState<number[]>([]);
+
+  const handleSend = (i: number) => setSentIds(prev => [...prev, i]);
+
   return (
     <DashboardLayout role="laboratory" title="Tableau de bord">
       <div className="space-y-6">
-        {/* Stats */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all">
-              <div className="flex items-center justify-between">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${s.color}`}>
-                  <s.icon className="h-5 w-5" />
-                </div>
-              </div>
+              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${s.color}`}><s.icon className="h-5 w-5" /></div>
               <p className="mt-3 text-2xl font-bold text-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-[11px] text-accent mt-1 flex items-center gap-0.5">
-                <ArrowUpRight className="h-3 w-3" />{s.change}
-              </p>
+              <p className="text-[11px] text-accent mt-1 flex items-center gap-0.5"><ArrowUpRight className="h-3 w-3" />{s.change}</p>
             </div>
           ))}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Recent analyses */}
-          <div className="lg:col-span-2 rounded-xl border bg-card shadow-card">
-            <div className="flex items-center justify-between border-b px-5 py-4">
-              <h2 className="font-semibold text-foreground flex items-center gap-2">
-                <FlaskConical className="h-4 w-4 text-primary" />
-                Analyses récentes
-              </h2>
-              <Link to="/dashboard/laboratory/analyses" className="text-sm text-primary hover:underline flex items-center gap-1">
-                Tout voir <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="divide-y">
-              {analyses.map((a, i) => {
-                const config = statusConfig[a.status];
-                return (
-                  <div key={i} className={`flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors ${
-                    a.priority === "urgent" ? "border-l-2 border-l-destructive" : ""
-                  }`}>
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
-                      {a.avatar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-foreground text-sm truncate">{a.patient}</p>
-                        {a.priority === "urgent" && (
-                          <span className="rounded-full bg-destructive/10 text-destructive px-2 py-0.5 text-[10px] font-medium">Urgent</span>
+          <div className="lg:col-span-2 space-y-6">
+            {/* Active analyses */}
+            <div className="rounded-xl border bg-card shadow-card">
+              <div className="flex items-center justify-between border-b px-5 py-4">
+                <h2 className="font-semibold text-foreground flex items-center gap-2"><FlaskConical className="h-4 w-4 text-primary" />Analyses en cours</h2>
+                <Link to="/dashboard/laboratory/analyses" className="text-sm text-primary hover:underline flex items-center gap-1">Tout voir <ChevronRight className="h-4 w-4" /></Link>
+              </div>
+              <div className="divide-y">
+                {analyses.map((a, i) => {
+                  const config = statusConfig[a.status];
+                  const isSent = sentIds.includes(i);
+                  return (
+                    <div key={i} className={`px-5 py-3 hover:bg-muted/30 transition-colors ${a.priority === "urgent" ? "border-l-2 border-l-destructive" : ""}`}>
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0">{a.avatar}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-foreground text-sm truncate">{a.patient}</p>
+                            {a.priority === "urgent" && <span className="rounded-full bg-destructive/10 text-destructive px-2 py-0.5 text-[10px] font-medium">Urgent</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{a.type} · {a.doctor}</p>
+                          {a.status === "in_progress" && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${a.progress}%` }} />
+                              </div>
+                              <span className="text-[10px] font-medium text-primary">{a.progress}%</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold text-foreground shrink-0">{a.amount}</span>
+                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 shrink-0 ${config.class}`}>
+                          <config.icon className="h-3 w-3" />{config.label}
+                        </span>
+                        {a.status === "ready" && !isSent && (
+                          <Button variant="outline" size="sm" className="h-7 text-[11px] shrink-0" onClick={() => handleSend(i)}>
+                            <Send className="h-3 w-3 mr-1" />Envoyer
+                          </Button>
                         )}
+                        {isSent && <span className="text-[10px] text-accent font-medium">✓ Envoyé</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground">{a.type} · {a.doctor} · {a.date}</p>
                     </div>
-                    <span className="text-xs font-semibold text-foreground shrink-0">{a.amount}</span>
-                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 shrink-0 ${config.class}`}>
-                      <config.icon className="h-3 w-3" />
-                      {config.label}
-                    </span>
-                    {a.status === "ready" && (
-                      <Button variant="outline" size="sm" className="h-7 text-[11px] shrink-0">
-                        <Send className="h-3 w-3 mr-1" />Envoyer
-                      </Button>
-                    )}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pending prélèvements */}
+            <div className="rounded-xl border border-warning/30 bg-card shadow-card">
+              <div className="flex items-center justify-between border-b px-5 py-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Timer className="h-4 w-4 text-warning" />Prélèvements en attente
+                  <span className="bg-warning/10 text-warning text-xs font-bold px-2 py-0.5 rounded-full">{pendingPrelevements.length}</span>
+                </h3>
+              </div>
+              <div className="divide-y">
+                {pendingPrelevements.map((p, i) => (
+                  <div key={i} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${p.urgent ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>{p.avatar}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">{p.patient}</p>
+                        {p.urgent && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-medium">Urgent</span>}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{p.type} · RDV {p.time}</p>
+                    </div>
+                    <Button size="sm" className="h-7 text-[11px] gradient-primary text-primary-foreground">
+                      <UserCheck className="h-3 w-3 mr-1" />Enregistrer
+                    </Button>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Right sidebar */}
           <div className="space-y-6">
             {/* Weekly output */}
             <div className="rounded-xl border bg-card shadow-card p-5">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Production hebdomadaire
-              </h3>
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" />Production hebdomadaire</h3>
               <div className="space-y-3">
                 {weeklyOutput.map((d, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-muted-foreground w-8">{d.day}</span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(d.count / 60) * 100}%` }} />
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-muted-foreground">{d.day}</span>
+                      <span className="text-[11px] text-muted-foreground">{d.revenue} DT</span>
                     </div>
-                    <span className="text-xs font-semibold text-foreground w-8 text-right">{d.count}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(d.count / 60) * 100}%` }} />
+                      </div>
+                      <span className="text-xs font-bold text-foreground w-8 text-right">{d.count}</span>
+                    </div>
                   </div>
                 ))}
               </div>
               <div className="mt-4 pt-3 border-t flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Total semaine</span>
-                <span className="text-sm font-bold text-foreground">{weeklyOutput.reduce((s, d) => s + d.count, 0)} analyses</span>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-foreground">{weeklyOutput.reduce((s, d) => s + d.count, 0)} analyses</p>
+                  <p className="text-[11px] text-accent">{weeklyOutput.reduce((s, d) => s + d.revenue, 0).toLocaleString()} DT</p>
+                </div>
               </div>
             </div>
 
             {/* Top analyses */}
             <div className="rounded-xl border bg-card shadow-card p-5">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Beaker className="h-4 w-4 text-accent" />
-                Types les plus demandés
-              </h3>
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Beaker className="h-4 w-4 text-accent" />Types les plus demandés</h3>
               <div className="space-y-3">
                 {[
                   { type: "NFS / Hémogramme", count: 35, percent: 28 },
@@ -151,6 +185,28 @@ const LaboratoryDashboard = () => {
                       <div className="h-full bg-accent rounded-full" style={{ width: `${t.percent * 3}%` }} />
                     </div>
                     <span className="text-xs font-semibold text-muted-foreground w-8 text-right">{t.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Supplies */}
+            <div className="rounded-xl border bg-card shadow-card p-5">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Package className="h-4 w-4 text-warning" />Consommables</h3>
+              <div className="space-y-3">
+                {[
+                  { name: "Tubes EDTA", qty: 120, threshold: 50, status: "ok" },
+                  { name: "Tubes secs", qty: 15, threshold: 50, status: "low" },
+                  { name: "Aiguilles 21G", qty: 8, threshold: 30, status: "critical" },
+                  { name: "Gants latex M", qty: 200, threshold: 100, status: "ok" },
+                ].map((c, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs text-foreground flex-1">{c.name}</span>
+                    <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${c.status === "critical" ? "bg-destructive" : c.status === "low" ? "bg-warning" : "bg-accent"}`}
+                        style={{ width: `${Math.min((c.qty / c.threshold) * 100, 100)}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-semibold w-10 text-right ${c.status === "critical" ? "text-destructive" : c.status === "low" ? "text-warning" : "text-foreground"}`}>{c.qty}</span>
                   </div>
                 ))}
               </div>
