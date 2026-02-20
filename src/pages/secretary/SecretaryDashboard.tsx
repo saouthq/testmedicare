@@ -3,7 +3,8 @@ import {
   Calendar, Users, Phone, Clock, ChevronRight, Plus, 
   UserCheck, UserX, AlertCircle, CheckCircle2, Play,
   Bell, TrendingUp, Video, ArrowRight, PhoneCall,
-  ArrowUpRight, ArrowDownRight, Euro
+  ArrowUpRight, ArrowDownRight, Banknote, MapPin,
+  FileText, Stethoscope, Activity, BarChart3, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -12,33 +13,34 @@ import { useState } from "react";
 const stats = [
   { label: "RDV aujourd'hui", value: "24", change: "+3 vs hier", trend: "up", icon: Calendar, color: "bg-primary/10 text-primary" },
   { label: "Patients du jour", value: "18", change: "2 nouveaux", trend: "up", icon: Users, color: "bg-accent/10 text-accent" },
-  { label: "Appels en attente", value: "5", change: "", trend: "neutral", icon: Phone, color: "bg-warning/10 text-warning" },
+  { label: "Appels en attente", value: "5", change: "3 non répondus", trend: "neutral", icon: Phone, color: "bg-warning/10 text-warning" },
   { label: "En salle d'attente", value: "3", change: "Moy. 8 min", trend: "neutral", icon: Clock, color: "bg-destructive/10 text-destructive" },
 ];
 
 const waitingRoom = [
-  { patient: "Marie Dupont", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Martin", wait: "15 min", status: "waiting", avatar: "MD" },
-  { patient: "Jean Bernard", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Lefebvre", wait: "10 min", status: "called", avatar: "JB" },
-  { patient: "Claire Moreau", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Martin", wait: "5 min", status: "waiting", avatar: "CM" },
+  { patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", wait: "15 min", status: "waiting", avatar: "AB", cnam: true },
+  { patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", wait: "10 min", status: "called", avatar: "FT", cnam: true },
+  { patient: "Mohamed Sfar", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Bouazizi", wait: "5 min", status: "waiting", avatar: "MS", cnam: false },
 ];
 
 const todayAppointments = [
-  { time: "08:30", patient: "Pierre Duval", doctor: "Dr. Martin", type: "Consultation", status: "done", avatar: "PD" },
-  { time: "09:00", patient: "Lucie Fabre", doctor: "Dr. Lefebvre", type: "Suivi", status: "done", avatar: "LF" },
-  { time: "09:30", patient: "Marie Dupont", doctor: "Dr. Martin", type: "Consultation", status: "in_progress", avatar: "MD" },
-  { time: "09:45", patient: "Jean Bernard", doctor: "Dr. Lefebvre", type: "Suivi", status: "waiting", avatar: "JB" },
-  { time: "10:00", patient: "Claire Moreau", doctor: "Dr. Martin", type: "Contrôle", status: "upcoming", avatar: "CM" },
-  { time: "10:30", patient: "Paul Petit", doctor: "Dr. Durand", type: "Consultation", status: "upcoming", avatar: "PP" },
-  { time: "11:00", patient: "Sophie Leroy", doctor: "Dr. Martin", type: "Première visite", status: "upcoming", avatar: "SL" },
-  { time: "11:30", patient: "Luc Garcia", doctor: "Dr. Lefebvre", type: "Suivi", status: "upcoming", avatar: "LG" },
-  { time: "14:00", patient: "Anne Dubois", doctor: "Dr. Martin", type: "Téléconsultation", status: "upcoming", teleconsultation: true, avatar: "AD" },
-  { time: "14:30", patient: "Marc Roux", doctor: "Dr. Durand", type: "Consultation", status: "upcoming", avatar: "MR" },
+  { time: "08:30", patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Consultation", status: "done", avatar: "KM" },
+  { time: "09:00", patient: "Leila Chahed", doctor: "Dr. Gharbi", type: "Suivi", status: "done", avatar: "LC" },
+  { time: "09:30", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", status: "in_progress", avatar: "AB" },
+  { time: "09:45", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", status: "waiting", avatar: "FT" },
+  { time: "10:00", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", type: "Contrôle", status: "upcoming", avatar: "MS" },
+  { time: "10:30", patient: "Nadia Jemni", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming", avatar: "NJ" },
+  { time: "11:00", patient: "Sami Ayari", doctor: "Dr. Bouazizi", type: "Première visite", status: "upcoming", avatar: "SA" },
+  { time: "11:30", patient: "Rania Meddeb", doctor: "Dr. Gharbi", type: "Suivi", status: "upcoming", avatar: "RM" },
+  { time: "14:00", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", type: "Téléconsultation", status: "upcoming", teleconsultation: true, avatar: "YB" },
+  { time: "14:30", patient: "Salma Dridi", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming", avatar: "SD" },
 ];
 
 const recentCalls = [
-  { caller: "Marie Laurent", time: "09:15", type: "Prise de RDV", handled: true },
-  { caller: "Paul Durand", time: "09:05", type: "Annulation", handled: true },
-  { caller: "N° inconnu", time: "08:55", type: "Non répondu", handled: false },
+  { caller: "Hana Kammoun", time: "09:15", type: "Prise de RDV", handled: true, phone: "+216 71 234 567" },
+  { caller: "Bilel Nasri", time: "09:05", type: "Annulation", handled: true, phone: "+216 22 345 678" },
+  { caller: "N° inconnu", time: "08:55", type: "Non répondu", handled: false, phone: "+216 98 765 432" },
+  { caller: "Olfa Ben Salah", time: "08:40", type: "Demande info", handled: true, phone: "+216 55 678 901" },
 ];
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
@@ -49,8 +51,16 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
   upcoming: { label: "À venir", class: "bg-muted/50 text-muted-foreground", icon: Clock },
 };
 
+const todayFinancials = {
+  total: "1 250 DT",
+  cnam: "875 DT",
+  directPayment: "375 DT",
+  pendingInvoices: 4,
+};
+
 const SecretaryDashboard = () => {
   const doneCount = todayAppointments.filter(a => a.status === "done").length;
+  const [refreshing, setRefreshing] = useState(false);
 
   return (
     <DashboardLayout role="secretary" title="Tableau de bord">
@@ -58,9 +68,15 @@ const SecretaryDashboard = () => {
         {/* Top bar */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <p className="text-sm text-muted-foreground">Cabinet Médical Saint-Honoré · Vendredi 20 Février 2026</p>
+            <h2 className="text-lg font-bold text-foreground">Cabinet Médical El Manar</h2>
+            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" />Tunis · Vendredi 20 Février 2026
+            </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setRefreshing(!refreshing)}>
+              <RefreshCw className={`h-3.5 w-3.5 mr-1 ${refreshing ? "animate-spin" : ""}`} />Actualiser
+            </Button>
             <Button variant="outline" size="sm" className="text-xs">
               <PhoneCall className="h-3.5 w-3.5 mr-1" />Journal d'appels
             </Button>
@@ -106,13 +122,23 @@ const SecretaryDashboard = () => {
                 Agenda complet <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+            {/* Progress bar */}
+            <div className="px-5 pt-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] text-muted-foreground">Progression</span>
+                <span className="text-[11px] font-semibold text-primary">{Math.round((doneCount / todayAppointments.length) * 100)}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(doneCount / todayAppointments.length) * 100}%` }} />
+              </div>
+            </div>
             <div className="divide-y max-h-[450px] overflow-y-auto">
               {todayAppointments.map((a, i) => {
                 const config = statusConfig[a.status];
                 return (
                   <div key={i} className={`flex items-center gap-4 px-5 py-3 transition-colors ${
-                    a.status === "in_progress" ? "bg-primary/5" :
-                    a.status === "waiting" ? "bg-warning/5" :
+                    a.status === "in_progress" ? "bg-primary/5 border-l-2 border-l-primary" :
+                    a.status === "waiting" ? "bg-warning/5 border-l-2 border-l-warning" :
                     a.status === "done" ? "opacity-50" :
                     "hover:bg-muted/30"
                   }`}>
@@ -172,6 +198,9 @@ const SecretaryDashboard = () => {
                           {w.status === "called" && (
                             <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full font-medium">Appelé</span>
                           )}
+                          {w.cnam && (
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">CNAM</span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground">{w.doctor} · RDV {w.appointment}</p>
                       </div>
@@ -183,6 +212,35 @@ const SecretaryDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Today's financials */}
+            <div className="rounded-xl border bg-card shadow-card p-5">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Banknote className="h-4 w-4 text-accent" />
+                Recettes du jour
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Total encaissé</span>
+                  <span className="font-bold text-foreground">{todayFinancials.total}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Part CNAM</span>
+                  <span className="font-semibold text-primary">{todayFinancials.cnam}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Paiement direct</span>
+                  <span className="font-semibold text-foreground">{todayFinancials.directPayment}</span>
+                </div>
+                <div className="pt-2 border-t">
+                  <Link to="/dashboard/secretary/billing">
+                    <Button variant="outline" size="sm" className="w-full text-xs">
+                      <FileText className="h-3.5 w-3.5 mr-1" />Voir la facturation
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -216,18 +274,26 @@ const SecretaryDashboard = () => {
 
             {/* Doctor status */}
             <div className="rounded-xl border bg-card shadow-card p-5">
-              <h3 className="font-semibold text-foreground mb-4">État des médecins</h3>
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Stethoscope className="h-4 w-4 text-primary" />
+                État des médecins
+              </h3>
               <div className="space-y-3">
                 {[
-                  { name: "Dr. Martin", status: "En consultation", patient: "Marie Dupont", color: "bg-primary" },
-                  { name: "Dr. Lefebvre", status: "Disponible", patient: null, color: "bg-accent" },
-                  { name: "Dr. Durand", status: "Absent ce matin", patient: null, color: "bg-muted-foreground" },
+                  { name: "Dr. Bouazizi", status: "En consultation", patient: "Amine Ben Ali", color: "bg-primary", specialty: "Généraliste" },
+                  { name: "Dr. Gharbi", status: "Disponible", patient: null, color: "bg-accent", specialty: "Cardiologue" },
+                  { name: "Dr. Hammami", status: "Absent ce matin", patient: null, color: "bg-muted-foreground", specialty: "Dermatologue" },
                 ].map((d, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className={`h-2 w-2 rounded-full ${d.color}`} />
+                    <div className="relative">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                        {d.name.split(". ")[1]?.[0] || "D"}
+                      </div>
+                      <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ${d.color} border-2 border-card`} />
+                    </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium text-foreground">{d.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{d.status}{d.patient ? ` — ${d.patient}` : ""}</p>
+                      <p className="text-[10px] text-muted-foreground">{d.specialty} · {d.status}{d.patient ? ` — ${d.patient}` : ""}</p>
                     </div>
                   </div>
                 ))}

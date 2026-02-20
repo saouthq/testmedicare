@@ -1,12 +1,12 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Clock, User, Video, LayoutGrid, List, Filter, Search, Phone, X, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Clock, User, Video, LayoutGrid, List, Filter, Search, Phone, X, CheckCircle2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type ViewMode = "week" | "day" | "list";
 
-const doctors = ["Tous", "Dr. Martin", "Dr. Lefebvre", "Dr. Durand"];
+const doctors = ["Tous", "Dr. Bouazizi", "Dr. Gharbi", "Dr. Hammami"];
 
 const days = ["Lun 17", "Mar 18", "Mer 19", "Jeu 20", "Ven 21", "Sam 22"];
 const hours = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"];
@@ -21,23 +21,24 @@ interface CalendarAppointment {
   teleconsultation?: boolean;
   phone?: string;
   confirmed?: boolean;
+  cnam?: boolean;
 }
 
 const appointments: Record<string, CalendarAppointment> = {
-  "Lun 17-09:00": { patient: "Marie Dupont", doctor: "Dr. Martin", type: "Consultation", color: "primary", phone: "06 12 34 56 78", confirmed: true },
-  "Lun 17-10:00": { patient: "Jean Bernard", doctor: "Dr. Lefebvre", type: "Suivi", color: "accent", confirmed: true },
-  "Lun 17-10:30": { patient: "Claire Petit", doctor: "Dr. Martin", type: "1ère visite", color: "warning", confirmed: false },
-  "Mar 18-08:30": { patient: "Claire Moreau", doctor: "Dr. Martin", type: "Contrôle", color: "accent", confirmed: true },
-  "Mar 18-14:00": { patient: "Paul Petit", doctor: "Dr. Durand", type: "1ère visite", color: "warning", confirmed: true },
-  "Mar 18-15:00": { patient: "Anne Dubois", doctor: "Dr. Martin", type: "Téléconsultation", color: "primary", teleconsultation: true, confirmed: true },
-  "Mer 19-09:30": { patient: "Sophie Leroy", doctor: "Dr. Martin", type: "Consultation", color: "primary", confirmed: true },
-  "Mer 19-11:00": { patient: "Luc Garcia", doctor: "Dr. Lefebvre", type: "Consultation", color: "primary", confirmed: false },
-  "Jeu 20-08:00": { patient: "Hugo Petit", doctor: "Dr. Martin", type: "Contrôle", color: "accent", confirmed: true },
-  "Jeu 20-11:00": { patient: "Luc Garcia", doctor: "Dr. Lefebvre", type: "Suivi", color: "accent", confirmed: true },
-  "Jeu 20-14:30": { patient: "Emma Laurent", doctor: "Dr. Durand", type: "Téléconsultation", color: "primary", teleconsultation: true, confirmed: true },
-  "Ven 21-08:00": { patient: "Anne Dubois", doctor: "Dr. Martin", type: "Contrôle", color: "accent", confirmed: true },
-  "Ven 21-15:00": { patient: "Marc Roux", doctor: "Dr. Durand", type: "Consultation", color: "primary", confirmed: true },
-  "Sam 22-09:00": { patient: "Julie Blanc", doctor: "Dr. Martin", type: "Urgence", color: "destructive", confirmed: true },
+  "Lun 17-09:00": { patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", color: "primary", phone: "+216 71 234 567", confirmed: true, cnam: true },
+  "Lun 17-10:00": { patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", color: "accent", confirmed: true, cnam: true },
+  "Lun 17-10:30": { patient: "Nadia Jemni", doctor: "Dr. Bouazizi", type: "1ère visite", color: "warning", confirmed: false, cnam: true },
+  "Mar 18-08:30": { patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", type: "Contrôle", color: "accent", confirmed: true, cnam: false },
+  "Mar 18-14:00": { patient: "Sami Ayari", doctor: "Dr. Hammami", type: "1ère visite", color: "warning", confirmed: true, cnam: true },
+  "Mar 18-15:00": { patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", type: "Téléconsultation", color: "primary", teleconsultation: true, confirmed: true, cnam: false },
+  "Mer 19-09:30": { patient: "Rania Meddeb", doctor: "Dr. Bouazizi", type: "Consultation", color: "primary", confirmed: true, cnam: true },
+  "Mer 19-11:00": { patient: "Salma Dridi", doctor: "Dr. Gharbi", type: "Consultation", color: "primary", confirmed: false, cnam: true },
+  "Jeu 20-08:00": { patient: "Hana Kammoun", doctor: "Dr. Bouazizi", type: "Contrôle", color: "accent", confirmed: true, cnam: true },
+  "Jeu 20-11:00": { patient: "Bilel Nasri", doctor: "Dr. Gharbi", type: "Suivi", color: "accent", confirmed: true, cnam: true },
+  "Jeu 20-14:30": { patient: "Olfa Ben Salah", doctor: "Dr. Hammami", type: "Téléconsultation", color: "primary", teleconsultation: true, confirmed: true, cnam: false },
+  "Ven 21-08:00": { patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Contrôle", color: "accent", confirmed: true, cnam: true },
+  "Ven 21-15:00": { patient: "Leila Chahed", doctor: "Dr. Hammami", type: "Consultation", color: "primary", confirmed: true, cnam: true },
+  "Sam 22-09:00": { patient: "Imen Bouhlel", doctor: "Dr. Bouazizi", type: "Urgence", color: "destructive", confirmed: true, cnam: true },
 };
 
 const colorMap: Record<AppointmentColor, string> = {
@@ -77,7 +78,6 @@ const SecretaryAgenda = () => {
             <Button variant="outline" size="sm" className="text-xs ml-2">Aujourd'hui</Button>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Doctor filter */}
             <div className="flex gap-1 rounded-lg border bg-card p-0.5">
               {doctors.map(d => (
                 <button
@@ -91,7 +91,6 @@ const SecretaryAgenda = () => {
                 </button>
               ))}
             </div>
-            {/* View toggle */}
             <div className="flex gap-1 rounded-lg border bg-card p-0.5">
               <button onClick={() => setView("week")} className={`rounded-md p-2 text-xs ${view === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
                 <LayoutGrid className="h-4 w-4" />
@@ -113,8 +112,7 @@ const SecretaryAgenda = () => {
           <div className="flex items-center gap-1.5"><div className="h-3 w-3 rounded bg-warning/20 border border-warning/30" /> 1ère visite</div>
           <div className="flex items-center gap-1.5"><div className="h-3 w-3 rounded bg-destructive/20 border border-destructive/30" /> Urgence</div>
           <div className="flex items-center gap-1.5"><Video className="h-3 w-3 text-primary" /> Téléconsultation</div>
-          <div className="flex items-center gap-1.5 ml-auto"><div className="h-3 w-3 rounded-full border-2 border-accent bg-accent" /> Confirmé</div>
-          <div className="flex items-center gap-1.5"><div className="h-3 w-3 rounded-full border-2 border-warning bg-warning" /> Non confirmé</div>
+          <div className="flex items-center gap-1.5"><Shield className="h-3 w-3 text-primary" /> CNAM</div>
         </div>
 
         {/* Day selector */}
@@ -171,6 +169,7 @@ const SecretaryAgenda = () => {
                             <div className="flex items-center gap-1">
                               <p className="font-semibold truncate">{apt.patient}</p>
                               {apt.teleconsultation && <Video className="h-3 w-3 shrink-0" />}
+                              {apt.cnam && <Shield className="h-3 w-3 shrink-0 opacity-60" />}
                               {!apt.confirmed && <div className="h-1.5 w-1.5 rounded-full bg-warning shrink-0" />}
                             </div>
                             <p className="opacity-70 truncate text-[10px]">{apt.doctor} · {apt.type}</p>
@@ -188,7 +187,7 @@ const SecretaryAgenda = () => {
           </table>
         </div>
 
-        {/* New RDV modal placeholder */}
+        {/* New RDV modal */}
         {showNewRdv && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowNewRdv(false)}>
             <div className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
@@ -216,9 +215,9 @@ const SecretaryAgenda = () => {
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Médecin</label>
                   <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-                    <option>Dr. Martin</option>
-                    <option>Dr. Lefebvre</option>
-                    <option>Dr. Durand</option>
+                    <option>Dr. Bouazizi</option>
+                    <option>Dr. Gharbi</option>
+                    <option>Dr. Hammami</option>
                   </select>
                 </div>
                 <div>
