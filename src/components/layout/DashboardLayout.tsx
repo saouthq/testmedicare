@@ -26,6 +26,8 @@ import {
   Activity,
   ScrollText,
   MessageSquare,
+  Plug,
+  Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -58,7 +60,9 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Mes patients", url: "/dashboard/doctor/patients", icon: Users },
     { title: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
     { title: "Ordonnances", url: "/dashboard/doctor/prescriptions", icon: FileText },
+    { title: "Facturation", url: "/dashboard/doctor/billing", icon: Banknote },
     { title: "Messagerie", url: "/dashboard/doctor/messages", icon: MessageSquare },
+    { title: "Connect", url: "/dashboard/doctor/connect", icon: Plug },
     { title: "Secrétaires", url: "/dashboard/doctor/secretary", icon: Building2 },
     { title: "Statistiques", url: "/dashboard/doctor/stats", icon: BarChart3 },
     { title: "Abonnement", url: "/dashboard/doctor/subscription", icon: CreditCard },

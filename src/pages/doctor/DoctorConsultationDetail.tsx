@@ -17,6 +17,27 @@ const patient = {
   ssn: "1 91 03 75 012 035 42", mutuelle: "Assurances Maghrebia", medecinTraitant: "Dr. Ahmed Bouazizi",
 };
 
+const ConsultAccordion = ({ date, motif, diag, notes, prescription }: { date: string; motif: string; diag: string; notes: string; prescription: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-lg border bg-muted/30 overflow-hidden">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors text-left">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2"><p className="text-xs font-medium text-foreground">{motif}</p><span className="text-[10px] text-muted-foreground">{date}</span></div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{diag}</p>
+        </div>
+        {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-3 pb-3 space-y-2 border-t pt-2">
+          <div><p className="text-[10px] font-medium text-muted-foreground">Notes</p><p className="text-xs text-foreground mt-0.5">{notes}</p></div>
+          <div><p className="text-[10px] font-medium text-muted-foreground">Prescription</p><p className="text-xs text-foreground mt-0.5 flex items-center gap-1"><Pill className="h-3 w-3 text-primary" />{prescription}</p></div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const DoctorConsultationDetail = () => {
   const navigate = useNavigate();
   const [vitals, setVitals] = useState({ systolic: "130", diastolic: "80", heartRate: "72", temperature: "37.0", weight: "75", oxygenSat: "98", height: "175", respiratoryRate: "16" });
@@ -267,27 +288,51 @@ const DoctorConsultationDetail = () => {
             </div>
           </div>
 
-          {/* Right sidebar */}
+          {/* Right sidebar — Antécédents + Consultations précédentes */}
           <div className="space-y-4">
+            {/* Antécédents */}
             <div className="rounded-xl border bg-card p-5 shadow-card">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><History className="h-4 w-4 text-primary" />Historique récent</h3>
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-warning" />Antécédents</h3>
               <div className="space-y-3">
-                {[
-                  { date: "10 Fév", motif: "Suivi diabète", diag: "Glycémie stable" },
-                  { date: "15 Jan", motif: "Bilan annuel", diag: "RAS" },
-                  { date: "5 Déc", motif: "Dermato", diag: "Eczéma léger" },
-                ].map((h, i) => (
-                  <div key={i} className="rounded-lg bg-muted/50 p-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-medium text-foreground">{h.motif}</p>
-                      <span className="text-[10px] text-muted-foreground">{h.date}</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{h.diag}</p>
+                <div>
+                  <p className="text-[11px] font-medium text-destructive mb-1.5">Allergies</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {patient.allergies.map(a => <span key={a} className="text-[11px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{a}</span>)}
                   </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-warning mb-1.5">Pathologies</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {patient.conditions.map(c => <span key={c} className="text-[11px] font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">{c}</span>)}
+                    <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">HTA légère</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-primary mb-1.5">Traitements chroniques</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-foreground flex items-center gap-1.5"><Pill className="h-3 w-3 text-primary" />Metformine 850mg — 2x/jour</p>
+                    <p className="text-xs text-foreground flex items-center gap-1.5"><Pill className="h-3 w-3 text-primary" />Glibenclamide 5mg — 1x/jour</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Consultations précédentes — accordion */}
+            <div className="rounded-xl border bg-card p-5 shadow-card">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><History className="h-4 w-4 text-primary" />Consultations précédentes</h3>
+              <div className="space-y-2">
+                {[
+                  { date: "10 Fév 2026", motif: "Suivi diabète", diag: "Glycémie stable, HbA1c 6.8%", notes: "Maintien du traitement. Contrôle dans 3 mois. Activité physique recommandée. Poids stable à 75kg.", prescription: "Metformine 850mg, Glibenclamide 5mg" },
+                  { date: "15 Jan 2026", motif: "Bilan annuel", diag: "RAS — Bilan sanguin normal", notes: "Bilan complet réalisé. Tous les marqueurs dans les normes. Pas de complication microvasculaire détectée. Fond d'œil programmé.", prescription: "Renouvellement traitement habituel" },
+                  { date: "5 Déc 2025", motif: "Consultation dermatologique", diag: "Eczéma léger", notes: "Plaque eczémateuse au coude droit. Prescription crème hydratante + dermocorticoïde. Contrôle à 1 mois.", prescription: "Bétaméthasone 0.05% crème, Dexeryl" },
+                  { date: "20 Oct 2025", motif: "Suivi diabète", diag: "Légère hausse glycémie", notes: "HbA1c à 7.2%, légère hausse. Ajustement alimentaire conseillé. Réduction sucres rapides.", prescription: "Metformine 850mg (dose augmentée soir)" },
+                ].map((h, i) => (
+                  <ConsultAccordion key={i} {...h} />
                 ))}
               </div>
             </div>
 
+            {/* Résumé actuel */}
             <div className="rounded-xl border bg-card p-5 shadow-card">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><FileText className="h-4 w-4 text-accent" />Résumé actuel</h3>
               <div className="space-y-2 text-xs">
