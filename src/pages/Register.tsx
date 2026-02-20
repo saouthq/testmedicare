@@ -10,7 +10,6 @@ const roles = [
   { value: "doctor", label: "Médecin" },
   { value: "pharmacy", label: "Pharmacie" },
   { value: "laboratory", label: "Laboratoire" },
-  { value: "secretary", label: "Secrétaire" },
 ];
 
 const Register = () => {

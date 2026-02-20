@@ -3,6 +3,10 @@ import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import {
   Stethoscope,
+  ShieldCheck,
+  CreditCard,
+  Flag,
+  BarChart3,
   LayoutDashboard,
   Calendar,
   Users,
@@ -31,7 +35,7 @@ interface NavItem {
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary";
+  role: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin";
   title: string;
 }
 
@@ -40,7 +44,8 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Tableau de bord", url: "/dashboard/patient", icon: LayoutDashboard },
     { title: "Mes rendez-vous", url: "/dashboard/patient/appointments", icon: Calendar },
     { title: "Prendre RDV", url: "/dashboard/patient/search", icon: Search },
-    { title: "Dossier médical", url: "/dashboard/patient/records", icon: ClipboardList },
+    { title: "Mon espace santé", url: "/dashboard/patient/health", icon: ClipboardList },
+    { title: "Dossier médical", url: "/dashboard/patient/records", icon: FileText },
     { title: "Ordonnances", url: "/dashboard/patient/prescriptions", icon: FileText },
     { title: "Messagerie", url: "/dashboard/patient/messages", icon: Users },
     { title: "Notifications", url: "/dashboard/patient/notifications", icon: Bell },
@@ -52,6 +57,8 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Mes patients", url: "/dashboard/doctor/patients", icon: Users },
     { title: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
     { title: "Ordonnances", url: "/dashboard/doctor/prescriptions", icon: FileText },
+    { title: "Secrétaires", url: "/dashboard/doctor/secretary", icon: Users },
+    { title: "Abonnement", url: "/dashboard/doctor/subscription", icon: CreditCard },
     { title: "Statistiques", url: "/dashboard/doctor/stats", icon: Clock },
     { title: "Messagerie", url: "/dashboard/doctor/messages", icon: Users },
   ],
@@ -78,6 +85,12 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Documents", url: "/dashboard/secretary/documents", icon: FileText },
     { title: "Messagerie", url: "/dashboard/secretary/messages", icon: Users },
   ],
+  admin: [
+    { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
+    { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
+    { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
+    { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
+  ],
 };
 
 const roleLabels: Record<string, string> = {
@@ -86,6 +99,7 @@ const roleLabels: Record<string, string> = {
   pharmacy: "Pharmacie",
   laboratory: "Laboratoire",
   secretary: "Secrétaire",
+  admin: "Administrateur",
 };
 
 const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
