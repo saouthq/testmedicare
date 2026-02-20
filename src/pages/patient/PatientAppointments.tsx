@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
@@ -29,8 +29,8 @@ const PatientAppointments = () => {
     { id: 9, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "20 Jan 2026", time: "11:30", reason: "Annulation par le patient", avatar: "KH" },
   ]);
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
-  const [expandedPast, setExpandedPast] = useState<number | null>(null);
-  const [expandedPrep, setExpandedPrep] = useState<number | null>(null);
+  // Drawer state for appointment detail
+  const [drawerApt, setDrawerApt] = useState<number | null>(null);
 
   const handleCancel = (id: number) => {
     const apt = appointments.find(a => a.id === id);
@@ -39,11 +39,15 @@ const PatientAppointments = () => {
       setAppointments(prev => prev.filter(a => a.id !== id));
     }
     setShowCancelConfirm(null);
+    setDrawerApt(null);
   };
+
+  const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
+  const currentPast = drawerApt ? initialPastAppointments.find(a => a.id === drawerApt) : null;
 
   return (
     <DashboardLayout role="patient" title="Mes rendez-vous">
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex gap-1 rounded-lg border bg-card p-1">
             {([
@@ -52,176 +56,178 @@ const PatientAppointments = () => {
               { key: "cancelled" as Tab, label: "Annulés", count: cancelledList.length },
             ]).map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
-                className={`rounded-md px-3 sm:px-4 py-2 text-sm font-medium transition-colors ${tab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${tab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                 {t.label} <span className={`ml-1 text-xs ${tab === t.key ? "text-primary-foreground/70" : "text-muted-foreground/50"}`}>({t.count})</span>
               </button>
             ))}
           </div>
-          <Link to="/search">
-            <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm"><Plus className="h-4 w-4 mr-2" />Nouveau rendez-vous</Button>
-          </Link>
+          <Link to="/search"><Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm"><Plus className="h-4 w-4 mr-2" />Nouveau RDV</Button></Link>
         </div>
 
+        {/* ── Upcoming: compact clickable cards ── */}
         {tab === "upcoming" && (
-          <div className="space-y-4">
-            {appointments.length === 0 && (
-              <EmptyState icon={Calendar} title="Aucun rendez-vous à venir" description="Prenez rendez-vous avec un praticien pour commencer." actionLabel="Prendre un RDV" actionLink="/search" />
-            )}
+          <div className="space-y-3">
+            {appointments.length === 0 && <EmptyState icon={Calendar} title="Aucun rendez-vous à venir" description="Prenez rendez-vous avec un praticien." actionLabel="Prendre un RDV" actionLink="/search" />}
             {appointments.map(a => (
-              <div key={a.id} className="rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all overflow-hidden">
+              <button key={a.id} onClick={() => setDrawerApt(a.id)} className="w-full text-left rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all overflow-hidden">
                 {a.date === "20 Fév 2026" && (
-                  <div className="bg-primary/5 border-b border-primary/10 px-4 sm:px-5 py-2">
-                    <p className="text-xs font-medium text-primary flex items-center gap-1"><Clock className="h-3 w-3" />Aujourd'hui — dans 4 heures</p>
+                  <div className="bg-primary/5 border-b border-primary/10 px-4 py-1.5">
+                    <p className="text-[11px] font-medium text-primary flex items-center gap-1"><Clock className="h-3 w-3" />Aujourd'hui — dans 4 heures</p>
                   </div>
                 )}
-                <div className="p-4 sm:p-5">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <Link to={`/doctor/${a.id}`} className="h-12 w-12 sm:h-14 sm:w-14 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm sm:text-lg shrink-0 hover:opacity-90 transition-opacity">{a.avatar}</Link>
+                <div className="p-3 sm:p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0">{a.avatar}</div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 flex-wrap">
-                        <div>
-                          <Link to={`/doctor/${a.id}`} className="font-bold text-foreground hover:text-primary transition-colors text-sm sm:text-base">{a.doctor}</Link>
-                          <p className="text-xs sm:text-sm text-primary">{a.specialty}</p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {a.cnam && <span className="hidden sm:flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />CNAM</span>}
-                          <StatusBadge status={a.status} />
-                        </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-semibold text-foreground text-sm truncate">{a.doctor}</h3>
+                        <StatusBadge status={a.status} />
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs sm:text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-primary" />{a.date} à {a.time}</span>
-                        <span className="flex items-center gap-1.5">
-                          {a.type === "teleconsultation" ? (<><Video className="h-3.5 w-3.5 text-primary" />Téléconsultation</>) : (<><MapPin className="h-3.5 w-3.5" /><span className="truncate max-w-[200px]">{a.address}</span></>)}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Motif : <span className="text-foreground">{a.motif}</span></p>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 mt-3 flex-wrap">
-                        {a.type === "teleconsultation" && (
-                          <Link to="/dashboard/patient/teleconsultation"><Button size="sm" className="h-7 sm:h-8 text-xs gradient-primary text-primary-foreground"><Video className="h-3.5 w-3.5 mr-1" />Rejoindre</Button></Link>
-                        )}
-                        <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs" onClick={() => setExpandedPrep(expandedPrep === a.id ? null : a.id)}>
-                          <FileText className="h-3.5 w-3.5 mr-1" />Préparer
-                        </Button>
-                        <Link to="/dashboard/patient/messages"><Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
-                        {a.canModify && <Link to={`/booking/${a.id}`}><Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button></Link>}
-                        {a.canCancel && (
-                          showCancelConfirm === a.id ? (
-                            <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-1.5">
-                              <span className="text-xs text-destructive font-medium">Confirmer ?</span>
-                              <Button size="sm" variant="ghost" className="h-6 text-xs text-destructive" onClick={() => handleCancel(a.id)}>Oui</Button>
-                              <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowCancelConfirm(null)}>Non</Button>
-                            </div>
-                          ) : (
-                            <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/5" onClick={() => setShowCancelConfirm(a.id)}>
-                              <X className="h-3.5 w-3.5 mr-1" />Annuler
-                            </Button>
-                          )
-                        )}
+                      <p className="text-[11px] text-primary">{a.specialty}</p>
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{a.date} à {a.time}</span>
+                        <span>·</span>
+                        <span className="flex items-center gap-0.5">{a.type === "teleconsultation" ? <><Video className="h-3 w-3 text-primary" />Téléconsult</> : <><MapPin className="h-3 w-3" /><span className="truncate max-w-[120px] sm:max-w-none">{a.address}</span></>}</span>
                       </div>
                     </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </div>
                 </div>
-
-                {/* Prep card */}
-                {expandedPrep === a.id && (
-                  <div className="px-4 sm:px-5 pb-4 border-t bg-muted/20 animate-fade-in">
-                    <div className="pt-4 space-y-3">
-                      <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">📋 Préparer mon rendez-vous</h4>
-                      {a.address && (
-                        <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                          <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                          <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{a.address}</p>
-                            <button className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button>
-                          </div>
-                        </div>
-                      )}
-                      {a.documents.length > 0 && (
-                        <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                          <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                          <div><p className="text-xs font-medium text-foreground">Documents à apporter</p>
-                            <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">{a.documents.map(d => <li key={d}>• {d}</li>)}</ul>
-                          </div>
-                        </div>
-                      )}
-                      {a.instructions && (
-                        <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                          <div><p className="text-xs font-medium text-foreground">Consignes</p><p className="text-xs text-muted-foreground">{a.instructions}</p></div>
-                        </div>
-                      )}
-                      <p className="text-[10px] text-muted-foreground">📋 {a.cancellationPolicy}</p>
-                      <Button variant="outline" size="sm" className="h-7 text-xs"><CalendarPlus className="h-3 w-3 mr-1" />Ajouter au calendrier</Button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </button>
             ))}
           </div>
         )}
 
+        {/* ── Past: compact clickable cards ── */}
         {tab === "past" && (
           <div className="space-y-3">
-            {initialPastAppointments.length === 0 && (
-              <EmptyState icon={Calendar} title="Aucun rendez-vous passé" description="Vos rendez-vous passés apparaîtront ici." />
-            )}
+            {initialPastAppointments.length === 0 && <EmptyState icon={Calendar} title="Aucun rendez-vous passé" description="Vos rendez-vous passés apparaîtront ici." />}
             {initialPastAppointments.map(a => (
-              <div key={a.id} className="rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all overflow-hidden">
-                <div className="p-4 sm:p-5 cursor-pointer" onClick={() => setExpandedPast(expandedPast === a.id ? null : a.id)}>
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm shrink-0 ${a.status === "no-show" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>{a.avatar}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold text-foreground text-sm">{a.doctor}</h3>
-                          <p className="text-xs text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Motif : {a.motif} · <span className="font-semibold text-foreground">{a.amount}</span></p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <StatusBadge status={a.status} />
-                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedPast === a.id ? "rotate-180" : ""}`} />
-                        </div>
-                      </div>
+              <button key={a.id} onClick={() => setDrawerApt(a.id)} className="w-full text-left rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-semibold text-xs shrink-0 ${a.status === "no-show" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>{a.avatar}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-foreground text-sm truncate">{a.doctor}</h3>
+                      <StatusBadge status={a.status} />
                     </div>
+                    <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
+                    <p className="text-[11px] text-muted-foreground">Motif : {a.motif} · <span className="font-semibold text-foreground">{a.amount}</span></p>
                   </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                 </div>
-                {expandedPast === a.id && (
-                  <div className="px-4 sm:px-5 pb-4 pt-0 border-t">
-                    <div className="flex gap-2 pt-3 flex-wrap">
-                      {a.hasReport && <Button variant="outline" size="sm" className="h-7 text-xs">📄 Compte-rendu</Button>}
-                      {a.hasPrescription && <Link to="/dashboard/patient/prescriptions"><Button variant="outline" size="sm" className="h-7 text-xs">💊 Ordonnance</Button></Link>}
-                      <Link to={`/booking/${a.id}`}><Button variant="outline" size="sm" className="h-7 text-xs"><RefreshCw className="h-3 w-3 mr-1" />Reprendre RDV</Button></Link>
-                      <Link to="/dashboard/patient/messages"><Button variant="outline" size="sm" className="h-7 text-xs"><MessageSquare className="h-3 w-3 mr-1" />Contacter</Button></Link>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </button>
             ))}
           </div>
         )}
 
+        {/* ── Cancelled ── */}
         {tab === "cancelled" && (
           <div className="space-y-3">
-            {cancelledList.length === 0 && (
-              <EmptyState icon={CheckCircle2} title="Aucun rendez-vous annulé" description="Vous n'avez aucun rendez-vous annulé." />
-            )}
+            {cancelledList.length === 0 && <EmptyState icon={CheckCircle2} title="Aucun rendez-vous annulé" description="Vous n'avez aucun rendez-vous annulé." />}
             {cancelledList.map(a => (
-              <div key={a.id} className="rounded-xl border bg-card p-4 sm:p-5 shadow-card border-l-4 border-l-destructive/30">
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive font-semibold text-sm shrink-0">{a.avatar}</div>
+              <div key={a.id} className="rounded-xl border bg-card p-3 sm:p-4 shadow-card border-l-4 border-l-destructive/30">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive font-semibold text-xs shrink-0">{a.avatar}</div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground text-sm">{a.doctor}</h3>
-                    <p className="text-xs text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
-                    <p className="text-xs text-destructive/70 mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{a.reason}</p>
+                    <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
+                    <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{a.reason}</p>
                   </div>
-                  <Link to={`/booking/${a.id}`}><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre RDV</Button></Link>
+                  <Link to={`/booking/${a.id}`}><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre</Button></Link>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* ── Detail drawer (bottom sheet style) ── */}
+      {(currentApt || currentPast) && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setDrawerApt(null)}>
+          <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            {/* Handle bar mobile */}
+            <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
+            
+            {currentApt && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-foreground">{currentApt.doctor}</h3>
+                  <button onClick={() => setDrawerApt(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+                </div>
+                <p className="text-sm text-primary">{currentApt.specialty}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Date</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.date} à {currentApt.time}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Type</p><p className="text-sm font-medium text-foreground mt-0.5 capitalize">{currentApt.type}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Motif</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.motif}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Statut</p><div className="mt-0.5"><StatusBadge status={currentApt.status} /></div></div>
+                </div>
+                {currentApt.address && (
+                  <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+                    <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
+                  </div>
+                )}
+                {currentApt.documents.length > 0 && (
+                  <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+                    <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div><p className="text-xs font-medium text-foreground">Documents à apporter</p><ul className="text-xs text-muted-foreground mt-1 space-y-0.5">{currentApt.documents.map(d => <li key={d}>• {d}</li>)}</ul></div>
+                  </div>
+                )}
+                {currentApt.instructions && (
+                  <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+                    <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                    <div><p className="text-xs font-medium text-foreground">Consignes</p><p className="text-xs text-muted-foreground">{currentApt.instructions}</p></div>
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground">📋 {currentApt.cancellationPolicy}</p>
+                {/* Actions */}
+                <div className="space-y-2">
+                  {currentApt.type === "teleconsultation" && <Link to="/dashboard/patient/teleconsultation" className="block"><Button className="w-full gradient-primary text-primary-foreground"><Video className="h-4 w-4 mr-2" />Rejoindre la téléconsultation</Button></Link>}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
+                    {currentApt.canModify && <Link to={`/booking/${currentApt.id}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button></Link>}
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full text-xs"><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                  {currentApt.canCancel && (
+                    showCancelConfirm === currentApt.id ? (
+                      <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+                        <span className="text-xs text-destructive font-medium flex-1">Confirmer l'annulation ?</span>
+                        <Button size="sm" variant="ghost" className="h-6 text-xs text-destructive" onClick={() => handleCancel(currentApt.id)}>Oui</Button>
+                        <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowCancelConfirm(null)}>Non</Button>
+                      </div>
+                    ) : (
+                      <Button variant="outline" className="w-full text-xs text-destructive border-destructive/30 hover:bg-destructive/5" onClick={() => setShowCancelConfirm(currentApt.id)}>
+                        <X className="h-3.5 w-3.5 mr-1" />Annuler ce rendez-vous
+                      </Button>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
+            {currentPast && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-foreground">{currentPast.doctor}</h3>
+                  <button onClick={() => setDrawerApt(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+                </div>
+                <p className="text-sm text-muted-foreground">{currentPast.specialty} · {currentPast.date} à {currentPast.time}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Motif</p><p className="text-sm font-medium text-foreground mt-0.5">{currentPast.motif}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Montant</p><p className="text-sm font-medium text-foreground mt-0.5">{currentPast.amount}</p></div>
+                </div>
+                <div className="mt-1"><StatusBadge status={currentPast.status} /></div>
+                <div className="space-y-2">
+                  {currentPast.hasReport && <Button variant="outline" className="w-full text-xs">📄 Voir le compte-rendu</Button>}
+                  {currentPast.hasPrescription && <Link to="/dashboard/patient/prescriptions"><Button variant="outline" className="w-full text-xs">💊 Voir l'ordonnance</Button></Link>}
+                  <Link to={`/booking/${currentPast.id}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
