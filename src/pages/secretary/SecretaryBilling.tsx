@@ -4,121 +4,219 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search, Plus, Download, Euro, FileText, CheckCircle2, Clock,
-  AlertCircle, TrendingUp, Users, Calendar
+  AlertCircle, TrendingUp, CreditCard, Banknote, ArrowUpRight,
+  Eye, Printer, Send, X
 } from "lucide-react";
 
 const stats = [
-  { label: "CA du mois", value: "12 450 €", icon: Euro, color: "text-primary" },
-  { label: "Factures en attente", value: "8", icon: Clock, color: "text-warning" },
-  { label: "Factures payées", value: "156", icon: CheckCircle2, color: "text-accent" },
-  { label: "Impayés", value: "3", icon: AlertCircle, color: "text-destructive" },
+  { label: "CA du mois", value: "12 450 €", change: "+8%", icon: Euro, color: "bg-primary/10 text-primary" },
+  { label: "En attente", value: "8", change: "2 075 €", icon: Clock, color: "bg-warning/10 text-warning" },
+  { label: "Payées ce mois", value: "156", change: "10 375 €", icon: CheckCircle2, color: "bg-accent/10 text-accent" },
+  { label: "Impayés", value: "3", change: "450 €", icon: AlertCircle, color: "bg-destructive/10 text-destructive" },
 ];
 
 const invoices = [
-  { id: "FAC-2026-087", patient: "Marie Dupont", doctor: "Dr. Martin", date: "20 Fév 2026", amount: 25, type: "Consultation", payment: "Carte vitale", status: "paid" },
-  { id: "FAC-2026-086", patient: "Jean Bernard", doctor: "Dr. Lefebvre", date: "20 Fév 2026", amount: 50, type: "Consultation spécialiste", payment: "En attente", status: "pending" },
-  { id: "FAC-2026-085", patient: "Claire Moreau", doctor: "Dr. Martin", date: "19 Fév 2026", amount: 25, type: "Consultation", payment: "CB", status: "paid" },
-  { id: "FAC-2026-084", patient: "Paul Petit", doctor: "Dr. Durand", date: "19 Fév 2026", amount: 70, type: "Première consultation", payment: "En attente", status: "pending" },
-  { id: "FAC-2026-083", patient: "Sophie Leroy", doctor: "Dr. Martin", date: "18 Fév 2026", amount: 25, type: "Consultation", payment: "Chèque", status: "paid" },
-  { id: "FAC-2026-080", patient: "Luc Garcia", doctor: "Dr. Lefebvre", date: "15 Fév 2026", amount: 50, type: "Suivi", payment: "Impayé", status: "overdue" },
+  { id: "FAC-2026-087", patient: "Marie Dupont", doctor: "Dr. Martin", date: "20 Fév", amount: 25, type: "Consultation G", payment: "Carte vitale", status: "paid", avatar: "MD" },
+  { id: "FAC-2026-086", patient: "Jean Bernard", doctor: "Dr. Lefebvre", date: "20 Fév", amount: 50, type: "Cardio", payment: "—", status: "pending", avatar: "JB" },
+  { id: "FAC-2026-085", patient: "Claire Moreau", doctor: "Dr. Martin", date: "19 Fév", amount: 25, type: "Consultation G", payment: "CB", status: "paid", avatar: "CM" },
+  { id: "FAC-2026-084", patient: "Paul Petit", doctor: "Dr. Durand", date: "19 Fév", amount: 70, type: "1ère consultation", payment: "—", status: "pending", avatar: "PP" },
+  { id: "FAC-2026-083", patient: "Sophie Leroy", doctor: "Dr. Martin", date: "18 Fév", amount: 25, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SL" },
+  { id: "FAC-2026-082", patient: "Anne Dubois", doctor: "Dr. Martin", date: "18 Fév", amount: 25, type: "Téléconsultation", payment: "CB en ligne", status: "paid", avatar: "AD" },
+  { id: "FAC-2026-080", patient: "Luc Garcia", doctor: "Dr. Lefebvre", date: "15 Fév", amount: 50, type: "Suivi", payment: "—", status: "overdue", avatar: "LG" },
+  { id: "FAC-2026-078", patient: "Hugo Petit", doctor: "Dr. Martin", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "HP" },
 ];
 
-const statusConfig: Record<string, { label: string; class: string }> = {
-  paid: { label: "Payée", class: "bg-accent/10 text-accent" },
-  pending: { label: "En attente", class: "bg-warning/10 text-warning" },
-  overdue: { label: "Impayée", class: "bg-destructive/10 text-destructive" },
+const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
+  paid: { label: "Payée", class: "bg-accent/10 text-accent", icon: CheckCircle2 },
+  pending: { label: "En attente", class: "bg-warning/10 text-warning", icon: Clock },
+  overdue: { label: "Impayée", class: "bg-destructive/10 text-destructive", icon: AlertCircle },
 };
+
+const paymentMethods = [
+  { method: "Carte vitale", count: 45, icon: CreditCard },
+  { method: "CB", count: 38, icon: CreditCard },
+  { method: "Chèque", count: 12, icon: Banknote },
+  { method: "Espèces", count: 5, icon: Euro },
+];
 
 const SecretaryBilling = () => {
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
-  const filtered = filter === "all" ? invoices : invoices.filter(i => i.status === filter);
+  const filtered = invoices.filter(i => {
+    if (filter !== "all" && i.status !== filter) return false;
+    if (search && !i.patient.toLowerCase().includes(search.toLowerCase()) && !i.id.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   return (
     <DashboardLayout role="secretary" title="Facturation">
       <div className="space-y-6">
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {stats.map(s => (
-            <div key={s.label} className="rounded-xl border bg-card p-5 shadow-card">
+            <div key={s.label} className="rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-                <s.icon className={`h-5 w-5 ${s.color}`} />
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${s.color}`}>
+                  <s.icon className="h-5 w-5" />
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="mt-3 text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className="text-[11px] text-accent mt-1 flex items-center gap-0.5">
+                {s.change.startsWith("+") && <ArrowUpRight className="h-3 w-3" />}
+                {s.change}
+              </p>
             </div>
           ))}
         </div>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
-          <div className="flex gap-1 rounded-lg border bg-card p-1">
-            {[
-              { key: "all", label: "Toutes" },
-              { key: "pending", label: "En attente" },
-              { key: "paid", label: "Payées" },
-              { key: "overdue", label: "Impayées" },
-            ].map(f => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1 rounded-lg border bg-card p-0.5">
+              {[
+                { key: "all", label: "Toutes" },
+                { key: "pending", label: "En attente" },
+                { key: "paid", label: "Payées" },
+                { key: "overdue", label: "Impayées" },
+              ].map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                placeholder="Rechercher..." 
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9 h-9 w-48 text-xs" 
+              />
+            </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" />Exporter</Button>
+            <Button variant="outline" size="sm" className="text-xs"><Download className="h-3.5 w-3.5 mr-1" />Exporter</Button>
             <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm">
-              <Plus className="h-4 w-4 mr-1" />Nouvelle facture
+              <Plus className="h-3.5 w-3.5 mr-1" />Nouvelle facture
             </Button>
           </div>
         </div>
 
-        {/* Invoices table */}
-        <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="p-4 text-sm font-medium text-muted-foreground">N° Facture</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground">Patient</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground hidden md:table-cell">Médecin</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground hidden lg:table-cell">Date</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground hidden sm:table-cell">Type</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground">Montant</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground hidden md:table-cell">Paiement</th>
-                <th className="p-4 text-sm font-medium text-muted-foreground">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map(inv => (
-                <tr key={inv.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="p-4 text-sm font-medium text-foreground">{inv.id}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                        {inv.patient.split(" ").map(n => n[0]).join("")}
-                      </div>
-                      <span className="text-sm text-foreground">{inv.patient}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-muted-foreground hidden md:table-cell">{inv.doctor}</td>
-                  <td className="p-4 text-sm text-muted-foreground hidden lg:table-cell">{inv.date}</td>
-                  <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">{inv.type}</td>
-                  <td className="p-4 text-sm font-semibold text-foreground">{inv.amount} €</td>
-                  <td className="p-4 text-sm text-muted-foreground hidden md:table-cell">{inv.payment}</td>
-                  <td className="p-4">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig[inv.status].class}`}>
-                      {statusConfig[inv.status].label}
-                    </span>
-                  </td>
+        <div className="grid gap-6 lg:grid-cols-4">
+          {/* Invoices table */}
+          <div className="lg:col-span-3 rounded-xl border bg-card shadow-card overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b text-left">
+                  <th className="p-3 text-[11px] font-medium text-muted-foreground">Facture</th>
+                  <th className="p-3 text-[11px] font-medium text-muted-foreground">Patient</th>
+                  <th className="p-3 text-[11px] font-medium text-muted-foreground hidden md:table-cell">Médecin</th>
+                  <th className="p-3 text-[11px] font-medium text-muted-foreground hidden sm:table-cell">Type</th>
+                  <th className="p-3 text-[11px] font-medium text-muted-foreground">Montant</th>
+                  <th className="p-3 text-[11px] font-medium text-muted-foreground hidden lg:table-cell">Paiement</th>
+                  <th className="p-3 text-[11px] font-medium text-muted-foreground">Statut</th>
+                  <th className="p-3"></th>
                 </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map(inv => {
+                  const config = statusConfig[inv.status];
+                  return (
+                    <tr key={inv.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="p-3">
+                        <p className="text-xs font-semibold text-foreground">{inv.id}</p>
+                        <p className="text-[10px] text-muted-foreground">{inv.date}</p>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">
+                            {inv.avatar}
+                          </div>
+                          <span className="text-xs font-medium text-foreground">{inv.patient}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{inv.doctor}</td>
+                      <td className="p-3 text-xs text-muted-foreground hidden sm:table-cell">{inv.type}</td>
+                      <td className="p-3 text-xs font-bold text-foreground">{inv.amount} €</td>
+                      <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{inv.payment}</td>
+                      <td className="p-3">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium flex items-center gap-1 w-fit ${config.class}`}>
+                          <config.icon className="h-3 w-3" />
+                          {config.label}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Eye className="h-3 w-3 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Printer className="h-3 w-3 text-muted-foreground" />
+                          </Button>
+                          {inv.status === "overdue" && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Send className="h-3 w-3 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Payment methods breakdown */}
+          <div className="rounded-xl border bg-card shadow-card p-5">
+            <h3 className="font-semibold text-foreground mb-4">Moyens de paiement</h3>
+            <div className="space-y-3">
+              {paymentMethods.map(pm => (
+                <div key={pm.method} className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <pm.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-foreground">{pm.method}</p>
+                    <div className="h-1.5 w-full bg-muted rounded-full mt-1">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${(pm.count / 100) * 100}%` }} />
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-foreground">{pm.count}%</span>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            <div className="mt-6 pt-4 border-t">
+              <h4 className="text-xs font-medium text-muted-foreground mb-3">Résumé du mois</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Total facturé</span>
+                  <span className="font-semibold text-foreground">12 450 €</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Part CPAM</span>
+                  <span className="font-semibold text-foreground">8 715 €</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Part mutuelle</span>
+                  <span className="font-semibold text-foreground">2 490 €</span>
+                </div>
+                <div className="flex justify-between text-xs pt-2 border-t">
+                  <span className="text-muted-foreground">Reste à charge patients</span>
+                  <span className="font-bold text-foreground">1 245 €</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
