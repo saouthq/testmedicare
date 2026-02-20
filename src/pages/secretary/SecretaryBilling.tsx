@@ -3,27 +3,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Search, Plus, Download, Euro, FileText, CheckCircle2, Clock,
-  AlertCircle, TrendingUp, CreditCard, Banknote, ArrowUpRight,
-  Eye, Printer, Send, X
+  Search, Plus, Download, Banknote, FileText, CheckCircle2, Clock,
+  AlertCircle, TrendingUp, CreditCard, ArrowUpRight,
+  Eye, Printer, Send, Receipt, Shield
 } from "lucide-react";
 
 const stats = [
-  { label: "CA du mois", value: "12 450 €", change: "+8%", icon: Euro, color: "bg-primary/10 text-primary" },
-  { label: "En attente", value: "8", change: "2 075 €", icon: Clock, color: "bg-warning/10 text-warning" },
-  { label: "Payées ce mois", value: "156", change: "10 375 €", icon: CheckCircle2, color: "bg-accent/10 text-accent" },
-  { label: "Impayés", value: "3", change: "450 €", icon: AlertCircle, color: "bg-destructive/10 text-destructive" },
+  { label: "CA du mois", value: "8 450 DT", change: "+8%", icon: Banknote, color: "bg-primary/10 text-primary" },
+  { label: "En attente", value: "8", change: "1 575 DT", icon: Clock, color: "bg-warning/10 text-warning" },
+  { label: "Payées ce mois", value: "156", change: "6 875 DT", icon: CheckCircle2, color: "bg-accent/10 text-accent" },
+  { label: "Impayés", value: "3", change: "320 DT", icon: AlertCircle, color: "bg-destructive/10 text-destructive" },
 ];
 
 const invoices = [
-  { id: "FAC-2026-087", patient: "Marie Dupont", doctor: "Dr. Martin", date: "20 Fév", amount: 25, type: "Consultation G", payment: "Carte vitale", status: "paid", avatar: "MD" },
-  { id: "FAC-2026-086", patient: "Jean Bernard", doctor: "Dr. Lefebvre", date: "20 Fév", amount: 50, type: "Cardio", payment: "—", status: "pending", avatar: "JB" },
-  { id: "FAC-2026-085", patient: "Claire Moreau", doctor: "Dr. Martin", date: "19 Fév", amount: 25, type: "Consultation G", payment: "CB", status: "paid", avatar: "CM" },
-  { id: "FAC-2026-084", patient: "Paul Petit", doctor: "Dr. Durand", date: "19 Fév", amount: 70, type: "1ère consultation", payment: "—", status: "pending", avatar: "PP" },
-  { id: "FAC-2026-083", patient: "Sophie Leroy", doctor: "Dr. Martin", date: "18 Fév", amount: 25, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SL" },
-  { id: "FAC-2026-082", patient: "Anne Dubois", doctor: "Dr. Martin", date: "18 Fév", amount: 25, type: "Téléconsultation", payment: "CB en ligne", status: "paid", avatar: "AD" },
-  { id: "FAC-2026-080", patient: "Luc Garcia", doctor: "Dr. Lefebvre", date: "15 Fév", amount: 50, type: "Suivi", payment: "—", status: "overdue", avatar: "LG" },
-  { id: "FAC-2026-078", patient: "Hugo Petit", doctor: "Dr. Martin", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "HP" },
+  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "CNAM", status: "paid", avatar: "AB", cnam: true },
+  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", cnam: true },
+  { id: "FAC-2026-085", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", date: "19 Fév", amount: 35, type: "Consultation G", payment: "Espèces", status: "paid", avatar: "MS", cnam: false },
+  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", cnam: true },
+  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", cnam: true },
+  { id: "FAC-2026-082", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Téléconsultation", payment: "Virement", status: "paid", avatar: "YB", cnam: false },
+  { id: "FAC-2026-080", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "15 Fév", amount: 60, type: "Suivi", payment: "—", status: "overdue", avatar: "RM", cnam: true },
+  { id: "FAC-2026-078", patient: "Salma Dridi", doctor: "Dr. Bouazizi", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "SD", cnam: true },
 ];
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
@@ -33,10 +33,10 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
 };
 
 const paymentMethods = [
-  { method: "Carte vitale", count: 45, icon: CreditCard },
-  { method: "CB", count: 38, icon: CreditCard },
-  { method: "Chèque", count: 12, icon: Banknote },
-  { method: "Espèces", count: 5, icon: Euro },
+  { method: "CNAM", count: 45, icon: Shield },
+  { method: "Espèces", count: 28, icon: Banknote },
+  { method: "Chèque", count: 15, icon: Receipt },
+  { method: "Virement", count: 12, icon: CreditCard },
 ];
 
 const SecretaryBilling = () => {
@@ -140,12 +140,17 @@ const SecretaryBilling = () => {
                           <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">
                             {inv.avatar}
                           </div>
-                          <span className="text-xs font-medium text-foreground">{inv.patient}</span>
+                          <div>
+                            <span className="text-xs font-medium text-foreground">{inv.patient}</span>
+                            {inv.cnam && (
+                              <p className="text-[9px] text-primary font-medium">CNAM</p>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{inv.doctor}</td>
                       <td className="p-3 text-xs text-muted-foreground hidden sm:table-cell">{inv.type}</td>
-                      <td className="p-3 text-xs font-bold text-foreground">{inv.amount} €</td>
+                      <td className="p-3 text-xs font-bold text-foreground">{inv.amount} DT</td>
                       <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{inv.payment}</td>
                       <td className="p-3">
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium flex items-center gap-1 w-fit ${config.class}`}>
@@ -200,19 +205,19 @@ const SecretaryBilling = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Total facturé</span>
-                  <span className="font-semibold text-foreground">12 450 €</span>
+                  <span className="font-semibold text-foreground">8 450 DT</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Part CPAM</span>
-                  <span className="font-semibold text-foreground">8 715 €</span>
+                  <span className="text-muted-foreground">Part CNAM</span>
+                  <span className="font-semibold text-foreground">5 915 DT</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Part mutuelle</span>
-                  <span className="font-semibold text-foreground">2 490 €</span>
+                  <span className="font-semibold text-foreground">1 690 DT</span>
                 </div>
                 <div className="flex justify-between text-xs pt-2 border-t">
                   <span className="text-muted-foreground">Reste à charge patients</span>
-                  <span className="font-bold text-foreground">1 245 €</span>
+                  <span className="font-bold text-foreground">845 DT</span>
                 </div>
               </div>
             </div>

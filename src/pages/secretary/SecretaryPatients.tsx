@@ -1,40 +1,40 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, Phone, Mail, Plus, ChevronRight, Calendar, Edit, FileText, Clock, AlertTriangle, X } from "lucide-react";
+import { Search, Phone, Mail, Plus, ChevronRight, Calendar, Edit, FileText, Clock, AlertTriangle, X, Shield, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 const patients = [
   { 
-    name: "Marie Dupont", phone: "06 12 34 56 78", email: "marie@email.com", 
-    lastVisit: "20 Fév 2026", doctor: "Dr. Martin", nextAppointment: "28 Fév 14:30",
-    ssn: "2 91 03 75 ***", mutuelle: "MGEN", dob: "15/03/1991", avatar: "MD",
-    balance: 0, notes: "Suivi diabète régulier"
+    name: "Amine Ben Ali", phone: "+216 71 234 567", email: "amine@email.tn", 
+    lastVisit: "20 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: "28 Fév 14:30",
+    cnamId: "12345678", assurance: "CNAM", dob: "15/03/1991", avatar: "AB",
+    balance: 0, notes: "Suivi diabète régulier", gouvernorat: "Tunis"
   },
   { 
-    name: "Jean Martin", phone: "06 98 76 54 32", email: "jean@email.com", 
-    lastVisit: "18 Fév 2026", doctor: "Dr. Lefebvre", nextAppointment: "25 Fév 10:00",
-    ssn: "1 70 07 75 ***", mutuelle: "Harmonie", dob: "12/07/1970", avatar: "JM",
-    balance: 50, notes: "Hypertension — suivi cardio"
+    name: "Fatma Trabelsi", phone: "+216 22 345 678", email: "fatma@email.tn", 
+    lastVisit: "18 Fév 2026", doctor: "Dr. Gharbi", nextAppointment: "25 Fév 10:00",
+    cnamId: "23456789", assurance: "CNAM", dob: "12/07/1970", avatar: "FT",
+    balance: 60, notes: "Hypertension — suivi cardio", gouvernorat: "Ariana"
   },
   { 
-    name: "Claire Petit", phone: "06 11 22 33 44", email: "claire@email.com", 
-    lastVisit: "15 Fév 2026", doctor: "Dr. Martin", nextAppointment: null,
-    ssn: "2 98 01 75 ***", mutuelle: "AXA", dob: "05/01/1998", avatar: "CP",
-    balance: 0, notes: "Suivi grossesse T2"
+    name: "Mohamed Sfar", phone: "+216 55 456 789", email: "med@email.tn", 
+    lastVisit: "15 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null,
+    cnamId: "—", assurance: "Privée", dob: "05/01/1998", avatar: "MS",
+    balance: 0, notes: "Suivi post-opératoire", gouvernorat: "Ben Arous"
   },
   { 
-    name: "Luc Bernard", phone: "06 55 66 77 88", email: "luc@email.com", 
-    lastVisit: "10 Fév 2026", doctor: "Dr. Durand", nextAppointment: "3 Mar 09:00",
-    ssn: "1 59 11 75 ***", mutuelle: "MGEN", dob: "18/11/1959", avatar: "LB",
-    balance: 25, notes: "Arthrose — anti-inflammatoires"
+    name: "Nadia Jemni", phone: "+216 98 567 890", email: "nadia@email.tn", 
+    lastVisit: "10 Fév 2026", doctor: "Dr. Hammami", nextAppointment: "3 Mar 09:00",
+    cnamId: "34567890", assurance: "CNAM", dob: "18/11/1959", avatar: "NJ",
+    balance: 25, notes: "Arthrose — anti-inflammatoires", gouvernorat: "Manouba"
   },
   { 
-    name: "Sophie Moreau", phone: "06 99 88 77 66", email: "sophie@email.com", 
-    lastVisit: "8 Fév 2026", doctor: "Dr. Martin", nextAppointment: null,
-    ssn: "2 84 06 75 ***", mutuelle: "Swiss Life", dob: "22/06/1984", avatar: "SM",
-    balance: 0, notes: "Asthme léger"
+    name: "Sami Ayari", phone: "+216 29 678 901", email: "sami@email.tn", 
+    lastVisit: "8 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null,
+    cnamId: "45678901", assurance: "CNAM", dob: "22/06/1984", avatar: "SA",
+    balance: 0, notes: "Asthme léger", gouvernorat: "Tunis"
   },
 ];
 
@@ -93,7 +93,12 @@ const SecretaryPatients = () => {
                           </div>
                           <div>
                             <p className="font-medium text-foreground text-sm">{p.name}</p>
-                            <p className="text-[11px] text-muted-foreground">{p.dob}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <p className="text-[11px] text-muted-foreground">{p.dob}</p>
+                              {p.assurance === "CNAM" && (
+                                <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -109,7 +114,7 @@ const SecretaryPatients = () => {
                       </td>
                       <td className="p-4 hidden lg:table-cell">
                         {p.balance > 0 ? (
-                          <span className="text-xs font-semibold text-destructive">{p.balance} €</span>
+                          <span className="text-xs font-semibold text-destructive">{p.balance} DT</span>
                         ) : (
                           <span className="text-xs text-accent">Soldé</span>
                         )}
@@ -142,7 +147,7 @@ const SecretaryPatients = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-foreground">{selectedPatient.name}</h3>
-                      <p className="text-xs text-muted-foreground">{selectedPatient.dob} · N° SS: {selectedPatient.ssn}</p>
+                      <p className="text-xs text-muted-foreground">{selectedPatient.dob} · {selectedPatient.gouvernorat}</p>
                     </div>
                   </div>
                 </div>
@@ -156,9 +161,12 @@ const SecretaryPatients = () => {
                       <p className="text-[10px] text-muted-foreground">Email</p>
                       <p className="text-xs font-medium text-foreground truncate">{selectedPatient.email}</p>
                     </div>
-                    <div className="rounded-lg bg-muted/50 p-3">
-                      <p className="text-[10px] text-muted-foreground">Mutuelle</p>
-                      <p className="text-xs font-medium text-foreground">{selectedPatient.mutuelle}</p>
+                    <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+                      <p className="text-[10px] text-primary font-medium flex items-center gap-1"><Shield className="h-3 w-3" />Assurance</p>
+                      <p className="text-xs font-semibold text-foreground">{selectedPatient.assurance}</p>
+                      {selectedPatient.cnamId !== "—" && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">N° {selectedPatient.cnamId}</p>
+                      )}
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3">
                       <p className="text-[10px] text-muted-foreground">Médecin</p>
@@ -206,17 +214,36 @@ const SecretaryPatients = () => {
                   <div><Label className="text-xs">Prénom</Label><Input className="mt-1" placeholder="Prénom" /></div>
                   <div><Label className="text-xs">Nom</Label><Input className="mt-1" placeholder="Nom" /></div>
                   <div><Label className="text-xs">Date de naissance</Label><Input type="date" className="mt-1" /></div>
-                  <div><Label className="text-xs">Téléphone</Label><Input className="mt-1" placeholder="06 ..." /></div>
+                  <div><Label className="text-xs">Téléphone</Label><Input className="mt-1" placeholder="+216 XX XXX XXX" /></div>
                   <div><Label className="text-xs">Email</Label><Input type="email" className="mt-1" placeholder="email@..." /></div>
-                  <div><Label className="text-xs">N° Sécurité sociale</Label><Input className="mt-1" placeholder="1 XX XX XX ..." /></div>
-                  <div><Label className="text-xs">Mutuelle</Label><Input className="mt-1" placeholder="MGEN, Harmonie..." /></div>
-                  <div><Label className="text-xs">Médecin traitant</Label>
+                  <div><Label className="text-xs">N° Assuré CNAM</Label><Input className="mt-1" placeholder="XXXXXXXX" /></div>
+                  <div><Label className="text-xs">Assurance</Label>
                     <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-                      <option>Dr. Martin</option>
-                      <option>Dr. Lefebvre</option>
-                      <option>Dr. Durand</option>
+                      <option>CNAM</option>
+                      <option>CNRPS</option>
+                      <option>Assurance privée</option>
+                      <option>Sans assurance</option>
                     </select>
                   </div>
+                  <div><Label className="text-xs">Gouvernorat</Label>
+                    <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                      <option>Tunis</option>
+                      <option>Ariana</option>
+                      <option>Ben Arous</option>
+                      <option>Manouba</option>
+                      <option>Sousse</option>
+                      <option>Sfax</option>
+                      <option>Nabeul</option>
+                      <option>Bizerte</option>
+                    </select>
+                  </div>
+                </div>
+                <div><Label className="text-xs">Médecin traitant</Label>
+                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                    <option>Dr. Bouazizi</option>
+                    <option>Dr. Gharbi</option>
+                    <option>Dr. Hammami</option>
+                  </select>
                 </div>
                 <div>
                   <Label className="text-xs">Adresse</Label>
