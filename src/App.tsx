@@ -58,6 +58,13 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminModeration from "./pages/admin/AdminModeration";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminLogs from "./pages/admin/AdminLogs";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+
+// Settings
+import PatientSettings from "./pages/patient/PatientSettings";
+import PharmacySettings from "./pages/pharmacy/PharmacySettings";
+import LaboratorySettings from "./pages/laboratory/LaboratorySettings";
 
 // Public
 import DoctorPublicProfile from "./pages/public/DoctorPublicProfile";
@@ -139,6 +146,13 @@ const App = () => (
           <Route path="/dashboard/admin/subscriptions" element={<AdminSubscriptions />} />
           <Route path="/dashboard/admin/moderation" element={<AdminModeration />} />
           <Route path="/dashboard/admin/settings" element={<AdminSettings />} />
+          <Route path="/dashboard/admin/logs" element={<AdminLogs />} />
+          <Route path="/dashboard/admin/analytics" element={<AdminAnalytics />} />
+
+          {/* Settings */}
+          <Route path="/dashboard/patient/settings" element={<PatientSettings />} />
+          <Route path="/dashboard/pharmacy/settings" element={<PharmacySettings />} />
+          <Route path="/dashboard/laboratory/settings" element={<LaboratorySettings />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

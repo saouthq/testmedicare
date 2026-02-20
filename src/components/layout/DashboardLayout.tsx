@@ -23,6 +23,8 @@ import {
   Building2,
   Menu,
   X,
+  Activity,
+  ScrollText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -50,6 +52,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Messagerie", url: "/dashboard/patient/messages", icon: Users },
     { title: "Notifications", url: "/dashboard/patient/notifications", icon: Bell },
     { title: "Mon profil", url: "/dashboard/patient/profile", icon: UserCircle },
+    { title: "Paramètres", url: "/dashboard/patient/settings", icon: Settings },
   ],
   doctor: [
     { title: "Tableau de bord", url: "/dashboard/doctor", icon: LayoutDashboard },
@@ -68,6 +71,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Stock", url: "/dashboard/pharmacy/stock", icon: Pill },
     { title: "Historique", url: "/dashboard/pharmacy/history", icon: Clock },
     { title: "Messagerie", url: "/dashboard/pharmacy/messages", icon: Users },
+    { title: "Paramètres", url: "/dashboard/pharmacy/settings", icon: Settings },
   ],
   laboratory: [
     { title: "Tableau de bord", url: "/dashboard/laboratory", icon: LayoutDashboard },
@@ -75,6 +79,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Résultats", url: "/dashboard/laboratory/results", icon: FileText },
     { title: "Patients", url: "/dashboard/laboratory/patients", icon: Users },
     { title: "Messagerie", url: "/dashboard/laboratory/messages", icon: Users },
+    { title: "Paramètres", url: "/dashboard/laboratory/settings", icon: Settings },
   ],
   secretary: [
     { title: "Tableau de bord", url: "/dashboard/secretary", icon: LayoutDashboard },
@@ -90,6 +95,8 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
     { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
     { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
+    { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
+    { title: "Journal", url: "/dashboard/admin/logs", icon: ScrollText },
     { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
   ],
 };
