@@ -7,15 +7,7 @@ type NotificationType = "appointment" | "prescription" | "message" | "result" | 
 
 interface Notification { id: string; type: NotificationType; title: string; message: string; time: string; read: boolean; }
 
-const initialNotifications: Notification[] = [
-  { id: "1", type: "appointment", title: "Rappel de RDV", message: "Votre rendez-vous avec Dr. Bouazizi est demain à 14h30 au cabinet El Manar.", time: "Il y a 1h", read: false },
-  { id: "2", type: "result", title: "Résultats disponibles", message: "Les résultats de votre bilan sanguin sont prêts. Consultez-les dans votre dossier médical.", time: "Il y a 3h", read: false },
-  { id: "3", type: "message", title: "Nouveau message", message: "Dr. Gharbi vous a envoyé un message concernant votre dernière consultation.", time: "Il y a 5h", read: false },
-  { id: "4", type: "prescription", title: "Ordonnance renouvelée", message: "Votre ordonnance ORD-2026-045 a été renouvelée par Dr. Bouazizi.", time: "Hier", read: true },
-  { id: "5", type: "reminder", title: "Rappel CNAM", message: "Pensez à renouveler votre carte CNAM avant le 31 mars 2026.", time: "Hier", read: true },
-  { id: "6", type: "appointment", title: "RDV confirmé", message: "Votre rendez-vous du 23 Fév avec Dr. Gharbi (Cardiologue) est confirmé.", time: "Il y a 2 jours", read: true },
-  { id: "7", type: "system", title: "Mise à jour du profil", message: "Pensez à compléter votre numéro d'assuré CNAM dans votre profil.", time: "Il y a 3 jours", read: true },
-];
+import { mockNotifications as initialNotifications } from "@/data/mockData";
 
 const typeConfig: Record<NotificationType, { icon: any; class: string }> = {
   appointment: { icon: Calendar, class: "bg-primary/10 text-primary" },

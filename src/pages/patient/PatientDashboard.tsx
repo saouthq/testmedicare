@@ -11,31 +11,12 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
 
-const upcomingAppointments = [
-  { id: 1, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "Aujourd'hui", time: "14:30", type: "cabinet", address: "15 Av. de la Liberté, El Manar", avatar: "AB", status: "confirmed" as AppointmentStatus, motif: "Suivi diabète", canModify: true, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Carte CNAM", "Pièce d'identité"], instructions: "Arrivez 10 min en avance." },
-  { id: 2, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "23 Fév", time: "10:00", type: "cabinet", address: "32 Rue Charles de Gaulle, Ariana", avatar: "SG", status: "confirmed" as AppointmentStatus, motif: "Bilan cardiaque", canModify: true, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 48h avant", documents: ["Carte CNAM"], instructions: "Venez à jeun." },
-  { id: 3, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "28 Fév", time: "16:15", type: "teleconsultation", address: "", avatar: "KH", status: "pending" as AppointmentStatus, motif: "Consultation dermatologie", canModify: false, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: [], instructions: "Préparez votre caméra." },
-];
-
-const recentPrescriptions = [
-  { id: "ORD-045", doctor: "Dr. Bouazizi", date: "10 Fév", items: 3, status: "active" },
-  { id: "ORD-042", doctor: "Dr. Gharbi", date: "3 Fév", items: 1, status: "active" },
-];
-
-const favoriteDoctors = [
-  { name: "Dr. Bouazizi", specialty: "Généraliste", avatar: "AB", id: 1 },
-  { name: "Dr. Gharbi", specialty: "Cardiologue", avatar: "SG", id: 2 },
-  { name: "Dr. Hammami", specialty: "Dermatologue", avatar: "KH", id: 3 },
-];
-
-const healthSummary = {
-  bloodType: "A+",
-  treatingDoctor: "Dr. Ahmed Bouazizi",
-  cnam: true,
-  cnamId: "12345678",
-  allergies: ["Pénicilline"],
-  vaccinations: 2,
-};
+import { 
+  mockPatientAppointments as upcomingAppointments, 
+  mockRecentPrescriptions as recentPrescriptions, 
+  mockFavoriteDoctors as favoriteDoctors, 
+  mockHealthSummary as healthSummary 
+} from "@/data/mockData";
 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);

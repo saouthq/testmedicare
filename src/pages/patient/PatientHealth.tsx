@@ -20,73 +20,28 @@ const menuItems: { key: HealthSection; label: string; icon: any; count?: number 
 ];
 
 /* Mock data */
-const documents = [
-  { name: "Résultats analyses - Glycémie", type: "Analyse", date: "15 Fév 2026", source: "Labo BioSanté", size: "245 Ko" },
-  { name: "Ordonnance Dr. Bouazizi", type: "Ordonnance", date: "10 Fév 2026", source: "Dr. Ahmed Bouazizi", size: "120 Ko" },
-  { name: "Radio thoracique", type: "Imagerie", date: "5 Jan 2026", source: "Centre Imagerie Tunis", size: "2.1 Mo" },
-  { name: "Compte-rendu consultation", type: "Consultation", date: "20 Déc 2025", source: "Dr. Sonia Gharbi", size: "85 Ko" },
-  { name: "Certificat médical", type: "Certificat", date: "15 Nov 2025", source: "Dr. Ahmed Bouazizi", size: "55 Ko" },
-];
-
-const antecedents = [
-  { name: "Diabète type 2", date: "Depuis 2020", details: "Suivi régulier, traitement oral" },
-  { name: "Hypertension artérielle", date: "Depuis 2022", details: "Traitement par Amlodipine 5mg" },
-  { name: "Asthme léger", date: "Depuis l'enfance", details: "Ventoline en cas de crise" },
-  { name: "Appendicectomie", date: "Mars 2015", details: "Hôpital Charles Nicolle" },
-];
-
-const treatments = [
-  { name: "Metformine 850mg", dose: "1 cp matin et soir", prescriber: "Dr. Bouazizi", since: "Jan 2021", status: "active" },
-  { name: "Amlodipine 5mg", dose: "1 cp le matin", prescriber: "Dr. Bouazizi", since: "Mar 2022", status: "active" },
-];
-
-const allergies = [
-  { name: "Pénicilline", severity: "Sévère", reaction: "Réaction cutanée sévère" },
-  { name: "Acariens", severity: "Modéré", reaction: "Rhinite allergique" },
-];
-
-const habits = [
-  { label: "Tabac", value: "Non-fumeur" },
-  { label: "Alcool", value: "Occasionnel" },
-  { label: "Activité physique", value: "3x / semaine" },
-  { label: "Alimentation", value: "Régime diabétique" },
-];
-
-const familyHistory = [
-  { name: "Diabète (père)", details: "Type 2" },
-  { name: "Hypertension (mère)", details: "" },
-];
-
-const surgeries = [
-  { name: "Appendicectomie", date: "Mars 2015", hospital: "Hôpital Charles Nicolle, Tunis" },
-];
-
-const vaccinations = [
-  { name: "COVID-19 (Pfizer)", doses: "3 doses", lastDate: "15 Jan 2022", nextDate: null },
-  { name: "Grippe saisonnière", doses: "1 dose", lastDate: "10 Oct 2025", nextDate: "Oct 2026" },
-  { name: "Hépatite B", doses: "3 doses", lastDate: "2005", nextDate: null },
-  { name: "Tétanos", doses: "Rappel", lastDate: "Mar 2020", nextDate: "Mar 2030" },
-];
-
-const measures = [
-  { label: "Tension artérielle", value: "13/8 mmHg", date: "15 Fév 2026" },
-  { label: "Glycémie", value: "1.05 g/L", date: "15 Fév 2026" },
-  { label: "Poids", value: "75 kg", date: "10 Fév 2026" },
-  { label: "IMC", value: "24.2", date: "10 Fév 2026" },
-];
+import {
+  mockHealthDocuments as documents,
+  mockAntecedents as antecedents,
+  mockTreatments as treatments,
+  mockAllergies as allergies,
+  mockHabits as habits,
+  mockFamilyHistory as familyHistory,
+  mockSurgeries as surgeries,
+  mockVaccinations as vaccinations,
+  mockMeasures as measures,
+  mockPatientAiInitial as aiInitial,
+  mockPatientAiResponses as aiMockResponses
+} from "@/data/mockData";
 
 /* AI chat */
-interface AiMessage { id: string; sender: "me" | "ai"; text: string; time: string; }
-const aiInitial: AiMessage[] = [{ id: "1", sender: "ai", text: "Bonjour ! Je suis l'assistant virtuel Medicare. Je peux vous aider à comprendre vos résultats ou vous orienter. Que puis-je faire pour vous ?", time: "—" }];
-const aiMockResponses = [
-  "D'après vos résultats, votre glycémie est dans les normes (1.05 g/L). Continuez votre traitement et vos contrôles réguliers. N'hésitez pas à consulter votre médecin traitant pour toute question.",
-  "Je vous recommande de consulter un spécialiste pour ce type de symptômes. Vous pouvez rechercher un praticien directement depuis l'onglet 'Prendre RDV'.",
-];
+import type { ChatMessage } from "@/data/mockData";
+// AI data imported from mockData
 
 const PatientHealth = () => {
   const [section, setSection] = useState<HealthSection>("menu");
   const [showUpload, setShowUpload] = useState(false);
-  const [aiMessages, setAiMessages] = useState<AiMessage[]>(aiInitial);
+  const [aiMessages, setAiMessages] = useState<ChatMessage[]>(aiInitial);
   const [aiInput, setAiInput] = useState("");
   const [aiIdx, setAiIdx] = useState(0);
 
