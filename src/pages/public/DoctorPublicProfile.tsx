@@ -86,17 +86,12 @@ const faqItems = [
 
 const DoctorPublicProfile = () => {
   const navigate = useNavigate();
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [selectedMotif, setSelectedMotif] = useState<string | null>(null);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
-  const [showAllSlots, setShowAllSlots] = useState(false);
-  const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<string | null>("presentation");
   const isMobile = useIsMobile();
 
-  const displaySlots = showAllSlots ? availableSlots : availableSlots.slice(0, 3);
   const displayReviews = showAllReviews ? reviews : reviews.slice(0, 3);
 
   const ratingDistribution = [
@@ -107,18 +102,9 @@ const DoctorPublicProfile = () => {
     { stars: 1, count: 2, pct: 2 },
   ];
 
-  const toggleSection = (key: string) => setOpenSection(openSection === key ? null : key);
-
-  const handleBooking = () => {
-    if (!selectedSlot || !selectedMotif) return;
-    const [date, ...timeParts] = selectedSlot.split("-");
-    const time = timeParts.join(":");
-    const params = new URLSearchParams({
-      date: date.trim(),
-      time: time.trim(),
-      motif: selectedMotif,
-    });
-    navigate(`/booking/1?${params.toString()}`);
+  const toggleSection = (key: string) => {
+    if (key === "presentation") return; // always open
+    setOpenSection(openSection === key ? null : key);
   };
 
   const AccordionSection = ({ title, sectionKey, icon: Icon, children }: { title: string; sectionKey: string; icon: any; children: React.ReactNode }) => {
@@ -156,9 +142,9 @@ const DoctorPublicProfile = () => {
           <ChevronLeft className="h-4 w-4" />Retour aux résultats
         </Link>
 
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-[1fr] max-w-3xl mx-auto">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+          <div className="space-y-4 sm:space-y-5">
 
             {/* Hero doctor card – fixed mobile layout */}
             <div className="rounded-2xl border bg-card overflow-hidden shadow-card">
@@ -189,15 +175,15 @@ const DoctorPublicProfile = () => {
                   </div>
                 </div>
 
-                {/* Stats row – 2 cols mobile, 4 cols desktop */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4">
-                  <div className="rounded-xl bg-warning/5 border border-warning/20 p-2.5 sm:p-3 text-center">
-                    <div className="flex items-center justify-center gap-1"><Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-warning text-warning" /><span className="text-base sm:text-lg font-bold text-foreground">{doctorData.rating}</span></div>
-                    <p className="text-[10px] text-muted-foreground">{doctorData.reviewCount} avis</p>
+                {/* Stats row – compact */}
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mt-3">
+                  <div className="rounded-lg bg-warning/5 border border-warning/20 p-1.5 sm:p-2 text-center">
+                    <div className="flex items-center justify-center gap-0.5"><Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-warning text-warning" /><span className="text-sm sm:text-base font-bold text-foreground">{doctorData.rating}</span></div>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">{doctorData.reviewCount} avis</p>
                   </div>
-                  <div className="rounded-xl bg-primary/5 border border-primary/20 p-2.5 sm:p-3 text-center"><Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mx-auto" /><p className="text-[10px] text-primary font-medium">CNAM</p></div>
-                  <div className="rounded-xl bg-accent/5 border border-accent/20 p-2.5 sm:p-3 text-center"><p className="text-base sm:text-lg font-bold text-foreground">{doctorData.experience}</p><p className="text-[10px] text-muted-foreground">d'expérience</p></div>
-                  <div className="rounded-xl bg-muted/50 p-2.5 sm:p-3 text-center"><p className="text-base sm:text-lg font-bold text-foreground">{doctorData.price}</p><p className="text-[10px] text-muted-foreground">Consultation</p></div>
+                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-1.5 sm:p-2 text-center"><Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary mx-auto" /><p className="text-[9px] sm:text-[10px] text-primary font-medium">CNAM</p></div>
+                  <div className="rounded-lg bg-accent/5 border border-accent/20 p-1.5 sm:p-2 text-center"><p className="text-sm sm:text-base font-bold text-foreground">{doctorData.experience}</p><p className="text-[9px] sm:text-[10px] text-muted-foreground">Expérience</p></div>
+                  <div className="rounded-lg bg-muted/50 p-1.5 sm:p-2 text-center"><p className="text-sm sm:text-base font-bold text-foreground">{doctorData.price}</p><p className="text-[9px] sm:text-[10px] text-muted-foreground">Consultation</p></div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4 text-xs">
@@ -362,89 +348,21 @@ const DoctorPublicProfile = () => {
               </div>
             )}
           </div>
-
-          {/* Booking sidebar */}
-          <div className="space-y-5">
-            <div className="rounded-2xl border bg-card shadow-card lg:sticky lg:top-20 overflow-hidden">
-              <div className="gradient-primary p-4">
-                <h3 className="font-bold text-primary-foreground text-base sm:text-lg">Prendre rendez-vous</h3>
-                <p className="text-primary-foreground/70 text-xs mt-0.5">Prochain créneau : Aujourd'hui 14:30</p>
-              </div>
-
-              <div className="p-4 space-y-4">
-                {/* STEP 1: Choose date → expand to see time slots */}
-                <div>
-                  <p className="text-sm font-medium text-foreground mb-2">1. Choisissez une date</p>
-                  <div className="space-y-2">
-                    {displaySlots.map((day, i) => (
-                      <div key={i}>
-                        <button
-                          onClick={() => setExpandedDay(expandedDay === day.date ? null : day.date)}
-                          className={`w-full flex items-center justify-between rounded-lg border p-2.5 sm:p-3 text-left transition-all ${
-                            expandedDay === day.date ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/50"
-                          }`}
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{day.date}</p>
-                            <p className="text-[11px] text-muted-foreground">{day.slots.length} créneaux</p>
-                          </div>
-                          {expandedDay === day.date ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                        </button>
-                        {expandedDay === day.date && (
-                          <div className="flex flex-wrap gap-1.5 mt-2 ml-1 animate-fade-in">
-                            {day.slots.map(s => (
-                              <button key={s} onClick={() => setSelectedSlot(`${day.date}-${s}`)}
-                                className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${
-                                  selectedSlot === `${day.date}-${s}` ? "border-primary bg-primary text-primary-foreground" : "text-primary border-primary/30 hover:bg-primary/10"
-                                }`}>{s}</button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {!showAllSlots && (
-                    <button onClick={() => setShowAllSlots(true)} className="text-xs text-primary font-medium mt-2 hover:underline">Voir plus de créneaux →</button>
-                  )}
-                </div>
-
-                {/* STEP 2: Choose motif – NO price/duration shown */}
-                <div>
-                  <p className="text-sm font-medium text-foreground mb-2">2. Motif de consultation</p>
-                  <div className="space-y-1.5">
-                    {doctorData.motifs.map(m => (
-                      <button key={m.name} onClick={() => setSelectedMotif(m.name)}
-                        className={`w-full flex items-center justify-between text-left rounded-lg border p-2.5 sm:p-3 text-xs transition-all ${
-                          selectedMotif === m.name ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/50"
-                        }`}>
-                        <p className="font-medium text-foreground">{m.name}</p>
-                        {selectedMotif === m.name && <CheckCircle className="h-4 w-4 text-primary shrink-0" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recap */}
-                {selectedSlot && selectedMotif && (
-                  <div className="rounded-lg bg-accent/5 border border-accent/20 p-3 space-y-2">
-                    <p className="text-xs font-semibold text-accent">Récapitulatif</p>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between"><span className="text-muted-foreground">Motif</span><span className="font-medium text-foreground">{selectedMotif}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span className="font-medium text-foreground">{selectedSlot.split("-")[0]}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Heure</span><span className="font-medium text-foreground">{selectedSlot.split("-").slice(1).join(":")}</span></div>
-                    </div>
-                  </div>
-                )}
-
-                <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11" disabled={!selectedSlot || !selectedMotif} onClick={handleBooking}>
-                  <Calendar className="h-4 w-4 mr-2" />Confirmer le rendez-vous
-                </Button>
-                <p className="text-[10px] text-muted-foreground text-center">Prise en charge CNAM · Annulation gratuite 24h avant</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* Sticky bottom CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-card/95 backdrop-blur-md p-3 sm:p-4">
+        <div className="max-w-3xl mx-auto">
+          <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-12 text-sm font-semibold" onClick={() => navigate("/booking/1")}>
+            <Calendar className="h-4 w-4 mr-2" />Prendre rendez-vous
+          </Button>
+          <p className="text-[10px] text-muted-foreground text-center mt-1">Prise en charge CNAM · Annulation gratuite 24h avant</p>
+        </div>
+      </div>
+
+      {/* Bottom spacer for sticky CTA */}
+      <div className="h-24" />
     </div>
   );
 };
