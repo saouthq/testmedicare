@@ -6,30 +6,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const specialties = [
-  "Tous", "Médecin généraliste", "Dentiste", "Cardiologue", "Dermatologue", 
-  "Ophtalmologue", "Pédiatre", "Gynécologue", "ORL", "Kinésithérapeute"
-];
-
-/* Availability data: 7 days from today */
-const availDates = [
-  { label: "Lun 17", short: "17/02", morning: true, afternoon: true },
-  { label: "Mar 18", short: "18/02", morning: true, afternoon: false },
-  { label: "Mer 19", short: "19/02", morning: false, afternoon: false },
-  { label: "Jeu 20", short: "20/02", morning: true, afternoon: true },
-  { label: "Ven 21", short: "21/02", morning: false, afternoon: true },
-  { label: "Sam 22", short: "22/02", morning: true, afternoon: false },
-  { label: "Dim 23", short: "23/02", morning: false, afternoon: false },
-];
-
-const doctors = [
-  { name: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", address: "15 Av. de la Liberté, El Manar, 2092 Tunis", distance: "0.8 km", rating: 4.8, reviews: 234, nextSlot: "Aujourd'hui 14:30", avatar: "AB", price: 35, languages: ["Français", "Arabe"], teleconsultation: true, cnam: true, avail: [true, true, false, true, false, true, false], availAM: [true, true, false, true, false, true, false], availPM: [true, false, false, true, true, false, false] },
-  { name: "Dr. Sonia Gharbi", specialty: "Cardiologue", address: "32 Rue Charles de Gaulle, 2080 Ariana", distance: "2.3 km", rating: 4.9, reviews: 187, nextSlot: "Demain 09:00", avatar: "SG", price: 60, languages: ["Français", "Arabe"], teleconsultation: false, cnam: true, avail: [false, true, true, false, true, false, false], availAM: [false, true, true, false, false, false, false], availPM: [false, false, false, false, true, false, false] },
-  { name: "Dr. Khaled Hammami", specialty: "Dermatologue", address: "8 Boulevard Bab Bnet, 1006 Tunis", distance: "1.5 km", rating: 4.7, reviews: 156, nextSlot: "23 Fév 10:30", avatar: "KH", price: 50, languages: ["Français", "Arabe", "Anglais"], teleconsultation: true, cnam: true, avail: [false, false, false, true, true, true, false], availAM: [false, false, false, true, false, true, false], availPM: [false, false, false, false, true, false, false] },
-  { name: "Dr. Leila Chebbi", specialty: "Ophtalmologue", address: "45 Av. Habib Bourguiba, 4000 Sousse", distance: "3.1 km", rating: 4.6, reviews: 98, nextSlot: "24 Fév 11:00", avatar: "LC", price: 45, languages: ["Français", "Arabe"], teleconsultation: true, cnam: false, avail: [false, false, false, false, false, false, false], availAM: [false, false, false, false, false, false, false], availPM: [false, false, false, false, false, false, false] },
-  { name: "Dr. Nabil Karray", specialty: "Pédiatre", address: "22 Rue de Marseille, 1002 Tunis", distance: "1.2 km", rating: 4.9, reviews: 312, nextSlot: "Aujourd'hui 16:00", avatar: "NK", price: 40, languages: ["Français", "Arabe", "Anglais"], teleconsultation: true, cnam: true, avail: [true, false, true, true, false, true, false], availAM: [false, false, true, false, false, true, false], availPM: [true, false, false, true, false, false, false] },
-  { name: "Dr. Ines Mansour", specialty: "Gynécologue", address: "10 Rue du Lac Constance, Les Berges du Lac", distance: "4.0 km", rating: 4.8, reviews: 421, nextSlot: "25 Fév 09:30", avatar: "IM", price: 70, languages: ["Français", "Arabe"], teleconsultation: true, cnam: true, avail: [false, false, false, false, false, false, false], availAM: [false, false, false, false, false, false, false], availPM: [false, false, false, false, false, false, false] },
-];
+import { 
+  specialtiesWithAll as specialties, 
+  availDates, 
+  mockDoctors as doctors 
+} from "@/data/mockData";
 
 const SearchDoctors = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState("Tous");

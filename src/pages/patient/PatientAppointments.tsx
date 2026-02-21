@@ -8,26 +8,16 @@ import EmptyState from "@/components/shared/EmptyState";
 
 type Tab = "upcoming" | "past" | "cancelled";
 
-const initialAppointments = [
-  { id: 1, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "20 Fév 2026", time: "14:30", address: "15 Av. de la Liberté, El Manar, Tunis", status: "confirmed" as AppointmentStatus, type: "cabinet", motif: "Suivi diabète", canModify: true, canCancel: true, avatar: "AB", cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Carte CNAM", "Pièce d'identité"], instructions: "Arrivez 10 min en avance. Apportez vos résultats d'analyses récents." },
-  { id: 2, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "23 Fév 2026", time: "10:00", address: "32 Rue Charles de Gaulle, Ariana", status: "confirmed" as AppointmentStatus, type: "cabinet", motif: "Bilan cardiaque annuel", canModify: true, canCancel: true, avatar: "SG", cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 48h avant", documents: ["Carte CNAM", "Ancien ECG"], instructions: "Venez à jeun si possible." },
-  { id: 3, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "28 Fév 2026", time: "16:15", address: "", status: "pending" as AppointmentStatus, type: "teleconsultation", motif: "Consultation dermatologie", canModify: false, canCancel: true, avatar: "KH", cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: [], instructions: "Préparez votre caméra et une bonne connexion." },
-  { id: 4, doctor: "Dr. Leila Chebbi", specialty: "Ophtalmologue", date: "5 Mar 2026", time: "11:00", address: "12 Rue de Carthage, Sousse", status: "confirmed" as AppointmentStatus, type: "cabinet", motif: "Contrôle annuel vue", canModify: true, canCancel: true, avatar: "LC", cnam: false, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Pièce d'identité"], instructions: "" },
-];
-
-const initialPastAppointments = [
-  { id: 5, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "10 Fév 2026", time: "09:00", status: "completed" as AppointmentStatus, motif: "Suivi diabète", hasPrescription: true, hasReport: true, avatar: "AB", amount: "35 DT" },
-  { id: 6, doctor: "Dr. Nabil Karray", specialty: "Pédiatre", date: "3 Fév 2026", time: "14:00", status: "completed" as AppointmentStatus, motif: "Consultation enfant", hasPrescription: false, hasReport: true, avatar: "NK", amount: "40 DT" },
-  { id: 7, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "15 Jan 2026", time: "10:30", status: "no-show" as AppointmentStatus, motif: "Bilan cardiaque", hasPrescription: false, hasReport: false, avatar: "SG", amount: "60 DT" },
-];
+import { 
+  mockPatientAppointmentsFull as initialAppointments, 
+  mockPastAppointments as initialPastAppointments,
+  mockCancelledAppointments 
+} from "@/data/mockData";
 
 const PatientAppointments = () => {
   const [tab, setTab] = useState<Tab>("upcoming");
   const [appointments, setAppointments] = useState(initialAppointments);
-  const [cancelledList, setCancelledList] = useState([
-    { id: 8, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "8 Fév 2026", time: "15:00", reason: "Indisponibilité du praticien", avatar: "SG" },
-    { id: 9, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "20 Jan 2026", time: "11:30", reason: "Annulation par le patient", avatar: "KH" },
-  ]);
+  const [cancelledList, setCancelledList] = useState(mockCancelledAppointments);
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
   // Drawer state for appointment detail
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
