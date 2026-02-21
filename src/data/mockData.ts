@@ -1024,3 +1024,72 @@ export const mockAdminRecentActivity = [
   { type: "paiement", desc: "Paiement reçu - Labo BioSanté (59 DT)", time: "Il y a 8h", status: "success" },
   { type: "signalement", desc: "Patient signale un profil médecin frauduleux", time: "Il y a 12h", status: "warning" },
 ];
+
+// Aliases for backward compatibility
+export const mockAdminStats = [
+  { label: "Utilisateurs", value: "12,458", color: "text-primary", change: "+12%" },
+  { label: "Médecins", value: "1,245", color: "text-accent", change: "+8%" },
+  { label: "Laboratoires", value: "87", color: "text-warning", change: "+3%" },
+  { label: "Pharmacies", value: "234", color: "text-primary", change: "+5%" },
+];
+
+export const mockAdminRevenue = mockAdminRevenueData;
+
+export const mockAdminUsers = [
+  { id: 1, name: "Dr. Ahmed Bouazizi", email: "ahmed@email.tn", phone: "+216 71 234 567", role: "doctor", status: "active", subscription: "Pro", joined: "Jan 2024", lastLogin: "20 Fév 2026", verified: true },
+  { id: 2, name: "Fatma Trabelsi", email: "fatma@email.tn", phone: "+216 55 987 654", role: "patient", status: "active", subscription: "Gratuit", joined: "Mar 2024", lastLogin: "19 Fév 2026", verified: true },
+  { id: 3, name: "Pharmacie El Manar", email: "elmanar@pharmacy.tn", phone: "+216 71 555 666", role: "pharmacy", status: "active", subscription: "Standard", joined: "Juin 2024", lastLogin: "20 Fév 2026", verified: true },
+  { id: 4, name: "Labo BioSanté", email: "biosante@lab.tn", phone: "+216 71 777 888", role: "laboratory", status: "active", subscription: "Pro", joined: "Sep 2024", lastLogin: "18 Fév 2026", verified: true },
+  { id: 5, name: "Dr. Karim Bouzid", email: "karim@email.tn", phone: "+216 71 111 222", role: "doctor", status: "pending", subscription: "—", joined: "18 Fév 2026", lastLogin: "—", verified: false },
+  { id: 6, name: "Dr. Nadia Hamdi", email: "nadia@email.tn", phone: "+216 71 333 444", role: "doctor", status: "pending", subscription: "—", joined: "20 Fév 2026", lastLogin: "—", verified: false },
+  { id: 7, name: "Amine Ben Ali", email: "amine@email.tn", phone: "+216 22 345 678", role: "patient", status: "suspended", subscription: "Gratuit", joined: "Fév 2024", lastLogin: "10 Fév 2026", verified: true },
+];
+
+export const mockAdminReports = [
+  { id: 1, type: "avis", reason: "Avis frauduleux sur le profil du Dr. Mejri", reporter: "Dr. Sonia Gharbi", target: "Patient anonyme", date: "19 Fév 2026", priority: "high", status: "pending" as string, details: "Plusieurs avis 1 étoile publiés en série depuis un compte créé récemment." },
+  { id: 2, type: "profil", reason: "Profil médecin non vérifié avec activité suspecte", reporter: "Système auto", target: "Dr. Fathi Mejri", date: "18 Fév 2026", priority: "high", status: "pending" as string, details: "Ce compte a été créé il y a 3 jours et a déjà publié 15 consultations." },
+  { id: 3, type: "comportement", reason: "Comportement inapproprié en téléconsultation", reporter: "Fatma Trabelsi", target: "Dr. Inconnu", date: "17 Fév 2026", priority: "medium", status: "pending" as string, details: "La patiente rapporte un comportement non professionnel durant une téléconsultation." },
+  { id: 4, type: "contenu", reason: "Photo de profil inappropriée", reporter: "Système auto", target: "Utilisateur #4521", date: "15 Fév 2026", priority: "low", status: "resolved" as string, details: "Photo de profil ne correspondant pas aux normes de la plateforme." },
+];
+
+export const mockAdminSubscriptions = [
+  { name: "Gratuit", count: 8500, revenue: "0 DT" },
+  { name: "Starter (49 DT/mois)", count: 320, revenue: "15,680 DT" },
+  { name: "Pro (129 DT/mois)", count: 145, revenue: "18,705 DT" },
+];
+
+export const mockLabStats = [
+  { label: "Analyses aujourd'hui", value: "24", color: "bg-primary/10 text-primary", change: "+12%" },
+  { label: "En cours", value: "8", color: "bg-warning/10 text-warning", change: "3 urgentes" },
+  { label: "Terminées", value: "14", color: "bg-accent/10 text-accent", change: "+18%" },
+  { label: "CA du jour", value: "1,850 DT", color: "bg-primary/10 text-primary", change: "+8%" },
+];
+
+export const mockLabAnalysesFull = mockLabAnalyses;
+
+export const mockPharmacyStats = [
+  { label: "Ordonnances", value: "18", color: "bg-primary/10 text-primary", change: "+5 aujourd'hui" },
+  { label: "Délivrées", value: "12", color: "bg-accent/10 text-accent", change: "+8%" },
+  { label: "En attente", value: "6", color: "bg-warning/10 text-warning", change: "2 urgentes" },
+  { label: "CA du jour", value: "945 DT", color: "bg-primary/10 text-primary", change: "+12%" },
+];
+
+export const mockPharmacyPrescriptions = [
+  { patient: "Amine Ben Ali", avatar: "AB", doctor: "Dr. Bouazizi", items: 3, date: "20 Fév", total: "85 DT", urgent: false, cnam: true },
+  { patient: "Fatma Trabelsi", avatar: "FT", doctor: "Dr. Gharbi", items: 1, date: "20 Fév", total: "22 DT", urgent: true, cnam: true },
+  { patient: "Karim Mansour", avatar: "KM", doctor: "Dr. Hammami", items: 2, date: "19 Fév", total: "54 DT", urgent: false, cnam: false },
+];
+
+export const mockPharmacyDeliveries = [
+  { patient: "Leila Chahed", time: "09:45", items: ["Amoxicilline", "Paracétamol"], amount: 42 },
+  { patient: "Mohamed Sfar", time: "09:20", items: ["Metformine"], amount: 18 },
+  { patient: "Hana Kammoun", time: "08:50", items: ["Amlodipine", "Aspirine"], amount: 35 },
+];
+
+export const mockSecretaryStats = {
+  rdvTotal: 18,
+  termines: 6,
+  attente: 3,
+  attenteMoy: 12,
+  caJour: 420,
+};
