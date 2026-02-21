@@ -270,10 +270,7 @@ const PatientBooking = () => {
             }>
                   <div className="flex items-center gap-3">
                     <Clock className={`h-4 w-4 shrink-0 ${selectedMotif === m.name ? "text-primary" : "text-muted-foreground"}`} />
-                    <div>
-                      <p className="font-medium text-sm text-foreground">{m.name}</p>
-                      
-                    </div>
+                    <p className="font-medium text-sm text-foreground">{m.name}</p>
                   </div>
                   {selectedMotif === m.name && <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />}
                 </button>

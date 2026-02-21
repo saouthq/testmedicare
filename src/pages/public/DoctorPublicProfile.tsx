@@ -192,7 +192,6 @@ const DoctorPublicProfile = () => {
   ];
 
   const toggleSection = (key: string) => {
-    if (key === "presentation") return; // always open
     setOpenSection(openSection === key ? null : key);
   };
 
@@ -378,11 +377,16 @@ const DoctorPublicProfile = () => {
 
             {activeTab === "info" && (
               <div className="space-y-3 sm:space-y-5">
-                <AccordionSection title="Présentation" sectionKey="presentation" icon={User}>
+                {/* Présentation — always visible, not in accordion */}
+                <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">
+                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary" />
+                    Présentation
+                  </h3>
                   <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
                     {doctorData.presentation}
                   </p>
-                </AccordionSection>
+                </div>
 
                 <AccordionSection title="Expertises & Actes" sectionKey="actes" icon={Briefcase}>
                   <div className="flex flex-wrap gap-1.5 sm:gap-2">
