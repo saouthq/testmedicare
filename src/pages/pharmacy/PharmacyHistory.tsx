@@ -3,24 +3,14 @@ import { useState } from "react";
 import { Clock, User, Pill, CheckCircle2, Search, Download, Calendar, Shield, Banknote, BarChart3, TrendingUp, Filter, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-const history = [
-  { id: "DEL-078", patient: "Sami Ayari", prescription: "ORD-2026-043", items: ["Ibuprofène 400mg", "Tramadol 50mg"], date: "20 Fév 2026", time: "14:30", pharmacist: "S. Maalej", amount: 35, cnam: true, avatar: "SA", type: "full" },
-  { id: "DEL-077", patient: "Rania Meddeb", prescription: "ORD-2026-042", items: ["Ventoline 100µg"], date: "20 Fév 2026", time: "10:15", pharmacist: "A. Kchaou", amount: 22, cnam: true, avatar: "RM", type: "full" },
-  { id: "DEL-076", patient: "Youssef Belhadj", prescription: "ORD-2026-040", items: ["Paracétamol 1g", "Oméprazole 20mg"], date: "19 Fév 2026", time: "16:45", pharmacist: "S. Maalej", amount: 18, cnam: false, avatar: "YB", type: "full" },
-  { id: "DEL-075", patient: "Mohamed Sfar", prescription: "ORD-2026-038", items: ["Amoxicilline 500mg"], date: "18 Fév 2026", time: "09:00", pharmacist: "A. Kchaou", amount: 8.5, cnam: false, avatar: "MS", type: "full" },
-  { id: "DEL-074", patient: "Amine Ben Ali", prescription: "ORD-2026-035", items: ["Metformine 850mg", "Glibenclamide 5mg"], date: "17 Fév 2026", time: "11:20", pharmacist: "S. Maalej", amount: 45, cnam: true, avatar: "AB", type: "full" },
-  { id: "DEL-073", patient: "Fatma Trabelsi", prescription: "ORD-2026-033", items: ["Amlodipine 10mg", "Bisoprolol 5mg"], date: "16 Fév 2026", time: "15:30", pharmacist: "A. Kchaou", amount: 38, cnam: true, avatar: "FT", type: "partial" },
-  { id: "DEL-072", patient: "Nadia Jemni", prescription: "ORD-2026-030", items: ["Doliprane 1g"], date: "15 Fév 2026", time: "10:00", pharmacist: "S. Maalej", amount: 4.5, cnam: true, avatar: "NJ", type: "full" },
-  { id: "DEL-071", patient: "Karim Mansour", prescription: "ORD-2026-028", items: ["Augmentin 1g", "Nifuroxazide 200mg"], date: "14 Fév 2026", time: "14:15", pharmacist: "A. Kchaou", amount: 25, cnam: false, avatar: "KM", type: "full" },
-];
+import { mockPharmacyHistory } from "@/data/mockData";
 
 const PharmacyHistory = () => {
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const filtered = history.filter(h => {
+  const filtered = mockPharmacyHistory.filter(h => {
     if (search && !h.patient.toLowerCase().includes(search.toLowerCase()) && !h.id.toLowerCase().includes(search.toLowerCase())) return false;
     if (typeFilter === "cnam" && !h.cnam) return false;
     if (typeFilter === "partial" && h.type !== "partial") return false;
@@ -31,8 +21,8 @@ const PharmacyHistory = () => {
 
   const totalAmount = filtered.reduce((sum, h) => sum + h.amount, 0);
   const cnamAmount = filtered.filter(h => h.cnam).reduce((sum, h) => sum + h.amount, 0);
-  const todayAmount = history.filter(h => h.date === "20 Fév 2026").reduce((sum, h) => sum + h.amount, 0);
-  const todayCount = history.filter(h => h.date === "20 Fév 2026").length;
+  const todayAmount = mockPharmacyHistory.filter(h => h.date === "20 Fév 2026").reduce((sum, h) => sum + h.amount, 0);
+  const todayCount = mockPharmacyHistory.filter(h => h.date === "20 Fév 2026").length;
 
   return (
     <DashboardLayout role="pharmacy" title="Historique des délivrances">

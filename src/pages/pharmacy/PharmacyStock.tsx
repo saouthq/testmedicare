@@ -4,23 +4,12 @@ import { Search, AlertTriangle, Package, Plus, ShoppingCart, ArrowDown, ArrowUp,
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { mockPharmacyStock, mockPharmacyCategories } from "@/data/mockData";
 
 interface StockItem {
   id: number; name: string; category: string; quantity: number; threshold: number;
   status: string; price: string; expiry: string; supplier: string;
 }
-
-const initialStock: StockItem[] = [
-  { id: 1, name: "Amoxicilline 500mg", category: "Antibiotiques", quantity: 245, threshold: 50, status: "ok", price: "8.5 DT", expiry: "Mar 2027", supplier: "Siphat" },
-  { id: 2, name: "Paracétamol 1g", category: "Antalgiques", quantity: 532, threshold: 100, status: "ok", price: "3.2 DT", expiry: "Juin 2027", supplier: "Adwya" },
-  { id: 3, name: "Ibuprofène 400mg", category: "Anti-inflammatoires", quantity: 12, threshold: 50, status: "low", price: "6.8 DT", expiry: "Déc 2026", supplier: "Siphat" },
-  { id: 4, name: "Metformine 850mg", category: "Antidiabétiques", quantity: 89, threshold: 30, status: "ok", price: "12 DT", expiry: "Sep 2027", supplier: "Sanofi" },
-  { id: 5, name: "Ventoline 100µg", category: "Bronchodilatateurs", quantity: 5, threshold: 20, status: "critical", price: "18 DT", expiry: "Fév 2027", supplier: "GSK" },
-  { id: 6, name: "Oméprazole 20mg", category: "Anti-acides", quantity: 8, threshold: 30, status: "critical", price: "9.5 DT", expiry: "Jan 2027", supplier: "Adwya" },
-  { id: 7, name: "Amlodipine 10mg", category: "Antihypertenseurs", quantity: 67, threshold: 25, status: "ok", price: "15 DT", expiry: "Avr 2027", supplier: "Medis" },
-  { id: 8, name: "Bisoprolol 5mg", category: "Bêtabloquants", quantity: 42, threshold: 20, status: "ok", price: "11 DT", expiry: "Mai 2027", supplier: "Sanofi" },
-  { id: 9, name: "Glibenclamide 5mg", category: "Antidiabétiques", quantity: 18, threshold: 25, status: "low", price: "7 DT", expiry: "Nov 2026", supplier: "Siphat" },
-];
 
 const statusConfig: Record<string, { label: string; class: string }> = {
   ok: { label: "En stock", class: "bg-accent/10 text-accent" },
@@ -28,10 +17,8 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   critical: { label: "Rupture", class: "bg-destructive/10 text-destructive" },
 };
 
-const categories = ["Tous", "Antibiotiques", "Antalgiques", "Anti-inflammatoires", "Antidiabétiques", "Antihypertenseurs", "Bronchodilatateurs", "Anti-acides", "Bêtabloquants"];
-
 const PharmacyStock = () => {
-  const [stock, setStock] = useState(initialStock);
+  const [stock, setStock] = useState<StockItem[]>(mockPharmacyStock.map(s => ({ ...s, expiry: s.expiry || "", supplier: s.supplier || "" })));
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [sortBy, setSortBy] = useState<"name" | "quantity">("name");
@@ -113,7 +100,7 @@ const PharmacyStock = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {categories.map(c => (
+          {mockPharmacyCategories.map(c => (
             <button key={c} onClick={() => setSelectedCategory(c)}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${selectedCategory === c ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
               {c}
@@ -128,7 +115,7 @@ const PharmacyStock = () => {
               <div><Label className="text-xs">Nom</Label><Input value={newItem.name} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} className="mt-1 h-9" placeholder="Ex: Doliprane 500mg" /></div>
               <div><Label className="text-xs">Catégorie</Label>
                 <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value }))} className="mt-1 w-full h-9 rounded-md border bg-background px-3 text-sm">
-                  {categories.filter(c => c !== "Tous").map(c => <option key={c}>{c}</option>)}
+                  {mockPharmacyCategories.filter(c => c !== "Tous").map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div><Label className="text-xs">Quantité</Label><Input type="number" value={newItem.quantity} onChange={e => setNewItem(p => ({ ...p, quantity: e.target.value }))} className="mt-1 h-9" /></div>

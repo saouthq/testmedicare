@@ -6,23 +6,24 @@ import {
   Search, Download, Filter, Clock, User, Shield, AlertTriangle,
   CheckCircle2, XCircle, LogIn, LogOut, Edit, Trash2, Eye, Settings
 } from "lucide-react";
+import { mockAdminLogs } from "@/data/mockData";
 
 type LogLevel = "all" | "info" | "warning" | "error" | "security";
 
-const logs = [
-  { id: 1, time: "20 Fév 09:45", user: "Dr. Bouazizi", action: "Connexion", detail: "Connexion réussie depuis 196.203.xx.xx", level: "info", icon: LogIn },
-  { id: 2, time: "20 Fév 09:42", user: "Admin", action: "Validation compte", detail: "Dr. Karim Bouzid — Cardiologue approuvé", level: "info", icon: CheckCircle2 },
-  { id: 3, time: "20 Fév 09:38", user: "Système", action: "Alerte sécurité", detail: "3 tentatives de connexion échouées — IP 41.226.xx.xx", level: "security", icon: Shield },
-  { id: 4, time: "20 Fév 09:30", user: "Dr. Gharbi", action: "Modification profil", detail: "Mise à jour des horaires d'ouverture", level: "info", icon: Edit },
-  { id: 5, time: "20 Fév 09:15", user: "Admin", action: "Suspension compte", detail: "Dr. Fathi Mejri — Profil signalé pour fraude", level: "warning", icon: XCircle },
-  { id: 6, time: "20 Fév 09:10", user: "Pharmacie El Amal", action: "Inscription", detail: "Nouvelle inscription — En attente de validation", level: "info", icon: User },
-  { id: 7, time: "20 Fév 09:00", user: "Système", action: "Sauvegarde automatique", detail: "Base de données sauvegardée avec succès", level: "info", icon: Settings },
-  { id: 8, time: "20 Fév 08:55", user: "Admin", action: "Rejet inscription", detail: "Labo XYZ — Documents non conformes", level: "warning", icon: XCircle },
-  { id: 9, time: "19 Fév 22:00", user: "Système", action: "Maintenance planifiée", detail: "Nettoyage des sessions expirées", level: "info", icon: Settings },
-  { id: 10, time: "19 Fév 18:30", user: "Patient inconnu", action: "Tentative d'accès", detail: "Accès refusé — Token expiré", level: "error", icon: AlertTriangle },
-  { id: 11, time: "19 Fév 17:00", user: "Admin", action: "Export données", detail: "Export CSV des utilisateurs actifs", level: "info", icon: Download },
-  { id: 12, time: "19 Fév 15:30", user: "Dr. Hammami", action: "Suppression RDV", detail: "Annulation du RDV #4532", level: "warning", icon: Trash2 },
-];
+const iconMap: Record<string, any> = {
+  "Connexion": LogIn,
+  "Validation compte": CheckCircle2,
+  "Alerte sécurité": Shield,
+  "Modification profil": Edit,
+  "Suspension compte": XCircle,
+  "Inscription": User,
+  "Sauvegarde automatique": Settings,
+  "Rejet inscription": XCircle,
+  "Maintenance planifiée": Settings,
+  "Tentative d'accès": AlertTriangle,
+  "Export données": Download,
+  "Suppression RDV": Trash2,
+};
 
 const levelConfig: Record<string, { label: string; class: string }> = {
   info: { label: "Info", class: "bg-primary/10 text-primary" },
@@ -35,7 +36,7 @@ const AdminLogs = () => {
   const [filter, setFilter] = useState<LogLevel>("all");
   const [search, setSearch] = useState("");
 
-  const filtered = logs.filter(l => {
+  const filtered = mockAdminLogs.filter(l => {
     if (filter !== "all" && l.level !== filter) return false;
     if (search && !l.user.toLowerCase().includes(search.toLowerCase()) && !l.action.toLowerCase().includes(search.toLowerCase()) && !l.detail.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -67,10 +68,11 @@ const AdminLogs = () => {
         <div className="rounded-xl border bg-card shadow-card divide-y">
           {filtered.map(log => {
             const config = levelConfig[log.level];
+            const LogIcon = iconMap[log.action] || Settings;
             return (
               <div key={log.id} className="flex items-start gap-4 px-5 py-4 hover:bg-muted/20 transition-colors">
                 <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${config.class}`}>
-                  <log.icon className="h-4 w-4" />
+                  <LogIcon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">

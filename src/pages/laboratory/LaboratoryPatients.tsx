@@ -3,15 +3,7 @@ import { useState } from "react";
 import { Search, User, Calendar, FileText, FlaskConical, Phone, Eye, Shield, ChevronRight, Activity } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-const patients = [
-  { name: "Amine Ben Ali", age: 34, lastAnalysis: "Bilan sanguin", date: "20 Fév 2026", status: "in_progress", total: 8, phone: "+216 71 234 567", cnam: true, avatar: "AB" },
-  { name: "Fatma Trabelsi", age: 56, lastAnalysis: "Analyse d'urine", date: "19 Fév 2026", status: "ready", total: 12, phone: "+216 22 345 678", cnam: true, avatar: "FT" },
-  { name: "Mohamed Sfar", age: 28, lastAnalysis: "TSH", date: "20 Fév 2026", status: "waiting", total: 3, phone: "+216 55 456 789", cnam: false, avatar: "MS" },
-  { name: "Nadia Jemni", age: 67, lastAnalysis: "Glycémie", date: "18 Fév 2026", status: "ready", total: 15, phone: "+216 98 567 890", cnam: true, avatar: "NJ" },
-  { name: "Sami Ayari", age: 42, lastAnalysis: "Hémogramme", date: "20 Fév 2026", status: "in_progress", total: 6, phone: "+216 29 678 901", cnam: true, avatar: "SA" },
-  { name: "Rania Meddeb", age: 38, lastAnalysis: "Bilan lipidique", date: "17 Fév 2026", status: "ready", total: 9, phone: "+216 52 789 012", cnam: true, avatar: "RM" },
-];
+import { mockLabPatients } from "@/data/mockData";
 
 const statusConfig: Record<string, { label: string; class: string }> = {
   in_progress: { label: "En cours", class: "bg-primary/10 text-primary" },
@@ -21,9 +13,9 @@ const statusConfig: Record<string, { label: string; class: string }> = {
 
 const LaboratoryPatients = () => {
   const [search, setSearch] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState<typeof patients[0] | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<typeof mockLabPatients[0] | null>(null);
 
-  const filtered = patients.filter(p =>
+  const filtered = mockLabPatients.filter(p =>
     !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.phone.includes(search)
   );
 

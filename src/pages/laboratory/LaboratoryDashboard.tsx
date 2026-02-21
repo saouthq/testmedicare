@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { mockLabStats, mockLabAnalysesFull } from "@/data/mockData";
+import { mockLabStats, mockLabAnalyses } from "@/data/mockData";
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
   in_progress: { label: "En cours", class: "bg-primary/10 text-primary", icon: Activity },
@@ -50,7 +50,7 @@ const LaboratoryDashboard = () => {
                 <Link to="/dashboard/laboratory/analyses" className="text-sm text-primary hover:underline flex items-center gap-1">Tout voir <ChevronRight className="h-4 w-4" /></Link>
               </div>
               <div className="divide-y">
-                {mockLabAnalysesFull.map((a, i) => {
+                {mockLabAnalyses.map((a, i) => {
                   const config = statusConfig[a.status];
                   const isSent = sentIds.includes(i);
                   return (

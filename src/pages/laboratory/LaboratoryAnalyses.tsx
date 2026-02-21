@@ -4,20 +4,7 @@ import { FlaskConical, Search, Plus, Clock, CheckCircle2, AlertCircle, Activity,
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-
-interface Analysis {
-  id: string; patient: string; type: string; doctor: string; date: string;
-  status: string; amount: string; cnam: boolean; avatar: string; priority: string;
-}
-
-const initialAnalyses: Analysis[] = [
-  { id: "ANA-001", patient: "Amine Ben Ali", type: "Bilan sanguin complet", doctor: "Dr. Bouazizi", date: "20 Fév 2026", status: "in_progress", amount: "85 DT", cnam: true, avatar: "AB", priority: "normal" },
-  { id: "ANA-002", patient: "Fatma Trabelsi", type: "Analyse d'urine", doctor: "Dr. Gharbi", date: "19 Fév 2026", status: "ready", amount: "35 DT", cnam: true, avatar: "FT", priority: "normal" },
-  { id: "ANA-003", patient: "Mohamed Sfar", type: "TSH - Thyroïde", doctor: "Dr. Hammami", date: "20 Fév 2026", status: "waiting", amount: "45 DT", cnam: false, avatar: "MS", priority: "urgent" },
-  { id: "ANA-004", patient: "Nadia Jemni", type: "Glycémie à jeun", doctor: "Dr. Bouazizi", date: "18 Fév 2026", status: "ready", amount: "25 DT", cnam: true, avatar: "NJ", priority: "normal" },
-  { id: "ANA-005", patient: "Sami Ayari", type: "Hémogramme (NFS)", doctor: "Dr. Bouazizi", date: "20 Fév 2026", status: "in_progress", amount: "40 DT", cnam: true, avatar: "SA", priority: "normal" },
-  { id: "ANA-006", patient: "Rania Meddeb", type: "Bilan lipidique", doctor: "Dr. Bouazizi", date: "17 Fév 2026", status: "ready", amount: "55 DT", cnam: true, avatar: "RM", priority: "normal" },
-];
+import { mockLabAnalysesDetail, mockLabAnalysisTypes, type LabAnalysis } from "@/data/mockData";
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
   waiting: { label: "Attente prélèvement", class: "bg-warning/10 text-warning", icon: AlertCircle },
@@ -26,14 +13,12 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
   sent: { label: "Envoyé", class: "bg-muted text-muted-foreground", icon: CheckCircle2 },
 };
 
-const analysisTypes = ["Bilan sanguin complet", "NFS (Hémogramme)", "Glycémie à jeun", "HbA1c", "Bilan lipidique", "TSH", "Bilan hépatique", "Bilan rénal", "CRP", "Analyse d'urine", "Vitamine D", "Sérologie"];
-
 const LaboratoryAnalyses = () => {
-  const [analyses, setAnalyses] = useState(initialAnalyses);
+  const [analyses, setAnalyses] = useState<LabAnalysis[]>(mockLabAnalysesDetail);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
-  const [newAnalysis, setNewAnalysis] = useState({ patient: "", type: analysisTypes[0], doctor: "", amount: "", cnam: true, priority: "normal" });
+  const [newAnalysis, setNewAnalysis] = useState({ patient: "", type: mockLabAnalysisTypes[0], doctor: "", amount: "", cnam: true, priority: "normal" });
 
   const filtered = analyses.filter(a => {
     if (filter !== "all" && a.status !== filter) return false;
@@ -56,7 +41,7 @@ const LaboratoryAnalyses = () => {
       priority: newAnalysis.priority,
     }]);
     setShowNew(false);
-    setNewAnalysis({ patient: "", type: analysisTypes[0], doctor: "", amount: "", cnam: true, priority: "normal" });
+    setNewAnalysis({ patient: "", type: mockLabAnalysisTypes[0], doctor: "", amount: "", cnam: true, priority: "normal" });
   };
 
   return (
@@ -95,7 +80,7 @@ const LaboratoryAnalyses = () => {
               <div><Label className="text-xs">Patient</Label><Input value={newAnalysis.patient} onChange={e => setNewAnalysis(p => ({ ...p, patient: e.target.value }))} className="mt-1 h-9" placeholder="Nom du patient" /></div>
               <div><Label className="text-xs">Type d'analyse</Label>
                 <select value={newAnalysis.type} onChange={e => setNewAnalysis(p => ({ ...p, type: e.target.value }))} className="mt-1 w-full h-9 rounded-md border bg-background px-3 text-sm">
-                  {analysisTypes.map(t => <option key={t}>{t}</option>)}
+                  {mockLabAnalysisTypes.map(t => <option key={t}>{t}</option>)}
                 </select>
               </div>
               <div><Label className="text-xs">Médecin prescripteur</Label><Input value={newAnalysis.doctor} onChange={e => setNewAnalysis(p => ({ ...p, doctor: e.target.value }))} className="mt-1 h-9" placeholder="Dr. ..." /></div>
