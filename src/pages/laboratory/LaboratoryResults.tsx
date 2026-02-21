@@ -3,49 +3,14 @@ import { useState } from "react";
 import { FileText, Download, Send, Eye, Shield, ArrowUp, ArrowDown, Minus, User, Calendar, Banknote, CheckCircle2, Search, Filter, Edit, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
-interface ResultValue { name: string; value: string; ref: string; status: string; }
-interface Result {
-  id: string; analysis: string; patient: string; type: string; date: string;
-  doctor: string; sent: boolean; amount: string; cnam: boolean; avatar: string;
-  values: ResultValue[];
-}
-
-const initialResults: Result[] = [
-  {
-    id: "RES-001", analysis: "ANA-002", patient: "Fatma Trabelsi", type: "Analyse d'urine", date: "19 Fév 2026",
-    doctor: "Dr. Gharbi", sent: true, amount: "35 DT", cnam: true, avatar: "FT",
-    values: [
-      { name: "pH", value: "6.5", ref: "5.0 - 8.0", status: "normal" },
-      { name: "Protéines", value: "Négatif", ref: "Négatif", status: "normal" },
-      { name: "Glucose", value: "Négatif", ref: "Négatif", status: "normal" },
-      { name: "Leucocytes", value: "Négatif", ref: "Négatif", status: "normal" },
-    ],
-  },
-  {
-    id: "RES-002", analysis: "ANA-004", patient: "Nadia Jemni", type: "Glycémie à jeun", date: "18 Fév 2026",
-    doctor: "Dr. Bouazizi", sent: false, amount: "25 DT", cnam: true, avatar: "NJ",
-    values: [{ name: "Glycémie", value: "1.32 g/L", ref: "0.70 - 1.10 g/L", status: "high" }],
-  },
-  {
-    id: "RES-003", analysis: "ANA-006", patient: "Rania Meddeb", type: "Bilan lipidique", date: "17 Fév 2026",
-    doctor: "Dr. Bouazizi", sent: true, amount: "55 DT", cnam: true, avatar: "RM",
-    values: [
-      { name: "Cholestérol total", value: "2.40 g/L", ref: "< 2.00 g/L", status: "high" },
-      { name: "HDL", value: "0.55 g/L", ref: "> 0.40 g/L", status: "normal" },
-      { name: "LDL", value: "1.60 g/L", ref: "< 1.30 g/L", status: "high" },
-      { name: "Triglycérides", value: "1.20 g/L", ref: "< 1.50 g/L", status: "normal" },
-    ],
-  },
-];
+import { mockLabResults, type LabResult, type LabResultValue } from "@/data/mockData";
 
 const LaboratoryResults = () => {
-  const [results, setResults] = useState(initialResults);
+  const [results, setResults] = useState<LabResult[]>(mockLabResults);
   const [search, setSearch] = useState("");
   const [filterSent, setFilterSent] = useState<"all" | "sent" | "pending">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<ResultValue[]>([]);
+  const [editValues, setEditValues] = useState<LabResultValue[]>([]);
 
   const filtered = results.filter(r => {
     if (search && !r.patient.toLowerCase().includes(search.toLowerCase()) && !r.id.toLowerCase().includes(search.toLowerCase())) return false;
@@ -58,7 +23,7 @@ const LaboratoryResults = () => {
     setResults(prev => prev.map(r => r.id === id ? { ...r, sent: true } : r));
   };
 
-  const handleStartEdit = (r: Result) => {
+  const handleStartEdit = (r: LabResult) => {
     setEditingId(r.id);
     setEditValues([...r.values]);
   };

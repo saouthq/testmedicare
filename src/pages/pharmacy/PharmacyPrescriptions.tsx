@@ -3,47 +3,10 @@ import { useState } from "react";
 import { FileText, Search, CheckCircle2, Clock, Pill, Eye, Printer, Shield, AlertCircle, User, X, Package, Send, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-interface PrescriptionItem {
-  name: string;
-  available: boolean;
-  quantity: number;
-  price: string;
-}
-
-interface Prescription {
-  id: string; patient: string; doctor: string; date: string;
-  items: PrescriptionItem[]; status: string; total: string;
-  cnam: boolean; avatar: string; urgent: boolean;
-}
-
-const initialPrescriptions: Prescription[] = [
-  { id: "ORD-2026-045", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", items: [
-    { name: "Metformine 850mg", available: true, quantity: 60, price: "12 DT" },
-    { name: "Glibenclamide 5mg", available: true, quantity: 30, price: "7 DT" },
-    { name: "Oméprazole 20mg", available: false, quantity: 0, price: "9.5 DT" },
-  ], status: "pending", total: "28.5 DT", cnam: true, avatar: "AB", urgent: false },
-  { id: "ORD-2026-044", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", items: [
-    { name: "Amlodipine 10mg", available: true, quantity: 30, price: "15 DT" },
-  ], status: "pending", total: "15 DT", cnam: true, avatar: "FT", urgent: true },
-  { id: "ORD-2026-043", patient: "Mohamed Sfar", doctor: "Dr. Hammami", date: "17 Fév", items: [
-    { name: "Ibuprofène 400mg", available: true, quantity: 20, price: "6.8 DT" },
-    { name: "Tramadol 50mg", available: true, quantity: 10, price: "11 DT" },
-  ], status: "delivered", total: "17.8 DT", cnam: false, avatar: "MS", urgent: false },
-  { id: "ORD-2026-042", patient: "Nadia Jemni", doctor: "Dr. Bouazizi", date: "15 Fév", items: [
-    { name: "Ventoline 100µg", available: true, quantity: 1, price: "18 DT" },
-  ], status: "delivered", total: "18 DT", cnam: true, avatar: "NJ", urgent: false },
-  { id: "ORD-2026-041", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "14 Fév", items: [
-    { name: "Paracétamol 1g", available: true, quantity: 16, price: "3.2 DT" },
-    { name: "Amoxicilline 500mg", available: true, quantity: 24, price: "8.5 DT" },
-  ], status: "delivered", total: "11.7 DT", cnam: true, avatar: "SA", urgent: false },
-  { id: "ORD-2026-040", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "12 Fév", items: [
-    { name: "Bisoprolol 5mg", available: true, quantity: 30, price: "11 DT" },
-  ], status: "partial", total: "11 DT", cnam: true, avatar: "RM", urgent: false },
-];
+import { mockPharmacyPrescriptionsFull, type PharmacyPrescription } from "@/data/mockData";
 
 const PharmacyPrescriptions = () => {
-  const [prescriptions, setPrescriptions] = useState(initialPrescriptions);
+  const [prescriptions, setPrescriptions] = useState<PharmacyPrescription[]>(mockPharmacyPrescriptionsFull);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);

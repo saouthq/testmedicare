@@ -1093,3 +1093,128 @@ export const mockSecretaryStats = {
   attenteMoy: 12,
   caJour: 420,
 };
+
+// ─── Pharmacy Prescriptions (full detail) ────────────────────
+
+export interface PharmacyPrescriptionItem {
+  name: string;
+  available: boolean;
+  quantity: number;
+  price: string;
+}
+
+export interface PharmacyPrescription {
+  id: string; patient: string; doctor: string; date: string;
+  items: PharmacyPrescriptionItem[]; status: string; total: string;
+  cnam: boolean; avatar: string; urgent: boolean;
+}
+
+export const mockPharmacyPrescriptionsFull: PharmacyPrescription[] = [
+  { id: "ORD-2026-045", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", items: [
+    { name: "Metformine 850mg", available: true, quantity: 60, price: "12 DT" },
+    { name: "Glibenclamide 5mg", available: true, quantity: 30, price: "7 DT" },
+    { name: "Oméprazole 20mg", available: false, quantity: 0, price: "9.5 DT" },
+  ], status: "pending", total: "28.5 DT", cnam: true, avatar: "AB", urgent: false },
+  { id: "ORD-2026-044", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", items: [
+    { name: "Amlodipine 10mg", available: true, quantity: 30, price: "15 DT" },
+  ], status: "pending", total: "15 DT", cnam: true, avatar: "FT", urgent: true },
+  { id: "ORD-2026-043", patient: "Mohamed Sfar", doctor: "Dr. Hammami", date: "17 Fév", items: [
+    { name: "Ibuprofène 400mg", available: true, quantity: 20, price: "6.8 DT" },
+    { name: "Tramadol 50mg", available: true, quantity: 10, price: "11 DT" },
+  ], status: "delivered", total: "17.8 DT", cnam: false, avatar: "MS", urgent: false },
+  { id: "ORD-2026-042", patient: "Nadia Jemni", doctor: "Dr. Bouazizi", date: "15 Fév", items: [
+    { name: "Ventoline 100µg", available: true, quantity: 1, price: "18 DT" },
+  ], status: "delivered", total: "18 DT", cnam: true, avatar: "NJ", urgent: false },
+  { id: "ORD-2026-041", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "14 Fév", items: [
+    { name: "Paracétamol 1g", available: true, quantity: 16, price: "3.2 DT" },
+    { name: "Amoxicilline 500mg", available: true, quantity: 24, price: "8.5 DT" },
+  ], status: "delivered", total: "11.7 DT", cnam: true, avatar: "SA", urgent: false },
+  { id: "ORD-2026-040", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "12 Fév", items: [
+    { name: "Bisoprolol 5mg", available: true, quantity: 30, price: "11 DT" },
+  ], status: "partial", total: "11 DT", cnam: true, avatar: "RM", urgent: false },
+];
+
+// ─── Pharmacy History ────────────────────────────────────────
+
+export const mockPharmacyHistory = [
+  { id: "DEL-078", patient: "Sami Ayari", prescription: "ORD-2026-043", items: ["Ibuprofène 400mg", "Tramadol 50mg"], date: "20 Fév 2026", time: "14:30", pharmacist: "S. Maalej", amount: 35, cnam: true, avatar: "SA", type: "full" },
+  { id: "DEL-077", patient: "Rania Meddeb", prescription: "ORD-2026-042", items: ["Ventoline 100µg"], date: "20 Fév 2026", time: "10:15", pharmacist: "A. Kchaou", amount: 22, cnam: true, avatar: "RM", type: "full" },
+  { id: "DEL-076", patient: "Youssef Belhadj", prescription: "ORD-2026-040", items: ["Paracétamol 1g", "Oméprazole 20mg"], date: "19 Fév 2026", time: "16:45", pharmacist: "S. Maalej", amount: 18, cnam: false, avatar: "YB", type: "full" },
+  { id: "DEL-075", patient: "Mohamed Sfar", prescription: "ORD-2026-038", items: ["Amoxicilline 500mg"], date: "18 Fév 2026", time: "09:00", pharmacist: "A. Kchaou", amount: 8.5, cnam: false, avatar: "MS", type: "full" },
+  { id: "DEL-074", patient: "Amine Ben Ali", prescription: "ORD-2026-035", items: ["Metformine 850mg", "Glibenclamide 5mg"], date: "17 Fév 2026", time: "11:20", pharmacist: "S. Maalej", amount: 45, cnam: true, avatar: "AB", type: "full" },
+  { id: "DEL-073", patient: "Fatma Trabelsi", prescription: "ORD-2026-033", items: ["Amlodipine 10mg", "Bisoprolol 5mg"], date: "16 Fév 2026", time: "15:30", pharmacist: "A. Kchaou", amount: 38, cnam: true, avatar: "FT", type: "partial" },
+  { id: "DEL-072", patient: "Nadia Jemni", prescription: "ORD-2026-030", items: ["Doliprane 1g"], date: "15 Fév 2026", time: "10:00", pharmacist: "S. Maalej", amount: 4.5, cnam: true, avatar: "NJ", type: "full" },
+  { id: "DEL-071", patient: "Karim Mansour", prescription: "ORD-2026-028", items: ["Augmentin 1g", "Nifuroxazide 200mg"], date: "14 Fév 2026", time: "14:15", pharmacist: "A. Kchaou", amount: 25, cnam: false, avatar: "KM", type: "full" },
+];
+
+// ─── Laboratory Analyses (full detail) ───────────────────────
+
+export interface LabAnalysis {
+  id: string; patient: string; type: string; doctor: string; date: string;
+  status: string; amount: string; cnam: boolean; avatar: string; priority: string;
+}
+
+export const mockLabAnalysesDetail: LabAnalysis[] = [
+  { id: "ANA-001", patient: "Amine Ben Ali", type: "Bilan sanguin complet", doctor: "Dr. Bouazizi", date: "20 Fév 2026", status: "in_progress", amount: "85 DT", cnam: true, avatar: "AB", priority: "normal" },
+  { id: "ANA-002", patient: "Fatma Trabelsi", type: "Analyse d'urine", doctor: "Dr. Gharbi", date: "19 Fév 2026", status: "ready", amount: "35 DT", cnam: true, avatar: "FT", priority: "normal" },
+  { id: "ANA-003", patient: "Mohamed Sfar", type: "TSH - Thyroïde", doctor: "Dr. Hammami", date: "20 Fév 2026", status: "waiting", amount: "45 DT", cnam: false, avatar: "MS", priority: "urgent" },
+  { id: "ANA-004", patient: "Nadia Jemni", type: "Glycémie à jeun", doctor: "Dr. Bouazizi", date: "18 Fév 2026", status: "ready", amount: "25 DT", cnam: true, avatar: "NJ", priority: "normal" },
+  { id: "ANA-005", patient: "Sami Ayari", type: "Hémogramme (NFS)", doctor: "Dr. Bouazizi", date: "20 Fév 2026", status: "in_progress", amount: "40 DT", cnam: true, avatar: "SA", priority: "normal" },
+  { id: "ANA-006", patient: "Rania Meddeb", type: "Bilan lipidique", doctor: "Dr. Bouazizi", date: "17 Fév 2026", status: "ready", amount: "55 DT", cnam: true, avatar: "RM", priority: "normal" },
+];
+
+export const mockLabAnalysisTypes = ["Bilan sanguin complet", "NFS (Hémogramme)", "Glycémie à jeun", "HbA1c", "Bilan lipidique", "TSH", "Bilan hépatique", "Bilan rénal", "CRP", "Analyse d'urine", "Vitamine D", "Sérologie"];
+
+// ─── Laboratory Results ──────────────────────────────────────
+
+export interface LabResultValue { name: string; value: string; ref: string; status: string; }
+export interface LabResult {
+  id: string; analysis: string; patient: string; type: string; date: string;
+  doctor: string; sent: boolean; amount: string; cnam: boolean; avatar: string;
+  values: LabResultValue[];
+}
+
+export const mockLabResults: LabResult[] = [
+  {
+    id: "RES-001", analysis: "ANA-002", patient: "Fatma Trabelsi", type: "Analyse d'urine", date: "19 Fév 2026",
+    doctor: "Dr. Gharbi", sent: true, amount: "35 DT", cnam: true, avatar: "FT",
+    values: [
+      { name: "pH", value: "6.5", ref: "5.0 - 8.0", status: "normal" },
+      { name: "Protéines", value: "Négatif", ref: "Négatif", status: "normal" },
+      { name: "Glucose", value: "Négatif", ref: "Négatif", status: "normal" },
+      { name: "Leucocytes", value: "Négatif", ref: "Négatif", status: "normal" },
+    ],
+  },
+  {
+    id: "RES-002", analysis: "ANA-004", patient: "Nadia Jemni", type: "Glycémie à jeun", date: "18 Fév 2026",
+    doctor: "Dr. Bouazizi", sent: false, amount: "25 DT", cnam: true, avatar: "NJ",
+    values: [{ name: "Glycémie", value: "1.32 g/L", ref: "0.70 - 1.10 g/L", status: "high" }],
+  },
+  {
+    id: "RES-003", analysis: "ANA-006", patient: "Rania Meddeb", type: "Bilan lipidique", date: "17 Fév 2026",
+    doctor: "Dr. Bouazizi", sent: true, amount: "55 DT", cnam: true, avatar: "RM",
+    values: [
+      { name: "Cholestérol total", value: "2.40 g/L", ref: "< 2.00 g/L", status: "high" },
+      { name: "HDL", value: "0.55 g/L", ref: "> 0.40 g/L", status: "normal" },
+      { name: "LDL", value: "1.60 g/L", ref: "< 1.30 g/L", status: "high" },
+      { name: "Triglycérides", value: "1.20 g/L", ref: "< 1.50 g/L", status: "normal" },
+    ],
+  },
+];
+
+// ─── Admin Logs ──────────────────────────────────────────────
+
+export const mockAdminLogs = [
+  { id: 1, time: "20 Fév 09:45", user: "Dr. Bouazizi", action: "Connexion", detail: "Connexion réussie depuis 196.203.xx.xx", level: "info" },
+  { id: 2, time: "20 Fév 09:42", user: "Admin", action: "Validation compte", detail: "Dr. Karim Bouzid — Cardiologue approuvé", level: "info" },
+  { id: 3, time: "20 Fév 09:38", user: "Système", action: "Alerte sécurité", detail: "3 tentatives de connexion échouées — IP 41.226.xx.xx", level: "security" },
+  { id: 4, time: "20 Fév 09:30", user: "Dr. Gharbi", action: "Modification profil", detail: "Mise à jour des horaires d'ouverture", level: "info" },
+  { id: 5, time: "20 Fév 09:15", user: "Admin", action: "Suspension compte", detail: "Dr. Fathi Mejri — Profil signalé pour fraude", level: "warning" },
+  { id: 6, time: "20 Fév 09:10", user: "Pharmacie El Amal", action: "Inscription", detail: "Nouvelle inscription — En attente de validation", level: "info" },
+  { id: 7, time: "20 Fév 09:00", user: "Système", action: "Sauvegarde automatique", detail: "Base de données sauvegardée avec succès", level: "info" },
+  { id: 8, time: "20 Fév 08:55", user: "Admin", action: "Rejet inscription", detail: "Labo XYZ — Documents non conformes", level: "warning" },
+  { id: 9, time: "19 Fév 22:00", user: "Système", action: "Maintenance planifiée", detail: "Nettoyage des sessions expirées", level: "info" },
+  { id: 10, time: "19 Fév 18:30", user: "Patient inconnu", action: "Tentative d'accès", detail: "Accès refusé — Token expiré", level: "error" },
+  { id: 11, time: "19 Fév 17:00", user: "Admin", action: "Export données", detail: "Export CSV des utilisateurs actifs", level: "info" },
+  { id: 12, time: "19 Fév 15:30", user: "Dr. Hammami", action: "Suppression RDV", detail: "Annulation du RDV #4532", level: "warning" },
+];
