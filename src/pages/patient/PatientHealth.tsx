@@ -1,10 +1,10 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send } from "lucide-react";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-/* Health section = menu list (Doctolib / iOS style) */
 type HealthSection = "menu" | "documents" | "antecedents" | "treatments" | "allergies" | "habits" | "family" | "surgeries" | "vaccinations" | "measures" | "ai";
 
 const menuItems: { key: HealthSection; label: string; icon: any; count?: number }[] = [
@@ -19,24 +19,21 @@ const menuItems: { key: HealthSection; label: string; icon: any; count?: number 
   { key: "measures", label: "Mesures", icon: Thermometer },
 ];
 
-/* Mock data */
 import {
-  mockHealthDocuments as documents,
-  mockAntecedents as antecedents,
-  mockTreatments as treatments,
-  mockAllergies as allergies,
+  mockHealthDocuments as initialDocuments,
+  mockAntecedents as initialAntecedents,
+  mockTreatments as initialTreatments,
+  mockAllergies as initialAllergies,
   mockHabits as habits,
-  mockFamilyHistory as familyHistory,
-  mockSurgeries as surgeries,
-  mockVaccinations as vaccinations,
-  mockMeasures as measures,
+  mockFamilyHistory as initialFamily,
+  mockSurgeries as initialSurgeries,
+  mockVaccinations as initialVaccinations,
+  mockMeasures as initialMeasures,
   mockPatientAiInitial as aiInitial,
   mockPatientAiResponses as aiMockResponses
 } from "@/data/mockData";
 
-/* AI chat */
 import type { ChatMessage } from "@/data/mockData";
-// AI data imported from mockData
 
 const PatientHealth = () => {
   const [section, setSection] = useState<HealthSection>("menu");
@@ -44,6 +41,20 @@ const PatientHealth = () => {
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>(aiInitial);
   const [aiInput, setAiInput] = useState("");
   const [aiIdx, setAiIdx] = useState(0);
+
+  // Editable lists
+  const [antecedents, setAntecedents] = useState(initialAntecedents);
+  const [treatments, setTreatments] = useState(initialTreatments);
+  const [allergies, setAllergies] = useState(initialAllergies);
+  const [family, setFamily] = useState(initialFamily);
+  const [surgeries, setSurgeries] = useState(initialSurgeries);
+  const [vaccinations, setVaccinations] = useState(initialVaccinations);
+  const [measures, setMeasures] = useState(initialMeasures);
+  const [documents] = useState(initialDocuments);
+
+  // Add modals
+  const [showAddModal, setShowAddModal] = useState<string | null>(null);
+  const [addSuccess, setAddSuccess] = useState(false);
 
   const sendAi = () => {
     if (!aiInput.trim()) return;
@@ -56,32 +67,40 @@ const PatientHealth = () => {
     }, 1000);
   };
 
-  const SectionHeader = ({ title, onBack }: { title: string; onBack: () => void }) => (
-    <div className="flex items-center gap-3 mb-4">
-      <button onClick={onBack} className="text-primary hover:underline text-sm">← Retour</button>
-      <h3 className="font-semibold text-foreground">{title}</h3>
+  const showSuccess = () => {
+    setAddSuccess(true);
+    setTimeout(() => setAddSuccess(false), 2000);
+  };
+
+  const SectionHeader = ({ title, onBack, onAdd }: { title: string; onBack: () => void; onAdd?: () => void }) => (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <button onClick={onBack} className="text-primary hover:underline text-sm">← Retour</button>
+        <h3 className="font-semibold text-foreground">{title}</h3>
+      </div>
+      {onAdd && <Button size="sm" variant="outline" onClick={onAdd}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>}
     </div>
   );
 
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
       <div className="max-w-2xl space-y-4">
+        {addSuccess && (
+          <div className="rounded-lg bg-accent/10 border border-accent/20 p-3 flex items-center gap-2 animate-fade-in">
+            <CheckCircle className="h-4 w-4 text-accent" />
+            <span className="text-sm text-accent font-medium">Élément ajouté avec succès</span>
+          </div>
+        )}
 
-        {/* ── MENU LIST (iOS style) ── */}
+        {/* MENU */}
         {section === "menu" && (
           <div className="space-y-4">
-            {/* Health completion prompt */}
             <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
               <div className="flex items-center gap-3">
                 <Heart className="h-8 w-8 text-primary/40 shrink-0" />
-                <div>
-                  <h3 className="font-bold text-foreground text-sm">Complétez votre profil santé</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Recevez des rappels personnalisés et préparez vos consultations</p>
-                </div>
+                <div><h3 className="font-bold text-foreground text-sm">Complétez votre profil santé</h3><p className="text-xs text-muted-foreground mt-0.5">Recevez des rappels personnalisés et préparez vos consultations</p></div>
               </div>
             </div>
-
-            {/* Menu items */}
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {menuItems.map(item => (
                 <button key={item.key} onClick={() => setSection(item.key)} className="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
@@ -94,58 +113,40 @@ const PatientHealth = () => {
                 </button>
               ))}
             </div>
-
-            {/* AI assistant entry */}
             <button onClick={() => setSection("ai")} className="w-full rounded-xl border bg-card shadow-card p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Bot className="h-4 w-4 text-primary" /></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Assistant virtuel IA</p>
-                <p className="text-[11px] text-muted-foreground">Aide à l'orientation · Ne remplace pas un diagnostic</p>
-              </div>
+              <div className="flex-1"><p className="text-sm font-medium text-foreground">Assistant virtuel IA</p><p className="text-[11px] text-muted-foreground">Aide à l'orientation · Ne remplace pas un diagnostic</p></div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
         )}
 
-        {/* ── DOCUMENTS ── */}
+        {/* DOCUMENTS */}
         {section === "documents" && (
           <div>
             <SectionHeader title="Documents" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3">
-              <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setShowUpload(!showUpload)}><Upload className="h-4 w-4 mr-1" />Importer</Button>
-            </div>
+            <div className="flex justify-end mb-3"><Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setShowUpload(!showUpload)}><Upload className="h-4 w-4 mr-1" />Importer</Button></div>
             {showUpload && (
               <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 text-center mb-3">
-                <Upload className="h-6 w-6 text-primary mx-auto mb-2" />
-                <p className="font-medium text-foreground text-sm">Glissez vos fichiers ici</p>
-                <p className="text-xs text-muted-foreground mt-1">PDF, images (max 10 Mo)</p>
+                <Upload className="h-6 w-6 text-primary mx-auto mb-2" /><p className="font-medium text-foreground text-sm">Glissez vos fichiers ici</p><p className="text-xs text-muted-foreground mt-1">PDF, images (max 10 Mo)</p>
               </div>
             )}
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {documents.map((d, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
-                  <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : "bg-muted"}`}>
-                    <FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : "text-muted-foreground"}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{d.source} · {d.date}</p>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="h-3.5 w-3.5" /></Button>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5" /></Button>
-                  </div>
+                  <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : "bg-muted"}`}><FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : "text-muted-foreground"}`} /></div>
+                  <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground truncate">{d.name}</p><p className="text-[11px] text-muted-foreground">{d.source} · {d.date}</p></div>
+                  <div className="flex gap-1 shrink-0"><Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5" /></Button></div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── ANTECEDENTS ── */}
+        {/* ANTECEDENTS */}
         {section === "antecedents" && (
           <div>
-            <SectionHeader title="Antécédents médicaux" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <SectionHeader title="Antécédents médicaux" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("antecedent")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {antecedents.map((a, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
@@ -157,38 +158,29 @@ const PatientHealth = () => {
           </div>
         )}
 
-        {/* ── TREATMENTS ── */}
+        {/* TREATMENTS */}
         {section === "treatments" && (
           <div>
-            <SectionHeader title="Traitements réguliers" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <SectionHeader title="Traitements réguliers" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("treatment")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {treatments.map((t, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">{t.name}</p>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">En cours</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{t.dose} · Depuis {t.since}</p>
-                  <p className="text-[11px] text-muted-foreground">Prescrit par {t.prescriber}</p>
+                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{t.name}</p><span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">En cours</span></div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t.dose} · Depuis {t.since}</p><p className="text-[11px] text-muted-foreground">Prescrit par {t.prescriber}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── ALLERGIES ── */}
+        {/* ALLERGIES */}
         {section === "allergies" && (
           <div>
-            <SectionHeader title="Allergies" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <SectionHeader title="Allergies" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("allergy")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {allergies.map((a, i) => (
                 <div key={i} className="p-3 bg-destructive/5 hover:bg-destructive/10 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-destructive" />{a.name}</p>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">{a.severity}</span>
-                  </div>
+                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-destructive" />{a.name}</p><span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">{a.severity}</span></div>
                   <p className="text-xs text-muted-foreground mt-0.5">{a.reaction}</p>
                 </div>
               ))}
@@ -196,42 +188,34 @@ const PatientHealth = () => {
           </div>
         )}
 
-        {/* ── HABITS ── */}
+        {/* HABITS */}
         {section === "habits" && (
           <div>
             <SectionHeader title="Habitudes de vie" onBack={() => setSection("menu")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {habits.map((h, i) => (
-                <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
-                  <p className="text-sm text-foreground">{h.label}</p>
-                  <p className="text-sm font-medium text-foreground">{h.value}</p>
-                </div>
+                <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors"><p className="text-sm text-foreground">{h.label}</p><p className="text-sm font-medium text-foreground">{h.value}</p></div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── FAMILY ── */}
+        {/* FAMILY */}
         {section === "family" && (
           <div>
-            <SectionHeader title="Antécédents familiaux" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <SectionHeader title="Antécédents familiaux" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("family")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
-              {familyHistory.map((f, i) => (
-                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
-                  <p className="text-sm font-medium text-foreground">{f.name}</p>
-                  {f.details && <p className="text-xs text-muted-foreground mt-0.5">{f.details}</p>}
-                </div>
+              {family.map((f, i) => (
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors"><p className="text-sm font-medium text-foreground">{f.name}</p>{f.details && <p className="text-xs text-muted-foreground mt-0.5">{f.details}</p>}</div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── SURGERIES ── */}
+        {/* SURGERIES */}
         {section === "surgeries" && (
           <div>
-            <SectionHeader title="Opérations chirurgicales" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <SectionHeader title="Opérations chirurgicales" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("surgery")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {surgeries.map((s, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
@@ -243,11 +227,10 @@ const PatientHealth = () => {
           </div>
         )}
 
-        {/* ── VACCINATIONS ── */}
+        {/* VACCINATIONS */}
         {section === "vaccinations" && (
           <div>
-            <SectionHeader title="Vaccins" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <SectionHeader title="Vaccins" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("vaccination")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {vaccinations.map((v, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
@@ -262,11 +245,10 @@ const PatientHealth = () => {
           </div>
         )}
 
-        {/* ── MEASURES ── */}
+        {/* MEASURES */}
         {section === "measures" && (
           <div>
-            <SectionHeader title="Mesures" onBack={() => setSection("menu")} />
-            <div className="flex justify-end mb-3"><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />Ajouter</Button></div>
+            <SectionHeader title="Mesures" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("measure")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {measures.map((m, i) => (
                 <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
@@ -278,21 +260,16 @@ const PatientHealth = () => {
           </div>
         )}
 
-        {/* ── AI ASSISTANT ── */}
+        {/* AI */}
         {section === "ai" && (
           <div>
             <SectionHeader title="Assistant virtuel IA" onBack={() => setSection("menu")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden flex flex-col" style={{ height: "calc(100vh - 280px)" }}>
-              <div className="bg-warning/5 border-b border-warning/20 px-4 py-2.5">
-                <p className="text-[11px] text-warning flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 shrink-0" />Cet assistant est informatif. Il ne remplace pas un diagnostic médical ni un avis professionnel.</p>
-              </div>
+              <div className="bg-warning/5 border-b border-warning/20 px-4 py-2.5"><p className="text-[11px] text-warning flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 shrink-0" />Cet assistant est informatif. Il ne remplace pas un diagnostic médical.</p></div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {aiMessages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                      msg.sender === "me" ? "gradient-primary text-primary-foreground rounded-br-sm" :
-                      "bg-primary/5 border border-primary/20 text-foreground rounded-bl-sm"
-                    }`}>
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${msg.sender === "me" ? "gradient-primary text-primary-foreground rounded-br-sm" : "bg-primary/5 border border-primary/20 text-foreground rounded-bl-sm"}`}>
                       {msg.sender === "ai" && <p className="text-[10px] font-semibold text-primary mb-1 flex items-center gap-1"><Bot className="h-3 w-3" />Assistant</p>}
                       <p className="text-sm">{msg.text}</p>
                     </div>
@@ -308,9 +285,106 @@ const PatientHealth = () => {
             </div>
           </div>
         )}
-
       </div>
+
+      {/* ADD MODALS */}
+      {showAddModal && (
+        <AddItemModal
+          type={showAddModal}
+          onClose={() => setShowAddModal(null)}
+          onAdd={(item) => {
+            if (showAddModal === "antecedent") setAntecedents(prev => [...prev, item]);
+            else if (showAddModal === "treatment") setTreatments(prev => [...prev, item]);
+            else if (showAddModal === "allergy") setAllergies(prev => [...prev, item]);
+            else if (showAddModal === "family") setFamily(prev => [...prev, item]);
+            else if (showAddModal === "surgery") setSurgeries(prev => [...prev, item]);
+            else if (showAddModal === "vaccination") setVaccinations(prev => [...prev, item]);
+            else if (showAddModal === "measure") setMeasures(prev => [...prev, item]);
+            setShowAddModal(null);
+            showSuccess();
+          }}
+        />
+      )}
     </DashboardLayout>
+  );
+};
+
+const AddItemModal = ({ type, onClose, onAdd }: { type: string; onClose: () => void; onAdd: (item: any) => void }) => {
+  const [form, setForm] = useState<Record<string, string>>({});
+
+  const configs: Record<string, { title: string; fields: { key: string; label: string; placeholder: string; required?: boolean }[] }> = {
+    antecedent: { title: "Ajouter un antécédent", fields: [
+      { key: "name", label: "Nom de l'antécédent", placeholder: "Ex: Asthme", required: true },
+      { key: "date", label: "Date / Année", placeholder: "Ex: 2020" },
+      { key: "details", label: "Détails", placeholder: "Précisions..." },
+    ]},
+    treatment: { title: "Ajouter un traitement", fields: [
+      { key: "name", label: "Nom du médicament", placeholder: "Ex: Metformine 850mg", required: true },
+      { key: "dose", label: "Posologie", placeholder: "Ex: 1 comprimé matin et soir" },
+      { key: "since", label: "Depuis", placeholder: "Ex: Janvier 2024" },
+      { key: "prescriber", label: "Prescrit par", placeholder: "Ex: Dr. Bouazizi" },
+    ]},
+    allergy: { title: "Ajouter une allergie", fields: [
+      { key: "name", label: "Allergène", placeholder: "Ex: Pénicilline", required: true },
+      { key: "severity", label: "Sévérité", placeholder: "Ex: Sévère" },
+      { key: "reaction", label: "Type de réaction", placeholder: "Ex: Urticaire, œdème" },
+    ]},
+    family: { title: "Ajouter un antécédent familial", fields: [
+      { key: "name", label: "Pathologie", placeholder: "Ex: Diabète type 2", required: true },
+      { key: "details", label: "Détails (membre de la famille)", placeholder: "Ex: Père — diagnostiqué à 55 ans" },
+    ]},
+    surgery: { title: "Ajouter une opération", fields: [
+      { key: "name", label: "Type d'opération", placeholder: "Ex: Appendicectomie", required: true },
+      { key: "date", label: "Date", placeholder: "Ex: Mars 2019" },
+      { key: "hospital", label: "Établissement", placeholder: "Ex: Hôpital Charles Nicolle" },
+    ]},
+    vaccination: { title: "Ajouter un vaccin", fields: [
+      { key: "name", label: "Nom du vaccin", placeholder: "Ex: Grippe saisonnière", required: true },
+      { key: "doses", label: "Doses", placeholder: "Ex: 1 dose" },
+      { key: "lastDate", label: "Date dernière dose", placeholder: "Ex: Oct 2025" },
+      { key: "nextDate", label: "Prochain rappel (optionnel)", placeholder: "Ex: Oct 2026" },
+    ]},
+    measure: { title: "Ajouter une mesure", fields: [
+      { key: "label", label: "Type de mesure", placeholder: "Ex: Poids", required: true },
+      { key: "value", label: "Valeur", placeholder: "Ex: 75 kg", required: true },
+      { key: "date", label: "Date", placeholder: "Ex: 20 Fév 2026" },
+    ]},
+  };
+
+  const config = configs[type];
+  if (!config) return null;
+
+  const canSubmit = config.fields.filter(f => f.required).every(f => form[f.key]?.trim());
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+        <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-foreground">{config.title}</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="space-y-3">
+          {config.fields.map(f => (
+            <div key={f.key}>
+              <Label className="text-xs">{f.label}{f.required && " *"}</Label>
+              <Input
+                value={form[f.key] || ""}
+                onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                placeholder={f.placeholder}
+                className="mt-1"
+              />
+            </div>
+          ))}
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={onClose}>Annuler</Button>
+            <Button className="flex-1 gradient-primary text-primary-foreground" disabled={!canSubmit} onClick={() => onAdd(form)}>
+              <Save className="h-4 w-4 mr-1" />Ajouter
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
