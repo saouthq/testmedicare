@@ -2,13 +2,12 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import {
   FlaskConical, Clock, CheckCircle2,
-  ChevronRight, Send,
-  Banknote, BarChart3, Activity,
-  Timer, Package, ArrowUpRight
+  ChevronRight, Send, Activity,
+  Timer, AlertCircle, User, Shield, Beaker
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { mockLabStats, mockLabAnalyses } from "@/data/mockData";
+import { mockLabAnalyses } from "@/data/mockData";
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
   in_progress: { label: "En cours", class: "bg-primary/10 text-primary", icon: Activity },
@@ -17,32 +16,60 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
 };
 
 const pendingPrelevements = [
-  { patient: "Mohamed Sfar", type: "TSH", time: "09:30", urgent: true, avatar: "MS" },
-  { patient: "Leila Chahed", type: "NFS + CRP", time: "10:00", urgent: false, avatar: "LC" },
-  { patient: "Karim Mansour", type: "Bilan rénal", time: "10:30", urgent: true, avatar: "KM" },
+  { patient: "Mohamed Sfar", type: "TSH", time: "09:30", urgent: true, avatar: "MS", doctor: "Dr. Hammami" },
+  { patient: "Leila Chahed", type: "NFS + CRP", time: "10:00", urgent: false, avatar: "LC", doctor: "Dr. Bouazizi" },
+  { patient: "Karim Mansour", type: "Bilan rénal", time: "10:30", urgent: true, avatar: "KM", doctor: "Dr. Gharbi" },
 ];
 
 const LaboratoryDashboard = () => {
   const [sentIds, setSentIds] = useState<number[]>([]);
+  const [registeredIds, setRegisteredIds] = useState<number[]>([]);
 
   const handleSend = (i: number) => setSentIds(prev => [...prev, i]);
+  const handleRegister = (i: number) => setRegisteredIds(prev => [...prev, i]);
 
   return (
     <DashboardLayout role="laboratory" title="Tableau de bord">
       <div className="space-y-6">
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {mockLabStats.map((s) => (
-            <div key={s.label} className="rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all">
-              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${s.color}`}><FlaskConical className="h-5 w-5" /></div>
-              <p className="mt-3 text-2xl font-bold text-foreground">{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-[11px] text-accent mt-1 flex items-center gap-0.5"><ArrowUpRight className="h-3 w-3" />{s.change}</p>
-            </div>
-          ))}
-        </div>
-
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
+            {/* Pending prélèvements - priority */}
+            <div className="rounded-xl border border-warning/30 bg-card shadow-card">
+              <div className="flex items-center justify-between border-b px-5 py-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Timer className="h-4 w-4 text-warning" />Prélèvements en attente
+                  <span className="bg-warning/10 text-warning text-xs font-bold px-2 py-0.5 rounded-full">{pendingPrelevements.filter((_, i) => !registeredIds.includes(i)).length}</span>
+                </h3>
+              </div>
+              {pendingPrelevements.every((_, i) => registeredIds.includes(i)) ? (
+                <div className="p-8 text-center">
+                  <CheckCircle2 className="h-8 w-8 text-accent/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Tous les prélèvements ont été enregistrés</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {pendingPrelevements.map((p, i) => {
+                    if (registeredIds.includes(i)) return null;
+                    return (
+                      <div key={i} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${p.urgent ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>{p.avatar}</div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground">{p.patient}</p>
+                            {p.urgent && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-medium">Urgent</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{p.type} · {p.doctor} · RDV {p.time}</p>
+                        </div>
+                        <Button size="sm" className="h-7 text-[11px] gradient-primary text-primary-foreground" onClick={() => handleRegister(i)}>
+                          <Beaker className="h-3 w-3 mr-1" />Enregistrer
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Active analyses */}
             <div className="rounded-xl border bg-card shadow-card">
               <div className="flex items-center justify-between border-b px-5 py-4">
@@ -72,7 +99,6 @@ const LaboratoryDashboard = () => {
                             </div>
                           )}
                         </div>
-                        <span className="text-xs font-semibold text-foreground shrink-0">{a.amount}</span>
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 shrink-0 ${config.class}`}>
                           <config.icon className="h-3 w-3" />{config.label}
                         </span>
@@ -88,61 +114,51 @@ const LaboratoryDashboard = () => {
                 })}
               </div>
             </div>
-
-            {/* Pending prélèvements */}
-            <div className="rounded-xl border border-warning/30 bg-card shadow-card">
-              <div className="flex items-center justify-between border-b px-5 py-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Timer className="h-4 w-4 text-warning" />Prélèvements en attente
-                  <span className="bg-warning/10 text-warning text-xs font-bold px-2 py-0.5 rounded-full">{pendingPrelevements.length}</span>
-                </h3>
-              </div>
-              <div className="divide-y">
-                {pendingPrelevements.map((p, i) => (
-                  <div key={i} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${p.urgent ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>{p.avatar}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">{p.patient}</p>
-                        {p.urgent && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-medium">Urgent</span>}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{p.type} · RDV {p.time}</p>
-                    </div>
-                    <Button size="sm" className="h-7 text-[11px] gradient-primary text-primary-foreground">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />Enregistrer
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
+          {/* Right sidebar - Consommables only */}
           <div className="space-y-6">
-            {/* Weekly output (simplified) */}
-            <div className="rounded-xl border bg-card shadow-card p-5">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" />Production hebdomadaire</h3>
-              {/* Mock chart simplified */}
-              <div className="h-32 flex items-end justify-between px-2">
-                {[45, 52, 38, 48, 42].map((val, i) => (
-                  <div key={i} className="w-8 bg-primary/20 rounded-t-sm" style={{ height: `${val}%` }} />
+            <div className="rounded-xl border border-destructive/20 bg-card shadow-card p-5">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-destructive" />Alertes consommables
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { name: "Tubes EDTA", qty: 120, threshold: 150, status: "ok" },
+                  { name: "Tubes secs", qty: 15, threshold: 50, status: "low" },
+                  { name: "Aiguilles 21G", qty: 8, threshold: 30, status: "critical" },
+                  { name: "Gants latex M", qty: 45, threshold: 100, status: "low" },
+                ].map((c, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
+                    <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${c.status === "critical" ? "bg-destructive" : c.status === "low" ? "bg-warning" : "bg-accent"}`} />
+                    <span className="text-xs text-foreground flex-1">{c.name}</span>
+                    <span className={`text-[11px] font-bold ${c.status === "critical" ? "text-destructive" : c.status === "low" ? "text-warning" : "text-foreground"}`}>
+                      {c.qty}/{c.threshold}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Supplies */}
+            {/* Quick links */}
             <div className="rounded-xl border bg-card shadow-card p-5">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Package className="h-4 w-4 text-warning" />Consommables</h3>
-              <div className="space-y-3">
-                {[
-                  { name: "Tubes EDTA", qty: 120, status: "ok" },
-                  { name: "Tubes secs", qty: 15, status: "low" },
-                  { name: "Aiguilles 21G", qty: 8, status: "critical" },
-                ].map((c, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-xs text-foreground flex-1">{c.name}</span>
-                    <span className={`text-[10px] font-semibold ${c.status === "critical" ? "text-destructive" : c.status === "low" ? "text-warning" : "text-foreground"}`}>{c.qty}</span>
-                  </div>
-                ))}
+              <h3 className="font-semibold text-foreground mb-3">Accès rapide</h3>
+              <div className="space-y-2">
+                <Link to="/dashboard/laboratory/analyses">
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start">
+                    <FlaskConical className="h-3.5 w-3.5 mr-2 text-primary" />Toutes les analyses
+                  </Button>
+                </Link>
+                <Link to="/dashboard/laboratory/results">
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start">
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-2 text-accent" />Résultats à envoyer
+                  </Button>
+                </Link>
+                <Link to="/dashboard/laboratory/patients">
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start">
+                    <User className="h-3.5 w-3.5 mr-2 text-muted-foreground" />Patients
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
