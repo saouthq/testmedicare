@@ -1218,3 +1218,45 @@ export const mockAdminLogs = [
   { id: 11, time: "19 Fév 17:00", user: "Admin", action: "Export données", detail: "Export CSV des utilisateurs actifs", level: "info" },
   { id: 12, time: "19 Fév 15:30", user: "Dr. Hammami", action: "Suppression RDV", detail: "Annulation du RDV #4532", level: "warning" },
 ];
+
+// ─── Partner Pharmacies (Patient Prescriptions) ──────────────
+
+export interface PartnerPharmacy {
+  id: string;
+  name: string;
+  address: string;
+  distance: string;
+  phone: string;
+  openNow: boolean;
+  rating: number;
+}
+
+export const mockPartnerPharmacies: PartnerPharmacy[] = [
+  { id: "ph1", name: "Pharmacie El Amal", address: "12 Av. Habib Bourguiba, El Manar", distance: "0.3 km", phone: "+216 71 234 567", openNow: true, rating: 4.7 },
+  { id: "ph2", name: "Pharmacie Pasteur", address: "45 Rue Pasteur, Centre Ville", distance: "1.2 km", phone: "+216 71 345 678", openNow: true, rating: 4.5 },
+  { id: "ph3", name: "Pharmacie El Manar", address: "3 Rue de la Liberté, El Manar", distance: "0.5 km", phone: "+216 71 456 789", openNow: false, rating: 4.8 },
+  { id: "ph4", name: "Pharmacie Ibn Sina", address: "20 Av. de la République, Bardo", distance: "2.1 km", phone: "+216 71 567 890", openNow: true, rating: 4.3 },
+  { id: "ph5", name: "Pharmacie Centrale", address: "1 Place de la Victoire, Tunis", distance: "3.0 km", phone: "+216 71 678 901", openNow: true, rating: 4.6 },
+  { id: "ph6", name: "Pharmacie de Nuit Tunis", address: "8 Rue de Hollande, Tunis", distance: "2.5 km", phone: "+216 71 789 012", openNow: true, rating: 4.2 },
+];
+
+// ─── Secretary Cabinet Chat Contacts ─────────────────────────
+
+export const mockSecretaryCabinetContacts: ChatContact[] = [
+  { id: "sc1", name: "Chat du cabinet", role: "Dr. Bouazizi · Dr. Gharbi · Dr. Hammami", avatar: "CB", lastMessage: "Le patient de 14h30 a annulé.", time: "11:15", unread: 2, online: true },
+  { id: "sc2", name: "Dr. Ahmed Bouazizi", role: "Médecin généraliste", avatar: "AB", lastMessage: "Merci pour la mise à jour du planning.", time: "10:45", unread: 0, online: true },
+  { id: "sc3", name: "Dr. Sonia Gharbi", role: "Cardiologue", avatar: "SG", lastMessage: "Le patient Trabelsi est arrivé ?", time: "09:30", unread: 1, online: false },
+];
+
+export const mockSecretaryCabinetMessages: Record<string, ChatMessage[]> = {
+  "sc1": [
+    { id: "1", sender: "them", text: "Le patient de 14h30 a appelé pour annuler.", time: "11:00", senderName: "Dr. Bouazizi" },
+    { id: "2", sender: "me", text: "D'accord, j'essaie de placer un patient en liste d'attente.", time: "11:10" },
+    { id: "3", sender: "them", text: "Le patient de 14h30 a annulé.", time: "11:15", senderName: "Dr. Gharbi" },
+  ],
+  "sc2": [
+    { id: "1", sender: "them", text: "Bonjour, est-ce que le patient Ben Ali est arrivé ?", time: "09:15" },
+    { id: "2", sender: "me", text: "Oui docteur, il est en salle d'attente depuis 09:15.", time: "09:20" },
+    { id: "3", sender: "them", text: "Merci pour la mise à jour du planning.", time: "10:45" },
+  ],
+};

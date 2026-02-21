@@ -1,12 +1,12 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { 
   Calendar, Clock, CheckCircle2, Play,
-  Bell, Video, Banknote, MapPin, RefreshCw, Plus, Timer
+  Bell, MapPin, RefreshCw, Plus, Timer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { mockSecretaryWaitingRoom, mockSecretaryAppointments, mockSecretaryStats } from "@/data/mockData";
+import { mockSecretaryWaitingRoom, mockSecretaryAppointments } from "@/data/mockData";
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
   done: { label: "Terminé", class: "bg-muted text-muted-foreground", icon: CheckCircle2 },
@@ -60,72 +60,8 @@ const SecretaryDashboard = () => {
           </div>
         </div>
 
-        {/* Live Stats Bar */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Calendar className="h-5 w-5 text-primary" /></div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{mockSecretaryStats.rdvTotal}</p>
-                <p className="text-[11px] text-muted-foreground">RDV total</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center"><CheckCircle2 className="h-5 w-5 text-accent" /></div>
-              <div>
-                <p className="text-2xl font-bold text-accent">{mockSecretaryStats.termines}</p>
-                <p className="text-[11px] text-muted-foreground">Terminés</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-warning/10 flex items-center justify-center"><Clock className="h-5 w-5 text-warning" /></div>
-              <div>
-                <p className="text-2xl font-bold text-warning">{mockSecretaryStats.attente}</p>
-                <p className="text-[11px] text-muted-foreground">En attente</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center"><Timer className="h-5 w-5 text-destructive" /></div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{mockSecretaryStats.attenteMoy}<span className="text-sm font-normal text-muted-foreground"> min</span></p>
-                <p className="text-[11px] text-muted-foreground">Attente moy.</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center"><Banknote className="h-5 w-5 text-accent" /></div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{mockSecretaryStats.caJour}<span className="text-sm font-normal text-muted-foreground"> DT</span></p>
-                <p className="text-[11px] text-muted-foreground">CA du jour</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress bar (simplified mock) */}
-        <div className="rounded-xl border bg-card p-4 shadow-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">Progression de la journée</span>
-            <span className="text-sm font-bold text-primary">33%</span>
-          </div>
-          <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500 flex">
-              <div className="bg-accent h-full" style={{ width: `33%` }} />
-              <div className="bg-primary h-full animate-pulse" style={{ width: `20%` }} />
-              <div className="bg-warning h-full" style={{ width: `10%` }} />
-            </div>
-          </div>
-        </div>
-
         <div className="grid gap-5 lg:grid-cols-3">
-          {/* Left: Timeline + Waiting Room */}
+          {/* Left: Waiting Room + Timeline */}
           <div className="lg:col-span-2 space-y-5">
             {/* Waiting Room - prominent */}
             <div className="rounded-xl border border-warning/30 bg-card shadow-card">
@@ -167,7 +103,7 @@ const SecretaryDashboard = () => {
                           )}
                           {w.status === "called" && (
                             <Button size="sm" className="h-8 text-xs bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => handleSendToConsult(w.id)}>
-                              <div className="h-3.5 w-3.5 mr-1" />Envoyer en consultation
+                              <Play className="h-3.5 w-3.5 mr-1" />En consultation
                             </Button>
                           )}
                         </div>

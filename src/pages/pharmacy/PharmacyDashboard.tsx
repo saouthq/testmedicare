@@ -1,35 +1,17 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { 
-  FileText, Pill, Clock, AlertCircle, CheckCircle2, TrendingUp,
-  Package, AlertTriangle, ArrowUpRight, ChevronRight, Banknote
+  FileText, Pill, CheckCircle2,
+  Package, AlertTriangle, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { mockPharmacyStats, mockPharmacyPrescriptions, mockPharmacyDeliveries } from "@/data/mockData";
+import { mockPharmacyPrescriptions, mockPharmacyDeliveries } from "@/data/mockData";
 
 const PharmacyDashboard = () => {
   return (
     <DashboardLayout role="pharmacy" title="Tableau de bord">
       <div className="space-y-6">
-        {/* Stats */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {mockPharmacyStats.map((s) => (
-            <div key={s.label} className="rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all">
-              <div className="flex items-center justify-between">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${s.color}`}>
-                  <FileText className="h-5 w-5" />
-                </div>
-              </div>
-              <p className="mt-3 text-2xl font-bold text-foreground">{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-[11px] text-accent mt-1 flex items-center gap-0.5">
-                <ArrowUpRight className="h-3 w-3" />{s.change}
-              </p>
-            </div>
-          ))}
-        </div>
-
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Pending prescriptions */}
           <div className="lg:col-span-2 rounded-xl border bg-card shadow-card">
@@ -37,6 +19,7 @@ const PharmacyDashboard = () => {
               <h2 className="font-semibold text-foreground flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
                 Ordonnances en attente
+                <span className="bg-warning/10 text-warning text-xs font-bold px-2 py-0.5 rounded-full">{mockPharmacyPrescriptions.length}</span>
               </h2>
               <Link to="/dashboard/pharmacy/prescriptions" className="text-sm text-primary hover:underline flex items-center gap-1">
                 Tout voir <ChevronRight className="h-4 w-4" />
@@ -92,8 +75,8 @@ const PharmacyDashboard = () => {
                   { name: "Oméprazole 20mg", remaining: 8, threshold: 30, status: "critical" }
                 ].map((s, i) => (
                   <div key={i} className="p-4 flex items-center gap-3">
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-destructive/10`}>
-                      <Package className={`h-4 w-4 text-destructive`} />
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-destructive/10">
+                      <Package className="h-4 w-4 text-destructive" />
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium text-foreground">{s.name}</p>
