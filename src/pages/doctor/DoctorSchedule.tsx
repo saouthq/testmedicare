@@ -1,57 +1,29 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { ChevronLeft, ChevronRight, Plus, Video, User, Clock, Calendar as CalendarIcon, LayoutGrid, List, X, CheckCircle2, Repeat, Ban, Play, AlertTriangle, Phone, MessageSquare, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Video, Calendar as CalendarIcon, LayoutGrid, List, X, CheckCircle2, Repeat, Ban, Play, Phone, MessageSquare, RefreshCw, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import StatusBadge from "@/components/shared/StatusBadge";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
+import { mockScheduleDays, mockScheduleHours, mockScheduleAppointments, mockRecurDays } from "@/data/mockData";
 
 type ViewMode = "week" | "day";
 type ModalType = null | "availability" | "block" | "appointment-action" | "empty-slot" | "create-rdv";
 
-const days = ["Lun 17", "Mar 18", "Mer 19", "Jeu 20", "Ven 21", "Sam 22"];
-const hours = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
-
-type AppointmentColor = "primary" | "accent" | "warning" | "destructive";
-
-interface Appointment {
-  patient: string; type: string; duration: number; color: AppointmentColor;
-  teleconsultation?: boolean; motif?: string; status?: string; phone?: string;
-}
-
-const initialAppointments: Record<string, Appointment> = {
-  "Lun 17-09:00": { patient: "Amine Ben Ali", type: "Consultation", duration: 1, color: "primary", motif: "Suivi diabète", status: "confirmed", phone: "+216 55 123 456" },
-  "Lun 17-09:30": { patient: "Fatma Trabelsi", type: "Suivi", duration: 1, color: "accent", motif: "Contrôle tension", status: "confirmed" },
-  "Lun 17-10:30": { patient: "Mohamed Sfar", type: "Première visite", duration: 2, color: "warning", motif: "Bilan initial", status: "pending" },
-  "Mar 18-08:30": { patient: "Nadia Jemni", type: "Contrôle", duration: 1, color: "accent", motif: "Douleurs articulaires", status: "confirmed" },
-  "Mar 18-10:00": { patient: "Sami Ayari", type: "Téléconsultation", duration: 1, color: "primary", teleconsultation: true, motif: "Renouvellement", status: "confirmed" },
-  "Mar 18-14:00": { patient: "Rania Meddeb", type: "Suivi", duration: 1, color: "accent", motif: "Cholestérol", status: "confirmed" },
-  "Mar 18-15:30": { patient: "Youssef Belhadj", type: "Consultation", duration: 1, color: "primary", motif: "Check-up", status: "pending" },
-  "Mer 19-09:00": { patient: "Salma Dridi", type: "Consultation", duration: 1, color: "primary", motif: "Consultation", status: "confirmed" },
-  "Mer 19-11:00": { patient: "Karim Mansour", type: "Première visite", duration: 2, color: "warning", motif: "Bilan", status: "confirmed" },
-  "Jeu 20-08:00": { patient: "Leila Chahed", type: "Contrôle", duration: 1, color: "accent", motif: "Suivi", status: "confirmed" },
-  "Jeu 20-14:30": { patient: "Bilel Nasri", type: "Téléconsultation", duration: 1, color: "primary", teleconsultation: true, motif: "Résultats", status: "confirmed" },
-  "Jeu 20-16:00": { patient: "Olfa Ben Salah", type: "Consultation", duration: 1, color: "primary", motif: "Certificat", status: "confirmed" },
-  "Ven 21-09:30": { patient: "Imen Bouhlel", type: "Suivi", duration: 1, color: "accent", motif: "Suivi grossesse", status: "confirmed" },
-  "Ven 21-15:00": { patient: "Walid Jlassi", type: "Consultation", duration: 1, color: "primary", motif: "Consultation", status: "confirmed" },
-};
-
-const colorMap: Record<AppointmentColor, string> = {
+const colorMap: Record<string, string> = {
   primary: "bg-primary/10 border-primary/30 text-primary",
   accent: "bg-accent/10 border-accent/30 text-accent",
   warning: "bg-warning/10 border-warning/30 text-warning",
   destructive: "bg-destructive/10 border-destructive/30 text-destructive",
 };
 
-const recurDays = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-
 const DoctorSchedule = () => {
   const [view, setView] = useState<ViewMode>("week");
   const [selectedDay, setSelectedDay] = useState("Lun 17");
   const [modal, setModal] = useState<ModalType>(null);
   const [selectedAppKey, setSelectedAppKey] = useState<string | null>(null);
-  const [appointments, setAppointments] = useState(initialAppointments);
+  const [appointments, setAppointments] = useState(mockScheduleAppointments);
   const [emptySlotKey, setEmptySlotKey] = useState<string | null>(null);
 
   // Availability creation state
@@ -60,7 +32,7 @@ const DoctorSchedule = () => {
   const [availEnd, setAvailEnd] = useState("18:00");
   const [availType, setAvailType] = useState("all");
 
-  const displayDays = view === "week" ? days : [selectedDay];
+  const displayDays = view === "week" ? mockScheduleDays : [selectedDay];
   const selectedApt = selectedAppKey ? appointments[selectedAppKey] : null;
 
   const handleAction = (action: string) => {
@@ -107,7 +79,7 @@ const DoctorSchedule = () => {
 
         {view === "day" && (
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {days.map(d => (
+            {mockScheduleDays.map(d => (
               <button key={d} onClick={() => setSelectedDay(d)}
                 className={`rounded-xl px-4 py-3 text-center min-w-[80px] transition-all ${selectedDay === d ? "gradient-primary text-primary-foreground shadow-primary-glow" : "border bg-card text-foreground hover:border-primary/50"}`}>
                 <p className="text-xs font-medium">{d.split(" ")[0]}</p><p className="text-lg font-bold">{d.split(" ")[1]}</p>
@@ -128,7 +100,7 @@ const DoctorSchedule = () => {
               </tr>
             </thead>
             <tbody>
-              {hours.map(h => (
+              {mockScheduleHours.map(h => (
                 <tr key={h} className="border-b last:border-0 hover:bg-muted/20">
                   <td className="p-2 text-xs text-muted-foreground font-medium sticky left-0 bg-card">{h}</td>
                   {displayDays.map(d => {
@@ -175,7 +147,7 @@ const DoctorSchedule = () => {
               <div>
                 <label className="text-sm font-medium text-foreground">Jours</label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {recurDays.map(d => (
+                  {mockRecurDays.map(d => (
                     <button key={d} onClick={() => setAvailDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])}
                       className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${availDays.includes(d) ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>{d.slice(0, 3)}</button>
                   ))}
@@ -258,84 +230,25 @@ const DoctorSchedule = () => {
               )}
               <Button variant="outline" className="w-full justify-start h-9 text-sm" onClick={() => handleAction("arrived")}><Play className="h-4 w-4 mr-2 text-primary" />Marquer arrivé</Button>
               <Link to="/dashboard/doctor/consultation/new"><Button variant="outline" className="w-full justify-start h-9 text-sm"><Play className="h-4 w-4 mr-2 text-accent" />Démarrer consultation</Button></Link>
+              <Button variant="outline" className="w-full justify-start h-9 text-sm"><MessageSquare className="h-4 w-4 mr-2 text-primary" />Message patient</Button>
               <Button variant="outline" className="w-full justify-start h-9 text-sm"><RefreshCw className="h-4 w-4 mr-2 text-warning" />Déplacer</Button>
-              <Button variant="outline" className="w-full justify-start h-9 text-sm"><MessageSquare className="h-4 w-4 mr-2 text-primary" />Envoyer un message</Button>
-              <Button variant="outline" className="w-full justify-start h-9 text-sm text-destructive" onClick={() => handleAction("cancel")}><X className="h-4 w-4 mr-2" />Annuler le RDV</Button>
-              <Button variant="outline" className="w-full justify-start h-9 text-sm text-destructive" onClick={() => handleAction("no-show")}><AlertTriangle className="h-4 w-4 mr-2" />Marquer absent (no-show)</Button>
+              <Button variant="outline" className="w-full justify-start h-9 text-sm hover:text-destructive hover:bg-destructive/10" onClick={() => handleAction("cancel")}><X className="h-4 w-4 mr-2" />Annuler RDV</Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Empty slot menu */}
+      {/* Empty slot modal */}
       {modal === "empty-slot" && emptySlotKey && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => { setModal(null); setEmptySlotKey(null); }}>
-          <div className="w-full max-w-xs rounded-2xl border bg-card shadow-elevated p-5 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-semibold text-foreground text-sm">Créneau libre</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{emptySlotKey.replace("-", " · ")}</p>
-              </div>
-              <button onClick={() => { setModal(null); setEmptySlotKey(null); }} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
-            </div>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start h-10 text-sm" onClick={() => { setModal("create-rdv"); }}>
-                <Plus className="h-4 w-4 mr-2 text-primary" />Créer un rendez-vous
-              </Button>
-              <Button variant="outline" className="w-full justify-start h-10 text-sm" onClick={() => {
-                if (emptySlotKey) {
-                  setAppointments(prev => ({ ...prev, [emptySlotKey]: { patient: "— Bloqué —", type: "Indisponible", duration: 1, color: "destructive", motif: "Créneau bloqué", status: "blocked" } }));
-                }
-                setModal(null); setEmptySlotKey(null);
-              }}>
-                <Ban className="h-4 w-4 mr-2 text-destructive" />Bloquer ce créneau
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create RDV modal */}
-      {modal === "create-rdv" && emptySlotKey && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => { setModal(null); setEmptySlotKey(null); }}>
-          <div className="w-full max-w-md rounded-2xl border bg-card shadow-elevated p-6 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-primary" />Nouveau RDV</h3>
-              <button onClick={() => { setModal(null); setEmptySlotKey(null); }} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4 bg-muted/50 rounded-lg p-2.5">{emptySlotKey.replace("-", " · ")}</p>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground">Patient</label>
-                <Input placeholder="Rechercher un patient..." className="mt-1.5" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground">Motif</label>
-                <select className="mt-1.5 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-                  <option>Consultation</option><option>Suivi</option><option>Contrôle</option><option>Première visite</option><option>Téléconsultation</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Type</label>
-                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-                    <option>Présentiel</option><option>Téléconsultation</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Durée</label>
-                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-                    <option>15 min</option><option>20 min</option><option>30 min</option><option>45 min</option><option>60 min</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">Notes</label>
-                <textarea placeholder="Notes optionnelles..." className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" rows={2} />
-              </div>
-              <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow" onClick={() => { setModal(null); setEmptySlotKey(null); }}>
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />Créer le rendez-vous
-              </Button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setModal(null)}>
+          <div className="w-full max-w-sm rounded-2xl border bg-card shadow-elevated p-6 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Créneau {emptySlotKey.replace("-", " à ")}</h3>
+            <div className="space-y-3">
+              <Link to="/dashboard/doctor/consultation/new">
+                <Button className="w-full justify-start" variant="outline"><Play className="h-4 w-4 mr-2 text-primary" />Démarrer consultation sans RDV</Button>
+              </Link>
+              <Button className="w-full justify-start" variant="outline"><CalendarIcon className="h-4 w-4 mr-2 text-accent" />Créer un RDV patient</Button>
+              <Button className="w-full justify-start" variant="outline"><Ban className="h-4 w-4 mr-2 text-destructive" />Bloquer ce créneau</Button>
             </div>
           </div>
         </div>

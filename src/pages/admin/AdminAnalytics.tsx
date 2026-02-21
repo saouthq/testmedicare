@@ -1,50 +1,17 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  TrendingUp, Users, Stethoscope, Calendar, CreditCard, Download,
-  ArrowUpRight, ArrowDownRight, BarChart3, Activity, MapPin, Globe
-} from "lucide-react";
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Download, Users, Calendar, CreditCard, Activity, Globe, TrendingUp, ArrowUpRight, ArrowDownRight, MapPin, BarChart3 } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 const userGrowthData = [
-  { month: "Sep", patients: 1200, doctors: 250, pharmacies: 55, labs: 30 },
-  { month: "Oct", patients: 1450, doctors: 270, pharmacies: 58, labs: 32 },
-  { month: "Nov", patients: 1700, doctors: 290, pharmacies: 62, labs: 35 },
-  { month: "Déc", patients: 1950, doctors: 310, pharmacies: 68, labs: 38 },
-  { month: "Jan", patients: 2300, doctors: 330, pharmacies: 73, labs: 42 },
-  { month: "Fév", patients: 2847, doctors: 342, pharmacies: 78, labs: 45 },
+  { month: "Sep", patients: 1200, doctors: 250 },
+  { month: "Oct", patients: 1450, doctors: 270 },
+  { month: "Nov", patients: 1700, doctors: 290 },
+  { month: "Déc", patients: 1950, doctors: 310 },
+  { month: "Jan", patients: 2300, doctors: 330 },
+  { month: "Fév", patients: 2847, doctors: 342 },
 ];
-
-const revenueByGouvernorat = [
-  { name: "Tunis", value: 18500 },
-  { name: "Sousse", value: 8200 },
-  { name: "Sfax", value: 7100 },
-  { name: "Ariana", value: 5600 },
-  { name: "Nabeul", value: 3400 },
-  { name: "Bizerte", value: 2900 },
-  { name: "Autres", value: 3050 },
-];
-
-const conversionData = [
-  { month: "Sep", inscriptions: 180, verifies: 145, actifs: 120 },
-  { month: "Oct", inscriptions: 210, verifies: 175, actifs: 150 },
-  { month: "Nov", inscriptions: 195, verifies: 160, actifs: 135 },
-  { month: "Déc", inscriptions: 230, verifies: 195, actifs: 170 },
-  { month: "Jan", inscriptions: 260, verifies: 225, actifs: 200 },
-  { month: "Fév", inscriptions: 285, verifies: 250, actifs: 220 },
-];
-
-const appointmentData = [
-  { month: "Sep", total: 4500, teleconsultation: 450 },
-  { month: "Oct", total: 5200, teleconsultation: 620 },
-  { month: "Nov", total: 5800, teleconsultation: 750 },
-  { month: "Déc", total: 5100, teleconsultation: 680 },
-  { month: "Jan", total: 6500, teleconsultation: 950 },
-  { month: "Fév", total: 7200, teleconsultation: 1100 },
-];
-
-const COLORS = ["hsl(205,85%,45%)", "hsl(160,60%,45%)", "hsl(38,92%,50%)", "hsl(0,72%,55%)", "hsl(215,25%,50%)", "hsl(280,60%,50%)", "hsl(160,30%,60%)"];
 
 const kpis = [
   { label: "Utilisateurs actifs (30j)", value: "2,134", change: "+18%", up: true, icon: Users },
@@ -110,57 +77,8 @@ const AdminAnalytics = () => {
 
           <div className="rounded-xl border bg-card p-6 shadow-card">
             <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />Revenus par gouvernorat</h3>
-            <div className="h-56 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={revenueByGouvernorat} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                    {revenueByGouvernorat.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => [`${v.toLocaleString()} DT`, "Revenu"]} contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {revenueByGouvernorat.map((g, i) => (
-                <span key={i} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  {g.name} ({g.value.toLocaleString()} DT)
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Charts row 2 */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border bg-card p-6 shadow-card">
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="h-4 w-4 text-accent" />Entonnoir de conversion</h3>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={conversionData} barGap={2}>
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
-                  <Bar dataKey="inscriptions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Inscriptions" />
-                  <Bar dataKey="verifies" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="Vérifiés" />
-                  <Bar dataKey="actifs" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="Actifs" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="rounded-xl border bg-card p-6 shadow-card">
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Calendar className="h-4 w-4 text-primary" />Rendez-vous & Téléconsultations</h3>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={appointmentData}>
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
-                  <Area type="monotone" dataKey="total" stroke="hsl(var(--primary))" fill="hsl(var(--primary)/0.1)" strokeWidth={2} name="Total RDV" />
-                  <Area type="monotone" dataKey="teleconsultation" stroke="hsl(var(--accent))" fill="hsl(var(--accent)/0.1)" strokeWidth={2} name="Téléconsultation" />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="h-56 flex items-center justify-center text-muted-foreground">
+              [Graphique simplifié pour la démo]
             </div>
           </div>
         </div>

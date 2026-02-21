@@ -3,35 +3,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Heart, Activity, FileText, Calendar, Phone, Mail, AlertTriangle, Pill, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
+import { mockConsultationPatient, mockVitalsHistory, mockPatientConsultations, mockPatientDetailPrescriptions, mockPatientAnalyses } from "@/data/mockData";
 
 type Tab = "summary" | "consultations" | "prescriptions" | "analyses" | "documents";
-
-const patient = {
-  name: "Amine Ben Ali", age: 34, gender: "Homme", dob: "15/03/1991", phone: "71 234 567", email: "amine@email.tn", address: "El Manar, Tunis",
-  bloodType: "A+", ssn: "1 91 03 75 012 035 42", mutuelle: "Assurances Maghrebia",
-  allergies: [{ name: "Pénicilline", severity: "Sévère" }], conditions: ["Diabète type 2"], treatingDoctor: "Dr. Ahmed Bouazizi", registeredSince: "Jan 2022",
-};
-
-const vitalsHistory = [
-  { date: "10 Fév 2026", systolic: 130, diastolic: 80, heartRate: 72, weight: 75, glycemia: 1.05 },
-  { date: "15 Jan 2026", systolic: 128, diastolic: 82, heartRate: 75, weight: 75.5, glycemia: 1.12 },
-  { date: "5 Déc 2025", systolic: 135, diastolic: 85, heartRate: 70, weight: 76, glycemia: 1.18 },
-  { date: "20 Nov 2025", systolic: 132, diastolic: 78, heartRate: 68, weight: 76.2, glycemia: 1.08 },
-];
-
-const consultations = [
-  { date: "10 Fév 2026", motif: "Suivi diabète", notes: "Glycémie stable 1.05 g/L. Maintien du traitement.", prescriptions: 1 },
-  { date: "15 Jan 2026", motif: "Bilan cardiaque annuel", notes: "ECG normal. TA 13/8.", prescriptions: 0 },
-];
-
-const prescriptions = [
-  { id: "ORD-045", date: "10 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], status: "active" },
-  { id: "ORD-032", date: "20 Nov 2025", items: ["Oméprazole 20mg"], status: "expired" },
-];
-
-const analyses = [
-  { id: "ANA-012", date: "10 Fév 2026", type: "Bilan sanguin", status: "ready", values: [{ name: "Glycémie", value: "1.05 g/L", ref: "0.70-1.10", status: "normal" }, { name: "HbA1c", value: "6.8%", ref: "< 7%", status: "normal" }] },
-];
 
 const DoctorPatientDetail = () => {
   const [tab, setTab] = useState<Tab>("summary");
@@ -39,6 +13,8 @@ const DoctorPatientDetail = () => {
     { key: "summary" as Tab, label: "Résumé" }, { key: "consultations" as Tab, label: "Consultations" },
     { key: "prescriptions" as Tab, label: "Ordonnances" }, { key: "analyses" as Tab, label: "Analyses" }, { key: "documents" as Tab, label: "Documents" },
   ];
+
+  const patient = mockConsultationPatient;
 
   return (
     <DashboardLayout role="doctor" title="Fiche patient">
@@ -58,18 +34,18 @@ const DoctorPatientDetail = () => {
               <div className="h-16 w-16 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-xl shrink-0">AB</div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">{patient.name}</h2>
-                <p className="text-sm text-muted-foreground">{patient.age} ans · {patient.gender} · Né le {patient.dob}</p>
+                <p className="text-sm text-muted-foreground">{patient.age} ans · {patient.gender} · Né le 15/03/1991</p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {patient.allergies.map(a => <span key={a.name} className="flex items-center gap-1 text-xs font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full"><AlertTriangle className="h-3 w-3" />{a.name} ({a.severity})</span>)}
+                  {patient.allergies.map(a => <span key={a} className="flex items-center gap-1 text-xs font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full"><AlertTriangle className="h-3 w-3" />{a}</span>)}
                   {patient.conditions.map(c => <span key={c} className="text-xs font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">{c}</span>)}
                 </div>
-                <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground"><span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{patient.phone}</span><span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{patient.email}</span></div>
+                <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground"><span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />71 234 567</span><span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />amine@email.tn</span></div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:w-48 text-sm">
               <div className="rounded-lg bg-muted/50 p-3"><p className="text-muted-foreground text-xs">Groupe sanguin</p><p className="font-medium text-foreground">{patient.bloodType}</p></div>
               <div className="rounded-lg bg-muted/50 p-3"><p className="text-muted-foreground text-xs">Mutuelle</p><p className="font-medium text-foreground">{patient.mutuelle}</p></div>
-              <div className="rounded-lg bg-muted/50 p-3"><p className="text-muted-foreground text-xs">Patient depuis</p><p className="font-medium text-foreground">{patient.registeredSince}</p></div>
+              <div className="rounded-lg bg-muted/50 p-3"><p className="text-muted-foreground text-xs">Patient depuis</p><p className="font-medium text-foreground">Jan 2022</p></div>
             </div>
           </div>
         </div>
@@ -87,18 +63,18 @@ const DoctorPatientDetail = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b"><th className="pb-2 text-left text-muted-foreground font-medium">Date</th><th className="pb-2 text-left text-muted-foreground font-medium">TA</th><th className="pb-2 text-left text-muted-foreground font-medium">FC</th><th className="pb-2 text-left text-muted-foreground font-medium">Poids</th><th className="pb-2 text-left text-muted-foreground font-medium">Glycémie</th></tr></thead>
-                  <tbody>{vitalsHistory.map((v, i) => <tr key={i} className="border-b last:border-0"><td className="py-2 text-muted-foreground">{v.date}</td><td className="py-2 text-foreground">{v.systolic}/{v.diastolic}</td><td className="py-2 text-foreground">{v.heartRate}</td><td className="py-2 text-foreground">{v.weight} kg</td><td className="py-2 font-medium">{v.glycemia} g/L</td></tr>)}</tbody>
+                  <tbody>{mockVitalsHistory.map((v, i) => <tr key={i} className="border-b last:border-0"><td className="py-2 text-muted-foreground">{v.date}</td><td className="py-2 text-foreground">{v.systolic}/{v.diastolic}</td><td className="py-2 text-foreground">{v.heartRate}</td><td className="py-2 text-foreground">{v.weight} kg</td><td className="py-2 font-medium">{v.glycemia} g/L</td></tr>)}</tbody>
                 </table>
               </div>
             </div>
             <div className="space-y-6">
               <div className="rounded-xl border bg-card p-5 shadow-card">
                 <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Pill className="h-5 w-5 text-primary" />Traitements en cours</h3>
-                <div className="space-y-2">{prescriptions.filter(p => p.status === "active").flatMap(p => p.items).map((item, i) => <div key={i} className="flex items-center gap-2 text-sm rounded-lg bg-muted/50 p-2.5"><Pill className="h-3.5 w-3.5 text-primary shrink-0" /><span className="text-foreground">{item}</span></div>)}</div>
+                <div className="space-y-2">{mockPatientDetailPrescriptions.filter(p => p.status === "active").flatMap(p => p.items).map((item, i) => <div key={i} className="flex items-center gap-2 text-sm rounded-lg bg-muted/50 p-2.5"><Pill className="h-3.5 w-3.5 text-primary shrink-0" /><span className="text-foreground">{item}</span></div>)}</div>
               </div>
               <div className="rounded-xl border bg-card p-5 shadow-card">
                 <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" />Dernières consultations</h3>
-                <div className="space-y-2">{consultations.slice(0, 3).map((c, i) => <div key={i} className="rounded-lg border p-3"><div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{c.motif}</p><span className="text-xs text-muted-foreground">{c.date}</span></div><p className="text-xs text-muted-foreground mt-1">{c.notes}</p></div>)}</div>
+                <div className="space-y-2">{mockPatientConsultations.slice(0, 3).map((c, i) => <div key={i} className="rounded-lg border p-3"><div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{c.motif}</p><span className="text-xs text-muted-foreground">{c.date}</span></div><p className="text-xs text-muted-foreground mt-1">{c.notes}</p></div>)}</div>
               </div>
             </div>
           </div>
@@ -106,7 +82,7 @@ const DoctorPatientDetail = () => {
 
         {tab === "consultations" && (
           <div className="space-y-4">
-            {consultations.map((c, i) => (
+            {mockPatientConsultations.map((c, i) => (
               <div key={i} className="rounded-xl border bg-card p-5 shadow-card">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
@@ -123,7 +99,7 @@ const DoctorPatientDetail = () => {
 
         {tab === "prescriptions" && (
           <div className="space-y-4">
-            {prescriptions.map(p => (
+            {mockPatientDetailPrescriptions.map(p => (
               <div key={p.id} className="rounded-xl border bg-card p-5 shadow-card">
                 <div className="flex items-start justify-between">
                   <div>
@@ -139,7 +115,7 @@ const DoctorPatientDetail = () => {
 
         {tab === "analyses" && (
           <div className="space-y-4">
-            {analyses.map(a => (
+            {mockPatientAnalyses.map(a => (
               <div key={a.id} className="rounded-xl border bg-card shadow-card">
                 <div className="p-5 border-b"><div className="flex items-center gap-2"><h4 className="font-semibold text-foreground">{a.type}</h4><span className="text-sm text-muted-foreground">— {a.date}</span></div></div>
                 <div className="p-5"><table className="w-full text-sm"><thead><tr className="text-left"><th className="pb-2 font-medium text-muted-foreground">Paramètre</th><th className="pb-2 font-medium text-muted-foreground">Résultat</th><th className="pb-2 font-medium text-muted-foreground">Référence</th></tr></thead><tbody>{a.values.map((v, i) => <tr key={i} className="border-t"><td className="py-2 text-foreground">{v.name}</td><td className="py-2 font-medium">{v.value}</td><td className="py-2 text-muted-foreground">{v.ref}</td></tr>)}</tbody></table></div>

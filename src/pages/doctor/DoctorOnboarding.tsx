@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Stethoscope, CheckCircle2, ArrowLeft, ArrowRight, User, MapPin, Clock,
-  Calendar, Shield, Globe, Plus, Trash2, AlertTriangle
+  Calendar, Shield, Plus, Trash2, AlertTriangle
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { specialties, languages, mockDefaultMotifs, mockDefaultHoraires } from "@/data/mockData";
 
 type Step = "identity" | "cabinet" | "motifs" | "rules";
 
@@ -17,38 +18,13 @@ const steps = [
   { key: "rules" as Step, label: "Règles RDV", icon: Calendar },
 ];
 
-const specialties = [
-  "Médecin généraliste", "Cardiologue", "Dermatologue", "Dentiste",
-  "Ophtalmologue", "Pédiatre", "Gynécologue", "ORL", "Kinésithérapeute",
-  "Psychiatre", "Rhumatologue", "Chirurgien",
-];
-
-const languages = ["Français", "Arabe", "Anglais", "Allemand", "Italien", "Espagnol"];
-
-const defaultMotifs = [
-  { name: "Consultation générale", duration: 30, price: 35 },
-  { name: "Suivi", duration: 20, price: 25 },
-  { name: "Première consultation", duration: 45, price: 50 },
-  { name: "Certificat médical", duration: 15, price: 20 },
-];
-
-const defaultHoraires = [
-  { day: "Lundi", morning: "08:00-12:00", afternoon: "14:00-18:00", open: true },
-  { day: "Mardi", morning: "08:00-12:00", afternoon: "14:00-18:00", open: true },
-  { day: "Mercredi", morning: "08:00-12:00", afternoon: "", open: true },
-  { day: "Jeudi", morning: "08:00-12:00", afternoon: "14:00-18:00", open: true },
-  { day: "Vendredi", morning: "08:00-12:00", afternoon: "14:00-17:00", open: true },
-  { day: "Samedi", morning: "08:00-13:00", afternoon: "", open: true },
-  { day: "Dimanche", morning: "", afternoon: "", open: false },
-];
-
 const DoctorOnboarding = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("identity");
   const [selectedLangs, setSelectedLangs] = useState(["Français", "Arabe"]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
-  const [motifs, setMotifs] = useState(defaultMotifs);
-  const [horaires, setHoraires] = useState(defaultHoraires);
+  const [motifs, setMotifs] = useState(mockDefaultMotifs);
+  const [horaires, setHoraires] = useState(mockDefaultHoraires);
   const [autoConfirm, setAutoConfirm] = useState(true);
   const [cancellationDelay, setCancellationDelay] = useState("24");
   const [bufferTime, setBufferTime] = useState("5");

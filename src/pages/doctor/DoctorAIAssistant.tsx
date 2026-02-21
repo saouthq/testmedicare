@@ -3,32 +3,21 @@ import { useState } from "react";
 import { Send, Bot, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-interface Message { id: string; sender: "me" | "ai"; text: string; time: string; }
-
-const aiInitialMessages: Message[] = [
-  { id: "1", sender: "ai", text: "Bonjour Dr. Bouazizi ! Je suis votre assistant IA Medicare. Comment puis-je vous aider ? Je peux vous aider avec des informations médicales, des protocoles ou des interactions médicamenteuses.", time: "—" },
-];
-
-const aiResponses = [
-  "D'après les dernières recommandations HAS (2025), pour un patient diabétique de type 2 avec HbA1c entre 7% et 8%, le traitement de première intention reste la Metformine. Si les objectifs ne sont pas atteints après 3-6 mois, l'ajout d'un inhibiteur SGLT2 ou d'un agoniste GLP-1 est recommandé, surtout en cas de risque cardiovasculaire.",
-  "Interaction potentielle détectée : l'association Metformine + AINS (ibuprofène) peut augmenter le risque d'acidose lactique, surtout en cas d'insuffisance rénale. Alternative recommandée : Paracétamol.",
-  "Je vous recommande de vérifier la clairance de la créatinine avant de prescrire. Pour plus de précisions, consultez le Vidal ou le CRAT.",
-];
+import { mockAiInitialMessages, mockAiResponses, ChatMessage } from "@/data/mockData";
 
 const DoctorAIAssistant = () => {
-  const [messages, setMessages] = useState<Message[]>(aiInitialMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(mockAiInitialMessages);
   const [newMessage, setNewMessage] = useState("");
   const [responseIdx, setResponseIdx] = useState(0);
 
   const sendMessage = () => {
     if (!newMessage.trim()) return;
     const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    const userMsg: Message = { id: Date.now().toString(), sender: "me", text: newMessage, time };
+    const userMsg: ChatMessage = { id: Date.now().toString(), sender: "me", text: newMessage, time };
     setMessages(prev => [...prev, userMsg]);
     setNewMessage("");
     setTimeout(() => {
-      const aiMsg: Message = { id: (Date.now() + 1).toString(), sender: "ai", text: aiResponses[responseIdx % aiResponses.length], time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) };
+      const aiMsg: ChatMessage = { id: (Date.now() + 1).toString(), sender: "ai", text: mockAiResponses[responseIdx % mockAiResponses.length], time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) };
       setMessages(prev => [...prev, aiMsg]);
       setResponseIdx(prev => prev + 1);
     }, 1200);

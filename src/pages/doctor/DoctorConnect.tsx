@@ -1,58 +1,29 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, Send, Paperclip, ChevronLeft, Users, Building2, Plus } from "lucide-react";
+import { Search, Send, Paperclip, ChevronLeft, Users, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { mockProContacts, mockCabinetContacts, mockProMessages, mockCabinetMessages, ChatContact, ChatMessage } from "@/data/mockData";
 
 /* Connect = inter-pro + cabinet only (AI moved to dedicated page) */
 type ConnectTab = "professionals" | "cabinet";
-
-interface Contact { id: string; name: string; specialty: string; avatar: string; lastMessage: string; time: string; unread: number; online: boolean; }
-interface Message { id: string; sender: "me" | "them"; text: string; time: string; senderName?: string; }
-
-const proContacts: Contact[] = [
-  { id: "p1", name: "Dr. Sonia Gharbi", specialty: "Cardiologue", avatar: "SG", lastMessage: "Merci pour l'orientation, je prends en charge.", time: "10:30", unread: 1, online: true },
-  { id: "p2", name: "Dr. Khaled Hammami", specialty: "Dermatologue", avatar: "KH", lastMessage: "Les résultats du bilan cutané sont bons.", time: "Hier", unread: 0, online: false },
-  { id: "p3", name: "Dr. Leila Chahed", specialty: "Endocrinologue", avatar: "LC", lastMessage: "Je vous envoie le protocole.", time: "18 Fév", unread: 0, online: true },
-];
-
-const cabinetContacts: Contact[] = [
-  { id: "c1", name: "Chat du cabinet", specialty: "Dr. Bouazizi · Mme Fatma (Secrétaire)", avatar: "CB", lastMessage: "Le patient de 14h30 a annulé.", time: "11:15", unread: 2, online: true },
-];
-
-const proMessages: Record<string, Message[]> = {
-  "p1": [
-    { id: "1", sender: "me", text: "Bonjour Dr. Gharbi, j'ai un patient avec suspicion d'arythmie. Pourriez-vous le prendre en charge ?", time: "09:45" },
-    { id: "2", sender: "them", text: "Bonjour Dr. Bouazizi, bien sûr. Envoyez-moi son dossier et je planifie un ECG.", time: "10:00" },
-    { id: "3", sender: "me", text: "Je vous envoie le dossier maintenant. Merci beaucoup !", time: "10:15" },
-    { id: "4", sender: "them", text: "Merci pour l'orientation, je prends en charge.", time: "10:30" },
-  ],
-};
-
-const cabinetMessages: Record<string, Message[]> = {
-  "c1": [
-    { id: "1", sender: "them", text: "Le patient de 14h30 a appelé pour annuler.", time: "11:00", senderName: "Mme Fatma" },
-    { id: "2", sender: "me", text: "D'accord, essayez de placer un patient en liste d'attente sur ce créneau.", time: "11:10" },
-    { id: "3", sender: "them", text: "Le patient de 14h30 a annulé.", time: "11:15", senderName: "Mme Fatma" },
-  ],
-};
 
 const DoctorConnect = () => {
   const [tab, setTab] = useState<ConnectTab>("professionals");
   const [selectedContact, setSelectedContact] = useState<string | null>("p1");
   const [newMessage, setNewMessage] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
-  const [messages, setMessages] = useState<Record<string, Message[]>>({ ...proMessages, ...cabinetMessages });
+  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({ ...mockProMessages, ...mockCabinetMessages });
   const [searchQuery, setSearchQuery] = useState("");
 
-  const contacts = tab === "professionals" ? proContacts : cabinetContacts;
+  const contacts = tab === "professionals" ? mockProContacts : mockCabinetContacts;
   const currentContact = contacts.find(c => c.id === selectedContact);
   const currentMessages = selectedContact ? messages[selectedContact] || [] : [];
 
   const sendMessage = () => {
     if (!newMessage.trim() || !selectedContact) return;
     const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    const msg: Message = { id: Date.now().toString(), sender: "me", text: newMessage, time };
+    const msg: ChatMessage = { id: Date.now().toString(), sender: "me", text: newMessage, time };
     setMessages(prev => ({ ...prev, [selectedContact]: [...(prev[selectedContact] || []), msg] }));
     setNewMessage("");
   };

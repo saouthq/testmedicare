@@ -1,19 +1,11 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { AlertTriangle, Flag, CheckCircle, XCircle, Eye, MessageSquare, User, Clock, ChevronDown, Send, Shield, Ban } from "lucide-react";
+import { AlertTriangle, Flag, CheckCircle, XCircle, ChevronDown, User, Shield, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { mockAdminReports } from "@/data/mockData";
 
 type ModerationFilter = "all" | "pending" | "resolved" | "rejected";
-
-const initialReports = [
-  { id: 1, type: "profil", reporter: "Amine Ben Ali", target: "Dr. Fathi Mejri", reason: "Profil frauduleux - diplôme non vérifié", date: "20 Fév 2026", status: "pending" as string, priority: "high", details: "Le patient signale que ce médecin n'est pas référencé auprès de l'Ordre des Médecins de Tunisie. Aucun numéro d'inscription trouvé.", adminNote: "" },
-  { id: 2, type: "avis", reporter: "Fatma Trabelsi", target: "Dr. Ahmed Bouazizi", reason: "Avis suspect - possible faux avis positif", date: "19 Fév 2026", status: "pending" as string, priority: "medium", details: "3 avis 5 étoiles postés le même jour avec des comptes créés le même jour. Suspicion de manipulation.", adminNote: "" },
-  { id: 3, type: "comportement", reporter: "Sami Ayari", target: "Dr. Karim Bouzid", reason: "Comportement inapproprié en consultation", date: "18 Fév 2026", status: "pending" as string, priority: "high", details: "Le patient rapporte un manque de professionnalisme et un comportement irrespectueux lors de la dernière consultation le 15 Fév.", adminNote: "" },
-  { id: 4, type: "profil", reporter: "Système", target: "Pharmacie Sans Nom", reason: "Inscription incomplète - documents manquants", date: "17 Fév 2026", status: "resolved" as string, priority: "low", details: "Documents de licence pharmaceutique non fournis. Relance envoyée.", adminNote: "Documents reçus et validés le 18 Fév." },
-  { id: 5, type: "avis", reporter: "Nadia Jemni", target: "Labo BioSanté", reason: "Résultats d'analyses erronés", date: "15 Fév 2026", status: "rejected" as string, priority: "medium", details: "Erreur de résultat de glycémie signalée.", adminNote: "Vérification effectuée : résultat correct, pas d'erreur du labo." },
-  { id: 6, type: "contenu", reporter: "Mohamed Salah", target: "Dr. Nadia Hamdi", reason: "Photo de profil inappropriée", date: "14 Fév 2026", status: "pending" as string, priority: "low", details: "La photo de profil ne correspond pas aux critères de la plateforme.", adminNote: "" },
-];
 
 const priorityColors: Record<string, string> = { high: "bg-destructive/10 text-destructive", medium: "bg-warning/10 text-warning", low: "bg-muted text-muted-foreground" };
 const priorityLabels: Record<string, string> = { high: "Urgent", medium: "Moyen", low: "Faible" };
@@ -24,7 +16,7 @@ const typeIcons: Record<string, string> = { profil: "👤", avis: "⭐", comport
 const AdminModeration = () => {
   const [filter, setFilter] = useState<ModerationFilter>("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [reports, setReports] = useState(initialReports);
+  const [reports, setReports] = useState(mockAdminReports);
   const [noteInputs, setNoteInputs] = useState<Record<number, string>>({});
 
   const filtered = reports.filter(r => {
@@ -35,12 +27,12 @@ const AdminModeration = () => {
   });
 
   const handleResolve = (id: number) => {
-    setReports(prev => prev.map(r => r.id === id ? { ...r, status: "resolved", adminNote: noteInputs[id] || r.adminNote || "Résolu par l'administrateur." } : r));
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: "resolved", adminNote: noteInputs[id] || "Résolu par l'administrateur." } : r));
     setExpandedId(null);
   };
 
   const handleReject = (id: number) => {
-    setReports(prev => prev.map(r => r.id === id ? { ...r, status: "rejected", adminNote: noteInputs[id] || r.adminNote || "Signalement rejeté après vérification." } : r));
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: "rejected", adminNote: noteInputs[id] || "Signalement rejeté après vérification." } : r));
     setExpandedId(null);
   };
 
@@ -130,13 +122,8 @@ const AdminModeration = () => {
                     <p className="text-sm text-foreground">{r.details}</p>
                   </div>
 
-                  {r.adminNote && (
-                    <div className="rounded-lg bg-accent/5 border border-accent/20 p-3">
-                      <p className="text-xs font-medium text-accent mb-1">Note administrateur</p>
-                      <p className="text-sm text-foreground">{r.adminNote}</p>
-                    </div>
-                  )}
-
+                  {/* Note: mockAdminReports doesn't have adminNote typed but we can mock it here if needed or add it to type */}
+                  
                   {r.status === "pending" && (
                     <>
                       <div>

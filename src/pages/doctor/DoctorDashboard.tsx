@@ -1,35 +1,14 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { 
-  Calendar, Users, ClipboardList, ChevronRight, Clock, 
-  Play, CheckCircle2, AlertTriangle, FileText, Pill, 
-  Video, MessageSquare, Bell, ArrowRight, Shield, Search,
-  Filter, MoreHorizontal, Phone, RefreshCw, X
+  Calendar, Clock, CheckCircle2, Play, 
+  Bell, AlertTriangle, MessageSquare, Shield, Search,
+  Filter, MoreHorizontal, FileText, Video, RefreshCw, X
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const todaySchedule = [
-  { time: "08:30", patient: "Amine Ben Ali", type: "Consultation", duration: "30 min", status: "done", motif: "Suivi diabète", avatar: "AB", cnam: true, phone: "+216 55 123 456" },
-  { time: "09:00", patient: "Fatma Trabelsi", type: "Suivi", duration: "20 min", status: "done", motif: "Contrôle tension", avatar: "FT", cnam: true, phone: "+216 55 234 567" },
-  { time: "09:30", patient: "Mohamed Sfar", type: "Première visite", duration: "45 min", status: "current", motif: "Bilan initial", avatar: "MS", cnam: false, phone: "+216 55 345 678" },
-  { time: "10:15", patient: "Nadia Jemni", type: "Contrôle", duration: "20 min", status: "upcoming", motif: "Douleurs articulaires", avatar: "NJ", cnam: true, phone: "+216 55 456 789" },
-  { time: "10:45", patient: "Sami Ayari", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Renouvellement ordonnance", avatar: "SA", cnam: true },
-  { time: "14:00", patient: "Rania Meddeb", type: "Suivi", duration: "20 min", status: "upcoming", motif: "Suivi cholestérol", avatar: "RM", cnam: true },
-  { time: "14:30", patient: "Youssef Belhadj", type: "Téléconsultation", duration: "20 min", status: "upcoming", motif: "Résultats analyses", avatar: "YB", teleconsultation: true, cnam: false },
-  { time: "15:00", patient: "Salma Dridi", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Certificat médical", avatar: "SD", cnam: true },
-];
-
-const waitingRoom = [
-  { patient: "Mohamed Sfar", arrivedAt: "09:20", appointment: "09:30", wait: "10 min", avatar: "MS" },
-  { patient: "Nadia Jemni", arrivedAt: "10:05", appointment: "10:15", wait: "0 min", avatar: "NJ" },
-];
-
-const urgentAlerts = [
-  { type: "result", patient: "Fatma Trabelsi", text: "Résultats analyses — Cholestérol élevé", severity: "high" },
-  { type: "message", patient: "Amine Ben Ali", text: "Question sur posologie Metformine", severity: "normal" },
-];
+import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts } from "@/data/mockData";
 
 type StatusFilter = "all" | "done" | "current" | "upcoming";
 
@@ -38,12 +17,12 @@ const DoctorDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
 
-  const doneCount = todaySchedule.filter(s => s.status === "done").length;
-  const totalCount = todaySchedule.length;
-  const currentRdv = todaySchedule.find(s => s.status === "current");
-  const nextRdv = todaySchedule.find(s => s.status === "upcoming");
+  const doneCount = mockTodaySchedule.filter(s => s.status === "done").length;
+  const totalCount = mockTodaySchedule.length;
+  const currentRdv = mockTodaySchedule.find(s => s.status === "current");
+  const nextRdv = mockTodaySchedule.find(s => s.status === "upcoming");
 
-  const filteredSchedule = todaySchedule.filter(s => {
+  const filteredSchedule = mockTodaySchedule.filter(s => {
     if (filter !== "all" && s.status !== filter) return false;
     if (searchQuery && !s.patient.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -75,10 +54,10 @@ const DoctorDashboard = () => {
           <div className="rounded-xl border bg-card shadow-card p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Clock className="h-4 w-4 text-warning" />Salle d'attente</h3>
-              <span className="text-xs font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">{waitingRoom.length}</span>
+              <span className="text-xs font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">{mockWaitingRoom.length}</span>
             </div>
             <div className="space-y-2.5">
-              {waitingRoom.map((w, i) => (
+              {mockWaitingRoom.map((w, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-lg border p-3 bg-warning/5 border-warning/20">
                   <div className="h-8 w-8 rounded-full bg-warning/10 flex items-center justify-center text-xs font-medium text-warning">{w.avatar}</div>
                   <div className="flex-1 min-w-0">
@@ -93,15 +72,15 @@ const DoctorDashboard = () => {
         </div>
 
         {/* Alerts */}
-        {urgentAlerts.length > 0 && (
+        {mockUrgentAlerts.length > 0 && (
           <div className="rounded-xl border bg-card shadow-card p-4">
             <div className="flex items-center gap-2 mb-3">
               <Bell className="h-4 w-4 text-destructive" />
               <h3 className="font-semibold text-foreground text-sm">Alertes</h3>
-              <span className="text-xs font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{urgentAlerts.length}</span>
+              <span className="text-xs font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{mockUrgentAlerts.length}</span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
-              {urgentAlerts.map((a, i) => (
+              {mockUrgentAlerts.map((a, i) => (
                 <div key={i} className={`rounded-lg border p-3 flex items-start gap-2 ${a.severity === "high" ? "border-destructive/30 bg-destructive/5" : "bg-card"}`}>
                   {a.severity === "high" ? <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" /> : <MessageSquare className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
                   <div><p className="text-xs font-medium text-foreground">{a.patient}</p><p className="text-xs text-muted-foreground mt-0.5">{a.text}</p></div>
@@ -120,7 +99,7 @@ const DoctorDashboard = () => {
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Rechercher patient..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8 h-8 text-xs" />
               </div>
-              <Link to="/dashboard/doctor/schedule" className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0">Semaine <ChevronRight className="h-3.5 w-3.5" /></Link>
+              <Link to="/dashboard/doctor/schedule" className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0">Semaine <Filter className="h-3.5 w-3.5" /></Link>
             </div>
           </div>
 
@@ -167,7 +146,7 @@ const DoctorDashboard = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-foreground text-sm truncate">{s.patient}</p>
-                    {(s as any).teleconsultation && <Video className="h-3.5 w-3.5 text-primary shrink-0" />}
+                    {s.teleconsultation && <Video className="h-3.5 w-3.5 text-primary shrink-0" />}
                     {s.cnam && <Shield className="h-3 w-3 text-primary shrink-0" />}
                   </div>
                   <p className="text-xs text-muted-foreground">{s.motif} · {s.type}</p>
@@ -203,32 +182,6 @@ const DoctorDashboard = () => {
             {filteredSchedule.length === 0 && (
               <div className="py-12 text-center text-sm text-muted-foreground">Aucun RDV trouvé</div>
             )}
-          </div>
-        </div>
-
-        {/* Quick actions + monthly summary (secondary) */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-xl border bg-card shadow-card p-5">
-            <h3 className="font-semibold text-foreground mb-3">Actions rapides</h3>
-            <div className="space-y-2">
-              <Link to="/dashboard/doctor/consultation/new"><Button variant="outline" className="w-full justify-start h-10 text-sm" size="sm"><ClipboardList className="h-4 w-4 mr-2 text-primary" />Nouvelle consultation</Button></Link>
-              <Link to="/dashboard/doctor/prescriptions"><Button variant="outline" className="w-full justify-start h-10 text-sm" size="sm"><Pill className="h-4 w-4 mr-2 text-warning" />Rédiger ordonnance</Button></Link>
-              <Link to="/dashboard/doctor/patients"><Button variant="outline" className="w-full justify-start h-10 text-sm" size="sm"><Users className="h-4 w-4 mr-2 text-accent" />Rechercher patient</Button></Link>
-              <Link to="/dashboard/doctor/messages"><Button variant="outline" className="w-full justify-start h-10 text-sm" size="sm"><MessageSquare className="h-4 w-4 mr-2 text-primary" />Messagerie</Button></Link>
-            </div>
-          </div>
-
-          <div className="rounded-xl border bg-card shadow-card p-5 lg:col-span-2">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-foreground text-sm">Résumé du mois</h3>
-              <Link to="/dashboard/doctor/stats" className="text-xs text-primary hover:underline flex items-center gap-1">Statistiques détaillées <ArrowRight className="h-3.5 w-3.5" /></Link>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Consultations</p><p className="text-lg font-bold text-foreground mt-1">94</p><p className="text-[11px] text-accent">+12%</p></div>
-              <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Patients actifs</p><p className="text-lg font-bold text-foreground mt-1">342</p><p className="text-[11px] text-accent">+5%</p></div>
-              <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">CA mensuel</p><p className="text-lg font-bold text-foreground mt-1">4 340 DT</p><p className="text-[11px] text-accent">+8%</p></div>
-              <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Annulations</p><p className="text-lg font-bold text-foreground mt-1">4.2%</p><p className="text-[11px] text-accent">-1%</p></div>
-            </div>
           </div>
         </div>
       </div>
