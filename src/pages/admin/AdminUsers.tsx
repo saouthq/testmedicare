@@ -1,23 +1,11 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, MoreVertical, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, ChevronLeft, ChevronRight, Download, X } from "lucide-react";
+import { Search, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { mockAdminUsers } from "@/data/mockData";
 
 type UserFilter = "all" | "doctors" | "patients" | "pharmacies" | "laboratories" | "pending";
-
-const initialUsers = [
-  { id: 1, name: "Dr. Ahmed Bouazizi", email: "ahmed@mediconnect.tn", phone: "+216 71 234 567", role: "doctor", status: "active", subscription: "Pro (129 DT)", joined: "15 Jan 2025", verified: true, lastLogin: "Aujourd'hui 09:30", patients: 245 },
-  { id: 2, name: "Dr. Sonia Gharbi", email: "sonia@email.tn", phone: "+216 55 123 456", role: "doctor", status: "active", subscription: "Basic (39 DT)", joined: "20 Jan 2025", verified: true, lastLogin: "Hier 17:00", patients: 128 },
-  { id: 3, name: "Dr. Karim Bouzid", email: "karim@email.tn", phone: "+216 98 765 432", role: "doctor", status: "pending", subscription: "—", joined: "18 Fév 2026", verified: false, lastLogin: "—", patients: 0 },
-  { id: 4, name: "Amine Ben Ali", email: "amine@email.tn", phone: "+216 22 345 678", role: "patient", status: "active", subscription: "Gratuit", joined: "10 Déc 2024", verified: true, lastLogin: "Aujourd'hui 08:15", patients: 0 },
-  { id: 5, name: "Fatma Trabelsi", email: "fatma@email.tn", phone: "+216 55 987 654", role: "patient", status: "active", subscription: "Gratuit", joined: "5 Jan 2025", verified: true, lastLogin: "19 Fév 2026", patients: 0 },
-  { id: 6, name: "Pharmacie El Amal", email: "elamal@pharmacy.tn", phone: "+216 73 456 789", role: "pharmacy", status: "pending", subscription: "—", joined: "19 Fév 2026", verified: false, lastLogin: "—", patients: 0 },
-  { id: 7, name: "Labo BioSanté", email: "bio@labo.tn", phone: "+216 71 987 654", role: "laboratory", status: "active", subscription: "Standard (59 DT)", joined: "1 Fév 2025", verified: true, lastLogin: "Aujourd'hui 10:00", patients: 0 },
-  { id: 8, name: "Dr. Fathi Mejri", email: "fathi@email.tn", phone: "+216 98 111 222", role: "doctor", status: "suspended", subscription: "Pro (129 DT)", joined: "10 Mar 2024", verified: true, lastLogin: "10 Fév 2026", patients: 89 },
-  { id: 9, name: "Nadia Jemni", email: "nadia@email.tn", phone: "+216 22 333 444", role: "patient", status: "active", subscription: "Gratuit", joined: "15 Nov 2024", verified: true, lastLogin: "18 Fév 2026", patients: 0 },
-  { id: 10, name: "Pharmacie Pasteur", email: "pasteur@pharmacy.tn", phone: "+216 71 555 666", role: "pharmacy", status: "active", subscription: "Standard (59 DT)", joined: "20 Oct 2024", verified: true, lastLogin: "Aujourd'hui 07:45", patients: 0 },
-];
 
 const roleLabels: Record<string, string> = { doctor: "Médecin", patient: "Patient", pharmacy: "Pharmacie", laboratory: "Laboratoire" };
 const roleColors: Record<string, string> = { doctor: "bg-primary/10 text-primary", patient: "bg-accent/10 text-accent", pharmacy: "bg-warning/10 text-warning", laboratory: "bg-muted text-foreground" };
@@ -27,8 +15,8 @@ const statusLabels: Record<string, string> = { active: "Actif", pending: "En att
 const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserFilter>("all");
-  const [users, setUsers] = useState(initialUsers);
-  const [selectedUser, setSelectedUser] = useState<typeof initialUsers[0] | null>(null);
+  const [users, setUsers] = useState(mockAdminUsers);
+  const [selectedUser, setSelectedUser] = useState<typeof mockAdminUsers[0] | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "joined">("joined");
 
   const filtered = users

@@ -1,27 +1,20 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { ClipboardList, Plus, User, Calendar, FileText, Shield, Eye, ChevronDown, Video, Send, Printer } from "lucide-react";
+import { ClipboardList, Plus, FileText, Shield, Eye, ChevronDown, Send, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { mockDoctorConsultations } from "@/data/mockData";
 
 type ConsultFilter = "today" | "week" | "all";
-
-const initialConsultations = [
-  { id: 1, patient: "Amine Ben Ali", date: "20 Fév 2026", time: "09:30", motif: "Suivi diabète", notes: "Glycémie stable, renouvellement traitement", prescriptions: 1, cnam: true, amount: "35 DT", avatar: "AB", status: "completed" },
-  { id: 2, patient: "Fatma Trabelsi", date: "20 Fév 2026", time: "09:00", motif: "Contrôle tension", notes: "TA 14/8, ajustement posologie", prescriptions: 1, cnam: true, amount: "35 DT", avatar: "FT", status: "completed" },
-  { id: 3, patient: "Mohamed Sfar", date: "18 Fév 2026", time: "14:00", motif: "Suivi post-opératoire", notes: "Cicatrisation normale, retrait fils J+15", prescriptions: 0, cnam: false, amount: "50 DT", avatar: "MS", status: "completed" },
-  { id: 4, patient: "Nadia Jemni", date: "17 Fév 2026", time: "10:30", motif: "Douleurs articulaires", notes: "Prescription anti-inflammatoires", prescriptions: 2, cnam: true, amount: "35 DT", avatar: "NJ", status: "completed" },
-  { id: 5, patient: "Sami Ayari", date: "15 Fév 2026", time: "11:00", motif: "Renouvellement ordonnance", notes: "Ventoline + Seretide renouvelés pour 3 mois", prescriptions: 1, cnam: true, amount: "35 DT", avatar: "SA", status: "completed" },
-];
 
 const DoctorConsultations = () => {
   const [filter, setFilter] = useState<ConsultFilter>("today");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [consultations] = useState(initialConsultations);
+  const [consultations] = useState(mockDoctorConsultations);
 
   const filtered = consultations.filter(c => {
     if (filter === "today") return c.date === "20 Fév 2026";
-    if (filter === "week") return ["20 Fév 2026", "18 Fév 2026", "17 Fév 2026"].includes(c.date);
+    if (filter === "week") return ["20 Fév 2026", "18 Fév 2026", "17 Fév 2026", "15 Fév 2026"].includes(c.date);
     return true;
   });
 

@@ -1,44 +1,23 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, Send, Paperclip, MoreVertical, Phone, Video, ChevronLeft, Shield } from "lucide-react";
+import { Search, Send, Paperclip, MoreVertical, Phone, Video, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-interface Contact { id: string; name: string; role: string; avatar: string; lastMessage: string; time: string; unread: number; online: boolean; }
-interface Message { id: string; sender: "me" | "them"; text: string; time: string; }
-
-const contacts: Contact[] = [
-  { id: "1", name: "Dr. Ahmed Bouazizi", role: "Médecin généraliste", avatar: "AB", lastMessage: "Vos résultats sont bons, on se revoit dans 3 mois.", time: "10:30", unread: 1, online: true },
-  { id: "2", name: "Dr. Sonia Gharbi", role: "Cardiologue", avatar: "SG", lastMessage: "N'oubliez pas votre bilan la semaine prochaine.", time: "Hier", unread: 0, online: false },
-  { id: "3", name: "Pharmacie El Manar", role: "Pharmacie", avatar: "PE", lastMessage: "Votre ordonnance est prête à retirer.", time: "Hier", unread: 2, online: true },
-  { id: "4", name: "Labo BioAnalyse Tunis", role: "Laboratoire", avatar: "LB", lastMessage: "Vos résultats d'analyses sont disponibles.", time: "18 Fév", unread: 0, online: false },
-  { id: "5", name: "Dr. Khaled Hammami", role: "Dermatologue", avatar: "KH", lastMessage: "Comment évolue votre traitement ?", time: "15 Fév", unread: 0, online: false },
-];
-
-const conversationMessages: Record<string, Message[]> = {
-  "1": [
-    { id: "1", sender: "them", text: "Bonjour, j'ai bien reçu vos résultats d'analyses.", time: "09:45" },
-    { id: "2", sender: "them", text: "Votre glycémie est à 1.05 g/L, ce qui est dans les normes. L'HbA1c est à 6.8%.", time: "09:46" },
-    { id: "3", sender: "me", text: "Merci docteur ! Est-ce que je dois modifier mon traitement ?", time: "10:15" },
-    { id: "4", sender: "them", text: "Non, on continue le traitement actuel. Metformine 850mg 2x/jour + Glibenclamide 5mg 1x/jour.", time: "10:20" },
-    { id: "5", sender: "me", text: "D'accord, merci beaucoup.", time: "10:25" },
-    { id: "6", sender: "them", text: "Vos résultats sont bons, on se revoit dans 3 mois.", time: "10:30" },
-  ],
-};
+import { mockMessagingContacts, mockConversationMessages, ChatMessage } from "@/data/mockData";
 
 const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" }) => {
   const [selectedContact, setSelectedContact] = useState<string | null>("1");
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [messages, setMessages] = useState(conversationMessages);
+  const [messages, setMessages] = useState(mockConversationMessages);
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
-  const contact = contacts.find(c => c.id === selectedContact);
+  const contact = mockMessagingContacts.find(c => c.id === selectedContact);
   const currentMessages = selectedContact ? (messages[selectedContact] || []) : [];
 
   const sendMessage = () => {
     if (!newMessage.trim() || !selectedContact) return;
-    const msg: Message = { id: Date.now().toString(), sender: "me", text: newMessage, time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) };
+    const msg: ChatMessage = { id: Date.now().toString(), sender: "me", text: newMessage, time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) };
     setMessages(prev => ({ ...prev, [selectedContact]: [...(prev[selectedContact] || []), msg] }));
     setNewMessage("");
   };
@@ -52,7 +31,7 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
               <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Rechercher..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" /></div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {contacts.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(c => (
+              {mockMessagingContacts.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(c => (
                 <button key={c.id} onClick={() => { setSelectedContact(c.id); setMobileShowChat(true); }}
                   className={`w-full flex items-center gap-3 p-3 text-left hover:bg-muted/50 transition-colors ${selectedContact === c.id ? "bg-primary/5 border-r-2 border-r-primary" : ""}`}>
                   <div className="relative shrink-0">

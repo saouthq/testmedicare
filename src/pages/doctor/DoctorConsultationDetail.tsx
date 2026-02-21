@@ -4,39 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Heart, Thermometer, Activity, Plus, Save, Send, Trash2,
+  Heart, Thermometer, Activity, Plus, Save,
   AlertTriangle, Pill, ArrowLeft, Stethoscope, Droplets,
   Scale, Gauge, ChevronDown, ChevronUp, Printer, History,
-  CheckCircle2, Calendar, X, FileText, Clock
+  CheckCircle2, X
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-
-const patient = {
-  name: "Amine Ben Ali", age: 34, gender: "Homme", bloodType: "A+",
-  allergies: ["Pénicilline"], conditions: ["Diabète type 2"], lastVisit: "10 Fév 2026",
-  ssn: "1 91 03 75 012 035 42", mutuelle: "Assurances Maghrebia", medecinTraitant: "Dr. Ahmed Bouazizi",
-};
-
-const ConsultAccordion = ({ date, motif, diag, notes, prescription }: { date: string; motif: string; diag: string; notes: string; prescription: string }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-lg border bg-muted/30 overflow-hidden">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors text-left">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2"><p className="text-xs font-medium text-foreground">{motif}</p><span className="text-[10px] text-muted-foreground">{date}</span></div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{diag}</p>
-        </div>
-        {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
-      </button>
-      {open && (
-        <div className="px-3 pb-3 space-y-2 border-t pt-2">
-          <div><p className="text-[10px] font-medium text-muted-foreground">Notes</p><p className="text-xs text-foreground mt-0.5">{notes}</p></div>
-          <div><p className="text-[10px] font-medium text-muted-foreground">Prescription</p><p className="text-xs text-foreground mt-0.5 flex items-center gap-1"><Pill className="h-3 w-3 text-primary" />{prescription}</p></div>
-        </div>
-      )}
-    </div>
-  );
-};
+import { mockConsultationPatient } from "@/data/mockData";
 
 const DoctorConsultationDetail = () => {
   const navigate = useNavigate();
@@ -58,8 +32,7 @@ const DoctorConsultationDetail = () => {
   const [nextRdv, setNextRdv] = useState("3 mois");
   const [consultAmount, setConsultAmount] = useState("35");
 
-  const addPrescriptionItem = () => setPrescriptionItems(prev => [...prev, { medication: "", dosage: "", duration: "", instructions: "" }]);
-  const removePrescriptionItem = (index: number) => setPrescriptionItems(prev => prev.filter((_, i) => i !== index));
+  const patient = mockConsultationPatient;
   const bmi = vitals.weight && vitals.height ? (parseFloat(vitals.weight) / Math.pow(parseFloat(vitals.height) / 100, 2)).toFixed(1) : "—";
 
   const handleClose = () => {
@@ -251,95 +224,6 @@ const DoctorConsultationDetail = () => {
                 <div><Label className="text-xs font-medium">Motif de consultation</Label><Input value={motif} onChange={e => setMotif(e.target.value)} className="mt-1" /></div>
                 <div><Label className="text-xs font-medium">Anamnèse / Symptômes</Label><textarea value={symptoms} onChange={e => setSymptoms(e.target.value)} rows={3} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></div>
                 <div><Label className="text-xs font-medium">Examen clinique</Label><textarea value={examination} onChange={e => setExamination(e.target.value)} rows={3} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></div>
-                <div><Label className="text-xs font-medium">Diagnostic</Label><Input value={diagnosis} onChange={e => setDiagnosis(e.target.value)} className="mt-1" /></div>
-                <div><Label className="text-xs font-medium">Conclusion & conduite à tenir</Label><textarea value={conclusion} onChange={e => setConclusion(e.target.value)} rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" /></div>
-              </div>
-            </div>
-
-            {/* Prescription */}
-            <div className="rounded-xl border bg-card p-5 shadow-card">
-              <div className="flex items-center justify-between mb-4"><h3 className="font-semibold text-foreground flex items-center gap-2"><Pill className="h-4 w-4 text-warning" />Ordonnance médicamenteuse</h3><Button variant="outline" size="sm" onClick={addPrescriptionItem} className="text-xs"><Plus className="h-3.5 w-3.5 mr-1" />Ajouter médicament</Button></div>
-              <div className="space-y-3">
-                {prescriptionItems.map((item, i) => (
-                  <div key={i} className="rounded-lg border p-4 bg-muted/20 relative group">
-                    <button onClick={() => removePrescriptionItem(i)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="h-3 w-3" /></button>
-                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-                      <div><Label className="text-[11px] text-muted-foreground">Médicament</Label><Input value={item.medication} onChange={e => { const u = [...prescriptionItems]; u[i].medication = e.target.value; setPrescriptionItems(u); }} className="mt-1 h-9" placeholder="Ex: Metformine 850mg" /></div>
-                      <div><Label className="text-[11px] text-muted-foreground">Posologie</Label><Input value={item.dosage} onChange={e => { const u = [...prescriptionItems]; u[i].dosage = e.target.value; setPrescriptionItems(u); }} className="mt-1 h-9" placeholder="Ex: 1 cp matin et soir" /></div>
-                      <div><Label className="text-[11px] text-muted-foreground">Durée</Label><Input value={item.duration} onChange={e => { const u = [...prescriptionItems]; u[i].duration = e.target.value; setPrescriptionItems(u); }} className="mt-1 h-9" placeholder="Ex: 3 mois" /></div>
-                      <div><Label className="text-[11px] text-muted-foreground">Instructions</Label><Input value={item.instructions} onChange={e => { const u = [...prescriptionItems]; u[i].instructions = e.target.value; setPrescriptionItems(u); }} className="mt-1 h-9" placeholder="Ex: pendant les repas" /></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Analyses */}
-            <div className="rounded-xl border bg-card p-5 shadow-card">
-              <div className="flex items-center justify-between mb-4"><h3 className="font-semibold text-foreground flex items-center gap-2"><Activity className="h-4 w-4 text-accent" />Prescription d'analyses</h3></div>
-              <div className="flex flex-wrap gap-2">
-                {["HbA1c", "Glycémie à jeun", "NFS", "Bilan lipidique", "Créatinine", "TSH", "Bilan hépatique", "CRP", "Vitamine D"].map(a => (
-                  <button key={a} onClick={() => setAnalysePrescription(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${analysePrescription.includes(a) ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:border-accent/50"}`}>
-                    {analysePrescription.includes(a) && "✓ "}{a}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right sidebar — Antécédents + Consultations précédentes */}
-          <div className="space-y-4">
-            {/* Antécédents */}
-            <div className="rounded-xl border bg-card p-5 shadow-card">
-              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-warning" />Antécédents</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-[11px] font-medium text-destructive mb-1.5">Allergies</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {patient.allergies.map(a => <span key={a} className="text-[11px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">{a}</span>)}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[11px] font-medium text-warning mb-1.5">Pathologies</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {patient.conditions.map(c => <span key={c} className="text-[11px] font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">{c}</span>)}
-                    <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">HTA légère</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[11px] font-medium text-primary mb-1.5">Traitements chroniques</p>
-                  <div className="space-y-1">
-                    <p className="text-xs text-foreground flex items-center gap-1.5"><Pill className="h-3 w-3 text-primary" />Metformine 850mg — 2x/jour</p>
-                    <p className="text-xs text-foreground flex items-center gap-1.5"><Pill className="h-3 w-3 text-primary" />Glibenclamide 5mg — 1x/jour</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Consultations précédentes — accordion */}
-            <div className="rounded-xl border bg-card p-5 shadow-card">
-              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><History className="h-4 w-4 text-primary" />Consultations précédentes</h3>
-              <div className="space-y-2">
-                {[
-                  { date: "10 Fév 2026", motif: "Suivi diabète", diag: "Glycémie stable, HbA1c 6.8%", notes: "Maintien du traitement. Contrôle dans 3 mois. Activité physique recommandée. Poids stable à 75kg.", prescription: "Metformine 850mg, Glibenclamide 5mg" },
-                  { date: "15 Jan 2026", motif: "Bilan annuel", diag: "RAS — Bilan sanguin normal", notes: "Bilan complet réalisé. Tous les marqueurs dans les normes. Pas de complication microvasculaire détectée. Fond d'œil programmé.", prescription: "Renouvellement traitement habituel" },
-                  { date: "5 Déc 2025", motif: "Consultation dermatologique", diag: "Eczéma léger", notes: "Plaque eczémateuse au coude droit. Prescription crème hydratante + dermocorticoïde. Contrôle à 1 mois.", prescription: "Bétaméthasone 0.05% crème, Dexeryl" },
-                  { date: "20 Oct 2025", motif: "Suivi diabète", diag: "Légère hausse glycémie", notes: "HbA1c à 7.2%, légère hausse. Ajustement alimentaire conseillé. Réduction sucres rapides.", prescription: "Metformine 850mg (dose augmentée soir)" },
-                ].map((h, i) => (
-                  <ConsultAccordion key={i} {...h} />
-                ))}
-              </div>
-            </div>
-
-            {/* Résumé actuel */}
-            <div className="rounded-xl border bg-card p-5 shadow-card">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><FileText className="h-4 w-4 text-accent" />Résumé actuel</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between"><span className="text-muted-foreground">Motif</span><span className="font-medium text-foreground text-right max-w-[140px] truncate">{motif}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Médicaments</span><span className="font-medium text-foreground">{prescriptionItems.filter(p => p.medication).length}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Analyses</span><span className="font-medium text-foreground">{analysePrescription.length}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Durée</span><span className="font-medium text-foreground">{elapsed}</span></div>
               </div>
             </div>
           </div>

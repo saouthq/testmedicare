@@ -1,18 +1,13 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Plus, Send, Printer, Shield, User, Pill, Eye, ChevronDown, CheckCircle, Download, Trash2, X } from "lucide-react";
+import { FileText, Plus, Send, Printer, Shield, User, Pill, Eye, ChevronDown, CheckCircle, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const initialPrescriptions = [
-  { id: "ORD-2026-045", patient: "Amine Ben Ali", date: "20 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], sent: true, cnam: true, total: "45 DT" },
-  { id: "ORD-2026-044", patient: "Fatma Trabelsi", date: "20 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], sent: true, cnam: true, total: "28 DT" },
-  { id: "ORD-2026-043", patient: "Nadia Jemni", date: "17 Fév 2026", items: ["Ibuprofène 400mg - 3x/jour pendant 7 jours", "Tramadol 50mg - si douleur intense"], sent: false, cnam: true, total: "35 DT" },
-];
+import { mockDoctorPrescriptions } from "@/data/mockData";
 
 const DoctorPrescriptions = () => {
-  const [prescriptions, setPrescriptions] = useState(initialPrescriptions);
+  const [prescriptions, setPrescriptions] = useState(mockDoctorPrescriptions);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newPatient, setNewPatient] = useState("");
@@ -28,7 +23,7 @@ const DoctorPrescriptions = () => {
     setPrescriptions(prev => [{
       id: newId, patient: newPatient, date: "20 Fév 2026",
       items: newItems.filter(i => i.medication).map(i => `${i.medication} - ${i.dosage}`),
-      sent: false, cnam: true, total: "— DT"
+      sent: false, cnam: true, total: "— DT", status: "active", doctor: "Dr. Bouazizi", pharmacy: null
     }, ...prev]);
     setShowNewForm(false);
     setNewPatient("");

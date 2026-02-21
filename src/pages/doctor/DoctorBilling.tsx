@@ -1,58 +1,11 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ChevronRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star } from "lucide-react";
+import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { mockSubscriptionInfo, mockPlans, mockSubscriptionInvoices, mockTeleconsultTransactions, InvoiceStatus } from "@/data/mockData";
 
 type BillingTab = "subscription" | "teleconsult";
-type InvoiceStatus = "paid" | "pending" | "failed" | "refunded";
-
-/* ── Subscription data ── */
-const currentPlan = "basic";
-const subscriptionInfo = {
-  plan: currentPlan === "basic" ? "Basic" : "Pro",
-  price: currentPlan === "basic" ? "39 DT/mois" : "129 DT/mois",
-  status: "active" as const,
-  nextRenewal: "20 Mar 2026",
-  cardLast4: "4821",
-  cardBrand: "Visa",
-};
-
-const plans = [
-  {
-    key: "basic",
-    name: "Basic",
-    price: "39",
-    period: "DT/mois",
-    features: ["Agenda en ligne", "Prise de rendez-vous patients", "Fiche praticien publique", "5 SMS de rappel / mois", "Messagerie patients", "Support email"],
-    notIncluded: ["Téléconsultation vidéo", "Gestion secrétaire", "Ordonnances numériques", "SMS illimités", "Statistiques avancées"],
-  },
-  {
-    key: "pro",
-    name: "Pro",
-    price: "129",
-    period: "DT/mois",
-    popular: true,
-    features: ["Tout le plan Basic +", "Téléconsultation vidéo", "Gestion de secrétaire(s)", "Ordonnances numériques", "SMS de rappel illimités", "Statistiques avancées", "Dossier patient complet", "Support prioritaire", "Multi-cabinet"],
-    notIncluded: [],
-  },
-];
-
-const subscriptionInvoices = [
-  { id: "SUB-2026-02", month: "Février 2026", amount: 39, status: "paid" as InvoiceStatus, date: "1 Fév 2026" },
-  { id: "SUB-2026-01", month: "Janvier 2026", amount: 39, status: "paid" as InvoiceStatus, date: "1 Jan 2026" },
-  { id: "SUB-2025-12", month: "Décembre 2025", amount: 39, status: "paid" as InvoiceStatus, date: "1 Déc 2025" },
-  { id: "SUB-2025-11", month: "Novembre 2025", amount: 39, status: "failed" as InvoiceStatus, date: "1 Nov 2025" },
-];
-
-/* ── Teleconsult transactions ── */
-const teleconsultTx = [
-  { id: "TX-2026-0142", patient: "Youssef Belhadj", avatar: "YB", dateRdv: "20 Fév 2026 14:30", amount: 45, status: "pending" as InvoiceStatus, ref: "FAC-2026-0142", motif: "Résultats analyses" },
-  { id: "TX-2026-0141", patient: "Rania Meddeb", avatar: "RM", dateRdv: "19 Fév 2026 10:00", amount: 35, status: "paid" as InvoiceStatus, ref: "FAC-2026-0141", motif: "Suivi cholestérol" },
-  { id: "TX-2026-0139", patient: "Amine Ben Ali", avatar: "AB", dateRdv: "18 Fév 2026 16:00", amount: 45, status: "paid" as InvoiceStatus, ref: "FAC-2026-0139", motif: "Suivi diabète" },
-  { id: "TX-2026-0137", patient: "Sami Ayari", avatar: "SA", dateRdv: "17 Fév 2026 09:00", amount: 35, status: "failed" as InvoiceStatus, ref: "FAC-2026-0137", motif: "Renouvellement ordonnance" },
-  { id: "TX-2026-0135", patient: "Salma Dridi", avatar: "SD", dateRdv: "15 Fév 2026 11:30", amount: 45, status: "refunded" as InvoiceStatus, ref: "FAC-2026-0135", motif: "Consultation annulée" },
-];
 
 const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: any }> = {
   paid: { label: "Payé", color: "bg-accent/10 text-accent border-accent/20", icon: CheckCircle2 },
@@ -67,12 +20,12 @@ const DoctorBilling = () => {
   const [detailTx, setDetailTx] = useState<string | null>(null);
   const [showChangeCard, setShowChangeCard] = useState(false);
 
-  const filteredTx = teleconsultTx.filter(tx =>
+  const filteredTx = mockTeleconsultTransactions.filter(tx =>
     !search || tx.patient.toLowerCase().includes(search.toLowerCase()) || tx.ref.toLowerCase().includes(search.toLowerCase())
   );
-  const totalPaid = teleconsultTx.filter(t => t.status === "paid").reduce((s, t) => s + t.amount, 0);
-  const totalPending = teleconsultTx.filter(t => t.status === "pending").reduce((s, t) => s + t.amount, 0);
-  const selectedTx = detailTx ? teleconsultTx.find(t => t.id === detailTx) : null;
+  const totalPaid = mockTeleconsultTransactions.filter(t => t.status === "paid").reduce((s, t) => s + t.amount, 0);
+  const totalPending = mockTeleconsultTransactions.filter(t => t.status === "pending").reduce((s, t) => s + t.amount, 0);
+  const selectedTx = detailTx ? mockTeleconsultTransactions.find(t => t.id === detailTx) : null;
 
   return (
     <DashboardLayout role="doctor" title="Facturation">
@@ -91,7 +44,7 @@ const DoctorBilling = () => {
         {tab === "subscription" && (
           <div className="space-y-6">
             {/* Pro upgrade banner – eye-catching */}
-            {currentPlan === "basic" && (
+            {mockSubscriptionInfo.plan === "Basic" && (
               <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 p-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/4" />
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -118,7 +71,7 @@ const DoctorBilling = () => {
 
             {/* Plans comparison */}
             <div className="grid gap-5 sm:grid-cols-2">
-              {plans.map(plan => (
+              {mockPlans.map(plan => (
                 <div key={plan.key} className={`rounded-xl border bg-card p-5 shadow-card relative ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -137,7 +90,7 @@ const DoctorBilling = () => {
                       <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground line-through"><span className="h-4 w-4 shrink-0" />{f}</li>
                     ))}
                   </ul>
-                  {currentPlan === plan.key ? (
+                  {mockSubscriptionInfo.plan === plan.name ? (
                     <Button variant="outline" className="w-full" disabled>Plan actuel</Button>
                   ) : (
                     <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow"><Zap className="h-4 w-4 mr-1" />Passer au {plan.name}</Button>
@@ -151,8 +104,8 @@ const DoctorBilling = () => {
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Méthode de paiement</h3>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-14 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">{subscriptionInfo.cardBrand}</div>
-                  <div><p className="text-sm font-medium text-foreground">•••• •••• •••• {subscriptionInfo.cardLast4}</p><p className="text-xs text-muted-foreground">Expire 12/2027</p></div>
+                  <div className="h-10 w-14 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">{mockSubscriptionInfo.cardBrand}</div>
+                  <div><p className="text-sm font-medium text-foreground">•••• •••• •••• {mockSubscriptionInfo.cardLast4}</p><p className="text-xs text-muted-foreground">Expire 12/2027</p></div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setShowChangeCard(true)}>Modifier</Button>
               </div>
@@ -162,7 +115,7 @@ const DoctorBilling = () => {
             <div className="rounded-xl border bg-card shadow-card">
               <div className="border-b px-5 py-4"><h3 className="font-semibold text-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Historique factures</h3></div>
               <div className="divide-y">
-                {subscriptionInvoices.map(inv => {
+                {mockSubscriptionInvoices.map(inv => {
                   const sc = statusConfig[inv.status];
                   return (
                     <div key={inv.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
@@ -189,7 +142,7 @@ const DoctorBilling = () => {
             <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
               <div className="rounded-xl border bg-card p-4 shadow-card"><div className="flex items-center gap-2 mb-2"><Banknote className="h-4 w-4 text-accent" /><span className="text-xs text-muted-foreground">Encaissé ce mois</span></div><p className="text-xl font-bold text-foreground">{totalPaid} DT</p></div>
               <div className="rounded-xl border bg-card p-4 shadow-card"><div className="flex items-center gap-2 mb-2"><Clock className="h-4 w-4 text-warning" /><span className="text-xs text-muted-foreground">En attente</span></div><p className="text-xl font-bold text-foreground">{totalPending} DT</p></div>
-              <div className="rounded-xl border bg-card p-4 shadow-card"><div className="flex items-center gap-2 mb-2"><Video className="h-4 w-4 text-primary" /><span className="text-xs text-muted-foreground">Transactions</span></div><p className="text-xl font-bold text-foreground">{teleconsultTx.length}</p></div>
+              <div className="rounded-xl border bg-card p-4 shadow-card"><div className="flex items-center gap-2 mb-2"><Video className="h-4 w-4 text-primary" /><span className="text-xs text-muted-foreground">Transactions</span></div><p className="text-xl font-bold text-foreground">{mockTeleconsultTransactions.length}</p></div>
             </div>
 
             <div className="rounded-xl border bg-card shadow-card">
@@ -243,33 +196,15 @@ const DoctorBilling = () => {
               <div className="rounded-lg bg-muted/30 p-4 space-y-3">
                 <p className="text-xs font-semibold text-foreground">Timeline paiement</p>
                 <div className="space-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent shrink-0" /><span>Autorisation carte · {selectedTx.dateRdv}</span></div>
-                  {selectedTx.status === "paid" && <><div className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent shrink-0" /><span>Capture effectuée</span></div><div className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent shrink-0" /><span>Reçu envoyé au patient</span></div></>}
-                  {selectedTx.status === "pending" && <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-warning shrink-0" /><span>En attente de capture</span></div>}
-                  {selectedTx.status === "failed" && <div className="flex items-center gap-2"><AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" /><span>Paiement refusé par la banque</span></div>}
-                  {selectedTx.status === "refunded" && <div className="flex items-center gap-2"><RefreshCw className="h-3.5 w-3.5 text-muted-foreground shrink-0" /><span>Remboursement effectué</span></div>}
+                  <div className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-accent" /><p>Autorisation carte — 20 Fév 14:25</p></div>
+                  <div className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-accent" /><p>Fin consultation — 20 Fév 14:50</p></div>
+                  <div className="flex items-center gap-3"><div className="h-2 w-2 rounded-full bg-accent" /><p>Capture paiement — 20 Fév 14:51</p></div>
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground text-center">Passerelle de paiement carte (à connecter)</p>
-              <div className="flex gap-2"><Button variant="outline" className="flex-1 text-xs"><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimer</Button><Button variant="outline" className="flex-1 text-xs"><Eye className="h-3.5 w-3.5 mr-1.5" />Voir facture PDF</Button></div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Change card modal */}
-      {showChangeCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowChangeCard(false)}>
-          <div className="w-full max-w-sm rounded-2xl border bg-card shadow-elevated p-6 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4"><h3 className="font-semibold text-foreground">Modifier la carte</h3><button onClick={() => setShowChangeCard(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button></div>
-            <div className="space-y-3">
-              <div><label className="text-xs font-medium text-muted-foreground">Numéro de carte</label><Input placeholder="4000 1234 5678 9012" className="mt-1" /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-medium text-muted-foreground">Expiration</label><Input placeholder="MM/AA" className="mt-1" /></div>
-                <div><label className="text-xs font-medium text-muted-foreground">CVC</label><Input placeholder="123" className="mt-1" /></div>
+              <div className="flex gap-2">
+                <Button className="flex-1" variant="outline"><Printer className="h-4 w-4 mr-2" />Reçu</Button>
+                <Button className="flex-1 gradient-primary text-primary-foreground shadow-primary-glow">Envoyer facture</Button>
               </div>
-              <Button className="w-full gradient-primary text-primary-foreground" onClick={() => setShowChangeCard(false)}>Enregistrer</Button>
-              <p className="text-[10px] text-muted-foreground text-center">Passerelle de paiement carte (à connecter)</p>
             </div>
           </div>
         </div>

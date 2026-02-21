@@ -1,26 +1,18 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, ChevronRight, Phone, Plus, AlertTriangle, Activity, Calendar, MessageSquare, FileText, Shield, Eye } from "lucide-react";
+import { Search, Phone, AlertTriangle, Activity, Calendar, MessageSquare, FileText, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { mockPatients } from "@/data/mockData";
 
 type PatientFilter = "all" | "recent" | "chronic" | "new";
-
-const patients = [
-  { id: 1, name: "Amine Ben Ali", age: 34, lastVisit: "10 Fév 2026", phone: "+216 22 345 678", condition: "Diabète type 2", avatar: "AB", nextAppointment: "20 Fév 14:30", isNew: false, chronicConditions: ["Diabète type 2"], allergies: ["Pénicilline"], lastVitals: { ta: "13/8", glycemia: "1.05" } },
-  { id: 2, name: "Fatma Trabelsi", age: 56, lastVisit: "8 Fév 2026", phone: "+216 55 987 654", condition: "Hypertension", avatar: "FT", nextAppointment: "23 Fév 10:00", isNew: false, chronicConditions: ["Hypertension", "Cholestérol"], allergies: [], lastVitals: { ta: "14/8", glycemia: "0.95" } },
-  { id: 3, name: "Mohamed Sfar", age: 28, lastVisit: "5 Fév 2026", phone: "+216 55 456 789", condition: "Suivi post-op", avatar: "MS", nextAppointment: "25 Fév 09:30", isNew: false, chronicConditions: [], allergies: ["Aspirine"], lastVitals: { ta: "11/7", glycemia: "0.88" } },
-  { id: 4, name: "Nadia Jemni", age: 67, lastVisit: "1 Fév 2026", phone: "+216 98 567 890", condition: "Arthrose", avatar: "NJ", nextAppointment: null, isNew: false, chronicConditions: ["Arthrose", "HTA"], allergies: [], lastVitals: { ta: "15/9", glycemia: "1.10" } },
-  { id: 5, name: "Sami Ayari", age: 42, lastVisit: "28 Jan 2026", phone: "+216 29 678 901", condition: "Asthme", avatar: "SA", nextAppointment: null, isNew: false, chronicConditions: ["Asthme"], allergies: ["Acariens"], lastVitals: { ta: "12/7", glycemia: "0.92" } },
-  { id: 6, name: "Rania Meddeb", age: 51, lastVisit: null, phone: "+216 52 789 012", condition: "Nouveau patient", avatar: "RM", nextAppointment: "28 Fév 14:00", isNew: true, chronicConditions: [], allergies: [], lastVitals: { ta: "—", glycemia: "—" } },
-];
 
 const DoctorPatients = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<PatientFilter>("all");
 
-  const filtered = patients.filter(p => {
+  const filtered = mockPatients.filter(p => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (filter === "recent") return p.lastVisit !== null;
     if (filter === "chronic") return p.chronicConditions.length > 0;
@@ -51,10 +43,10 @@ const DoctorPatients = () => {
         </div>
 
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-foreground">{patients.length}</p><p className="text-[11px] text-muted-foreground">Total patients</p></div>
-          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-primary">{patients.filter(p => p.chronicConditions.length > 0).length}</p><p className="text-[11px] text-muted-foreground">Chroniques</p></div>
-          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-accent">{patients.filter(p => p.nextAppointment).length}</p><p className="text-[11px] text-muted-foreground">RDV planifiés</p></div>
-          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-warning">{patients.filter(p => p.isNew).length}</p><p className="text-[11px] text-muted-foreground">Nouveaux</p></div>
+          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-foreground">{mockPatients.length}</p><p className="text-[11px] text-muted-foreground">Total patients</p></div>
+          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-primary">{mockPatients.filter(p => p.chronicConditions.length > 0).length}</p><p className="text-[11px] text-muted-foreground">Chroniques</p></div>
+          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-accent">{mockPatients.filter(p => p.nextAppointment).length}</p><p className="text-[11px] text-muted-foreground">RDV planifiés</p></div>
+          <div className="rounded-lg border bg-card px-4 py-3 text-center"><p className="text-xl font-bold text-warning">{mockPatients.filter(p => p.isNew).length}</p><p className="text-[11px] text-muted-foreground">Nouveaux</p></div>
         </div>
 
         <div className="space-y-3">
@@ -72,7 +64,7 @@ const DoctorPatients = () => {
                       </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {p.chronicConditions.map(c => <span key={c} className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{c}</span>)}
-                        {p.allergies.map(a => <span key={a} className="flex items-center gap-0.5 text-[10px] font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full"><AlertTriangle className="h-2.5 w-2.5" />{a}</span>)}
+                        {p.allergies.map(a => <span key={a.name} className="flex items-center gap-0.5 text-[10px] font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full"><AlertTriangle className="h-2.5 w-2.5" />{a.name}</span>)}
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
