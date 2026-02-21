@@ -247,8 +247,47 @@ const DoctorSchedule = () => {
               <Link to="/dashboard/doctor/consultation/new">
                 <Button className="w-full justify-start" variant="outline"><Play className="h-4 w-4 mr-2 text-primary" />Démarrer consultation sans RDV</Button>
               </Link>
-              <Button className="w-full justify-start" variant="outline"><CalendarIcon className="h-4 w-4 mr-2 text-accent" />Créer un RDV patient</Button>
+              <Button className="w-full justify-start" variant="outline" onClick={() => { setModal("create-rdv"); }}>
+                <CalendarIcon className="h-4 w-4 mr-2 text-accent" />Créer un RDV patient
+              </Button>
               <Button className="w-full justify-start" variant="outline"><Ban className="h-4 w-4 mr-2 text-destructive" />Bloquer ce créneau</Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Create RDV modal */}
+      {modal === "create-rdv" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setModal(null)}>
+          <div className="w-full max-w-md rounded-2xl border bg-card shadow-elevated p-6 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-primary" />Nouveau RDV</h3>
+              <button onClick={() => setModal(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <div><label className="text-xs font-medium text-muted-foreground">Patient</label><Input placeholder="Rechercher un patient..." className="mt-1" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Date</label><Input type="date" className="mt-1" defaultValue="2026-02-20" /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Heure</label><Input type="time" className="mt-1" defaultValue={emptySlotKey?.split("-").pop() || "09:00"} /></div>
+              </div>
+              <div><label className="text-xs font-medium text-muted-foreground">Motif</label>
+                <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                  <option>Consultation</option><option>Suivi</option><option>Contrôle</option><option>1ère visite</option><option>Téléconsultation</option><option>Urgence</option>
+                </select>
+              </div>
+              <div><label className="text-xs font-medium text-muted-foreground">Durée</label>
+                <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                  <option>15 min</option><option>30 min</option><option>45 min</option><option>60 min</option>
+                </select>
+              </div>
+              <div><label className="text-xs font-medium text-muted-foreground">Notes</label>
+                <textarea rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" placeholder="Notes..." />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setModal(null)}>Annuler</Button>
+                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={() => setModal(null)}>
+                  <CheckCircle2 className="h-4 w-4 mr-1.5" />Créer le RDV
+                </Button>
+              </div>
             </div>
           </div>
         </div>

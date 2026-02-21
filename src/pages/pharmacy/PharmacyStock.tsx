@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, AlertTriangle, Package, Plus, ShoppingCart, ArrowDown, ArrowUp, Pill, Edit, Save, X, Trash2, Calendar } from "lucide-react";
+import { Search, AlertTriangle, Package, Plus, ShoppingCart, ArrowDown, ArrowUp, Pill, Edit, Save, X, Trash2, Calendar, CheckCircle2, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,9 @@ const PharmacyStock = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editQty, setEditQty] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [showOrder, setShowOrder] = useState(false);
+  const [orderItems, setOrderItems] = useState<{ name: string; qty: number; supplier: string }[]>([]);
+  const [orderSent, setOrderSent] = useState(false);
   const [newItem, setNewItem] = useState({ name: "", category: "Antibiotiques", quantity: "0", threshold: "20", price: "", expiry: "", supplier: "" });
 
   const filtered = stock
@@ -38,7 +41,6 @@ const PharmacyStock = () => {
   const totalProducts = stock.length;
   const criticalCount = stock.filter(s => s.status === "critical").length;
   const lowCount = stock.filter(s => s.status === "low").length;
-
   const updateStatus = (qty: number, threshold: number) => qty <= 0 ? "critical" : qty < threshold ? "low" : "ok";
 
   const handleEditSave = (id: number) => {
@@ -53,31 +55,30 @@ const PharmacyStock = () => {
     const thresh = parseInt(newItem.threshold);
     if (!newItem.name || isNaN(qty)) return;
     const maxId = Math.max(...stock.map(s => s.id), 0);
-    setStock(prev => [...prev, {
-      id: maxId + 1, name: newItem.name, category: newItem.category,
-      quantity: qty, threshold: thresh, status: updateStatus(qty, thresh),
-      price: newItem.price, expiry: newItem.expiry, supplier: newItem.supplier,
-    }]);
+    setStock(prev => [...prev, { id: maxId + 1, name: newItem.name, category: newItem.category, quantity: qty, threshold: thresh, status: updateStatus(qty, thresh), price: newItem.price, expiry: newItem.expiry, supplier: newItem.supplier }]);
     setShowAdd(false);
     setNewItem({ name: "", category: "Antibiotiques", quantity: "0", threshold: "20", price: "", expiry: "", supplier: "" });
+  };
+
+  const openOrderModal = () => {
+    const lowItems = stock.filter(s => s.status === "low" || s.status === "critical");
+    setOrderItems(lowItems.map(s => ({ name: s.name, qty: Math.max(s.threshold * 2 - s.quantity, 10), supplier: s.supplier || "Grossiste principal" })));
+    setOrderSent(false);
+    setShowOrder(true);
+  };
+
+  const handleSendOrder = () => {
+    setOrderSent(true);
+    setTimeout(() => { setShowOrder(false); setOrderSent(false); }, 2000);
   };
 
   return (
     <DashboardLayout role="pharmacy" title="Gestion du stock">
       <div className="space-y-6">
         <div className="grid gap-4 grid-cols-3">
-          <div className="rounded-xl border bg-card p-4 shadow-card text-center">
-            <p className="text-2xl font-bold text-foreground">{totalProducts}</p>
-            <p className="text-xs text-muted-foreground">Produits total</p>
-          </div>
-          <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 shadow-card text-center">
-            <p className="text-2xl font-bold text-warning">{lowCount}</p>
-            <p className="text-xs text-muted-foreground">Stock bas</p>
-          </div>
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 shadow-card text-center">
-            <p className="text-2xl font-bold text-destructive">{criticalCount}</p>
-            <p className="text-xs text-muted-foreground">Ruptures</p>
-          </div>
+          <div className="rounded-xl border bg-card p-4 shadow-card text-center"><p className="text-2xl font-bold text-foreground">{totalProducts}</p><p className="text-xs text-muted-foreground">Produits total</p></div>
+          <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 shadow-card text-center"><p className="text-2xl font-bold text-warning">{lowCount}</p><p className="text-xs text-muted-foreground">Stock bas</p></div>
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 shadow-card text-center"><p className="text-2xl font-bold text-destructive">{criticalCount}</p><p className="text-xs text-muted-foreground">Ruptures</p></div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
@@ -90,10 +91,8 @@ const PharmacyStock = () => {
               {sortBy === "quantity" ? <ArrowUp className="h-3.5 w-3.5 mr-1" /> : <ArrowDown className="h-3.5 w-3.5 mr-1" />}
               {sortBy === "quantity" ? "Par quantité" : "Par nom"}
             </Button>
-            <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAdd(!showAdd)}>
-              <Plus className="h-3.5 w-3.5 mr-1" />Ajouter
-            </Button>
-            <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAdd(!showAdd)}><Plus className="h-3.5 w-3.5 mr-1" />Ajouter</Button>
+            <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm" onClick={openOrderModal}>
               <ShoppingCart className="h-4 w-4 mr-2" />Commander
             </Button>
           </div>
@@ -136,9 +135,7 @@ const PharmacyStock = () => {
             <div className="flex items-center gap-2 mb-2"><AlertTriangle className="h-5 w-5 text-warning" /><h3 className="font-medium text-foreground">Alertes de stock</h3></div>
             <div className="flex flex-wrap gap-2">
               {stock.filter(s => s.status !== "ok").map(s => (
-                <span key={s.name} className={`rounded-full px-3 py-1 text-xs font-medium ${statusConfig[s.status].class}`}>
-                  {s.name}: {s.quantity} unités
-                </span>
+                <span key={s.name} className={`rounded-full px-3 py-1 text-xs font-medium ${statusConfig[s.status].class}`}>{s.name}: {s.quantity} unités</span>
               ))}
             </div>
           </div>
@@ -190,9 +187,7 @@ const PharmacyStock = () => {
                   <td className="p-4 text-xs font-medium text-foreground hidden md:table-cell">{s.price}</td>
                   <td className="p-4 text-xs text-muted-foreground hidden lg:table-cell">{s.supplier}</td>
                   <td className="p-4 text-xs text-muted-foreground hidden lg:table-cell">{s.expiry}</td>
-                  <td className="p-4">
-                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${statusConfig[s.status].class}`}>{statusConfig[s.status].label}</span>
-                  </td>
+                  <td className="p-4"><span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${statusConfig[s.status].class}`}>{statusConfig[s.status].label}</span></td>
                   <td className="p-4">
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setEditingId(s.id); setEditQty(String(s.quantity)); }}>
                       <Edit className="h-3.5 w-3.5 text-muted-foreground" />
@@ -204,6 +199,67 @@ const PharmacyStock = () => {
           </table>
         </div>
       </div>
+
+      {/* ── Order Modal ── */}
+      {showOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowOrder(false)}>
+          <div className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-lg mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            {orderSent ? (
+              <div className="text-center py-8">
+                <CheckCircle2 className="h-16 w-16 text-accent mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-foreground">Commande envoyée !</h3>
+                <p className="text-sm text-muted-foreground mt-2">{orderItems.length} produit(s) commandé(s)</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-primary" />Bon de commande</h3>
+                  <button onClick={() => setShowOrder(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+                </div>
+                {orderItems.length === 0 ? (
+                  <div className="text-center py-6">
+                    <CheckCircle2 className="h-10 w-10 text-accent mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Tous les stocks sont suffisants !</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-xs text-muted-foreground">{orderItems.length} produit(s) en stock bas ou rupture</p>
+                    <div className="space-y-2">
+                      {orderItems.map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
+                          <Pill className="h-4 w-4 text-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{item.supplier}</p>
+                          </div>
+                          <Input value={item.qty} onChange={e => { const u = [...orderItems]; u[i].qty = parseInt(e.target.value) || 0; setOrderItems(u); }}
+                            className="w-16 h-8 text-xs text-center" type="number" />
+                          <span className="text-xs text-muted-foreground">unités</span>
+                          <button onClick={() => setOrderItems(p => p.filter((_, j) => j !== i))} className="text-destructive"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      ))}
+                    </div>
+                    <div><Label className="text-xs">Fournisseur</Label>
+                      <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                        <option>Grossiste principal</option><option>Saiph</option><option>Adwya</option><option>Médis</option>
+                      </select>
+                    </div>
+                    <div><Label className="text-xs">Notes</Label>
+                      <textarea rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" placeholder="Instructions spéciales..." />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" className="flex-1" onClick={() => setShowOrder(false)}>Annuler</Button>
+                      <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleSendOrder}>
+                        <Send className="h-4 w-4 mr-2" />Envoyer la commande
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

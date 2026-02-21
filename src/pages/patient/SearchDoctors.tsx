@@ -18,9 +18,19 @@ const SearchDoctors = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [dayRange, setDayRange] = useState<3 | 7>(3);
+  const [filterTeleconsult, setFilterTeleconsult] = useState(false);
+  const [filterToday, setFilterToday] = useState(false);
+  const [filterCnam, setFilterCnam] = useState(false);
   const isMobile = useIsMobile();
 
-  const filtered = selectedSpecialty === "Tous" ? doctors : doctors.filter(d => d.specialty === selectedSpecialty);
+  const filtered = doctors.filter(d => {
+    if (selectedSpecialty !== "Tous" && d.specialty !== selectedSpecialty) return false;
+    if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase()) && !d.specialty.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (filterTeleconsult && !d.teleconsultation) return false;
+    if (filterCnam && !d.cnam) return false;
+    if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
+    return true;
+  });
   const visibleDates = availDates.slice(0, dayRange);
 
   return (
@@ -39,14 +49,25 @@ const SearchDoctors = () => {
             </div>
             <Button className="gradient-primary text-primary-foreground h-10 px-5"><Search className="h-4 w-4 mr-1.5" />Rechercher</Button>
           </div>
-          {/* Filter chips */}
+          {/* Filter chips – now functional */}
           <div className="flex items-center gap-2 mt-3 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="text-xs h-8">
               <Filter className="h-3 w-3 mr-1" />Filtres <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${showFilters ? "rotate-180" : ""}`} />
             </Button>
-            <Button variant="outline" size="sm" className="text-xs h-8"><Video className="h-3 w-3 mr-1" />Téléconsultation</Button>
-            <Button variant="outline" size="sm" className="text-xs h-8"><Clock className="h-3 w-3 mr-1" />Dispo aujourd'hui</Button>
-            <Button variant="outline" size="sm" className="text-xs h-8"><Shield className="h-3 w-3 mr-1" />CNAM</Button>
+            <Button variant={filterTeleconsult ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterTeleconsult ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterTeleconsult(!filterTeleconsult)}>
+              <Video className="h-3 w-3 mr-1" />Téléconsultation
+            </Button>
+            <Button variant={filterToday ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterToday ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterToday(!filterToday)}>
+              <Clock className="h-3 w-3 mr-1" />Dispo aujourd'hui
+            </Button>
+            <Button variant={filterCnam ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterCnam ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterCnam(!filterCnam)}>
+              <Shield className="h-3 w-3 mr-1" />CNAM
+            </Button>
+            {(filterTeleconsult || filterToday || filterCnam) && (
+              <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => { setFilterTeleconsult(false); setFilterToday(false); setFilterCnam(false); }}>
+                Réinitialiser
+              </Button>
+            )}
             <div className="flex-1" />
             <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => setShowMap(!showMap)}>
               <Map className="h-3 w-3 mr-1" />{showMap ? "Liste" : "Carte"}
@@ -65,13 +86,9 @@ const SearchDoctors = () => {
           )}
         </div>
 
-        {/* Specialty: Select on mobile, chips on desktop */}
+        {/* Specialty chips */}
         {isMobile ? (
-          <select
-            value={selectedSpecialty}
-            onChange={e => setSelectedSpecialty(e.target.value)}
-            className="w-full rounded-xl border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-card"
-          >
+          <select value={selectedSpecialty} onChange={e => setSelectedSpecialty(e.target.value)} className="w-full rounded-xl border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-card">
             {specialties.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         ) : (
@@ -85,14 +102,12 @@ const SearchDoctors = () => {
           </div>
         )}
 
-        {/* Map placeholder */}
         {showMap && (
           <div className="rounded-xl border bg-muted/30 h-48 flex items-center justify-center text-muted-foreground text-sm">
             <Map className="h-6 w-6 mr-2 text-primary" /> Vue carte (à connecter)
           </div>
         )}
 
-        {/* Results count + day range toggle */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground font-medium">{filtered.length} résultat{filtered.length > 1 ? "s" : ""}</p>
           <div className="flex items-center gap-2">
@@ -100,21 +115,25 @@ const SearchDoctors = () => {
               <button onClick={() => setDayRange(3)} className={`px-3 py-1.5 text-xs font-medium transition-colors ${dayRange === 3 ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>3 jours</button>
               <button onClick={() => setDayRange(7)} className={`px-3 py-1.5 text-xs font-medium transition-colors ${dayRange === 7 ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>7 jours</button>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">Trier : Pertinence <ChevronDown className="h-3 w-3 ml-1" /></Button>
           </div>
         </div>
 
         {/* Doctor cards */}
         <div className="space-y-3">
+          {filtered.length === 0 && (
+            <div className="text-center py-12 rounded-xl border bg-card">
+              <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground font-medium">Aucun praticien trouvé</p>
+              <p className="text-xs text-muted-foreground mt-1">Essayez de modifier vos filtres</p>
+            </div>
+          )}
           {filtered.map((d, i) => {
             const hasAnyAvail = d.availAM.slice(0, dayRange).some(Boolean) || d.availPM.slice(0, dayRange).some(Boolean);
             return (
               <Link key={i} to={`/doctor/${i + 1}`} className="block rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all">
                 <div className="p-4">
                   <div className="flex gap-3 sm:gap-4">
-                    {/* Avatar */}
                     <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm sm:text-base shrink-0">{d.avatar}</div>
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-foreground text-sm sm:text-base">{d.name}</h3>
                       <p className="text-xs sm:text-sm text-primary font-medium">{d.specialty}</p>
@@ -136,7 +155,6 @@ const SearchDoctors = () => {
                     </div>
                   </div>
 
-                  {/* Availability grid – Doctolib style */}
                   <div className="mt-3 pt-3 border-t">
                     {hasAnyAvail ? (
                       <>
@@ -144,16 +162,13 @@ const SearchDoctors = () => {
                           <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
                           <span className="text-xs font-medium text-accent">{d.nextSlot}</span>
                         </div>
-                        {/* Doctolib-style availability table */}
                         <div className="overflow-x-auto -mx-1">
                           <table className="w-full text-center border-collapse" style={{ minWidth: dayRange === 7 ? 420 : 240 }}>
                             <thead>
                               <tr>
                                 <td className="w-[60px]" />
                                 {visibleDates.map((date, j) => (
-                                  <th key={j} className="pb-1.5 px-1">
-                                    <p className="text-[10px] font-semibold text-foreground leading-tight">{isMobile ? date.short : date.label}</p>
-                                  </th>
+                                  <th key={j} className="pb-1.5 px-1"><p className="text-[10px] font-semibold text-foreground leading-tight">{isMobile ? date.short : date.label}</p></th>
                                 ))}
                               </tr>
                             </thead>
@@ -162,11 +177,7 @@ const SearchDoctors = () => {
                                 <td className="text-[10px] font-medium text-muted-foreground text-left pr-1 py-1">Matin</td>
                                 {visibleDates.map((_, j) => (
                                   <td key={j} className="py-1 px-1">
-                                    {d.availAM[j] ? (
-                                      <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span>
-                                    ) : (
-                                      <span className="text-[11px] text-muted-foreground/30">—</span>
-                                    )}
+                                    {d.availAM[j] ? <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span> : <span className="text-[11px] text-muted-foreground/30">—</span>}
                                   </td>
                                 ))}
                               </tr>
@@ -174,11 +185,7 @@ const SearchDoctors = () => {
                                 <td className="text-[10px] font-medium text-muted-foreground text-left pr-1 py-1">Après-midi</td>
                                 {visibleDates.map((_, j) => (
                                   <td key={j} className="py-1 px-1">
-                                    {d.availPM[j] ? (
-                                      <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span>
-                                    ) : (
-                                      <span className="text-[11px] text-muted-foreground/30">—</span>
-                                    )}
+                                    {d.availPM[j] ? <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span> : <span className="text-[11px] text-muted-foreground/30">—</span>}
                                   </td>
                                 ))}
                               </tr>
