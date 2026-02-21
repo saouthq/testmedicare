@@ -198,12 +198,14 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             <h1 className="text-lg font-semibold text-foreground">{title}</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            <Link to={`/dashboard/${role}/notifications`} className="relative">
+              <Button variant="ghost" size="icon">
+                <Bell className="h-5 w-5 text-muted-foreground" />
+                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
+                  3
+                </span>
+              </Button>
+            </Link>
             <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
               JD
             </div>
