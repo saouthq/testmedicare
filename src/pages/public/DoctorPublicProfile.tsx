@@ -211,6 +211,19 @@ const DoctorPublicProfile = () => {
             </div>
 
             {activeTab === "info" &&
+          <>
+            {/* Présentation fixe (toujours visible dans l’onglet info) */}
+            <div className="rounded-xl border bg-card p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Présentation</h3>
+              </div>
+        
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                {doctorData.presentation}
+              </p>
+            </div>
+
             <div className="space-y-3 sm:space-y-5">
                 <AccordionSection title="Présentation" sectionKey="presentation" icon={User}>
                   <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{doctorData.presentation}</p>
