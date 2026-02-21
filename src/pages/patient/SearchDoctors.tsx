@@ -140,38 +140,50 @@ const SearchDoctors = () => {
                   <div className="mt-3 pt-3 border-t">
                     {hasAnyAvail ? (
                       <>
-                        <div className="flex items-center gap-1.5 mb-2">
+                        <div className="flex items-center gap-1.5 mb-2.5">
                           <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
                           <span className="text-xs font-medium text-accent">{d.nextSlot}</span>
                         </div>
-                        {/* Date columns grid - no visible borders */}
-                        <div className={`grid gap-0 ${dayRange === 3 ? "grid-cols-3" : "grid-cols-7"}`}>
-                          {/* Header row */}
-                          {visibleDates.map((date, j) => (
-                            <div key={`h-${j}`} className="text-center py-1.5">
-                              <p className="text-[10px] font-semibold text-foreground">{isMobile ? date.short : date.label}</p>
-                            </div>
-                          ))}
-                          {/* Morning row */}
-                          {visibleDates.map((_, j) => (
-                            <div key={`am-${j}`} className="text-center py-1">
-                              {d.availAM[j] ? (
-                                <span className="text-[10px] font-medium text-accent">Matin</span>
-                              ) : (
-                                <span className="text-[10px] text-muted-foreground/40">—</span>
-                              )}
-                            </div>
-                          ))}
-                          {/* Afternoon row */}
-                          {visibleDates.map((_, j) => (
-                            <div key={`pm-${j}`} className="text-center py-1">
-                              {d.availPM[j] ? (
-                                <span className="text-[10px] font-medium text-accent">Après-midi</span>
-                              ) : (
-                                <span className="text-[10px] text-muted-foreground/40">—</span>
-                              )}
-                            </div>
-                          ))}
+                        {/* Doctolib-style availability table */}
+                        <div className="overflow-x-auto -mx-1">
+                          <table className="w-full text-center border-collapse" style={{ minWidth: dayRange === 7 ? 420 : 240 }}>
+                            <thead>
+                              <tr>
+                                <td className="w-[60px]" />
+                                {visibleDates.map((date, j) => (
+                                  <th key={j} className="pb-1.5 px-1">
+                                    <p className="text-[10px] font-semibold text-foreground leading-tight">{isMobile ? date.short : date.label}</p>
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td className="text-[10px] font-medium text-muted-foreground text-left pr-1 py-1">Matin</td>
+                                {visibleDates.map((_, j) => (
+                                  <td key={j} className="py-1 px-1">
+                                    {d.availAM[j] ? (
+                                      <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span>
+                                    ) : (
+                                      <span className="text-[11px] text-muted-foreground/30">—</span>
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
+                              <tr>
+                                <td className="text-[10px] font-medium text-muted-foreground text-left pr-1 py-1">Après-midi</td>
+                                {visibleDates.map((_, j) => (
+                                  <td key={j} className="py-1 px-1">
+                                    {d.availPM[j] ? (
+                                      <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span>
+                                    ) : (
+                                      <span className="text-[11px] text-muted-foreground/30">—</span>
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
                       </>
                     ) : (
