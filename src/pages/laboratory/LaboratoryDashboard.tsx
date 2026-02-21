@@ -1,169 +1,416 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import {
-  FlaskConical, Clock, CheckCircle2,
-  ChevronRight, Send, Activity,
-  Timer, AlertCircle, User, Shield, Beaker
+  FlaskConical, Clock, CheckCircle2, ChevronRight, Send, Activity,
+  Timer, User, Shield, Beaker, Search, Plus, Eye, Download,
+  ArrowUp, ArrowDown, Minus, X, Save, AlertCircle, Calendar,
+  Printer, Phone, FileText, Filter, Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { mockLabAnalyses } from "@/data/mockData";
+import { mockLabAnalyses, mockLabAnalysisTypes } from "@/data/mockData";
 
-const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
-  in_progress: { label: "En cours", class: "bg-primary/10 text-primary", icon: Activity },
-  ready: { label: "Prêt", class: "bg-accent/10 text-accent", icon: CheckCircle2 },
-  waiting: { label: "En attente", class: "bg-warning/10 text-warning", icon: Clock },
+type DashTab = "pipeline" | "results" | "new";
+type AnalysisStatus = "waiting" | "in_progress" | "ready" | "sent";
+
+interface DashAnalysis {
+  id: number;
+  patient: string;
+  avatar: string;
+  type: string;
+  doctor: string;
+  status: AnalysisStatus;
+  date: string;
+  priority: string;
+  amount: string;
+  progress: number;
+  cnam: boolean;
+  values?: { name: string; value: string; ref: string; status: string }[];
+}
+
+const statusConfig: Record<string, { label: string; class: string; icon: any; order: number }> = {
+  waiting: { label: "Prélèvement", class: "bg-warning/10 text-warning border-warning/30", icon: Timer, order: 0 },
+  in_progress: { label: "En cours", class: "bg-primary/10 text-primary border-primary/30", icon: Activity, order: 1 },
+  ready: { label: "À valider", class: "bg-accent/10 text-accent border-accent/30", icon: CheckCircle2, order: 2 },
+  sent: { label: "Envoyé", class: "bg-muted text-muted-foreground", icon: Send, order: 3 },
 };
 
-const pendingPrelevements = [
-  { patient: "Mohamed Sfar", type: "TSH", time: "09:30", urgent: true, avatar: "MS", doctor: "Dr. Hammami" },
-  { patient: "Leila Chahed", type: "NFS + CRP", time: "10:00", urgent: false, avatar: "LC", doctor: "Dr. Bouazizi" },
-  { patient: "Karim Mansour", type: "Bilan rénal", time: "10:30", urgent: true, avatar: "KM", doctor: "Dr. Gharbi" },
+const initialAnalyses: DashAnalysis[] = [
+  { id: 1, patient: "Amine Ben Ali", avatar: "AB", type: "Bilan sanguin complet", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", amount: "85 DT", progress: 65, cnam: true, values: [
+    { name: "Glycémie", value: "1.05 g/L", ref: "0.70 - 1.10", status: "normal" },
+    { name: "HbA1c", value: "6.8%", ref: "< 7%", status: "normal" },
+    { name: "Cholestérol total", value: "2.45 g/L", ref: "< 2.00", status: "high" },
+  ]},
+  { id: 2, patient: "Fatma Trabelsi", avatar: "FT", type: "Analyse d'urine", doctor: "Dr. Gharbi", status: "ready", date: "19 Fév", priority: "normal", amount: "35 DT", progress: 100, cnam: true, values: [
+    { name: "pH", value: "6.0", ref: "4.5 - 8.0", status: "normal" },
+    { name: "Protéines", value: "Traces", ref: "Négatif", status: "high" },
+    { name: "Glucose", value: "Négatif", ref: "Négatif", status: "normal" },
+  ]},
+  { id: 3, patient: "Mohamed Sfar", avatar: "MS", type: "TSH - Thyroïde", doctor: "Dr. Hammami", status: "waiting", date: "20 Fév", priority: "urgent", amount: "45 DT", progress: 0, cnam: false },
+  { id: 4, patient: "Nadia Jemni", avatar: "NJ", type: "Glycémie à jeun", doctor: "Dr. Bouazizi", status: "ready", date: "18 Fév", priority: "normal", amount: "25 DT", progress: 100, cnam: true, values: [
+    { name: "Glycémie à jeun", value: "1.32 g/L", ref: "0.70 - 1.10", status: "high" },
+  ]},
+  { id: 5, patient: "Sami Ayari", avatar: "SA", type: "Hémogramme (NFS)", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", amount: "40 DT", progress: 40, cnam: true },
+  { id: 6, patient: "Rania Meddeb", avatar: "RM", type: "Bilan lipidique", doctor: "Dr. Gharbi", status: "sent", date: "17 Fév", priority: "normal", amount: "55 DT", progress: 100, cnam: true },
+  { id: 7, patient: "Karim Mansour", avatar: "KM", type: "CRP + VS", doctor: "Dr. Bouazizi", status: "waiting", date: "20 Fév", priority: "urgent", amount: "30 DT", progress: 0, cnam: true },
 ];
 
 const LaboratoryDashboard = () => {
-  const [sentIds, setSentIds] = useState<number[]>([]);
-  const [registeredIds, setRegisteredIds] = useState<number[]>([]);
+  const [analyses, setAnalyses] = useState<DashAnalysis[]>(initialAnalyses);
+  const [activeTab, setActiveTab] = useState<DashTab>("pipeline");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [selectedAnalysis, setSelectedAnalysis] = useState<DashAnalysis | null>(null);
 
-  const handleSend = (i: number) => setSentIds(prev => [...prev, i]);
-  const handleRegister = (i: number) => setRegisteredIds(prev => [...prev, i]);
+  // New analysis form
+  const [newPatient, setNewPatient] = useState("");
+  const [newType, setNewType] = useState(mockLabAnalysisTypes[0]);
+  const [newDoctor, setNewDoctor] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [newCnam, setNewCnam] = useState(true);
+  const [newPriority, setNewPriority] = useState("normal");
+
+  // Result editing
+  const [editingValues, setEditingValues] = useState<{ name: string; value: string; ref: string; status: string }[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const waitingCount = analyses.filter(a => a.status === "waiting").length;
+  const inProgressCount = analyses.filter(a => a.status === "in_progress").length;
+  const readyCount = analyses.filter(a => a.status === "ready").length;
+  const urgentCount = analyses.filter(a => a.priority === "urgent" && a.status !== "sent").length;
+
+  const filtered = analyses.filter(a => {
+    if (filterStatus !== "all" && a.status !== filterStatus) return false;
+    if (search && !a.patient.toLowerCase().includes(search.toLowerCase()) && !a.type.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  }).sort((a, b) => {
+    // Urgent first, then by pipeline order
+    if (a.priority === "urgent" && b.priority !== "urgent") return -1;
+    if (b.priority === "urgent" && a.priority !== "urgent") return 1;
+    return statusConfig[a.status].order - statusConfig[b.status].order;
+  });
+
+  const handleAdvanceStatus = (id: number) => {
+    setAnalyses(prev => prev.map(a => {
+      if (a.id !== id) return a;
+      if (a.status === "waiting") return { ...a, status: "in_progress" as AnalysisStatus, progress: 10 };
+      if (a.status === "in_progress") return { ...a, status: "ready" as AnalysisStatus, progress: 100 };
+      if (a.status === "ready") return { ...a, status: "sent" as AnalysisStatus };
+      return a;
+    }));
+  };
+
+  const handleAddAnalysis = () => {
+    if (!newPatient || !newType) return;
+    const maxId = Math.max(...analyses.map(a => a.id), 0);
+    setAnalyses(prev => [...prev, {
+      id: maxId + 1,
+      patient: newPatient,
+      avatar: newPatient.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
+      type: newType,
+      doctor: newDoctor || "Dr. —",
+      status: "waiting" as AnalysisStatus,
+      date: "20 Fév",
+      priority: newPriority,
+      amount: newAmount || "40 DT",
+      progress: 0,
+      cnam: newCnam,
+    }]);
+    setNewPatient(""); setNewDoctor(""); setNewAmount(""); setNewPriority("normal");
+    setActiveTab("pipeline");
+  };
+
+  const handleStartEdit = (a: DashAnalysis) => {
+    if (a.values) {
+      setEditingId(a.id);
+      setEditingValues([...a.values]);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (editingId === null) return;
+    setAnalyses(prev => prev.map(a => a.id === editingId ? { ...a, values: editingValues } : a));
+    setEditingId(null);
+  };
 
   return (
     <DashboardLayout role="laboratory" title="Tableau de bord">
-      <div className="space-y-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Pending prélèvements - priority */}
-            <div className="rounded-xl border border-warning/30 bg-card shadow-card">
-              <div className="flex items-center justify-between border-b px-5 py-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Timer className="h-4 w-4 text-warning" />Prélèvements en attente
-                  <span className="bg-warning/10 text-warning text-xs font-bold px-2 py-0.5 rounded-full">{pendingPrelevements.filter((_, i) => !registeredIds.includes(i)).length}</span>
-                </h3>
-              </div>
-              {pendingPrelevements.every((_, i) => registeredIds.includes(i)) ? (
-                <div className="p-8 text-center">
-                  <CheckCircle2 className="h-8 w-8 text-accent/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Tous les prélèvements ont été enregistrés</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {pendingPrelevements.map((p, i) => {
-                    if (registeredIds.includes(i)) return null;
-                    return (
-                      <div key={i} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${p.urgent ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>{p.avatar}</div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-foreground">{p.patient}</p>
-                            {p.urgent && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-medium">Urgent</span>}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{p.type} · {p.doctor} · RDV {p.time}</p>
-                        </div>
-                        <Button size="sm" className="h-7 text-[11px] gradient-primary text-primary-foreground" onClick={() => handleRegister(i)}>
-                          <Beaker className="h-3 w-3 mr-1" />Enregistrer
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+      <div className="space-y-5">
+        {/* Live counters */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <button onClick={() => { setActiveTab("pipeline"); setFilterStatus("waiting"); }}
+            className="rounded-xl border bg-warning/5 border-warning/20 p-3 flex items-center gap-3 text-left hover:shadow-sm transition-all">
+            <div className="h-10 w-10 rounded-xl bg-warning/10 flex items-center justify-center"><Timer className="h-5 w-5 text-warning" /></div>
+            <div><p className="text-lg font-bold text-warning">{waitingCount}</p><p className="text-[10px] text-muted-foreground">Prélèvements</p></div>
+          </button>
+          <button onClick={() => { setActiveTab("pipeline"); setFilterStatus("in_progress"); }}
+            className="rounded-xl border bg-primary/5 border-primary/20 p-3 flex items-center gap-3 text-left hover:shadow-sm transition-all">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Activity className="h-5 w-5 text-primary" /></div>
+            <div><p className="text-lg font-bold text-primary">{inProgressCount}</p><p className="text-[10px] text-muted-foreground">En cours</p></div>
+          </button>
+          <button onClick={() => { setActiveTab("pipeline"); setFilterStatus("ready"); }}
+            className="rounded-xl border bg-accent/5 border-accent/20 p-3 flex items-center gap-3 text-left hover:shadow-sm transition-all">
+            <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center"><CheckCircle2 className="h-5 w-5 text-accent" /></div>
+            <div><p className="text-lg font-bold text-accent">{readyCount}</p><p className="text-[10px] text-muted-foreground">À valider</p></div>
+          </button>
+          {urgentCount > 0 ? (
+            <div className="rounded-xl border bg-destructive/5 border-destructive/20 p-3 flex items-center gap-3 animate-pulse">
+              <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center"><AlertCircle className="h-5 w-5 text-destructive" /></div>
+              <div><p className="text-lg font-bold text-destructive">{urgentCount}</p><p className="text-[10px] text-muted-foreground">Urgents</p></div>
             </div>
+          ) : (
+            <div className="rounded-xl border p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center"><FlaskConical className="h-5 w-5 text-muted-foreground" /></div>
+              <div><p className="text-lg font-bold text-foreground">{analyses.length}</p><p className="text-[10px] text-muted-foreground">Total</p></div>
+            </div>
+          )}
+        </div>
 
-            {/* Active analyses */}
-            <div className="rounded-xl border bg-card shadow-card">
-              <div className="flex items-center justify-between border-b px-5 py-4">
-                <h2 className="font-semibold text-foreground flex items-center gap-2"><FlaskConical className="h-4 w-4 text-primary" />Analyses en cours</h2>
-                <Link to="/dashboard/laboratory/analyses" className="text-sm text-primary hover:underline flex items-center gap-1">Tout voir <ChevronRight className="h-4 w-4" /></Link>
-              </div>
-              <div className="divide-y">
-                {mockLabAnalyses.map((a, i) => {
-                  const config = statusConfig[a.status];
-                  const isSent = sentIds.includes(i);
-                  return (
-                    <div key={i} className={`px-5 py-3 hover:bg-muted/30 transition-colors ${a.priority === "urgent" ? "border-l-2 border-l-destructive" : ""}`}>
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0">{a.avatar}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-foreground text-sm truncate">{a.patient}</p>
-                            {a.priority === "urgent" && <span className="rounded-full bg-destructive/10 text-destructive px-2 py-0.5 text-[10px] font-medium">Urgent</span>}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{a.type} · {a.doctor}</p>
-                          {a.status === "in_progress" && a.progress && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${a.progress}%` }} />
-                              </div>
-                              <span className="text-[10px] font-medium text-primary">{a.progress}%</span>
-                            </div>
-                          )}
-                        </div>
-                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 shrink-0 ${config.class}`}>
-                          <config.icon className="h-3 w-3" />{config.label}
-                        </span>
-                        {a.status === "ready" && !isSent && (
-                          <Button variant="outline" size="sm" className="h-7 text-[11px] shrink-0" onClick={() => handleSend(i)}>
-                            <Send className="h-3 w-3 mr-1" />Envoyer
-                          </Button>
-                        )}
-                        {isSent && <span className="text-[10px] text-accent font-medium">✓ Envoyé</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+        {/* Tabs */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex gap-1 rounded-lg border bg-card p-0.5">
+            {([
+              { key: "pipeline" as DashTab, label: "Pipeline analyses", icon: FlaskConical },
+              { key: "results" as DashTab, label: "Résultats à valider", icon: Eye },
+              { key: "new" as DashTab, label: "Nouvelle analyse", icon: Plus },
+            ]).map(t => (
+              <button key={t.key} onClick={() => { setActiveTab(t.key); setFilterStatus("all"); }}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${activeTab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <t.icon className="h-3.5 w-3.5" />{t.label}
+              </button>
+            ))}
           </div>
-
-          {/* Right sidebar - Consommables only */}
-          <div className="space-y-6">
-            <div className="rounded-xl border border-destructive/20 bg-card shadow-card p-5">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-destructive" />Alertes consommables
-              </h3>
-              <div className="space-y-3">
+          {activeTab === "pipeline" && (
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 w-44 text-xs" />
+              </div>
+              <div className="flex gap-0.5 rounded-lg border bg-card p-0.5">
                 {[
-                  { name: "Tubes EDTA", qty: 120, threshold: 150, status: "ok" },
-                  { name: "Tubes secs", qty: 15, threshold: 50, status: "low" },
-                  { name: "Aiguilles 21G", qty: 8, threshold: 30, status: "critical" },
-                  { name: "Gants latex M", qty: 45, threshold: 100, status: "low" },
-                ].map((c, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
-                    <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${c.status === "critical" ? "bg-destructive" : c.status === "low" ? "bg-warning" : "bg-accent"}`} />
-                    <span className="text-xs text-foreground flex-1">{c.name}</span>
-                    <span className={`text-[11px] font-bold ${c.status === "critical" ? "text-destructive" : c.status === "low" ? "text-warning" : "text-foreground"}`}>
-                      {c.qty}/{c.threshold}
-                    </span>
-                  </div>
+                  { key: "all", label: "Tous" },
+                  { key: "waiting", label: "Prélèv." },
+                  { key: "in_progress", label: "En cours" },
+                  { key: "ready", label: "Prêts" },
+                ].map(f => (
+                  <button key={f.key} onClick={() => setFilterStatus(f.key)}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${filterStatus === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                    {f.label}
+                  </button>
                 ))}
               </div>
             </div>
+          )}
+        </div>
 
-            {/* Quick links */}
-            <div className="rounded-xl border bg-card shadow-card p-5">
-              <h3 className="font-semibold text-foreground mb-3">Accès rapide</h3>
+        {/* ═══ PIPELINE TAB ═══ */}
+        {activeTab === "pipeline" && (
+          <div className="space-y-3">
+            {filtered.map(a => {
+              const config = statusConfig[a.status];
+              return (
+                <div key={a.id} onClick={() => setSelectedAnalysis(a)}
+                  className={`rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all cursor-pointer ${
+                    a.priority === "urgent" ? "border-l-4 border-l-destructive" : ""
+                  } ${a.status === "sent" ? "opacity-50" : ""}`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`h-11 w-11 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                      a.priority === "urgent" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                    }`}>{a.avatar}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-foreground text-sm">{a.patient}</p>
+                        {a.priority === "urgent" && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-medium">URGENT</span>}
+                        {a.cnam && <Shield className="h-3 w-3 text-primary" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{a.type} · {a.doctor} · {a.date}</p>
+                      {a.status === "in_progress" && (
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <div className="h-1.5 w-28 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${a.progress}%` }} />
+                          </div>
+                          <span className="text-[10px] font-medium text-primary">{a.progress}%</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-bold text-foreground">{a.amount}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium border flex items-center gap-1 ${config.class}`}>
+                        <config.icon className="h-3 w-3" />{config.label}
+                      </span>
+                      {a.status !== "sent" && (
+                        <Button size="sm" className={`h-7 text-[10px] shrink-0 ${
+                          a.status === "waiting" ? "gradient-primary text-primary-foreground" :
+                          a.status === "in_progress" ? "bg-accent text-accent-foreground hover:bg-accent/90" :
+                          "bg-card border text-foreground hover:bg-muted"
+                        }`}
+                          onClick={e => { e.stopPropagation(); handleAdvanceStatus(a.id); }}>
+                          {a.status === "waiting" && <><Beaker className="h-3 w-3 mr-1" />Prélever</>}
+                          {a.status === "in_progress" && <><CheckCircle2 className="h-3 w-3 mr-1" />Valider</>}
+                          {a.status === "ready" && <><Send className="h-3 w-3 mr-1" />Envoyer</>}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="text-center py-12"><FlaskConical className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-muted-foreground">Aucune analyse trouvée</p></div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ RESULTS TAB ═══ */}
+        {activeTab === "results" && (
+          <div className="space-y-4">
+            {analyses.filter(a => a.status === "ready" && a.values).map(a => (
+              <div key={a.id} className="rounded-xl border bg-card shadow-card overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent">{a.avatar}</div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-foreground text-sm">{a.patient}</p>
+                        {a.cnam && <Shield className="h-3 w-3 text-primary" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{a.type} · {a.doctor} · {a.date}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {editingId !== a.id && (
+                      <Button variant="outline" size="sm" className="text-xs" onClick={() => handleStartEdit(a)}>
+                        <FileText className="h-3.5 w-3.5 mr-1" />Modifier
+                      </Button>
+                    )}
+                    <Button size="sm" className="gradient-primary text-primary-foreground text-xs" onClick={() => handleAdvanceStatus(a.id)}>
+                      <Send className="h-3.5 w-3.5 mr-1" />Envoyer
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs"><Download className="h-3.5 w-3.5 mr-1" />PDF</Button>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs">
+                        <th className="pb-2 font-medium text-muted-foreground">Paramètre</th>
+                        <th className="pb-2 font-medium text-muted-foreground">Résultat</th>
+                        <th className="pb-2 font-medium text-muted-foreground">Référence</th>
+                        <th className="pb-2 font-medium text-muted-foreground w-20">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(editingId === a.id ? editingValues : a.values!).map((v, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="py-2.5 text-sm text-foreground font-medium">{v.name}</td>
+                          <td className="py-2.5">
+                            {editingId === a.id ? (
+                              <Input value={editingValues[i].value}
+                                onChange={e => { const u = [...editingValues]; u[i] = { ...u[i], value: e.target.value }; setEditingValues(u); }}
+                                className="h-7 w-28 text-xs" />
+                            ) : (
+                              <span className={`text-sm font-bold ${v.status === "high" ? "text-destructive" : v.status === "low" ? "text-warning" : "text-foreground"}`}>{v.value}</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 text-xs text-muted-foreground">{v.ref}</td>
+                          <td className="py-2.5">
+                            {v.status === "high" ? <span className="flex items-center gap-1 text-destructive text-xs"><ArrowUp className="h-3 w-3" />Élevé</span> :
+                             v.status === "low" ? <span className="flex items-center gap-1 text-warning text-xs"><ArrowDown className="h-3 w-3" />Bas</span> :
+                             <span className="flex items-center gap-1 text-accent text-xs"><Minus className="h-3 w-3" />Normal</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {editingId === a.id && (
+                    <div className="flex gap-2 mt-3 pt-3 border-t">
+                      <Button size="sm" className="gradient-primary text-primary-foreground" onClick={handleSaveEdit}><Save className="h-3.5 w-3.5 mr-1" />Enregistrer</Button>
+                      <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>Annuler</Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {analyses.filter(a => a.status === "ready" && a.values).length === 0 && (
+              <div className="text-center py-12"><CheckCircle2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-muted-foreground">Aucun résultat à valider</p></div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ NEW ANALYSIS TAB ═══ */}
+        {activeTab === "new" && (
+          <div className="max-w-2xl">
+            <div className="rounded-xl border bg-card shadow-card p-6 space-y-4">
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><Beaker className="h-4 w-4 text-primary" />Enregistrer une analyse</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><Label className="text-xs">Patient</Label><Input value={newPatient} onChange={e => setNewPatient(e.target.value)} placeholder="Nom du patient" className="mt-1" /></div>
+                <div><Label className="text-xs">Type d'analyse</Label>
+                  <select value={newType} onChange={e => setNewType(e.target.value)} className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm">
+                    {mockLabAnalysisTypes.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div><Label className="text-xs">Médecin prescripteur</Label><Input value={newDoctor} onChange={e => setNewDoctor(e.target.value)} placeholder="Dr. ..." className="mt-1" /></div>
+                <div><Label className="text-xs">Montant</Label><Input value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="Ex: 45 DT" className="mt-1" /></div>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-1.5 text-xs"><input type="checkbox" checked={newCnam} onChange={e => setNewCnam(e.target.checked)} className="rounded border-input" /><Shield className="h-3 w-3 text-primary" />CNAM</label>
+                <label className="flex items-center gap-1.5 text-xs"><input type="checkbox" checked={newPriority === "urgent"} onChange={e => setNewPriority(e.target.checked ? "urgent" : "normal")} className="rounded border-input" /><AlertCircle className="h-3 w-3 text-destructive" />Urgent</label>
+              </div>
+              <div className="flex gap-2">
+                <Button className="gradient-primary text-primary-foreground" onClick={handleAddAnalysis} disabled={!newPatient}>
+                  <Save className="h-4 w-4 mr-1" />Enregistrer
+                </Button>
+                <Button variant="outline" onClick={() => setActiveTab("pipeline")}>Annuler</Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Analysis detail drawer ── */}
+      {selectedAnalysis && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setSelectedAnalysis(null)}>
+          <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-foreground">{selectedAnalysis.patient}</h3>
+                <button onClick={() => setSelectedAnalysis(null)}><X className="h-5 w-5 text-muted-foreground" /></button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Analyse</p><p className="text-sm font-medium text-foreground mt-0.5">{selectedAnalysis.type}</p></div>
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Médecin</p><p className="text-sm font-medium text-foreground mt-0.5">{selectedAnalysis.doctor}</p></div>
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Date</p><p className="text-sm font-medium text-foreground mt-0.5">{selectedAnalysis.date}</p></div>
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Montant</p><p className="text-sm font-bold text-foreground mt-0.5">{selectedAnalysis.amount}</p></div>
+              </div>
+              {selectedAnalysis.values && (
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs font-semibold text-foreground mb-2">Résultats</p>
+                  {selectedAnalysis.values.map((v, i) => (
+                    <div key={i} className="flex items-center justify-between py-1.5 border-t text-xs">
+                      <span className="text-foreground">{v.name}</span>
+                      <span className={`font-bold ${v.status === "high" ? "text-destructive" : v.status === "low" ? "text-warning" : "text-accent"}`}>{v.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="space-y-2">
-                <Link to="/dashboard/laboratory/analyses">
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start">
-                    <FlaskConical className="h-3.5 w-3.5 mr-2 text-primary" />Toutes les analyses
+                {selectedAnalysis.status !== "sent" && (
+                  <Button size="sm" className="w-full text-xs gradient-primary text-primary-foreground" onClick={() => { handleAdvanceStatus(selectedAnalysis.id); setSelectedAnalysis(null); }}>
+                    {selectedAnalysis.status === "waiting" && <><Beaker className="h-3.5 w-3.5 mr-1" />Enregistrer le prélèvement</>}
+                    {selectedAnalysis.status === "in_progress" && <><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Valider les résultats</>}
+                    {selectedAnalysis.status === "ready" && <><Send className="h-3.5 w-3.5 mr-1" />Envoyer au médecin</>}
                   </Button>
-                </Link>
-                <Link to="/dashboard/laboratory/results">
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start">
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-2 text-accent" />Résultats à envoyer
-                  </Button>
-                </Link>
-                <Link to="/dashboard/laboratory/patients">
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start">
-                    <User className="h-3.5 w-3.5 mr-2 text-muted-foreground" />Patients
-                  </Button>
-                </Link>
+                )}
+                <Button size="sm" variant="outline" className="w-full text-xs"><Phone className="h-3.5 w-3.5 mr-1" />Appeler le patient</Button>
+                <Button size="sm" variant="outline" className="w-full text-xs"><Printer className="h-3.5 w-3.5 mr-1" />Imprimer</Button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </DashboardLayout>
   );
 };
