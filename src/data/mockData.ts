@@ -1248,6 +1248,38 @@ export const mockSecretaryCabinetContacts: ChatContact[] = [
   { id: "sc3", name: "Dr. Sonia Gharbi", role: "Cardiologue", avatar: "SG", lastMessage: "Le patient Trabelsi est arrivé ?", time: "09:30", unread: 1, online: false },
 ];
 
+// ─── Consultation Workbench Mocks ─────────────────────────────
+
+export interface RxFavorite {
+  label: string;
+  dosage: string;
+  duration: string;
+  instructions: string;
+}
+
+export const mockRxFavorites: RxFavorite[] = [
+  { label: "Paracétamol 1g", dosage: "1 cp x3/j", duration: "3 jours", instructions: "Si douleur/fièvre" },
+  { label: "Amoxicilline 1g", dosage: "1 cp x2/j", duration: "6 jours", instructions: "Selon indication" },
+  { label: "IPP (Oméprazole 20mg)", dosage: "1 gélule/j", duration: "14 jours", instructions: "Le matin à jeun" },
+];
+
+export interface PastConsult {
+  date: string;
+  motif: string;
+  notes: string;
+  prescriptions: number;
+}
+
+export const mockPastConsults: PastConsult[] = [
+  { date: "15 Jan 2026", motif: "Suivi diabète", notes: "HbA1c à 7.1%. Bonne observance. Maintien traitement.", prescriptions: 1 },
+  { date: "10 Oct 2025", motif: "Contrôle glycémie", notes: "Glycémie à jeun 1.15g/L. Ajustement posologie Metformine.", prescriptions: 1 },
+  { date: "5 Juil 2025", motif: "Bilan annuel", notes: "Bilan complet. Fonction rénale normale. Fond d'œil RAS.", prescriptions: 2 },
+];
+
+export const mockLabSuggestionsBase = ["NFS", "CRP", "Ionogramme", "Créatinine", "TSH", "Bilan lipidique"];
+export const mockLabSuggestionsDT2 = ["HbA1c", "Glycémie à jeun", "Microalbuminurie", "Bilan lipidique", "Créatinine"];
+export const mockLabSuggestionsAngine = ["TDR streptocoque", "CRP", "NFS"];
+
 export const mockSecretaryCabinetMessages: Record<string, ChatMessage[]> = {
   "sc1": [
     { id: "1", sender: "them", text: "Le patient de 14h30 a appelé pour annuler.", time: "11:00", senderName: "Dr. Bouazizi" },

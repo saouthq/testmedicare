@@ -33,7 +33,7 @@ import {
   PanelsRightBottom,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { mockConsultationPatient } from "@/data/mockData";
+import { mockConsultationPatient, mockRxFavorites, mockPastConsults, mockLabSuggestionsBase, mockLabSuggestionsDT2, mockLabSuggestionsAngine } from "@/data/mockData";
 
 /**
  * DoctorConsultationDetail — Workbench (ultra centralisé)
@@ -171,14 +171,7 @@ const DoctorConsultationDetail = () => {
     },
   ]);
 
-  const rxFavorites = useMemo(
-    () => [
-      { label: "Paracétamol 1g", dosage: "1 cp x3/j", duration: "3 jours", instructions: "Si douleur/fièvre" },
-      { label: "Amoxicilline 1g", dosage: "1 cp x2/j", duration: "6 jours", instructions: "Selon indication" },
-      { label: "IPP (Oméprazole 20mg)", dosage: "1 gélule/j", duration: "14 jours", instructions: "Le matin à jeun" },
-    ],
-    [],
-  );
+  const rxFavorites = mockRxFavorites;
 
   const addPrescriptionItem = () =>
     setPrescriptionItems((prev) => [...prev, { medication: "", dosage: "", duration: "", instructions: "" }]);
@@ -203,19 +196,13 @@ const DoctorConsultationDetail = () => {
   const [newAnalyse, setNewAnalyse] = useState("");
 
   const labSuggestions = useMemo(() => {
-    // Suggestion simple (règles légères) selon diagnostic/motif
     const blob = `${motif} ${diagnosis}`.toLowerCase();
 
-    const base = ["NFS", "CRP", "Ionogramme", "Créatinine", "TSH", "Bilan lipidique"];
-    const dt2 = ["HbA1c", "Glycémie à jeun", "Microalbuminurie", "Bilan lipidique", "Créatinine"];
-    const angine = ["TDR streptocoque", "CRP", "NFS"];
-
-    let list = base;
-    if (blob.includes("diab") || blob.includes("hba1c")) list = Array.from(new Set([...base, ...dt2]));
+    let list = [...mockLabSuggestionsBase];
+    if (blob.includes("diab") || blob.includes("hba1c")) list = Array.from(new Set([...list, ...mockLabSuggestionsDT2]));
     if (blob.includes("angine") || blob.includes("odynoph") || blob.includes("gorge"))
-      list = Array.from(new Set([...base, ...angine]));
+      list = Array.from(new Set([...list, ...mockLabSuggestionsAngine]));
 
-    // On retire celles déjà ajoutées
     return list.filter((x) => !analysePrescription.includes(x));
   }, [analysePrescription, diagnosis, motif]);
 
@@ -309,29 +296,7 @@ const DoctorConsultationDetail = () => {
   }, [vitals.height, vitals.weight]);
 
   // Drawer : past consults (mock)
-  const pastConsults = useMemo(
-    () => [
-      {
-        date: "15 Jan 2026",
-        motif: "Suivi diabète",
-        notes: "HbA1c à 7.1%. Bonne observance. Maintien traitement.",
-        prescriptions: 1,
-      },
-      {
-        date: "10 Oct 2025",
-        motif: "Contrôle glycémie",
-        notes: "Glycémie à jeun 1.15g/L. Ajustement posologie Metformine.",
-        prescriptions: 1,
-      },
-      {
-        date: "5 Juil 2025",
-        motif: "Bilan annuel",
-        notes: "Bilan complet. Fonction rénale normale. Fond d'œil RAS.",
-        prescriptions: 2,
-      },
-    ],
-    [],
-  );
+  const pastConsults = mockPastConsults;
 
   // Completion logic (drive 2–3 actions)
   const completion = useMemo(() => {
