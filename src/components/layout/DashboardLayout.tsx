@@ -115,6 +115,9 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const location = useLocation();
   const items = navItems[role];
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  const expanded = hovered;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -125,30 +128,41 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-card transform transition-transform lg:translate-x-0 lg:static lg:z-auto ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={`
+          fixed inset-y-0 left-0 z-50 border-r bg-card flex flex-col
+          transition-all duration-300 ease-in-out overflow-hidden
+          ${expanded ? "w-64" : "w-[60px]"}
+          lg:translate-x-0 lg:static lg:z-auto
+          ${sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"}
+        `}
       >
-        <div className="flex h-16 items-center justify-between border-b px-6">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
+        {/* Header */}
+        <div className="flex h-16 items-center border-b px-3 shrink-0">
+          <Link to="/" className="flex items-center gap-2 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gradient-primary">
               <Stethoscope className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-foreground">Medicare</span>
+            <span className={`font-bold text-foreground whitespace-nowrap transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 lg:opacity-0"}`}>
+              Medicare
+            </span>
           </Link>
-          <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}>
+          <button className="lg:hidden text-muted-foreground ml-auto" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="px-4 py-3">
+        {/* Role badge */}
+        <div className={`px-3 py-3 shrink-0 transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 h-0 py-0 overflow-hidden lg:h-0 lg:py-0"}`}>
           <div className="rounded-lg bg-secondary px-3 py-2">
             <p className="text-xs text-muted-foreground">Connecté en tant que</p>
             <p className="text-sm font-medium text-secondary-foreground">{roleLabels[role]}</p>
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-2 space-y-1">
+        {/* Nav */}
+        <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
           {items.map((item) => {
             const isActive = location.pathname === item.url;
             return (
@@ -156,33 +170,39 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
                 key={item.url}
                 to={item.url}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                title={!expanded ? item.title : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors whitespace-nowrap ${
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
-                {item.title}
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
+                  {item.title}
+                </span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="border-t p-3 space-y-1">
+        {/* Footer */}
+        <div className="border-t px-2 py-3 space-y-1 shrink-0">
           <Link
             to={`/dashboard/${role}/settings`}
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title={!expanded ? "Paramètres" : undefined}
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap"
           >
-            <Settings className="h-4 w-4" />
-            Paramètres
+            <Settings className="h-4 w-4 shrink-0" />
+            <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Paramètres</span>
           </Link>
           <Link
             to="/login"
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+            title={!expanded ? "Déconnexion" : undefined}
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap"
           >
-            <LogOut className="h-4 w-4" />
-            Déconnexion
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Déconnexion</span>
           </Link>
         </div>
       </aside>
