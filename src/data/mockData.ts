@@ -1280,6 +1280,76 @@ export const mockLabSuggestionsBase = ["NFS", "CRP", "Ionogramme", "Créatinine"
 export const mockLabSuggestionsDT2 = ["HbA1c", "Glycémie à jeun", "Microalbuminurie", "Bilan lipidique", "Créatinine"];
 export const mockLabSuggestionsAngine = ["TDR streptocoque", "CRP", "NFS"];
 
+// ─── Consultation Workbench Initial Values ───────────────────
+
+export interface ConsultationPrescriptionItem {
+  medication: string;
+  dosage: string;
+  duration: string;
+  instructions: string;
+}
+
+export const mockConsultationInitialVitals = {
+  systolic: "130", diastolic: "80", heartRate: "72", temperature: "37.0",
+  weight: "75", oxygenSat: "98", height: "175", respiratoryRate: "16",
+};
+
+export const mockConsultationInitialNotes = {
+  motif: "Suivi diabète de type 2",
+  symptoms: "Patient se plaint de fatigue accrue depuis 2 semaines. Pas de douleurs particulières. Sommeil perturbé.",
+  examination: "Examen clinique normal. Abdomen souple, pas de masse palpable. Auscultation pulmonaire claire. Pas d'œdème des MI.",
+  diagnosis: "Diabète de type 2 équilibré. Asthénie à surveiller.",
+  conclusion: "Maintien du traitement actuel. Contrôle HbA1c dans 3 mois. Hygiène de vie : activité physique régulière recommandée.",
+};
+
+export const mockConsultationInitialPrescription: ConsultationPrescriptionItem[] = [
+  { medication: "Metformine 850mg", dosage: "1 comprimé matin et soir", duration: "3 mois", instructions: "Pendant les repas" },
+  { medication: "Glibenclamide 5mg", dosage: "1 comprimé le matin", duration: "3 mois", instructions: "Avant le petit déjeuner" },
+];
+
+export const mockConsultationInitialAnalyses = ["HbA1c", "Glycémie à jeun"];
+
+export interface ConsultationTemplate {
+  key: string;
+  label: string;
+  motif: string;
+  symptoms: string;
+  examination: string;
+  diagnosis: string;
+  conclusion: string;
+  extraAnalyses?: string[];
+  defaultDockTab: "rx" | "labs" | "docs" | "tasks";
+}
+
+export const mockConsultationTemplates: ConsultationTemplate[] = [
+  {
+    key: "dt2", label: "Suivi diabète T2", defaultDockTab: "rx",
+    motif: "Suivi diabète de type 2",
+    symptoms: "Observance traitement : oui. Fatigue intermittente. Alimentation à rééquilibrer. Activité physique : irrégulière.",
+    examination: "TA correcte. Auscultation cardio-pulmonaire RAS. Pas d'œdème. Pied diabétique : pas de lésion.",
+    diagnosis: "Diabète T2 — suivi. Objectifs glycémie à rappeler.",
+    conclusion: "Renforcer hygiène de vie. Prescrire HbA1c + bilan lipidique. Contrôle dans 3 mois.",
+    extraAnalyses: ["HbA1c", "Bilan lipidique", "Créatinine"],
+  },
+  {
+    key: "hta", label: "HTA — contrôle", defaultDockTab: "rx",
+    motif: "Contrôle hypertension",
+    symptoms: "Pas de céphalées. Pas de douleur thoracique. Bonne tolérance du traitement.",
+    examination: "TA à contrôler en automesure. Auscultation RAS. Pas d'œdème.",
+    diagnosis: "Hypertension artérielle — suivi.",
+    conclusion: "Poursuite traitement. Bilan rénal/ionogramme si besoin. Contrôle dans 1–3 mois.",
+  },
+  {
+    key: "angine", label: "Angine", defaultDockTab: "labs",
+    motif: "Odynophagie / suspicion angine",
+    symptoms: "Mal de gorge depuis 48h. Fièvre ? À préciser. Pas de dyspnée.",
+    examination: "Examen ORL : amygdales inflammatoires. Adénopathies cervicales ? À préciser.",
+    diagnosis: "Angine (à confirmer). Tests rapides si disponible.",
+    conclusion: "Traitement symptomatique. ATB si critères / test positif. Surveillance 48–72h.",
+  },
+];
+
+
 export const mockSecretaryCabinetMessages: Record<string, ChatMessage[]> = {
   "sc1": [
     { id: "1", sender: "them", text: "Le patient de 14h30 a appelé pour annuler.", time: "11:00", senderName: "Dr. Bouazizi" },
