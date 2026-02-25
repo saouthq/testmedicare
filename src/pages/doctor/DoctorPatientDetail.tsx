@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,10 @@ import {
   Search,
   Send,
   Stethoscope,
+  ChevronRight,
+  Pencil,
+  CheckCircle2,
+  Copy,
   X,
 } from "lucide-react";
 
@@ -33,6 +37,8 @@ import {
   mockPatientDetailPrescriptions,
   mockVitalsHistory,
 } from "@/data/mockData";
+
+import { toast } from "@/hooks/use-toast";
 
 /**
  * DoctorPatientDetail — Render Complete V2
@@ -63,6 +69,7 @@ type TimelineEvent = {
   title: string;
   desc?: string;
   open?: TimelineOpen;
+  payload?: any;
 };
 
 type DocFileKind = "document" | "photo";
@@ -75,6 +82,7 @@ type PatientFile = {
   mime: string;
   size?: number;
   url?: string;
+  meta?: any;
 };
 
 type Ante = { medical: string; surgical: string; traumatic: string; family: string };
@@ -200,12 +208,279 @@ function humanSize(bytes?: number) {
 }
 
 /* ---------------------------------- */
+/* Local components (page-only)        */
+/* ---------------------------------- */
+
+/**
+ * ActionsPaletteOverlay
+ * - Même UI que Consultation (overlay + input + navigation clavier)
+ * - Groupé par catégories (Consultation / Créer / Dossier / Communication / Utilitaires)
+ */
+function ActionsPaletteOverlay({
+  open,
+  onClose,
+  query,
+  setQuery,
+  actions,
+  index,
+  setIndex,
+  inputRef,
+}: {
+  open: boolean;
+  onClose: () => void;
+  query: string;
+  setQuery: (v: string) => void;
+  actions: Array<{ id: string; label: string; hint?: string; icon: ReactNode; run: () => void; group?: string }>;
+  index: number;
+  setIndex: (v: any) => void;
+  inputRef: RefObject<HTMLInputElement | null>;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="max-w-lg w-[92%] mx-auto mt-24 rounded-2xl border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-3 border-b flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setIndex(0);
+            }}
+            placeholder="Rechercher une action… (ex: ordonnance, analyses, doc, notes)"
+            className="h-9"
+            onKeyDown={(e) => {
+              // Navigation clavier
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setIndex((i) => Math.min(i + 1, Math.max(0, actions.length - 1)));
+              }
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setIndex((i) => Math.max(i - 1, 0));
+              }
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const a = actions[index];
+                if (!a) return;
+                onClose();
+                a.run();
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                onClose();
+              }
+            }}
+          />
+          <span className="text-[11px] text-muted-foreground px-2 py-1 rounded-full bg-muted">Ctrl+K</span>
+        </div>
+
+        <div className="p-2">
+          {actions.length === 0 ? (
+            <div className="p-4 text-sm text-muted-foreground">Aucune action.</div>
+          ) : (
+            <div className="space-y-1">
+              {(() => {
+                const order = ["Consultation", "Créer", "Dossier", "Communication", "Utilitaires"] as const;
+                const groups = order
+                  .map((g) => ({ g, items: actions.filter((a) => (a as any).group === g) }))
+                  .filter((x) => x.items.length > 0);
+
+                let cursor = 0;
+                return (
+                  <div className="space-y-2">
+                    {groups.map((grp) => (
+                      <div key={grp.g} className="space-y-1">
+                        <div className="px-3 pt-2 pb-1 text-[11px] font-semibold text-muted-foreground">{grp.g}</div>
+                        {grp.items.map((a) => {
+                          const i = cursor++;
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              className={
+                                i === index
+                                  ? "w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-muted"
+                                  : "w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl hover:bg-muted/60"
+                              }
+                              onMouseEnter={() => setIndex(i)}
+                              onClick={() => {
+                                onClose();
+                                a.run();
+                              }}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-muted-foreground">{a.icon}</span>
+                                <span className="text-sm font-medium text-foreground truncate">{a.label}</span>
+                              </div>
+                              {a.hint ? <span className="text-xs text-muted-foreground">{a.hint}</span> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+
+        <div className="p-3 border-t flex items-center justify-between text-xs text-muted-foreground">
+          <span>↑ ↓ pour naviguer · Entrée pour lancer · Esc pour fermer</span>
+          <Button variant="ghost" size="sm" className="h-8" onClick={onClose}>
+            Fermer
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * QuickNotesCard
+ * - Card fixe à droite pour capturer une note “rapide” sans changer d’onglet.
+ * - Le bouton “Ajouter” pousse la note dans Notes cliniques (trace) + reset.
+ */
+function QuickNotesCard({
+  cardRef,
+  savedAt,
+  value,
+  setValue,
+  onOpenNotes,
+  onAppendToClinical,
+}: {
+  cardRef: RefObject<HTMLDivElement | null>;
+  savedAt: Date | null;
+  value: string;
+  setValue: (v: string) => void;
+  onOpenNotes: () => void;
+  onAppendToClinical: (note: string) => void;
+}) {
+  return (
+    <Card
+      title="Notes rapides"
+      right={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onOpenNotes}>
+            Ouvrir notes
+          </Button>
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => {
+              const trimmed = (value || "").trim();
+              if (!trimmed) return;
+              onAppendToClinical(trimmed);
+              setValue("");
+            }}
+          >
+            Ajouter
+          </Button>
+        </div>
+      }
+    >
+      <div ref={cardRef} className="space-y-2" id="patient-quick-notes">
+        <div className="text-xs text-muted-foreground">
+          Note interne rapide (auto-sauvegardée)
+          {savedAt ? ` • sauvegardée à ${savedAt.toLocaleTimeString().slice(0, 5)}` : ""}
+        </div>
+        <textarea
+          id="patient-quick-notes-textarea"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          rows={6}
+          className="w-full resize-none rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring/25"
+          placeholder="Ex : patient stressé, rappeler bilan, priorité…"
+        />
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setValue("")}>
+            Effacer
+          </Button>
+          <div className="text-[11px] text-muted-foreground">Astuce : Ctrl/Cmd+K → “note rapide”</div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ---------------------------------- */
 /* Main page                           */
 /* ---------------------------------- */
 
 export default function DoctorPatientDetail() {
   const navigate = useNavigate();
   const patient = mockConsultationPatient as any;
+
+  // Identifiant stable (utile pour localStorage et le futur backend)
+  const patientId = String((patient as any)?.id ?? patient?.email ?? patient?.name ?? "patient");
+
+  // =====================
+  // Données dossier (state)
+  // - On initialise depuis mockData, mais on rend la page *vivante* :
+  //   les workflows (ordonnance/analyses/docs) alimentent vraiment le dossier.
+  // - Plus tard : ces 3 états seront remplacés par un repository + React Query.
+  // =====================
+  const [consultRecords, setConsultRecords] = useState<any[]>(() =>
+    (mockPatientConsultations || []).map((c: any, idx: number) => ({ ...c, _id: c.id ?? `CONS-${idx}` })),
+  );
+  const [rxRecords, setRxRecords] = useState<any[]>(() =>
+    (mockPatientDetailPrescriptions || []).map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` })),
+  );
+  const [labRecords, setLabRecords] = useState<any[]>(() =>
+    (mockPatientAnalyses || []).map((a: any, idx: number) => ({ ...a, _id: a.id ?? `LAB-${idx}` })),
+  );
+
+  // =====================
+  // Notes rapides (card droite)
+  // - Auto-save localStorage (debounced)
+  // - Permet de noter vite sans changer d’onglet
+  // =====================
+  const quickNotesRef = useRef<HTMLDivElement | null>(null);
+  const QUICK_NOTES_KEY = `medicare.patient.${patientId}.quickNotes.v1`;
+  const [quickNotes, setQuickNotes] = useState<string>(() => {
+    try {
+      return localStorage.getItem(QUICK_NOTES_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
+  const [quickNotesSavedAt, setQuickNotesSavedAt] = useState<Date | null>(null);
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      try {
+        localStorage.setItem(QUICK_NOTES_KEY, quickNotes);
+        setQuickNotesSavedAt(new Date());
+      } catch {
+        // ignore
+      }
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [QUICK_NOTES_KEY, quickNotes]);
+
+  // =====================
+  // Slide “Détail” (timeline)
+  // - Ouvrir un élément (consult/rx/lab/doc)
+  // - Bouton “Modifier” -> ré-ouvre le workflow pré-rempli
+  // =====================
+  const [detailEvent, setDetailEvent] = useState<TimelineEvent | null>(null);
+  const [detailEdit, setDetailEdit] = useState(false);
+  const [detailDraft, setDetailDraft] = useState("");
+  const [detailNameDraft, setDetailNameDraft] = useState("");
+
+  const scrollToQuickNotes = () => {
+    // UX : scroller vers la card notes rapides + focus
+    window.setTimeout(() => {
+      quickNotesRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const el = document.getElementById("patient-quick-notes-textarea");
+      if (el instanceof HTMLTextAreaElement) el.focus();
+    }, 0);
+  };
 
   const [tab, setTab] = useState<MainTab>("historique");
   const [q, setQ] = useState("");
@@ -272,7 +547,7 @@ export default function DoctorPatientDetail() {
   }, [createOpen]);
 
   /* ---------- Drawers (Rx/Labs/Docs) : workflows complets (UI only) ---------- */
-  const [drawer, setDrawer] = useState<null | "rx" | "lab" | "doc">(null);
+  const [drawer, setDrawer] = useState<null | "detail" | "rx" | "lab" | "doc">(null);
 
   // -----------------------------
   // Ordonnance (Rx) — workflow 1/2/3
@@ -285,6 +560,8 @@ export default function DoctorPatientDetail() {
   const [rxSigned, setRxSigned] = useState(false);
   const [rxSendToPatient, setRxSendToPatient] = useState(true);
   const [rxSendToPharmacy, setRxSendToPharmacy] = useState(false);
+  const [rxSendStatus, setRxSendStatus] = useState<{ code: string; version: number; sentAt: string } | null>(null);
+  const [rxEditingAfterSend, setRxEditingAfterSend] = useState(false);
 
   // -----------------------------
   // Analyses (Labs) — workflow 1/2/3
@@ -314,6 +591,8 @@ export default function DoctorPatientDetail() {
   const [labsSendToPatient, setLabsSendToPatient] = useState(true);
   const [labsSendToLab, setLabsSendToLab] = useState(true);
   const [labsValidated, setLabsValidated] = useState(false);
+  const [labsSendStatus, setLabsSendStatus] = useState<{ code: string; version: number; sentAt: string } | null>(null);
+  const [labsEditingAfterSend, setLabsEditingAfterSend] = useState(false);
 
   // -----------------------------
   // Documents — workflow 1/2/3
@@ -359,32 +638,57 @@ export default function DoctorPatientDetail() {
   }, [docBody, docTemplate, drawer, patient?.name]);
 
   const [docSendToPatient, setDocSendToPatient] = useState(true);
+  const [docSendStatus, setDocSendStatus] = useState<{ fileId: string; version: number; sentAt: string } | null>(null);
+  const [docEditingAfterSend, setDocEditingAfterSend] = useState(false);
 
   /**
    * Open helpers
    * NOTE: on garde les mêmes fonctions (openRx/openLabs/openDoc) pour simplifier le branchement backend + routing.
    */
   const openRx = () => {
-    setDrawer("rx");
-    setRxStep(1);
+    // Reset du draft (UX) : nouvelle ordonnance démarre propre
+    setRxItems([{ medication: "", dosage: "", duration: "", instructions: "" }]);
+    setRxNote("");
     setRxSigned(false);
+    setRxSendToPatient(true);
+    setRxSendToPharmacy(false);
+    setRxStep(1);
+    setRxSendStatus(null);
+    setRxEditingAfterSend(false);
+    setDrawer("rx");
   };
 
   const openLabs = () => {
-    setDrawer("lab");
-    setLabsStep(1);
+    // Reset du draft (UX) : nouvelle demande démarre propre
+    setLabsSelected(() => {
+      const init: Record<string, boolean> = {};
+      labPanels.forEach((p) => (init[p.key] = false));
+      return init;
+    });
+    setLabsCustom("");
+    setLabsNote("");
+    setLabsSendToPatient(true);
+    setLabsSendToLab(true);
     setLabsValidated(false);
+    setLabsStep(1);
+    setLabsSendStatus(null);
+    setLabsEditingAfterSend(false);
+    setDrawer("lab");
   };
 
   const openDoc = (template?: DocTemplate) => {
+    setDocSendToPatient(true);
+    setDocSigned(false);
+    setDocStep(1);
+    setDocSendStatus(null);
+    setDocEditingAfterSend(false);
+
     if (template) {
       setDocTemplate(template);
       // On force le pré-remplissage du bon template (voir useEffect plus bas)
       setDocBody("");
     }
     setDrawer("doc");
-    setDocStep(1);
-    setDocSigned(false);
   };
 
   /* ---------- Notes + versions ---------- */
@@ -475,33 +779,36 @@ export default function DoctorPatientDetail() {
 
   /* ---------- Timeline (unifiée) ---------- */
   const mockTimeline = useMemo<TimelineEvent[]>(() => {
-    const consults = mockPatientConsultations.map((c: any, idx: number) => ({
-      id: `c-${idx}`,
+    const consults = consultRecords.map((c: any, idx: number) => ({
+      id: `c-${c._id ?? idx}`,
       at: c.date,
       ts: Date.parse(c.date) || Date.now() - idx * 1000,
       type: "consult" as const,
       title: c.motif,
       desc: c.notes,
+      payload: c,
       open: { kind: "consult" as const },
     }));
 
-    const rxs = mockPatientDetailPrescriptions.map((p: any) => ({
-      id: `rx-${p.id}`,
+    const rxs = rxRecords.map((p: any) => ({
+      id: `rx-${p._id ?? p.id}`,
       at: p.date,
       ts: Date.parse(p.date) || Date.now() - 2000,
       type: "rx" as const,
       title: `Ordonnance ${p.id}`,
       desc: p.items?.[0] ? `${p.items[0]}${p.items.length > 1 ? ` • +${p.items.length - 1}` : ""}` : "—",
+      payload: p,
       open: { kind: "rx" as const },
     }));
 
-    const labs = mockPatientAnalyses.map((a: any) => ({
-      id: `lab-${a.id}`,
+    const labs = labRecords.map((a: any) => ({
+      id: `lab-${a._id ?? a.id}`,
       at: a.date,
       ts: Date.parse(a.date) || Date.now() - 3000,
       type: "lab" as const,
       title: a.type,
       desc: a.values?.[0] ? `${a.values[0].name}: ${a.values[0].value}` : "—",
+      payload: a,
       open: { kind: "lab" as const },
     }));
 
@@ -514,10 +821,11 @@ export default function DoctorPatientDetail() {
       title: f.kind === "photo" ? "Photo importée" : "Document importé",
       desc: f.name,
       open: { kind: "doc" as const },
+      payload: f,
     }));
 
     return [...docs, ...consults, ...rxs, ...labs].sort((x, y) => y.ts - x.ts);
-  }, [files]);
+  }, [files, consultRecords, rxRecords, labRecords]);
 
   const timeline = useMemo(() => {
     const qq = q.trim().toLowerCase();
@@ -526,74 +834,102 @@ export default function DoctorPatientDetail() {
       .filter((e) => (!qq ? true : `${e.title} ${e.desc || ""}`.toLowerCase().includes(qq)));
   }, [mockTimeline, q, histFilter]);
 
+  // Préparer le mode édition quand on ouvre le slide détail
+  useEffect(() => {
+    if (drawer !== "detail") return;
+    if (!detailEvent) return;
+
+    if (detailEvent.type === "consult") {
+      setDetailDraft(String(detailEvent.payload?.notes || detailEvent.desc || ""));
+    }
+    if (detailEvent.type === "doc") {
+      setDetailNameDraft(String(detailEvent.payload?.name || detailEvent.desc || ""));
+    }
+    setDetailEdit(false);
+  }, [detailEvent, drawer]);
+
   /* ---------- Right panel data ---------- */
-  const activeRx = useMemo(() => mockPatientDetailPrescriptions.filter((p: any) => p.status === "active"), []);
+  const activeRx = useMemo(() => rxRecords.filter((p: any) => p.status === "active"), [rxRecords]);
   const activeTreatments = useMemo(() => activeRx.flatMap((p: any) => p.items), [activeRx]);
 
   /* ---------- Actions palette items ---------- */
   const actions = useMemo(() => {
-    const items: Array<{ id: string; label: string; hint?: string; icon: ReactNode; run: () => void }> = [
-      // Raccourcis (médecin)
+    type ActionGroup = "Consultation" | "Créer" | "Dossier" | "Communication" | "Utilitaires";
+
+    const items: Array<{
+      id: string;
+      group: ActionGroup;
+      label: string;
+      hint?: string;
+      icon: ReactNode;
+      run: () => void;
+    }> = [
+      // Consultation
       {
         id: "new-consult",
+        group: "Consultation",
         label: "Nouvelle consultation",
-        hint: "Aller à la page consultation",
+        hint: "Ouvrir le module (intra‑page)",
         icon: <Stethoscope className="h-4 w-4" />,
-        run: () => navigate("/dashboard/doctor/consultation/new"),
+        run: () =>
+          toast({
+            title: "Nouvelle consultation",
+            description: "Workflow intra‑page (UI). À brancher sur le module consultation plus tard.",
+          }),
       },
+
+      // Créer (workflows)
       {
         id: "rx",
-        label: "Créer / reprendre une ordonnance",
+        group: "Créer",
+        label: "Créer une ordonnance",
         hint: "Composer → signer → envoyer",
         icon: <Pill className="h-4 w-4" />,
         run: openRx,
       },
       {
         id: "labs",
-        label: "Créer / reprendre une demande d’analyses",
-        hint: "Valider → envoyer labo/patient",
+        group: "Créer",
+        label: "Créer une demande d’analyses",
+        hint: "Sélection → valider → envoyer",
         icon: <Droplets className="h-4 w-4" />,
         run: openLabs,
       },
       {
         id: "docs",
-        label: "Générer un document (CR / Certif / Lettre / Arrêt)",
-        hint: "Rédiger → signer → envoyer",
+        group: "Créer",
+        label: "Générer un document",
+        hint: "CR / Certif / Lettre / Arrêt",
         icon: <FileText className="h-4 w-4" />,
-        run: openDoc,
+        run: () => openDoc(),
       },
 
       // Dossier
       {
-        id: "tab-h",
-        label: "Aller à Historique",
-        hint: "Timeline",
-        icon: <History className="h-4 w-4" />,
-        run: () => setTab("historique"),
+        id: "latest",
+        group: "Dossier",
+        label: "Ouvrir le dernier élément",
+        hint: "Slide détail + Modifier",
+        icon: <ChevronRight className="h-4 w-4" />,
+        run: () => {
+          const last = mockTimeline?.[0];
+          if (!last) return;
+          setDetailEvent(last);
+          setDetailEdit(false);
+          setDrawer("detail");
+        },
       },
       {
-        id: "tab-a",
-        label: "Aller à Antécédents",
-        hint: "Saisir + historique",
-        icon: <History className="h-4 w-4" />,
-        run: () => setTab("antecedents"),
-      },
-      {
-        id: "tab-t",
-        label: "Aller à Traitements",
-        hint: "Traitement actif",
-        icon: <Pill className="h-4 w-4" />,
-        run: () => setTab("traitement"),
-      },
-      {
-        id: "tab-v",
-        label: "Aller à Constantes",
-        hint: "Mesures + historique",
-        icon: <Droplets className="h-4 w-4" />,
-        run: () => setTab("constantes"),
+        id: "quick-notes",
+        group: "Dossier",
+        label: "Ajouter une note rapide",
+        hint: "Card Notes (droite)",
+        icon: <ClipboardList className="h-4 w-4" />,
+        run: scrollToQuickNotes,
       },
       {
         id: "tab-n",
+        group: "Dossier",
         label: "Aller à Notes cliniques",
         hint: "Notes + versions",
         icon: <ClipboardList className="h-4 w-4" />,
@@ -601,15 +937,33 @@ export default function DoctorPatientDetail() {
       },
       {
         id: "tab-pn",
+        group: "Dossier",
         label: "Aller à Notes privées",
         hint: "Interne uniquement",
         icon: <ClipboardList className="h-4 w-4" />,
         run: () => setTab("notes_prive"),
       },
       {
+        id: "tab-a",
+        group: "Dossier",
+        label: "Aller à Antécédents",
+        hint: "Saisir + historique",
+        icon: <History className="h-4 w-4" />,
+        run: () => setTab("antecedents"),
+      },
+      {
+        id: "tab-v",
+        group: "Dossier",
+        label: "Aller à Constantes",
+        hint: "Mesures + historique",
+        icon: <Droplets className="h-4 w-4" />,
+        run: () => setTab("constantes"),
+      },
+      {
         id: "tab-d",
+        group: "Dossier",
         label: "Aller à Documents",
-        hint: "Importer / Photos",
+        hint: "Importer / photos",
         icon: <FileText className="h-4 w-4" />,
         run: () => setTab("documents"),
       },
@@ -617,60 +971,75 @@ export default function DoctorPatientDetail() {
       // Communication
       {
         id: "msg",
+        group: "Communication",
         label: "Envoyer un message au patient",
         hint: "Messagerie",
         icon: <MessageSquare className="h-4 w-4" />,
-        run: () => window.alert("Message patient — mock"),
+        run: () => toast({ title: "Message", description: "À brancher : ouvrir la messagerie avec ce patient." }),
       },
       {
         id: "call",
+        group: "Communication",
         label: "Appeler le patient",
         hint: patient?.phone ? patient.phone : "Téléphone",
         icon: <Phone className="h-4 w-4" />,
-        run: () => window.alert(`Appel — ${patient?.phone || "—"}`),
-      },
-
-      // Organisation / administratif (mock)
-      {
-        id: "plan",
-        label: "Planifier un RDV",
-        hint: "Créer un rendez-vous",
-        icon: <Calendar className="h-4 w-4" />,
-        run: () => window.alert("Planifier RDV — mock"),
-      },
-      {
-        id: "task",
-        label: "Ajouter une tâche",
-        hint: "Organisation",
-        icon: <ClipboardList className="h-4 w-4" />,
-        run: () => window.alert("Ajouter tâche — mock"),
-      },
-      {
-        id: "request-doc",
-        label: "Demander un document au patient",
-        hint: "Ex: ancien bilan, radio…",
-        icon: <Send className="h-4 w-4" />,
-        run: () => window.alert("Demander document — mock"),
+        run: () =>
+          toast({ title: "Appel", description: `À brancher : lancer un appel vers ${patient?.phone || "—"}.` }),
       },
 
       // Utilitaires
       {
+        id: "plan",
+        group: "Utilitaires",
+        label: "Planifier un RDV",
+        hint: "Créer un rendez-vous",
+        icon: <Calendar className="h-4 w-4" />,
+        run: () => toast({ title: "Rendez‑vous", description: "À brancher : créer un RDV depuis le dossier patient." }),
+      },
+      {
         id: "print",
+        group: "Utilitaires",
         label: "Imprimer le dossier",
         hint: "Aperçu / impression",
         icon: <Printer className="h-4 w-4" />,
-        run: () => window.alert("Imprimer dossier — mock"),
+        run: () => toast({ title: "Impression", description: "À brancher : impression / export PDF du dossier." }),
       },
     ];
 
     const qq = actionsQ.trim().toLowerCase();
     const filtered = items.filter((a) => (!qq ? true : `${a.label} ${a.hint || ""}`.toLowerCase().includes(qq)));
-    // On limite volontairement pour garder une fenêtre compacte (comme ConsultationDetail).
-    return filtered.slice(0, 10);
-  }, [actionsQ, navigate, patient]);
+
+    // Fenêtre compacte : limite volontaire
+    return filtered.slice(0, 14);
+  }, [actionsQ, navigate, openDoc, openLabs, openRx, patient?.phone, scrollToQuickNotes, setTab, mockTimeline]);
 
   /* ---------- Helpers ---------- */
-  const printDossier = () => window.alert("Imprimer dossier — mock");
+  const printDossier = () =>
+    toast({ title: "Impression", description: "À brancher : impression / export PDF du dossier." });
+
+  const makeCode = (prefix: string) => `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+  const nowAt = () => new Date().toLocaleString();
+  const dateLabel = () => new Date().toLocaleDateString();
+
+  const buildRxItemsLabel = (items: RxDraftItem[]) =>
+    items
+      .filter((it) => (it.medication || "").trim().length > 0)
+      .map((it) => {
+        const med = (it.medication || "").trim();
+        const meta = [it.dosage, it.duration]
+          .map((x) => (x || "").trim())
+          .filter(Boolean)
+          .join(" · ");
+        const instr = (it.instructions || "").trim();
+        return `${med}${meta ? ` — ${meta}` : ""}${instr ? ` (${instr})` : ""}`;
+      });
+
+  const selectedLabLabels = () => {
+    const arr = labPanels.filter((p) => Boolean(labsSelected[p.key])).map((p) => p.label);
+    const custom = (labsCustom || "").trim();
+    if (custom) arr.push(custom);
+    return arr;
+  };
 
   /**
    * Previews (UI only)
@@ -774,20 +1143,31 @@ export default function DoctorPatientDetail() {
               Actions
             </Button>
 
-            <Button variant="outline" onClick={() => window.alert("Message — mock")}>
-              <MessageSquare className="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => toast({ title: "Message", description: "À brancher : ouvrir la conversation patient." })}
+            >
+              <MessageSquare className="mr-1 h-3.5 w-3.5" />
               Message
             </Button>
 
-            <Button variant="outline" onClick={printDossier}>
-              <Printer className="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm" className="text-xs" onClick={printDossier}>
+              <Printer className="mr-1 h-3.5 w-3.5" />
               Imprimer
             </Button>
 
             {/* Créer placé juste avant Nouvelle consultation */}
             <div ref={createWrapRef} className="relative">
-              <Button variant="outline" onClick={() => setCreateOpen((v) => !v)} aria-label="Créer">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setCreateOpen((v) => !v)}
+                aria-label="Créer"
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" />
                 Créer
               </Button>
 
@@ -896,7 +1276,10 @@ export default function DoctorPatientDetail() {
                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-muted"
                     onClick={() => {
                       setCreateOpen(false);
-                      window.alert("Demander un document (patient) — mock");
+                      toast({
+                        title: "Demander un document",
+                        description: "À brancher : demande de document au patient.",
+                      });
                     }}
                   >
                     <Send className="h-4 w-4 text-muted-foreground" />
@@ -905,13 +1288,19 @@ export default function DoctorPatientDetail() {
                 </div>
               ) : null}
             </div>
-
-            <Link to="/dashboard/doctor/consultation/new">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                <Stethoscope className="mr-2 h-4 w-4" />
-                Nouvelle consultation
-              </Button>
-            </Link>
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+              onClick={() =>
+                toast({
+                  title: "Nouvelle consultation",
+                  description: "Workflow intra‑page (UI). À brancher sur le module consultation plus tard.",
+                })
+              }
+            >
+              <Stethoscope className="mr-1 h-3.5 w-3.5" />
+              Nouvelle consultation
+            </Button>
           </div>
         </div>
 
@@ -1007,10 +1396,9 @@ export default function DoctorPatientDetail() {
                       type="button"
                       className="flex w-full items-start justify-between gap-3 rounded-xl border bg-background px-3 py-2 text-left hover:bg-muted"
                       onClick={() => {
-                        if (e.open?.kind === "rx") openRx();
-                        else if (e.open?.kind === "lab") openLabs();
-                        else if (e.open?.kind === "consult") window.alert("Ouvrir consultation — mock");
-                        else openDoc();
+                        setDetailEvent(e);
+                        setDetailEdit(false);
+                        setDrawer("detail");
                       }}
                     >
                       <div className="min-w-0">
@@ -1396,7 +1784,6 @@ export default function DoctorPatientDetail() {
                 </div>
               </div>
             </Card>
-
             <Card
               title="Traitements / ordonnance active"
               right={
@@ -1415,93 +1802,278 @@ export default function DoctorPatientDetail() {
                 </div>
               </div>
             </Card>
+
+            <QuickNotesCard
+              cardRef={quickNotesRef}
+              savedAt={quickNotesSavedAt}
+              value={quickNotes}
+              setValue={setQuickNotes}
+              onOpenNotes={() => setTab("notes")}
+              onAppendToClinical={(note) => {
+                const merged = notes
+                  ? `${notes}
+
+[Note rapide] ${note}`
+                  : `[Note rapide] ${note}`;
+                setNotes(merged);
+                const ts = Date.now();
+                const at = new Date().toLocaleString();
+                setNotesHistory((p) => [{ id: `n-${ts}`, at, ts, text: merged }, ...p]);
+              }}
+            />
           </div>
         </div>
 
         {/* ===================== Actions (palette) ===================== */}
-        {actionsOpen && (
-          <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm" onClick={() => setActionsOpen(false)}>
-            <div
-              className="max-w-lg w-[92%] mx-auto mt-24 rounded-2xl border bg-card shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-3 border-b flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  ref={actionsInputRef}
-                  value={actionsQ}
-                  onChange={(e) => {
-                    setActionsQ(e.target.value);
-                    setActionsIndex(0);
-                  }}
-                  placeholder="Rechercher une action… (ex: ordonnance, analyses, doc, notes)"
-                  className="h-9"
-                  onKeyDown={(e) => {
-                    // Navigation clavier (même logique que ConsultationDetail)
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault();
-                      setActionsIndex((i) => Math.min(i + 1, Math.max(0, actions.length - 1)));
-                    }
-                    if (e.key === "ArrowUp") {
-                      e.preventDefault();
-                      setActionsIndex((i) => Math.max(i - 1, 0));
-                    }
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const a = actions[actionsIndex];
-                      if (!a) return;
-                      setActionsOpen(false);
-                      a.run();
-                    }
-                    if (e.key === "Escape") {
-                      e.preventDefault();
-                      setActionsOpen(false);
-                    }
-                  }}
-                />
-                <span className="text-[11px] text-muted-foreground px-2 py-1 rounded-full bg-muted">Ctrl+K</span>
-              </div>
+        <ActionsPaletteOverlay
+          open={actionsOpen}
+          onClose={() => setActionsOpen(false)}
+          query={actionsQ}
+          setQuery={setActionsQ}
+          actions={actions as any}
+          index={actionsIndex}
+          setIndex={setActionsIndex}
+          inputRef={actionsInputRef}
+        />
 
-              <div className="p-2">
-                {actions.length === 0 ? (
-                  <div className="p-4 text-sm text-muted-foreground">Aucune action.</div>
-                ) : (
-                  <div className="space-y-1">
-                    {actions.map((a, i) => (
-                      <button
-                        key={a.id}
-                        type="button"
-                        className={
-                          i === actionsIndex
-                            ? "w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-muted"
-                            : "w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl hover:bg-muted/60"
+        {/* Slide Détail (timeline) — ouvrir + modifier */}
+        <Drawer
+          open={drawer === "detail"}
+          title={detailEvent ? `Détail — ${detailEvent.title}` : "Détail"}
+          onClose={() => {
+            setDrawer(null);
+            setDetailEvent(null);
+            setDetailEdit(false);
+          }}
+          footer={
+            <div className="flex items-center justify-end gap-2 flex-wrap">
+              {/* Actions contextualisées */}
+              {detailEvent?.type === "consult" ? (
+                detailEdit ? (
+                  <>
+                    <Button variant="outline" onClick={() => setDetailEdit(false)}>
+                      Annuler
+                    </Button>
+                    <Button
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() => {
+                        const payload = detailEvent?.payload;
+                        const id = payload?._id;
+                        if (!id) {
+                          setDetailEdit(false);
+                          return;
                         }
-                        onMouseEnter={() => setActionsIndex(i)}
-                        onClick={() => {
-                          setActionsOpen(false);
-                          a.run();
-                        }}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-muted-foreground">{a.icon}</span>
-                          <span className="text-sm font-medium text-foreground truncate">{a.label}</span>
-                        </div>
-                        {a.hint ? <span className="text-xs text-muted-foreground">{a.hint}</span> : null}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                        setConsultRecords((prev) => prev.map((c) => (c._id === id ? { ...c, notes: detailDraft } : c)));
+                        setDetailEdit(false);
+                      }}
+                    >
+                      Enregistrer
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" onClick={() => setDetailEdit(true)}>
+                    <Pencil className="mr-2 h-4 w-4" /> Modifier
+                  </Button>
+                )
+              ) : null}
+
+              {detailEvent?.type === "rx" ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const p = detailEvent?.payload;
+                    if (!p) return;
+
+                    const raw = Array.isArray(p.rawItems)
+                      ? p.rawItems
+                      : Array.isArray(p.items)
+                        ? p.items.map((name: string) => ({
+                            medication: name,
+                            dosage: "",
+                            duration: "",
+                            instructions: "",
+                          }))
+                        : [{ medication: "", dosage: "", duration: "", instructions: "" }];
+
+                    setRxItems(raw.length ? raw : [{ medication: "", dosage: "", duration: "", instructions: "" }]);
+                    setRxNote(p.note || "");
+                    setRxSigned(false);
+                    setRxSendToPatient(true);
+                    setRxSendToPharmacy(false);
+                    setRxStep(1);
+                    setDrawer("rx");
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" /> Modifier
+                </Button>
+              ) : null}
+
+              {detailEvent?.type === "lab" ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const a = detailEvent?.payload;
+                    if (!a) return;
+
+                    const init: Record<string, boolean> = {};
+                    labPanels.forEach((p) => (init[p.key] = false));
+                    const type = String(a.type || "").toLowerCase();
+                    labPanels.forEach((p) => {
+                      if (type.includes(p.label.toLowerCase())) init[p.key] = true;
+                    });
+                    (a.values || []).forEach((v: any) => {
+                      const name = String(v?.name || "").toLowerCase();
+                      labPanels.forEach((p) => {
+                        if (name.includes(p.label.toLowerCase())) init[p.key] = true;
+                      });
+                    });
+
+                    setLabsSelected(init);
+                    setLabsCustom(a.custom || "");
+                    setLabsNote(a.note || "");
+                    setLabsSendToPatient(true);
+                    setLabsSendToLab(true);
+                    setLabsValidated(false);
+                    setLabsStep(1);
+                    setDrawer("lab");
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" /> Modifier
+                </Button>
+              ) : null}
+
+              {detailEvent?.type === "doc" ? (
+                <>
+                  {(detailEvent?.payload?.url || "").length ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(detailEvent?.payload?.url, "_blank", "noopener,noreferrer")}
+                    >
+                      Ouvrir
+                    </Button>
+                  ) : null}
+
+                  {detailEvent?.payload?.meta?.template ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const f = detailEvent?.payload;
+                        if (!f) return;
+                        setDocTemplate(f.meta.template);
+                        setDocBody(String(f.meta.body || ""));
+                        setDocSigned(false);
+                        setDocSendToPatient(true);
+                        setDocStep(1);
+                        setDrawer("doc");
+                      }}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" /> Modifier
+                    </Button>
+                  ) : null}
+                </>
+              ) : null}
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDrawer(null);
+                  setDetailEvent(null);
+                  setDetailEdit(false);
+                }}
+              >
+                Fermer
+              </Button>
+            </div>
+          }
+        >
+          {!detailEvent ? (
+            <div className="text-sm text-muted-foreground">Aucun élément sélectionné.</div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs text-muted-foreground">{detailEvent.at}</div>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  {detailEvent.type === "consult"
+                    ? "Consultation"
+                    : detailEvent.type === "rx"
+                      ? "Ordonnance"
+                      : detailEvent.type === "lab"
+                        ? "Analyses"
+                        : "Document"}
+                </span>
               </div>
 
-              <div className="p-3 border-t flex items-center justify-between text-xs text-muted-foreground">
-                <span>↑ ↓ pour naviguer · Entrée pour lancer · Esc pour fermer</span>
-                <Button variant="ghost" size="sm" className="h-8" onClick={() => setActionsOpen(false)}>
-                  Fermer
-                </Button>
-              </div>
+              {detailEvent.type === "consult" ? (
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold text-foreground">Notes</div>
+                  {!detailEdit ? (
+                    <div className="rounded-xl border bg-background p-3 text-sm text-foreground whitespace-pre-wrap">
+                      {String(detailEvent.payload?.notes || detailEvent.desc || "—")}
+                    </div>
+                  ) : (
+                    <textarea
+                      value={detailDraft}
+                      onChange={(e) => setDetailDraft(e.target.value)}
+                      rows={10}
+                      className="w-full resize-none rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring/25"
+                    />
+                  )}
+                </div>
+              ) : null}
+
+              {detailEvent.type === "rx" ? (
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold text-foreground">Médicaments</div>
+                  <div className="rounded-xl border bg-background p-3 text-sm text-foreground">
+                    {Array.isArray(detailEvent.payload?.items) && detailEvent.payload.items.length
+                      ? detailEvent.payload.items.join(" • ")
+                      : "—"}
+                  </div>
+                  {detailEvent.payload?.note ? (
+                    <div className="text-xs text-muted-foreground">Note : {detailEvent.payload.note}</div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {detailEvent.type === "lab" ? (
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold text-foreground">Analyses</div>
+                  <div className="rounded-xl border bg-background p-3 text-sm text-foreground">
+                    {Array.isArray(detailEvent.payload?.values) && detailEvent.payload.values.length ? (
+                      <ul className="space-y-1">
+                        {detailEvent.payload.values.slice(0, 12).map((v: any, i: number) => (
+                          <li key={i} className="text-sm">
+                            <span className="font-medium">{v.name}</span> : {v.value}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      "—"
+                    )}
+                  </div>
+                  {detailEvent.payload?.note ? (
+                    <div className="text-xs text-muted-foreground">Note : {detailEvent.payload.note}</div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {detailEvent.type === "doc" ? (
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold text-foreground">Fichier</div>
+                  <div className="rounded-xl border bg-background p-3 text-sm text-foreground">
+                    <div className="font-medium">{String(detailEvent.payload?.name || detailEvent.desc || "—")}</div>
+                    <div className="text-xs text-muted-foreground">{String(detailEvent.payload?.mime || "")}</div>
+                  </div>
+                  {detailEvent.payload?.meta?.template ? (
+                    <div className="text-xs text-muted-foreground">Document généré (modifiable)</div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">Document importé</div>
+                  )}
+                </div>
+              ) : null}
             </div>
-          </div>
-        )}
+          )}
+        </Drawer>
 
         {/* Drawers (mock workflow, stable) */}
         <Drawer
@@ -1510,10 +2082,34 @@ export default function DoctorPatientDetail() {
           onClose={() => setDrawer(null)}
           footer={
             <div className="flex items-center justify-end gap-2 flex-wrap">
-              <Button variant="outline" onClick={() => window.alert(rxPreview)}>
-                <Printer className="mr-2 h-4 w-4" />
-                Aperçu
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => window.alert(rxPreview)}>
+                  <Printer className="mr-1 h-3.5 w-3.5" />
+                  Aperçu
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    try {
+                      navigator.clipboard.writeText(rxPreview);
+                      toast({
+                        title: "Ordonnance copié",
+                        description: "Le contenu a été copié dans le presse‑papiers.",
+                      });
+                    } catch {
+                      toast({
+                        title: "Copie impossible",
+                        description: "Votre navigateur a bloqué l’accès au presse‑papiers.",
+                      });
+                    }
+                  }}
+                >
+                  <Copy className="mr-1 h-3.5 w-3.5" />
+                  Copier
+                </Button>
+              </div>
 
               {rxStep === 1 ? (
                 <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setRxStep(2)}>
@@ -1544,25 +2140,71 @@ export default function DoctorPatientDetail() {
 
               {rxStep === 3 ? (
                 <>
-                  <Button variant="outline" onClick={() => setRxStep(2)}>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setRxStep(2)}>
                     Retour
                   </Button>
-                  <Button
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={!rxSigned || (!rxSendToPatient && !rxSendToPharmacy)}
-                    onClick={() => {
-                      // TODO backend : générer PDF + créer enregistrement ordonnance + routage patient/pharmacie
-                      window.alert(
-                        `Ordonnance envoyée (mock)\n- Patient: ${rxSendToPatient ? "oui" : "non"}\n- Pharmacie: ${
-                          rxSendToPharmacy ? "oui" : "non"
-                        }`,
-                      );
-                      setDrawer(null);
-                    }}
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    Envoyer
-                  </Button>
+
+                  {rxSendStatus && !rxEditingAfterSend ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setRxEditingAfterSend(true);
+                        setRxSigned(false);
+                        setRxStep(1);
+                      }}
+                    >
+                      <Pencil className="mr-1 h-3.5 w-3.5" />
+                      Modifier
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+                      disabled={!rxSigned || (!rxSendToPatient && !rxSendToPharmacy)}
+                      onClick={() => {
+                        const labels = buildRxItemsLabel(rxItems);
+                        if (!labels.length) {
+                          toast({ title: "Ordonnance", description: "Ajoutez au moins un médicament avant l’envoi." });
+                          return;
+                        }
+                        const at = nowAt();
+                        const base = rxSendStatus?.code || makeCode("ORD");
+                        const nextVersion = rxSendStatus
+                          ? rxEditingAfterSend
+                            ? rxSendStatus.version + 1
+                            : rxSendStatus.version
+                          : 1;
+
+                        setRxRecords((prev) =>
+                          prev.map((r) => (r.status === "active" ? { ...r, status: "inactive" } : r)),
+                        );
+                        setRxRecords((prev) => [
+                          {
+                            _id: `${base}::v${nextVersion}`,
+                            id: base,
+                            date: dateLabel(),
+                            status: "active",
+                            items: labels,
+                            rawItems: rxItems,
+                            note: rxNote,
+                            sentAt: at,
+                            to: { patient: rxSendToPatient, pharmacy: rxSendToPharmacy },
+                            version: nextVersion,
+                          },
+                          ...prev,
+                        ]);
+
+                        setRxSendStatus({ code: base, version: nextVersion, sentAt: at });
+                        setRxEditingAfterSend(false);
+                        toast({ title: "Ordonnance envoyée", description: `${base} · v${nextVersion} (mock)` });
+                      }}
+                    >
+                      <Send className="mr-1 h-3.5 w-3.5" />
+                      Envoyer
+                    </Button>
+                  )}
                 </>
               ) : null}
 
@@ -1767,6 +2409,23 @@ export default function DoctorPatientDetail() {
 
             {rxStep === 3 ? (
               <div className="space-y-4">
+                {rxSendStatus && !rxEditingAfterSend ? (
+                  <div className="rounded-xl border bg-primary/5 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Ordonnance envoyée — {rxSendStatus.code} · v{rxSendStatus.version}
+                      </div>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {rxSendStatus.sentAt}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Cliquez sur <span className="font-medium">Modifier</span> pour préparer une nouvelle version.
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="text-sm text-muted-foreground">Choisissez les destinataires (patient / pharmacie).</div>
 
                 <div className="rounded-2xl border bg-card p-3 space-y-3">
@@ -1807,10 +2466,31 @@ export default function DoctorPatientDetail() {
           onClose={() => setDrawer(null)}
           footer={
             <div className="flex items-center justify-end gap-2 flex-wrap">
-              <Button variant="outline" onClick={() => window.alert(labsPreview)}>
-                <Printer className="mr-2 h-4 w-4" />
-                Aperçu
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => window.alert(labsPreview)}>
+                  <Printer className="mr-1 h-3.5 w-3.5" />
+                  Aperçu
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    try {
+                      navigator.clipboard.writeText(labsPreview);
+                      toast({ title: "Analyses copié", description: "Le contenu a été copié dans le presse‑papiers." });
+                    } catch {
+                      toast({
+                        title: "Copie impossible",
+                        description: "Votre navigateur a bloqué l’accès au presse‑papiers.",
+                      });
+                    }
+                  }}
+                >
+                  <Copy className="mr-1 h-3.5 w-3.5" />
+                  Copier
+                </Button>
+              </div>
 
               {labsStep === 1 ? (
                 <Button
@@ -1843,25 +2523,72 @@ export default function DoctorPatientDetail() {
 
               {labsStep === 3 ? (
                 <>
-                  <Button variant="outline" onClick={() => setLabsStep(2)}>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setLabsStep(2)}>
                     Retour
                   </Button>
-                  <Button
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={!labsValidated || (!labsSendToPatient && !labsSendToLab)}
-                    onClick={() => {
-                      // TODO backend : créer demande + routage patient/labo + statut "en attente"
-                      window.alert(
-                        `Demande d’analyses envoyée (mock)\n- Patient: ${labsSendToPatient ? "oui" : "non"}\n- Laboratoire: ${
-                          labsSendToLab ? "oui" : "non"
-                        }`,
-                      );
-                      setDrawer(null);
-                    }}
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    Envoyer
-                  </Button>
+
+                  {labsSendStatus && !labsEditingAfterSend ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setLabsEditingAfterSend(true);
+                        setLabsValidated(false);
+                        setLabsStep(1);
+                      }}
+                    >
+                      <Pencil className="mr-1 h-3.5 w-3.5" />
+                      Modifier
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+                      disabled={!labsValidated || (!labsSendToPatient && !labsSendToLab)}
+                      onClick={() => {
+                        const labels = selectedLabLabels();
+                        if (!labels.length) {
+                          toast({ title: "Analyses", description: "Sélectionnez au moins une analyse avant l’envoi." });
+                          return;
+                        }
+                        const at = nowAt();
+                        const base = labsSendStatus?.code || makeCode("LAB");
+                        const nextVersion = labsSendStatus
+                          ? labsEditingAfterSend
+                            ? labsSendStatus.version + 1
+                            : labsSendStatus.version
+                          : 1;
+
+                        const values = labels.map((name) => ({ name, value: "—" }));
+                        const type =
+                          labels.slice(0, 3).join(", ") + (labels.length > 3 ? ` +${labels.length - 3}` : "");
+
+                        setLabRecords((prev) => [
+                          {
+                            _id: `${base}::v${nextVersion}`,
+                            id: base,
+                            date: dateLabel(),
+                            type: type || "Demande d’analyses",
+                            values,
+                            note: labsNote,
+                            custom: (labsCustom || "").trim(),
+                            sentAt: at,
+                            to: { patient: labsSendToPatient, lab: labsSendToLab },
+                            version: nextVersion,
+                          },
+                          ...prev,
+                        ]);
+
+                        setLabsSendStatus({ code: base, version: nextVersion, sentAt: at });
+                        setLabsEditingAfterSend(false);
+                        toast({ title: "Demande d’analyses envoyée", description: `${base} · v${nextVersion} (mock)` });
+                      }}
+                    >
+                      <Send className="mr-1 h-3.5 w-3.5" />
+                      Envoyer
+                    </Button>
+                  )}
                 </>
               ) : null}
 
@@ -2001,6 +2728,23 @@ export default function DoctorPatientDetail() {
 
             {labsStep === 3 ? (
               <div className="space-y-4">
+                {labsSendStatus && !labsEditingAfterSend ? (
+                  <div className="rounded-xl border bg-primary/5 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Demande envoyée — {labsSendStatus.code} · v{labsSendStatus.version}
+                      </div>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {labsSendStatus.sentAt}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Cliquez sur <span className="font-medium">Modifier</span> pour préparer une nouvelle version.
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="text-sm text-muted-foreground">
                   Choisissez les destinataires (patient / laboratoire).
                 </div>
@@ -2043,10 +2787,31 @@ export default function DoctorPatientDetail() {
           onClose={() => setDrawer(null)}
           footer={
             <div className="flex items-center justify-end gap-2 flex-wrap">
-              <Button variant="outline" onClick={() => window.alert(docPreview)}>
-                <Printer className="mr-2 h-4 w-4" />
-                Aperçu
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => window.alert(docPreview)}>
+                  <Printer className="mr-1 h-3.5 w-3.5" />
+                  Aperçu
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    try {
+                      navigator.clipboard.writeText(docPreview);
+                      toast({ title: "Document copié", description: "Le contenu a été copié dans le presse‑papiers." });
+                    } catch {
+                      toast({
+                        title: "Copie impossible",
+                        description: "Votre navigateur a bloqué l’accès au presse‑papiers.",
+                      });
+                    }
+                  }}
+                >
+                  <Copy className="mr-1 h-3.5 w-3.5" />
+                  Copier
+                </Button>
+              </div>
 
               {docStep === 1 ? (
                 <Button
@@ -2079,21 +2844,70 @@ export default function DoctorPatientDetail() {
 
               {docStep === 3 ? (
                 <>
-                  <Button variant="outline" onClick={() => setDocStep(2)}>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setDocStep(2)}>
                     Retour
                   </Button>
-                  <Button
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={!docSigned || !docSendToPatient}
-                    onClick={() => {
-                      // TODO backend : générer PDF + stocker + envoyer au patient / attacher à la consultation
-                      window.alert("Document envoyé au patient (mock).");
-                      setDrawer(null);
-                    }}
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    Envoyer
-                  </Button>
+
+                  {docSendStatus && !docEditingAfterSend ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setDocEditingAfterSend(true);
+                        setDocSigned(false);
+                        setDocStep(1);
+                      }}
+                    >
+                      <Pencil className="mr-1 h-3.5 w-3.5" />
+                      Modifier
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+                      disabled={!docSigned || !docSendToPatient}
+                      onClick={() => {
+                        const at = nowAt();
+                        const nextVersion = docSendStatus
+                          ? docEditingAfterSend
+                            ? docSendStatus.version + 1
+                            : docSendStatus.version
+                          : 1;
+
+                        const now = Date.now();
+                        const ts = now;
+
+                        const blob = new Blob([docPreview], { type: "text/plain" });
+                        const url = URL.createObjectURL(blob);
+                        const suffix = nextVersion > 1 ? ` (v${nextVersion})` : "";
+                        const safeName = `${docTitle}${suffix} — ${patient?.name || "Patient"} (${new Date().toLocaleDateString()}).txt`;
+                        const id = `pf-${now}-${Math.random().toString(16).slice(2)}`;
+
+                        setFiles((prev) => [
+                          {
+                            id,
+                            at,
+                            ts,
+                            kind: "document",
+                            name: safeName,
+                            mime: "text/plain",
+                            size: blob.size,
+                            url,
+                            meta: { template: docTemplate, body: docBody, title: docTitle, version: nextVersion },
+                          },
+                          ...prev,
+                        ]);
+
+                        setDocSendStatus({ fileId: id, version: nextVersion, sentAt: at });
+                        setDocEditingAfterSend(false);
+                        toast({ title: "Document envoyé", description: `${docTitle} · v${nextVersion} (mock)` });
+                      }}
+                    >
+                      <Send className="mr-1 h-3.5 w-3.5" />
+                      Envoyer
+                    </Button>
+                  )}
                 </>
               ) : null}
 
@@ -2234,6 +3048,23 @@ export default function DoctorPatientDetail() {
 
             {docStep === 3 ? (
               <div className="space-y-4">
+                {docSendStatus && !docEditingAfterSend ? (
+                  <div className="rounded-xl border bg-primary/5 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Document envoyé · v{docSendStatus.version}
+                      </div>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {docSendStatus.sentAt}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Cliquez sur <span className="font-medium">Modifier</span> pour générer une nouvelle version.
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="text-sm text-muted-foreground">Choisissez les destinataires.</div>
 
                 <div className="rounded-2xl border bg-card p-3 space-y-3">
