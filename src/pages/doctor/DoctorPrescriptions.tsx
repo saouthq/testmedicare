@@ -484,7 +484,7 @@ const DoctorPrescriptions = () => {
               sent: true,
               pharmacy: sendToPharmacy ? pharmacyName.trim() || p.pharmacy || "Pharmacie (à choisir)" : null,
               meta: {
-                ...(p.meta || { baseId, version: 1 }),
+                ...(p.meta || { baseId: p.id, version: 1 }),
                 sentAt: nowAt(),
                 to: {
                   patient: sendToPatient,
