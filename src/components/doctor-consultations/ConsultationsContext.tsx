@@ -103,7 +103,7 @@ interface ConsultationsCtx {
 }
 
 const Ctx = createContext<ConsultationsCtx | null>(null);
-export const useConsultations = () => {
+export const useConsultations = (): ConsultationsCtx => {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useConsultations must be used within ConsultationsProvider");
   return ctx;
