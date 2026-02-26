@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 import {
   AlertTriangle,
@@ -122,7 +123,7 @@ type DocTemplate = "report" | "certificate" | "referral" | "sickleave";
 
 function Card({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
   return (
-    <div className="rounded-2xl border bg-card shadow-card">
+    <div className="rounded-xl border bg-card shadow-card">
       <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
         <div className="text-sm font-semibold text-foreground">{title}</div>
         {right}
@@ -142,14 +143,14 @@ function TabsBar({
   options: Array<{ value: MainTab; label: string }>;
 }) {
   return (
-    <div className="inline-flex rounded-2xl border bg-card p-1 shadow-sm">
+    <div className="inline-flex rounded-lg border bg-card p-1 shadow-sm">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
           className={cx(
-            "rounded-xl px-3 py-2 text-sm font-medium transition",
+            "rounded-md px-3 py-2 text-sm font-medium transition",
             value === o.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
           )}
         >
@@ -174,29 +175,17 @@ function Drawer({
   footer?: ReactNode;
 }) {
   return (
-    <div className={cx("fixed inset-0 z-50", open ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!open}>
-      <div
-        className={cx("absolute inset-0 bg-black/30 transition-opacity", open ? "opacity-100" : "opacity-0")}
-        onClick={onClose}
-      />
-      <div
-        className={cx(
-          "absolute right-0 top-0 h-full w-full max-w-xl bg-card shadow-2xl transition-transform",
-          open ? "translate-x-0" : "translate-x-full",
-        )}
-      >
+    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <SheetContent side="right" className="w-full sm:max-w-xl p-0">
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <div className="text-sm font-semibold text-foreground">{title}</div>
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fermer">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <SheetHeader className="px-4 py-3 border-b space-y-0">
+            <SheetTitle className="text-sm font-semibold">{title}</SheetTitle>
+          </SheetHeader>
           <div className="flex-1 overflow-auto p-4">{children}</div>
           {footer ? <div className="border-t bg-card px-4 py-3">{footer}</div> : null}
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -240,7 +229,7 @@ function ActionsPaletteOverlay({
   return (
     <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="max-w-lg w-[92%] mx-auto mt-24 rounded-2xl border bg-card shadow-2xl"
+        className="max-w-lg w-[92%] mx-auto mt-24 rounded-xl border bg-card shadow-elevated"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-3 border-b flex items-center gap-2">
@@ -1106,7 +1095,7 @@ export default function DoctorPatientDetail() {
         {/* Header */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Retour">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard/doctor/patients")} aria-label="Retour">
               <ArrowLeft className="h-4 w-4" />
             </Button>
 
@@ -1172,7 +1161,7 @@ export default function DoctorPatientDetail() {
               </Button>
 
               {createOpen ? (
-                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-80 rounded-2xl border bg-card p-2 shadow-lg">
+                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-80 rounded-xl border bg-card p-2 shadow-lg">
                   <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Créer</div>
 
                   <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Soins</div>
@@ -1290,7 +1279,7 @@ export default function DoctorPatientDetail() {
             </div>
             <Button
               size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+              className="gradient-primary text-primary-foreground shadow-primary-glow text-xs"
               onClick={() =>
                 toast({
                   title: "Nouvelle consultation",
@@ -2271,7 +2260,7 @@ export default function DoctorPatientDetail() {
                 {/* Médicaments */}
                 <div className="space-y-3">
                   {rxItems.map((it, idx) => (
-                    <div key={idx} className="rounded-2xl border bg-card p-3">
+                    <div key={idx} className="rounded-xl border bg-card p-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm font-semibold text-foreground">Médicament {idx + 1}</div>
                         <Button
@@ -2370,7 +2359,7 @@ export default function DoctorPatientDetail() {
                 </div>
 
                 {/* Preview inline */}
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{rxPreview}</pre>
                 </div>
@@ -2383,12 +2372,12 @@ export default function DoctorPatientDetail() {
                   Vérifiez puis signez/validez. (UI) — le backend branchera la signature électronique plus tard.
                 </div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{rxPreview}</pre>
                 </div>
 
-                <div className="rounded-2xl border bg-card p-3">
+                <div className="rounded-xl border bg-card p-3">
                   <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
@@ -2428,7 +2417,7 @@ export default function DoctorPatientDetail() {
 
                 <div className="text-sm text-muted-foreground">Choisissez les destinataires (patient / pharmacie).</div>
 
-                <div className="rounded-2xl border bg-card p-3 space-y-3">
+                <div className="rounded-xl border bg-card p-3 space-y-3">
                   <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="checkbox"
@@ -2451,7 +2440,7 @@ export default function DoctorPatientDetail() {
                   ) : null}
                 </div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{rxPreview}</pre>
                 </div>
@@ -2655,7 +2644,7 @@ export default function DoctorPatientDetail() {
                   {labPanels.map((p) => (
                     <label
                       key={p.key}
-                      className="col-span-12 md:col-span-6 rounded-2xl border bg-card p-3 flex items-start gap-3"
+                      className="col-span-12 md:col-span-6 rounded-xl border bg-card p-3 flex items-start gap-3"
                     >
                       <input
                         type="checkbox"
@@ -2691,7 +2680,7 @@ export default function DoctorPatientDetail() {
                   />
                 </div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{labsPreview}</pre>
                 </div>
@@ -2702,12 +2691,12 @@ export default function DoctorPatientDetail() {
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">Vérifiez puis validez la demande.</div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{labsPreview}</pre>
                 </div>
 
-                <div className="rounded-2xl border bg-card p-3">
+                <div className="rounded-xl border bg-card p-3">
                   <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
@@ -2749,7 +2738,7 @@ export default function DoctorPatientDetail() {
                   Choisissez les destinataires (patient / laboratoire).
                 </div>
 
-                <div className="rounded-2xl border bg-card p-3 space-y-3">
+                <div className="rounded-xl border bg-card p-3 space-y-3">
                   <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="checkbox"
@@ -2772,7 +2761,7 @@ export default function DoctorPatientDetail() {
                   ) : null}
                 </div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{labsPreview}</pre>
                 </div>
@@ -3011,7 +3000,7 @@ export default function DoctorPatientDetail() {
                   />
                 </div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{docPreview}</pre>
                 </div>
@@ -3022,12 +3011,12 @@ export default function DoctorPatientDetail() {
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">Vérifiez puis signez/validez.</div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{docPreview}</pre>
                 </div>
 
-                <div className="rounded-2xl border bg-card p-3">
+                <div className="rounded-xl border bg-card p-3">
                   <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
@@ -3067,7 +3056,7 @@ export default function DoctorPatientDetail() {
 
                 <div className="text-sm text-muted-foreground">Choisissez les destinataires.</div>
 
-                <div className="rounded-2xl border bg-card p-3 space-y-3">
+                <div className="rounded-xl border bg-card p-3 space-y-3">
                   <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="checkbox"
@@ -3082,7 +3071,7 @@ export default function DoctorPatientDetail() {
                   ) : null}
                 </div>
 
-                <div className="rounded-2xl border bg-muted p-3">
+                <div className="rounded-xl border bg-muted p-3">
                   <div className="text-xs font-semibold text-muted-foreground mb-2">Aperçu</div>
                   <pre className="text-xs whitespace-pre-wrap text-foreground">{docPreview}</pre>
                 </div>
