@@ -722,8 +722,8 @@ export default function DoctorPatientDetail() {
   /* ---------- Vitals + versions ---------- */
   const lastVitals = useMemo(() => (mockVitalsHistory || [])[0], []);
   const [vitals, setVitals] = useState({
-    ta: lastVitals?.ta ?? "130/80",
-    fc: String(lastVitals?.fc ?? "72"),
+    ta: lastVitals ? `${lastVitals.systolic}/${lastVitals.diastolic}` : "130/80",
+    fc: String(lastVitals?.heartRate ?? "72"),
     weight: String(lastVitals?.weight ?? "75"),
     gly: String(lastVitals?.glycemia ?? "1.05 g/L"),
   });
@@ -732,7 +732,7 @@ export default function DoctorPatientDetail() {
       id: `vh-${i}`,
       at: v.date,
       ts: Date.parse(v.date) || Date.now() - i * 1000,
-      data: { ta: v.ta, fc: String(v.fc), weight: String(v.weight ?? ""), gly: String(v.glycemia ?? "") },
+      data: { ta: `${v.systolic ?? ""}/${v.diastolic ?? ""}`, fc: String(v.heartRate ?? ""), weight: String(v.weight ?? ""), gly: String(v.glycemia ?? "") },
     })),
   );
   const saveVitals = () => {
