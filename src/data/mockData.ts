@@ -1350,6 +1350,42 @@ export const mockConsultationTemplates: ConsultationTemplate[] = [
 ];
 
 
+// ─── Lab Panels (Patient Detail) ─────────────────────────────
+
+export interface LabPanel {
+  key: string;
+  label: string;
+  hint?: string;
+}
+
+export const mockLabPanels: LabPanel[] = [
+  { key: "nfs", label: "NFS", hint: "Bilan sanguin" },
+  { key: "gly", label: "Glycémie", hint: "à jeun" },
+  { key: "hba1c", label: "HbA1c", hint: "3 mois" },
+  { key: "lip", label: "Bilan lipidique", hint: "cholestérol" },
+  { key: "crp", label: "CRP", hint: "inflammation" },
+  { key: "tsh", label: "TSH", hint: "thyroïde" },
+  { key: "iono", label: "Ionogramme", hint: "Na/K/Cl" },
+  { key: "creat", label: "Créatinine", hint: "fonction rénale" },
+];
+
+// ─── Doc Template Helpers ────────────────────────────────────
+
+export const getDocTemplateText = (template: string, patientName: string): string => {
+  const date = new Date().toLocaleDateString();
+  switch (template) {
+    case "certificate":
+      return `Je soussigné(e), Dr. ________, certifie avoir examiné ${patientName} en date du ${date}.\n\nConclusion : ________.\n\nFait pour servir et valoir ce que de droit.`;
+    case "referral":
+      return `Cher/Chère confrère/consœur,\n\nJe vous adresse ${patientName} pour avis spécialisé concernant : ________.\n\nContexte / éléments cliniques :\n- ________\n\nJe vous remercie par avance.\n\nCordialement,\nDr. ________`;
+    case "sickleave":
+      return `Je soussigné(e), Dr. ________, certifie que l'état de santé de ${patientName} nécessite un arrêt de travail du __/__/____ au __/__/____.\n\nMotif (optionnel) : ________.\n\nFait à ________, le ${date}.`;
+    case "report":
+    default:
+      return `Compte-rendu de consultation — ${date}\n\nMotif : ________.\n\nExamen / Synthèse :\n- ________\n\nConclusion / Conduite à tenir :\n- ________`;
+  }
+};
+
 export const mockSecretaryCabinetMessages: Record<string, ChatMessage[]> = {
   "sc1": [
     { id: "1", sender: "them", text: "Le patient de 14h30 a appelé pour annuler.", time: "11:00", senderName: "Dr. Bouazizi" },
