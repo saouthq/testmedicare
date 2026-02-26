@@ -1334,7 +1334,7 @@ const DoctorPatients = () => {
             onClick={() => setActionsOpen(false)}
           >
             <div
-              className="bg-card rounded-2xl border shadow-elevated w-full max-w-xl mx-4 animate-scale-in overflow-hidden"
+              className="bg-card rounded-xl border shadow-elevated w-full max-w-xl mx-4 animate-scale-in overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -1447,7 +1447,7 @@ const DoctorPatients = () => {
             onClick={() => setNoteOpen(false)}
           >
             <div
-              className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-lg mx-4 animate-scale-in"
+              className="bg-card rounded-xl border shadow-elevated p-6 w-full max-w-lg mx-4 animate-scale-in"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-3">
@@ -1491,7 +1491,7 @@ const DoctorPatients = () => {
             onClick={() => setShowNewPatient(false)}
           >
             <div
-              className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-lg mx-4 animate-scale-in max-h-[90vh] overflow-y-auto"
+              className="bg-card rounded-xl border shadow-elevated p-6 w-full max-w-lg mx-4 animate-scale-in max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
