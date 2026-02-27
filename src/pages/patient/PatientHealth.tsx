@@ -9,15 +9,15 @@ import { toast } from "@/hooks/use-toast";
 
 type HealthSection = "menu" | "documents" | "antecedents" | "treatments" | "allergies" | "habits" | "family" | "surgeries" | "vaccinations" | "measures" | "ai";
 
-const menuItems: { key: HealthSection; label: string; icon: any; count?: number }[] = [
-  { key: "documents", label: "Documents", icon: FileText, count: 5 },
-  { key: "antecedents", label: "Antécédents médicaux", icon: Shield, count: 4 },
-  { key: "treatments", label: "Traitements réguliers", icon: Pill, count: 2 },
-  { key: "allergies", label: "Allergies", icon: AlertTriangle, count: 2 },
+const menuItemsDef: { key: HealthSection; label: string; icon: any }[] = [
+  { key: "documents", label: "Documents", icon: FileText },
+  { key: "antecedents", label: "Antécédents médicaux", icon: Shield },
+  { key: "treatments", label: "Traitements réguliers", icon: Pill },
+  { key: "allergies", label: "Allergies", icon: AlertTriangle },
   { key: "habits", label: "Habitudes de vie", icon: Apple },
-  { key: "family", label: "Antécédents familiaux", icon: Users, count: 2 },
-  { key: "surgeries", label: "Opérations chirurgicales", icon: Scissors, count: 1 },
-  { key: "vaccinations", label: "Vaccins", icon: Syringe, count: 4 },
+  { key: "family", label: "Antécédents familiaux", icon: Users },
+  { key: "surgeries", label: "Opérations chirurgicales", icon: Scissors },
+  { key: "vaccinations", label: "Vaccins", icon: Syringe },
   { key: "measures", label: "Mesures", icon: Thermometer },
 ];
 
@@ -54,6 +54,24 @@ const PatientHealth = () => {
   const [vaccinations, setVaccinations] = useState(initialVaccinations);
   const [measures, setMeasures] = useState(initialMeasures);
   const [documents, setDocuments] = useState(initialDocuments);
+
+  // Dynamic counts for menu
+  const countMap: Record<string, number> = {
+    documents: documents.length,
+    antecedents: antecedents.length,
+    treatments: treatments.length,
+    allergies: allergies.length,
+    habits: habits.length,
+    family: family.length,
+    surgeries: surgeries.length,
+    vaccinations: vaccinations.length,
+    measures: measures.length,
+  };
+
+  const menuItems = menuItemsDef.map(item => ({
+    ...item,
+    count: countMap[item.key],
+  }));
 
   // Add/Edit modals
   const [showAddModal, setShowAddModal] = useState<string | null>(null);

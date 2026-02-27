@@ -8,7 +8,12 @@ import {
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts, mockDoctorProfile } from "@/data/mockData";
+import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts, mockDoctorProfile, mockPatients } from "@/data/mockData";
+
+const getPatientId = (name: string) => {
+  const p = mockPatients.find(p => p.name === name);
+  return p ? p.id : 1;
+};
 
 type StatusFilter = "all" | "done" | "current" | "upcoming";
 
@@ -39,8 +44,8 @@ const DoctorDashboard = () => {
               <h2 className="text-xl font-bold mt-0.5">{mockDoctorProfile.name}</h2>
               <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} consultations · Prochain : <span className="font-semibold">{nextRdv?.time || "—"}</span></p>
               <div className="flex gap-3 mt-3">
-                <Link to="/dashboard/doctor/consultation/new">
-                  <Button size="sm" variant="secondary" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0"><Play className="h-4 w-4 mr-1.5" />Démarrer consultation</Button>
+                <Link to={`/dashboard/doctor/consultation/new?patient=${currentRdv ? getPatientId(currentRdv.patient) : 1}`}>
+                   <Button size="sm" variant="secondary" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0"><Play className="h-4 w-4 mr-1.5" />Démarrer consultation</Button>
                 </Link>
                 <Link to="/dashboard/doctor/schedule">
                   <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20">Planning complet</Button>
@@ -67,7 +72,7 @@ const DoctorDashboard = () => {
                     <p className="text-sm font-medium text-foreground truncate">{w.patient}</p>
                     <p className="text-xs text-muted-foreground">RDV {w.appointment} · Attente {w.wait}</p>
                   </div>
-                  <Link to="/dashboard/doctor/consultation/new"><Button size="sm" className="h-7 text-xs gradient-primary text-primary-foreground"><Play className="h-3 w-3 mr-1" />Appeler</Button></Link>
+                  <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(w.patient)}`}><Button size="sm" className="h-7 text-xs gradient-primary text-primary-foreground"><Play className="h-3 w-3 mr-1" />Appeler</Button></Link>
                 </div>
               ))}
             </div>
@@ -131,8 +136,8 @@ const DoctorDashboard = () => {
                   <p className="text-xs text-muted-foreground">{currentRdv.motif} · {currentRdv.type} · {currentRdv.duration}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <Link to={`/dashboard/doctor/patients/1`}><Button variant="outline" size="sm" className="h-8 text-xs"><FileText className="h-3.5 w-3.5 mr-1" />Dossier</Button></Link>
-                  <Link to="/dashboard/doctor/consultation/new"><Button size="sm" className="h-8 text-xs gradient-primary text-primary-foreground"><Play className="h-3.5 w-3.5 mr-1" />Consultation</Button></Link>
+                  <Link to={`/dashboard/doctor/patients/${getPatientId(currentRdv.patient)}`}><Button variant="outline" size="sm" className="h-8 text-xs"><FileText className="h-3.5 w-3.5 mr-1" />Dossier</Button></Link>
+                  <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(currentRdv.patient)}`}><Button size="sm" className="h-8 text-xs gradient-primary text-primary-foreground"><Play className="h-3.5 w-3.5 mr-1" />Consultation</Button></Link>
                 </div>
               </div>
             </div>
@@ -157,7 +162,7 @@ const DoctorDashboard = () => {
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {s.status === "done" && <span className="rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[11px] font-medium flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Terminé</span>}
-                  {s.status === "current" && <Link to="/dashboard/doctor/consultation/new"><Button size="sm" className="h-7 text-xs gradient-primary text-primary-foreground"><Play className="h-3 w-3 mr-1" />En cours</Button></Link>}
+                          {s.status === "current" && <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(s.patient)}`}><Button size="sm" className="h-7 text-xs gradient-primary text-primary-foreground"><Play className="h-3 w-3 mr-1" />En cours</Button></Link>}
                   {s.status === "upcoming" && (
                     <>
                       <span className="rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[11px] font-medium hidden sm:inline">À venir</span>
@@ -169,8 +174,8 @@ const DoctorDashboard = () => {
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setActionMenuOpen(null)} />
                             <div className="absolute right-0 top-8 z-50 w-48 rounded-lg border bg-card shadow-elevated p-1 animate-fade-in">
-                              <Link to={`/dashboard/doctor/patients/1`} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><FileText className="h-3.5 w-3.5 text-primary" />Ouvrir dossier</Link>
-                              <Link to="/dashboard/doctor/consultation/new" className="flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><Play className="h-3.5 w-3.5 text-accent" />Démarrer consultation</Link>
+                              <Link to={`/dashboard/doctor/patients/${getPatientId(s.patient)}`} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><FileText className="h-3.5 w-3.5 text-primary" />Ouvrir dossier</Link>
+                              <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(s.patient)}`} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><Play className="h-3.5 w-3.5 text-accent" />Démarrer consultation</Link>
                               <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><MessageSquare className="h-3.5 w-3.5 text-primary" />Message patient</button>
                               <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><RefreshCw className="h-3.5 w-3.5 text-warning" />Reprogrammer</button>
                               <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-destructive" onClick={() => setActionMenuOpen(null)}><X className="h-3.5 w-3.5" />Annuler</button>

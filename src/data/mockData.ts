@@ -398,11 +398,11 @@ export const mockAvailableSlots = [
 ];
 
 export const mockReviews = [
-  { author: "Amine B.", rating: 5, date: "10 Fév 2026", text: "Très bon médecin, à l'écoute et professionnel.", helpful: 12, verified: true },
-  { author: "Fatma T.", rating: 5, date: "5 Fév 2026", text: "Ponctuel et efficace. Explique bien les traitements.", helpful: 8, verified: true },
-  { author: "Mohamed S.", rating: 4, date: "28 Jan 2026", text: "Bon suivi médical, cabinet propre et moderne.", helpful: 5, verified: true },
-  { author: "Nadia J.", rating: 5, date: "20 Jan 2026", text: "Excellent suivi pour mon diabète.", helpful: 15, verified: true },
-  { author: "Sami A.", rating: 4, date: "15 Jan 2026", text: "Bonne consultation, docteur à l'écoute.", helpful: 3, verified: false },
+  { author: "Amine B.", date: "10 Fév 2026", text: "Très bon médecin, à l'écoute et professionnel.", helpful: 12, verified: true },
+  { author: "Fatma T.", date: "5 Fév 2026", text: "Ponctuel et efficace. Explique bien les traitements.", helpful: 8, verified: true },
+  { author: "Mohamed S.", date: "28 Jan 2026", text: "Bon suivi médical, cabinet propre et moderne.", helpful: 5, verified: true },
+  { author: "Nadia J.", date: "20 Jan 2026", text: "Excellent suivi pour mon diabète.", helpful: 15, verified: true },
+  { author: "Sami A.", date: "15 Jan 2026", text: "Bonne consultation, docteur à l'écoute.", helpful: 3, verified: false },
 ];
 
 export const mockFaqItems = [

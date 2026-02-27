@@ -3,42 +3,38 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Calendar, ChevronLeft, ChevronRight, MapPin, Star, Clock, CheckCircle2,
+  Calendar, ChevronLeft, ChevronRight, MapPin, Clock, CheckCircle2,
   Shield, Video, Upload, FileText, Plus, AlertTriangle,
   CalendarPlus, Edit3 } from
 "lucide-react";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { mockDoctorProfile } from "@/data/mockData";
 
 const doctor = {
   id: "1",
-  name: "Dr. Ahmed Bouazizi",
-  specialty: "Médecin généraliste",
-  address: "15 Av. de la Liberté, El Manar, 2092 Tunis",
-  rating: 4.8,
-  reviews: 234,
-  avatar: "AB",
+  name: mockDoctorProfile.name,
+  specialty: mockDoctorProfile.specialty,
+  address: mockDoctorProfile.address,
+  avatar: mockDoctorProfile.initials,
   cnam: true,
-  teleconsultation: true,
+  teleconsultation: mockDoctorProfile.teleconsultation,
   cancellationPolicy: "Annulation gratuite jusqu'à 24h avant le RDV",
   autoConfirm: true,
-  motifs: [
-  { name: "Consultation générale", duration: "30 min", price: 35 },
-  { name: "Renouvellement d'ordonnance", duration: "15 min", price: 25 },
-  { name: "Suivi maladie chronique", duration: "20 min", price: 30 },
-  { name: "Certificat médical", duration: "15 min", price: 20 },
-  { name: "Première consultation", duration: "45 min", price: 50 },
-  { name: "Vaccination", duration: "15 min", price: 25 },
-  { name: "Résultat d'analyses", duration: "20 min", price: 25 }],
-
+  motifs: mockDoctorProfile.motifs.map(m => ({
+    name: m.name,
+    duration: m.duration,
+    price: parseInt(m.price),
+  })),
   lieux: [
-  { name: "Cabinet El Manar", address: "15 Av. de la Liberté, El Manar, 2092 Tunis", type: "cabinet" },
-  { name: "Téléconsultation", address: "Consultation vidéo sécurisée", type: "teleconsultation" }]
-
+    { name: "Cabinet El Manar", address: mockDoctorProfile.address, type: "cabinet" },
+    { name: "Téléconsultation", address: "Consultation vidéo sécurisée", type: "teleconsultation" },
+  ],
+  verifiedReviewCount: mockDoctorProfile.verifiedReviewCount,
 };
 
 const profiles = [
-{ id: "me", name: "Moi-même", relation: "", avatar: "JD" },
-{ id: "child1", name: "Yassine Dridi", relation: "Fils · 8 ans", avatar: "YD" }];
+{ id: "me", name: "Moi-même", relation: "", avatar: "AB" },
+{ id: "child1", name: "Yassine Ben Ali", relation: "Fils · 8 ans", avatar: "YB" }];
 
 
 const generateSlots = () => {
@@ -179,7 +175,7 @@ const PatientBooking = () => {
               </div>
               <p className="text-primary font-medium text-xs">{doctor.specialty}</p>
               <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5"><MapPin className="h-3 w-3" />{doctor.address}</span>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5"><Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />{doctor.rating} ({doctor.reviews} avis)</span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5"><CheckCircle2 className="h-3 w-3 text-primary" />{doctor.verifiedReviewCount} avis vérifiés</span>
             </div>
           </div>
         </div>
