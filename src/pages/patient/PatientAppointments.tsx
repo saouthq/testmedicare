@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight, Star, Send } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
@@ -21,6 +22,12 @@ const PatientAppointments = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
   // Drawer state for appointment detail
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
+  // Review modal
+  const [showReviewModal, setShowReviewModal] = useState<number | null>(null);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSent, setReviewSent] = useState<Set<number>>(new Set());
+  // Report modal
+  const [showReportModal, setShowReportModal] = useState<number | null>(null);
 
   const handleCancel = (id: number) => {
     const apt = appointments.find(a => a.id === id);
@@ -36,6 +43,7 @@ const PatientAppointments = () => {
   const currentPast = drawerApt ? initialPastAppointments.find(a => a.id === drawerApt) : null;
 
   return (
+  <>
     <DashboardLayout role="patient" title="Mes rendez-vous">
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -209,8 +217,16 @@ const PatientAppointments = () => {
                 </div>
                 <div className="mt-1"><StatusBadge status={currentPast.status} /></div>
                 <div className="space-y-2">
-                  {currentPast.hasReport && <Button variant="outline" className="w-full text-xs">📄 Voir le compte-rendu</Button>}
+                  {currentPast.hasReport && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReportModal(currentPast.id); }}>📄 Voir le compte-rendu</Button>}
                   {currentPast.hasPrescription && <Link to="/dashboard/patient/prescriptions"><Button variant="outline" className="w-full text-xs">💊 Voir l'ordonnance</Button></Link>}
+                  {currentPast.status === "completed" && !reviewSent.has(currentPast.id) && (
+                    <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReviewModal(currentPast.id); }}>
+                      <MessageSquare className="h-3.5 w-3.5 mr-1" />Laisser un avis
+                    </Button>
+                  )}
+                  {reviewSent.has(currentPast.id) && (
+                    <p className="text-xs text-accent flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Avis envoyé</p>
+                  )}
                   <Link to={`/booking/${currentPast.id}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
                 </div>
               </div>
@@ -219,6 +235,79 @@ const PatientAppointments = () => {
         </div>
       )}
     </DashboardLayout>
+
+    {/* Review modal */}
+    {showReviewModal !== null && (() => {
+      const apt = initialPastAppointments.find(a => a.id === showReviewModal);
+      if (!apt) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowReviewModal(null)}>
+          <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-foreground">Laisser un avis</h3>
+              <button onClick={() => setShowReviewModal(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-1">Consultation avec {apt.doctor}</p>
+            <p className="text-xs text-muted-foreground mb-4">{apt.date} · {apt.motif}</p>
+            <div className="flex items-center gap-1.5 mb-3 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span className="font-medium">Consultation vérifiée</span>
+              <span className="text-muted-foreground">— Votre avis sera marqué comme vérifié</span>
+            </div>
+            <Textarea
+              placeholder="Partagez votre expérience avec ce praticien..."
+              value={reviewText}
+              onChange={e => setReviewText(e.target.value)}
+              className="min-h-[100px] mb-4"
+            />
+            <Button
+              className="w-full gradient-primary text-primary-foreground"
+              disabled={!reviewText.trim()}
+              onClick={() => {
+                setReviewSent(prev => new Set(prev).add(showReviewModal));
+                setShowReviewModal(null);
+                setReviewText("");
+              }}
+            >
+              <Send className="h-4 w-4 mr-2" />Envoyer mon avis
+            </Button>
+          </div>
+        </div>
+      );
+    })()}
+
+    {/* Report modal */}
+    {showReportModal !== null && (() => {
+      const apt = initialPastAppointments.find(a => a.id === showReportModal);
+      if (!apt) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowReportModal(null)}>
+          <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-foreground">Compte-rendu</h3>
+              <button onClick={() => setShowReportModal(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="text-sm text-muted-foreground mb-3">
+              <p className="font-medium text-foreground">{apt.doctor}</p>
+              <p>{apt.specialty} · {apt.date}</p>
+            </div>
+            <div className="rounded-xl border bg-muted/30 p-4 space-y-3 text-sm">
+              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Motif</p><p className="text-foreground">{apt.motif}</p></div>
+              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Examen clinique</p><p className="text-muted-foreground">Examen physique normal. Constantes dans les normes. TA 12/8, FC 72 bpm.</p></div>
+              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Diagnostic</p><p className="text-muted-foreground">État de santé satisfaisant. Poursuite du traitement en cours.</p></div>
+              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Conduite à tenir</p><p className="text-muted-foreground">Continuer le traitement prescrit. Contrôle dans 3 mois. Bilan sanguin à réaliser avant la prochaine consultation.</p></div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button variant="outline" className="flex-1 text-xs"><FileText className="h-3.5 w-3.5 mr-1" />Télécharger PDF</Button>
+              <Button variant="outline" className="flex-1 text-xs" onClick={() => setShowReportModal(null)}>Fermer</Button>
+            </div>
+          </div>
+        </div>
+      );
+    })()}
+  </>
   );
 };
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Calendar, Clock, FileSignature, FileText, History, PenLine, Pill, PanelsRightBottom,
 } from "lucide-react";
@@ -8,7 +8,7 @@ import {
   mockLabSuggestionsBase, mockLabSuggestionsDT2, mockLabSuggestionsAngine,
   mockConsultationInitialVitals, mockConsultationInitialNotes,
   mockConsultationInitialPrescription, mockConsultationInitialAnalyses,
-  mockConsultationTemplates,
+  mockConsultationTemplates, mockPatients,
   type RxFavorite,
 } from "@/data/mockData";
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
@@ -118,7 +118,30 @@ export function useConsultation() {
 
 export function ConsultationProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const patient = mockConsultationPatient;
+  const [searchParams] = useSearchParams();
+  
+  // Load patient from query param or fallback to default
+  const patient = useMemo(() => {
+    const patientId = searchParams.get("patient");
+    if (patientId) {
+      const found = mockPatients.find(p => p.id === parseInt(patientId));
+      if (found) {
+        return {
+          name: found.name,
+          age: found.age,
+          gender: found.gender,
+          bloodType: found.bloodType,
+          allergies: found.allergies.map(a => a.name),
+          conditions: found.chronicConditions,
+          lastVisit: found.lastVisit || "—",
+          ssn: found.ssn,
+          mutuelle: found.mutuelle,
+          medecinTraitant: found.treatingDoctor,
+        };
+      }
+    }
+    return mockConsultationPatient;
+  }, [searchParams]);
 
   const patientKey = useMemo(() => {
     const n = (patient?.name || "patient").toLowerCase().replace(/\s+/g, "-");

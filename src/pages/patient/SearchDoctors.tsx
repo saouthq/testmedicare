@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Search, MapPin, Star, Calendar, Filter, ChevronDown, Video, Clock, Shield, Globe, CheckCircle2, Map } from "lucide-react";
+import { Search, MapPin, Calendar, Filter, ChevronDown, Video, Clock, Shield, Globe, CheckCircle2, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -144,9 +144,8 @@ const SearchDoctors = () => {
                       </div>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-warning text-warning" />
-                          <span className="text-xs font-semibold text-foreground">{d.rating}</span>
-                          <span className="text-[11px] text-muted-foreground">({d.reviews})</span>
+                          <CheckCircle2 className="h-3 w-3 text-primary" />
+                          <span className="text-xs font-medium text-foreground">{d.reviews} avis</span>
                         </div>
                         <span className="text-[11px] text-muted-foreground">{d.price} DT</span>
                         {d.cnam && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Shield className="h-2.5 w-2.5" />CNAM</span>}

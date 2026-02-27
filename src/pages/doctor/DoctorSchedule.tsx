@@ -6,7 +6,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import StatusBadge from "@/components/shared/StatusBadge";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
-import { mockScheduleDays, mockScheduleHours, mockScheduleAppointments, mockRecurDays } from "@/data/mockData";
+import { mockScheduleDays, mockScheduleHours, mockScheduleAppointments, mockRecurDays, mockPatients } from "@/data/mockData";
+
+const getPatientId = (name: string) => {
+  const p = mockPatients.find(p => p.name === name);
+  return p ? p.id : 1;
+};
 
 type ViewMode = "week" | "day";
 type ModalType = null | "availability" | "block" | "appointment-action" | "empty-slot" | "create-rdv";
@@ -229,7 +234,7 @@ const DoctorSchedule = () => {
                 <Button variant="outline" className="w-full justify-start h-9 text-sm" onClick={() => handleAction("confirm")}><CheckCircle2 className="h-4 w-4 mr-2 text-accent" />Confirmer le RDV</Button>
               )}
               <Button variant="outline" className="w-full justify-start h-9 text-sm" onClick={() => handleAction("arrived")}><Play className="h-4 w-4 mr-2 text-primary" />Marquer arrivé</Button>
-              <Link to="/dashboard/doctor/consultation/new"><Button variant="outline" className="w-full justify-start h-9 text-sm"><Play className="h-4 w-4 mr-2 text-accent" />Démarrer consultation</Button></Link>
+              <Link to={`/dashboard/doctor/consultation/new?patient=${selectedApt ? getPatientId(selectedApt.patient) : 1}`}><Button variant="outline" className="w-full justify-start h-9 text-sm"><Play className="h-4 w-4 mr-2 text-accent" />Démarrer consultation</Button></Link>
               <Button variant="outline" className="w-full justify-start h-9 text-sm"><MessageSquare className="h-4 w-4 mr-2 text-primary" />Message patient</Button>
               <Button variant="outline" className="w-full justify-start h-9 text-sm"><RefreshCw className="h-4 w-4 mr-2 text-warning" />Déplacer</Button>
               <Button variant="outline" className="w-full justify-start h-9 text-sm hover:text-destructive hover:bg-destructive/10" onClick={() => handleAction("cancel")}><X className="h-4 w-4 mr-2" />Annuler RDV</Button>
@@ -244,7 +249,7 @@ const DoctorSchedule = () => {
           <div className="w-full max-w-sm rounded-2xl border bg-card shadow-elevated p-6 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-foreground mb-4">Créneau {emptySlotKey.replace("-", " à ")}</h3>
             <div className="space-y-3">
-              <Link to="/dashboard/doctor/consultation/new">
+              <Link to={`/dashboard/doctor/consultation/new?patient=${emptySlotKey ? 1 : 1}`}>
                 <Button className="w-full justify-start" variant="outline"><Play className="h-4 w-4 mr-2 text-primary" />Démarrer consultation sans RDV</Button>
               </Link>
               <Button className="w-full justify-start" variant="outline" onClick={() => { setModal("create-rdv"); }}>

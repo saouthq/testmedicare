@@ -1,6 +1,7 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
+import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import {
   Stethoscope,
   ShieldCheck,
@@ -122,6 +123,13 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
   const expanded = pinned || hovered || sidebarOpen;
 
+  const unreadCount = useMemo(() => mockNotifications.filter(n => !n.read).length, []);
+  const userInitials = useMemo(() => {
+    if (role === "doctor") return mockDoctorProfile.initials;
+    if (role === "patient") return mockPatients[0]?.avatar || "AB";
+    return role.slice(0, 2).toUpperCase();
+  }, [role]);
+
   return (
     <div className="flex min-h-screen bg-background">
       {/* Mobile overlay */}
@@ -149,7 +157,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             fixed inset-y-0 left-0 z-50 border-r bg-card flex flex-col
             transition-all duration-300 ease-in-out overflow-x-hidden
             ${expanded ? "w-56" : "w-[52px]"}
-            lg:translate-x-0 lg:static lg:z-auto
+            lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:z-auto
             ${sidebarOpen ? "translate-x-0 w-56" : "-translate-x-full lg:translate-x-0"}
           `}
         >
@@ -238,13 +246,15 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             <Link to={`/dashboard/${role}/notifications`} className="relative">
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Bell className="h-4 w-4 text-muted-foreground" />
-                <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-destructive text-[9px] font-medium text-destructive-foreground flex items-center justify-center">
-                  3
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-destructive text-[9px] font-medium text-destructive-foreground flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
               </Button>
             </Link>
             <div className="h-7 w-7 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-medium">
-              JD
+              {userInitials}
             </div>
           </div>
         </header>
