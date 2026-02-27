@@ -8,7 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts } from "@/data/mockData";
+import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts, mockDoctorProfile } from "@/data/mockData";
 
 type StatusFilter = "all" | "done" | "current" | "upcoming";
 
@@ -36,7 +36,7 @@ const DoctorDashboard = () => {
           <div className="lg:col-span-2 relative overflow-hidden rounded-2xl gradient-primary p-5 text-primary-foreground">
             <div className="relative z-10">
               <p className="text-primary-foreground/70 text-sm">Bonjour,</p>
-              <h2 className="text-xl font-bold mt-0.5">Dr. Ahmed Bouazizi</h2>
+              <h2 className="text-xl font-bold mt-0.5">{mockDoctorProfile.name}</h2>
               <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} consultations · Prochain : <span className="font-semibold">{nextRdv?.time || "—"}</span></p>
               <div className="flex gap-3 mt-3">
                 <Link to="/dashboard/doctor/consultation/new">
@@ -44,6 +44,9 @@ const DoctorDashboard = () => {
                 </Link>
                 <Link to="/dashboard/doctor/schedule">
                   <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20">Planning complet</Button>
+                </Link>
+                <Link to="/dashboard/doctor/settings">
+                  <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20">Compléter mon profil</Button>
                 </Link>
               </div>
             </div>

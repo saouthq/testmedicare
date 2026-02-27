@@ -47,17 +47,17 @@ const PatientSettings = () => {
             <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">
               <h3 className="font-semibold text-foreground mb-4">Informations personnelles</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label>Prénom</Label><Input defaultValue="Jean" className="mt-1" /></div>
-                <div><Label>Nom</Label><Input defaultValue="Dupont" className="mt-1" /></div>
-                <div><Label>Email</Label><Input defaultValue="jean.dupont@email.tn" className="mt-1" /></div>
-                <div><Label>Téléphone</Label><Input defaultValue="+216 71 234 567" className="mt-1" /></div>
+                <div><Label>Prénom</Label><Input defaultValue="Amine" className="mt-1" /></div>
+                <div><Label>Nom</Label><Input defaultValue="Ben Ali" className="mt-1" /></div>
+                <div><Label>Email</Label><Input defaultValue="amine@email.tn" className="mt-1" /></div>
+                <div><Label>Téléphone</Label><Input defaultValue="+216 22 345 678" className="mt-1" /></div>
                 <div><Label>Date de naissance</Label><Input type="date" defaultValue="1991-03-15" className="mt-1" /></div>
                 <div><Label>Gouvernorat</Label>
                   <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
                     <option>Tunis</option><option>Ariana</option><option>Ben Arous</option><option>Manouba</option><option>Sousse</option><option>Sfax</option>
                   </select>
                 </div>
-                <div className="sm:col-span-2"><Label>Adresse</Label><Input defaultValue="15 Rue de la Liberté, Tunis" className="mt-1" /></div>
+                <div className="sm:col-span-2"><Label>Adresse</Label><Input defaultValue="El Manar, Tunis" className="mt-1" /></div>
               </div>
             </div>
             <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">

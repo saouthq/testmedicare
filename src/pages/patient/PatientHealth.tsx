@@ -26,7 +26,7 @@ import {
   mockAntecedents as initialAntecedents,
   mockTreatments as initialTreatments,
   mockAllergies as initialAllergies,
-  mockHabits as habits,
+  mockHabits as initialHabits,
   mockFamilyHistory as initialFamily,
   mockSurgeries as initialSurgeries,
   mockVaccinations as initialVaccinations,
@@ -45,6 +45,7 @@ const PatientHealth = () => {
   const [aiIdx, setAiIdx] = useState(0);
 
   // Editable lists
+  const [habits, setHabits] = useState(initialHabits);
   const [antecedents, setAntecedents] = useState(initialAntecedents);
   const [treatments, setTreatments] = useState(initialTreatments);
   const [allergies, setAllergies] = useState(initialAllergies);
@@ -73,7 +74,7 @@ const PatientHealth = () => {
   const handleDelete = (category: string, index: number) => {
     const setters: Record<string, (fn: (prev: any[]) => any[]) => void> = {
       antecedent: setAntecedents, treatment: setTreatments, allergy: setAllergies,
-      family: setFamily, surgery: setSurgeries, vaccination: setVaccinations,
+      habit: setHabits, family: setFamily, surgery: setSurgeries, vaccination: setVaccinations,
       measure: setMeasures, document: setDocuments,
     };
     const setter = setters[category];
@@ -93,7 +94,7 @@ const PatientHealth = () => {
     if (!showAddModal) return;
     const setters: Record<string, (fn: (prev: any[]) => any[]) => void> = {
       antecedent: setAntecedents, treatment: setTreatments, allergy: setAllergies,
-      family: setFamily, surgery: setSurgeries, vaccination: setVaccinations,
+      habit: setHabits, family: setFamily, surgery: setSurgeries, vaccination: setVaccinations,
       measure: setMeasures,
     };
     const setter = setters[showAddModal];
@@ -254,10 +255,16 @@ const PatientHealth = () => {
         {/* HABITS */}
         {section === "habits" && (
           <div>
-            <SectionHeader title="Habitudes de vie" onBack={() => setSection("menu")} />
+            <SectionHeader title="Habitudes de vie" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("habit")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {habits.map((h, i) => (
-                <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors"><p className="text-sm text-foreground">{h.label}</p><p className="text-sm font-medium text-foreground">{h.value}</p></div>
+                <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
+                  <p className="text-sm text-foreground">{h.label}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-foreground">{h.value}</p>
+                    <ItemActions category="habit" index={i} item={h} />
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -415,6 +422,10 @@ const AddItemModal = ({ type, editData, onClose, onAdd }: { type: string; editDa
       { key: "label", label: "Type de mesure", placeholder: "Ex: Poids", required: true },
       { key: "value", label: "Valeur", placeholder: "Ex: 75 kg", required: true },
       { key: "date", label: "Date", placeholder: "Ex: 20 Fév 2026" },
+    ]},
+    habit: { title: isEdit ? "Modifier l'habitude" : "Ajouter une habitude", fields: [
+      { key: "label", label: "Catégorie", placeholder: "Ex: Tabac, Alcool, Sport", required: true },
+      { key: "value", label: "Valeur", placeholder: "Ex: Non-fumeur", required: true },
     ]},
   };
 
