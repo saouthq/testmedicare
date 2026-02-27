@@ -168,7 +168,7 @@ export function PatientsList() {
 function PatientRowMenu({ patient: p }: { patient: any }) {
   const ctx = usePatients();
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Actions patient"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuLabel className="text-xs">Actions patient</DropdownMenuLabel>

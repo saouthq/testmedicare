@@ -147,7 +147,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           onMouseLeave={() => setHovered(false)}
           className={`
             fixed inset-y-0 left-0 z-50 border-r bg-card flex flex-col
-            transition-all duration-300 ease-in-out overflow-hidden
+            transition-all duration-300 ease-in-out overflow-x-hidden
             ${expanded ? "w-56" : "w-[52px]"}
             lg:translate-x-0 lg:static lg:z-auto
             ${sidebarOpen ? "translate-x-0 w-56" : "-translate-x-full lg:translate-x-0"}

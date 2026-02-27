@@ -345,12 +345,14 @@ export const mockDoctorProfile = {
   specialty: "Médecin généraliste",
   subSpecialties: ["Diabétologie", "Médecine du sport"],
   initials: "AB",
-  rating: 4.8,
   reviewCount: 127,
+  verifiedReviewCount: 122,
+  email: "ahmed.bouazizi@mediconnect.tn",
   address: "15 Av. de la Liberté, El Manar, 2092 Tunis",
   phone: "+216 71 234 567",
-  convention: "Conventionné CNAM",
+  convention: "Conventionné Secteur 1",
   price: "35 DT",
+  consultationDuration: 30,
   priceRange: { consultation: 35, suivi: 25, premiere: 50, certificat: 20 },
   languages: ["Français", "Arabe", "Anglais"],
   experience: "15 ans",
@@ -410,13 +412,6 @@ export const mockFaqItems = [
   { q: "Quel est le délai moyen pour obtenir un RDV ?", a: "Le délai moyen est de 2 à 3 jours ouvrés. Pour les urgences, des créneaux sont réservés chaque jour." },
 ];
 
-export const mockRatingDistribution = [
-  { stars: 5, count: 89, pct: 70 },
-  { stars: 4, count: 25, pct: 20 },
-  { stars: 3, count: 8, pct: 6 },
-  { stars: 2, count: 3, pct: 2 },
-  { stars: 1, count: 2, pct: 2 },
-];
 
 // ─── Patients ────────────────────────────────────────────────
 
