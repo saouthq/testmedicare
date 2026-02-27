@@ -1,9 +1,11 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle } from "lucide-react";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "@/hooks/use-toast";
 
 type HealthSection = "menu" | "documents" | "antecedents" | "treatments" | "allergies" | "habits" | "family" | "surgeries" | "vaccinations" | "measures" | "ai";
 
@@ -50,11 +52,12 @@ const PatientHealth = () => {
   const [surgeries, setSurgeries] = useState(initialSurgeries);
   const [vaccinations, setVaccinations] = useState(initialVaccinations);
   const [measures, setMeasures] = useState(initialMeasures);
-  const [documents] = useState(initialDocuments);
+  const [documents, setDocuments] = useState(initialDocuments);
 
-  // Add modals
+  // Add/Edit modals
   const [showAddModal, setShowAddModal] = useState<string | null>(null);
-  const [addSuccess, setAddSuccess] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editData, setEditData] = useState<Record<string, string> | null>(null);
 
   const sendAi = () => {
     if (!aiInput.trim()) return;
@@ -67,10 +70,64 @@ const PatientHealth = () => {
     }, 1000);
   };
 
-  const showSuccess = () => {
-    setAddSuccess(true);
-    setTimeout(() => setAddSuccess(false), 2000);
+  const handleDelete = (category: string, index: number) => {
+    const setters: Record<string, (fn: (prev: any[]) => any[]) => void> = {
+      antecedent: setAntecedents, treatment: setTreatments, allergy: setAllergies,
+      family: setFamily, surgery: setSurgeries, vaccination: setVaccinations,
+      measure: setMeasures, document: setDocuments,
+    };
+    const setter = setters[category];
+    if (setter) {
+      setter(prev => prev.filter((_, i) => i !== index));
+      toast({ title: "Supprimé", description: "Élément supprimé avec succès." });
+    }
   };
+
+  const handleEdit = (category: string, index: number, item: any) => {
+    setEditIndex(index);
+    setEditData(Object.fromEntries(Object.entries(item).map(([k, v]) => [k, String(v ?? "")])));
+    setShowAddModal(category);
+  };
+
+  const handleSave = (item: any) => {
+    if (!showAddModal) return;
+    const setters: Record<string, (fn: (prev: any[]) => any[]) => void> = {
+      antecedent: setAntecedents, treatment: setTreatments, allergy: setAllergies,
+      family: setFamily, surgery: setSurgeries, vaccination: setVaccinations,
+      measure: setMeasures,
+    };
+    const setter = setters[showAddModal];
+    if (setter) {
+      if (editIndex !== null) {
+        setter(prev => prev.map((p, i) => i === editIndex ? { ...p, ...item } : p));
+        toast({ title: "Modifié", description: "Élément modifié avec succès." });
+      } else {
+        setter(prev => [...prev, item]);
+        toast({ title: "Ajouté", description: "Élément ajouté avec succès." });
+      }
+    }
+    setShowAddModal(null);
+    setEditIndex(null);
+    setEditData(null);
+  };
+
+  const ItemActions = ({ category, index, item }: { category: string; index: number; item: any }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
+          <MoreVertical className="h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-36">
+        <DropdownMenuItem onClick={() => handleEdit(category, index, item)} className="text-xs">
+          <Pencil className="h-3.5 w-3.5 mr-2" />Modifier
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleDelete(category, index)} className="text-xs text-destructive">
+          <Trash2 className="h-3.5 w-3.5 mr-2" />Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   const SectionHeader = ({ title, onBack, onAdd }: { title: string; onBack: () => void; onAdd?: () => void }) => (
     <div className="flex items-center justify-between mb-4">
@@ -78,20 +135,13 @@ const PatientHealth = () => {
         <button onClick={onBack} className="text-primary hover:underline text-sm">← Retour</button>
         <h3 className="font-semibold text-foreground">{title}</h3>
       </div>
-      {onAdd && <Button size="sm" variant="outline" onClick={onAdd}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>}
+      {onAdd && <Button size="sm" variant="outline" onClick={() => { setEditIndex(null); setEditData(null); onAdd(); }}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>}
     </div>
   );
 
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
       <div className="max-w-2xl space-y-4">
-        {addSuccess && (
-          <div className="rounded-lg bg-accent/10 border border-accent/20 p-3 flex items-center gap-2 animate-fade-in">
-            <CheckCircle className="h-4 w-4 text-accent" />
-            <span className="text-sm text-accent font-medium">Élément ajouté avec succès</span>
-          </div>
-        )}
-
         {/* MENU */}
         {section === "menu" && (
           <div className="space-y-4">
@@ -136,7 +186,11 @@ const PatientHealth = () => {
                 <div key={i} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
                   <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : "bg-muted"}`}><FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : "text-muted-foreground"}`} /></div>
                   <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground truncate">{d.name}</p><p className="text-[11px] text-muted-foreground">{d.source} · {d.date}</p></div>
-                  <div className="flex gap-1 shrink-0"><Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5" /></Button></div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => handleDelete("document", i)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -149,9 +203,12 @@ const PatientHealth = () => {
             <SectionHeader title="Antécédents médicaux" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("antecedent")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {antecedents.map((a, i) => (
-                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
-                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{a.name}</p>{a.date && <span className="text-xs text-muted-foreground">{a.date}</span>}</div>
-                  {a.details && <p className="text-xs text-muted-foreground mt-0.5">{a.details}</p>}
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{a.name}</p>{a.date && <span className="text-xs text-muted-foreground">{a.date}</span>}</div>
+                    {a.details && <p className="text-xs text-muted-foreground mt-0.5">{a.details}</p>}
+                  </div>
+                  <ItemActions category="antecedent" index={i} item={a} />
                 </div>
               ))}
             </div>
@@ -164,9 +221,12 @@ const PatientHealth = () => {
             <SectionHeader title="Traitements réguliers" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("treatment")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {treatments.map((t, i) => (
-                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
-                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{t.name}</p><span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">En cours</span></div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{t.dose} · Depuis {t.since}</p><p className="text-[11px] text-muted-foreground">Prescrit par {t.prescriber}</p>
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{t.name}</p><span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">En cours</span></div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.dose} · Depuis {t.since}</p><p className="text-[11px] text-muted-foreground">Prescrit par {t.prescriber}</p>
+                  </div>
+                  <ItemActions category="treatment" index={i} item={t} />
                 </div>
               ))}
             </div>
@@ -179,9 +239,12 @@ const PatientHealth = () => {
             <SectionHeader title="Allergies" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("allergy")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {allergies.map((a, i) => (
-                <div key={i} className="p-3 bg-destructive/5 hover:bg-destructive/10 transition-colors">
-                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-destructive" />{a.name}</p><span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">{a.severity}</span></div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{a.reaction}</p>
+                <div key={i} className="p-3 bg-destructive/5 hover:bg-destructive/10 transition-colors flex items-start gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-destructive" />{a.name}</p><span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">{a.severity}</span></div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{a.reaction}</p>
+                  </div>
+                  <ItemActions category="allergy" index={i} item={a} />
                 </div>
               ))}
             </div>
@@ -206,7 +269,10 @@ const PatientHealth = () => {
             <SectionHeader title="Antécédents familiaux" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("family")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {family.map((f, i) => (
-                <div key={i} className="p-3 hover:bg-muted/20 transition-colors"><p className="text-sm font-medium text-foreground">{f.name}</p>{f.details && <p className="text-xs text-muted-foreground mt-0.5">{f.details}</p>}</div>
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
+                  <div className="flex-1"><p className="text-sm font-medium text-foreground">{f.name}</p>{f.details && <p className="text-xs text-muted-foreground mt-0.5">{f.details}</p>}</div>
+                  <ItemActions category="family" index={i} item={f} />
+                </div>
               ))}
             </div>
           </div>
@@ -218,9 +284,12 @@ const PatientHealth = () => {
             <SectionHeader title="Opérations chirurgicales" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("surgery")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {surgeries.map((s, i) => (
-                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
-                  <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{s.name}</p><span className="text-xs text-muted-foreground">{s.date}</span></div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{s.hospital}</p>
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground">{s.name}</p><span className="text-xs text-muted-foreground">{s.date}</span></div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.hospital}</p>
+                  </div>
+                  <ItemActions category="surgery" index={i} item={s} />
                 </div>
               ))}
             </div>
@@ -233,12 +302,15 @@ const PatientHealth = () => {
             <SectionHeader title="Vaccins" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("vaccination")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {vaccinations.map((v, i) => (
-                <div key={i} className="p-3 hover:bg-muted/20 transition-colors">
-                  <p className="text-sm font-medium text-foreground">{v.name}</p>
-                  <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
-                    <span>{v.doses}</span><span>·</span><span>Dernière : {v.lastDate}</span>
-                    {v.nextDate && <><span>·</span><span className="text-primary font-medium">Prochain : {v.nextDate}</span></>}
+                <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{v.name}</p>
+                    <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
+                      <span>{v.doses}</span><span>·</span><span>Dernière : {v.lastDate}</span>
+                      {v.nextDate && <><span>·</span><span className="text-primary font-medium">Prochain : {v.nextDate}</span></>}
+                    </div>
                   </div>
+                  <ItemActions category="vaccination" index={i} item={v} />
                 </div>
               ))}
             </div>
@@ -253,7 +325,10 @@ const PatientHealth = () => {
               {measures.map((m, i) => (
                 <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
                   <div><p className="text-sm text-foreground">{m.label}</p><p className="text-[11px] text-muted-foreground">{m.date}</p></div>
-                  <p className="text-sm font-bold text-foreground">{m.value}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-foreground">{m.value}</p>
+                    <ItemActions category="measure" index={i} item={m} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -287,64 +362,56 @@ const PatientHealth = () => {
         )}
       </div>
 
-      {/* ADD MODALS */}
+      {/* ADD/EDIT MODAL */}
       {showAddModal && (
         <AddItemModal
           type={showAddModal}
-          onClose={() => setShowAddModal(null)}
-          onAdd={(item) => {
-            if (showAddModal === "antecedent") setAntecedents(prev => [...prev, item]);
-            else if (showAddModal === "treatment") setTreatments(prev => [...prev, item]);
-            else if (showAddModal === "allergy") setAllergies(prev => [...prev, item]);
-            else if (showAddModal === "family") setFamily(prev => [...prev, item]);
-            else if (showAddModal === "surgery") setSurgeries(prev => [...prev, item]);
-            else if (showAddModal === "vaccination") setVaccinations(prev => [...prev, item]);
-            else if (showAddModal === "measure") setMeasures(prev => [...prev, item]);
-            setShowAddModal(null);
-            showSuccess();
-          }}
+          editData={editData}
+          onClose={() => { setShowAddModal(null); setEditIndex(null); setEditData(null); }}
+          onAdd={handleSave}
         />
       )}
     </DashboardLayout>
   );
 };
 
-const AddItemModal = ({ type, onClose, onAdd }: { type: string; onClose: () => void; onAdd: (item: any) => void }) => {
-  const [form, setForm] = useState<Record<string, string>>({});
+const AddItemModal = ({ type, editData, onClose, onAdd }: { type: string; editData?: Record<string, string> | null; onClose: () => void; onAdd: (item: any) => void }) => {
+  const [form, setForm] = useState<Record<string, string>>(editData || {});
+  const isEdit = !!editData;
 
   const configs: Record<string, { title: string; fields: { key: string; label: string; placeholder: string; required?: boolean }[] }> = {
-    antecedent: { title: "Ajouter un antécédent", fields: [
+    antecedent: { title: isEdit ? "Modifier l'antécédent" : "Ajouter un antécédent", fields: [
       { key: "name", label: "Nom de l'antécédent", placeholder: "Ex: Asthme", required: true },
       { key: "date", label: "Date / Année", placeholder: "Ex: 2020" },
       { key: "details", label: "Détails", placeholder: "Précisions..." },
     ]},
-    treatment: { title: "Ajouter un traitement", fields: [
+    treatment: { title: isEdit ? "Modifier le traitement" : "Ajouter un traitement", fields: [
       { key: "name", label: "Nom du médicament", placeholder: "Ex: Metformine 850mg", required: true },
       { key: "dose", label: "Posologie", placeholder: "Ex: 1 comprimé matin et soir" },
       { key: "since", label: "Depuis", placeholder: "Ex: Janvier 2024" },
       { key: "prescriber", label: "Prescrit par", placeholder: "Ex: Dr. Bouazizi" },
     ]},
-    allergy: { title: "Ajouter une allergie", fields: [
+    allergy: { title: isEdit ? "Modifier l'allergie" : "Ajouter une allergie", fields: [
       { key: "name", label: "Allergène", placeholder: "Ex: Pénicilline", required: true },
       { key: "severity", label: "Sévérité", placeholder: "Ex: Sévère" },
       { key: "reaction", label: "Type de réaction", placeholder: "Ex: Urticaire, œdème" },
     ]},
-    family: { title: "Ajouter un antécédent familial", fields: [
+    family: { title: isEdit ? "Modifier l'antécédent familial" : "Ajouter un antécédent familial", fields: [
       { key: "name", label: "Pathologie", placeholder: "Ex: Diabète type 2", required: true },
       { key: "details", label: "Détails (membre de la famille)", placeholder: "Ex: Père — diagnostiqué à 55 ans" },
     ]},
-    surgery: { title: "Ajouter une opération", fields: [
+    surgery: { title: isEdit ? "Modifier l'opération" : "Ajouter une opération", fields: [
       { key: "name", label: "Type d'opération", placeholder: "Ex: Appendicectomie", required: true },
       { key: "date", label: "Date", placeholder: "Ex: Mars 2019" },
       { key: "hospital", label: "Établissement", placeholder: "Ex: Hôpital Charles Nicolle" },
     ]},
-    vaccination: { title: "Ajouter un vaccin", fields: [
+    vaccination: { title: isEdit ? "Modifier le vaccin" : "Ajouter un vaccin", fields: [
       { key: "name", label: "Nom du vaccin", placeholder: "Ex: Grippe saisonnière", required: true },
       { key: "doses", label: "Doses", placeholder: "Ex: 1 dose" },
       { key: "lastDate", label: "Date dernière dose", placeholder: "Ex: Oct 2025" },
       { key: "nextDate", label: "Prochain rappel (optionnel)", placeholder: "Ex: Oct 2026" },
     ]},
-    measure: { title: "Ajouter une mesure", fields: [
+    measure: { title: isEdit ? "Modifier la mesure" : "Ajouter une mesure", fields: [
       { key: "label", label: "Type de mesure", placeholder: "Ex: Poids", required: true },
       { key: "value", label: "Valeur", placeholder: "Ex: 75 kg", required: true },
       { key: "date", label: "Date", placeholder: "Ex: 20 Fév 2026" },
@@ -379,7 +446,7 @@ const AddItemModal = ({ type, onClose, onAdd }: { type: string; onClose: () => v
           <div className="flex gap-2 pt-2">
             <Button variant="outline" className="flex-1" onClick={onClose}>Annuler</Button>
             <Button className="flex-1 gradient-primary text-primary-foreground" disabled={!canSubmit} onClick={() => onAdd(form)}>
-              <Save className="h-4 w-4 mr-1" />Ajouter
+              <Save className="h-4 w-4 mr-1" />{isEdit ? "Enregistrer" : "Ajouter"}
             </Button>
           </div>
         </div>

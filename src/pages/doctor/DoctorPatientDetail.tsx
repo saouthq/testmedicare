@@ -1342,14 +1342,14 @@ export default function DoctorPatientDetail() {
                     { value: "documents", label: "Documents" },
                   ]}
                 />
-                <div className="text-xs text-muted-foreground">La recherche filtre la timeline</div>
+                <div className="text-xs text-muted-foreground">La recherche filtre l'historique</div>
               </div>
             </Card>
 
             {/* Historique */}
             {tab === "historique" ? (
               <Card
-                title="Timeline"
+                title="Historique"
                 right={
                   <div className="flex flex-wrap gap-2">
                     {(
@@ -1761,7 +1761,11 @@ export default function DoctorPatientDetail() {
 
           {/* Right */}
           <div className="col-span-12 lg:col-span-4 space-y-4">
-            <Card title="Rappels">
+            <Card title="Rappels" right={
+              <Button variant="outline" size="sm" onClick={() => toast({ title: "Nouveau rappel", description: "Formulaire de création de rappel à brancher." })}>
+                <Plus className="h-3.5 w-3.5 mr-1" />Créer un rappel
+              </Button>
+            }>
               <div className="space-y-2">
                 <div className="rounded-xl border bg-warning/10 px-3 py-2">
                   <div className="text-sm font-medium text-foreground">Bilan HbA1c à prescrire</div>
