@@ -148,7 +148,7 @@ const SearchDoctors = () => {
 
 
 
-                        <span className="text-[11px] text-muted-foreground">{d.price} DT</span>
+                        
                         {d.cnam && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Shield className="h-2.5 w-2.5" />CNAM</span>}
                         {d.teleconsultation && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Video className="h-2.5 w-2.5" />Vidéo</span>}
                       </div>
