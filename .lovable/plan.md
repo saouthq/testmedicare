@@ -1,162 +1,257 @@
 
-# Audit Complet Medicare — Patient + Medecin
 
-## Problemes identifies par priorite
+# Refactoring Global Medicare — Plan Corrige
 
----
+## Corrections par rapport au plan precedent
 
-### BUG CRITIQUE 1 : Sidebar — Footer invisible sans scroller
+1. **DoctorConsultations** : deja refactore (34L page, Context 357L, Components 481L). PAS besoin de le re-decouper. Par contre `DoctorPrescriptions.tsx` (1539L) est un **doublon mort** — il exporte `DoctorConsultations` et contient l'ancien code consultations. Il faut le **supprimer et reconstruire** une vraie page Ordonnances.
 
-**Cause racine** : Sur desktop, la sidebar a `lg:static` qui annule `fixed inset-y-0`. Sans `fixed`, il n'y a plus de contrainte de hauteur sur le `<aside>`. La structure flex (nav `flex-1 overflow-y-auto` + footer `shrink-0`) ne fonctionne que si le conteneur parent a une hauteur fixe.
+2. **Types UI locaux** : restent dans `components/<feature>/types.ts`. `src/types/` = uniquement modeles metier partages (Patient, Doctor, Consultation, Prescription, Document).
 
-**Solution** : Garder la sidebar `fixed` sur desktop aussi, ou ajouter `lg:h-screen lg:sticky lg:top-0` au lieu de `lg:static`. La meilleure approche : remplacer `lg:static` par `lg:sticky lg:top-0 lg:h-screen`. Cela fixe la sidebar a l'ecran sans la retirer du flux, et le footer reste ancre en bas.
+3. **0 mock inline** : sur TOUTES les pages, y compris secretaire, labo, pharmacie. Tout va dans `src/data/mocks/`.
 
-**Fichier** : `src/components/layout/DashboardLayout.tsx` (lignes 148-154)
-
----
-
-### BUG 2 : PatientBooking — donnees locales dupliquees (doctor hardcode)
-
-Le fichier `PatientBooking.tsx` contient un objet `doctor` (lignes 12-37) avec `rating: 4.8`, `reviews: 234` et des motifs hardcodes, dupliquant `mockDoctorProfile`. Le rating par etoiles est toujours affiche (ligne 182 : `Star fill-yellow-400`).
-
-**Solution** : Importer `mockDoctorProfile` depuis mockData. Supprimer le rating etoile et le remplacer par le nombre d'avis verifies.
-
-**Fichier** : `src/pages/patient/PatientBooking.tsx`
+4. **DropdownMenu modal={false}** : au cas par cas seulement. Pattern standard : `onSelect` avec `e.preventDefault()` quand necessaire, pas de boutons imbriques dans les triggers.
 
 ---
 
-### BUG 3 : SearchDoctors — Rating etoile toujours affiche
+## Phase 1 : Types metier partages (`src/types/`)
 
-La page de recherche affiche encore un systeme de rating par etoiles pour chaque medecin (Star fill-yellow-400). Incoherent avec la decision de supprimer les etoiles.
+Uniquement les interfaces metier reutilisees entre plusieurs features.
 
-**Solution** : Remplacer le rating etoile par un badge "X avis verifies" ou simplement "X avis".
+**Fichiers a creer :**
 
-**Fichier** : `src/pages/patient/SearchDoctors.tsx`
+- `src/types/patient.ts` — Patient, HealthDocument, Antecedent, Treatment, Allergy, Habit, FamilyHistory, Surgery, Vaccination, HealthMeasure
+- `src/types/doctor.ts` — Doctor, DoctorProfile, ScheduleAppointment, WaitingRoomEntry, UrgentAlert
+- `src/types/prescription.ts` — Prescription, RxDraftItem
+- `src/types/consultation.ts` — DoctorConsultation (le type infere de mockDoctorConsultations), ConsultationPatient
+- `src/types/document.ts` — DocTemplate, GeneratedDoc
+- `src/types/common.ts` — AppointmentStatus, Notification (metier), ChatMessage, ChatContact, StatsCard
+- `src/types/index.ts` — barrel re-export
 
----
-
-### BUG 4 : Initiales header "JD" hardcodees
-
-Le header du dashboard affiche "JD" (ligne 247 DashboardLayout.tsx) au lieu des initiales dynamiques du patient ("AB" pour Amine Ben Ali) ou du medecin ("AB" pour Ahmed Bouazizi).
-
-**Solution** : Calculer les initiales en fonction du role. Pour patient : "AB" (Amine Ben Ali). Pour doctor : "AB" (Ahmed Bouazizi). Importer les donnees depuis mockData.
-
-**Fichier** : `src/components/layout/DashboardLayout.tsx` (ligne 246-248)
+Les types UI locaux (MainTab, HistFilter, TimelineOpen, TimelineEvent, VersionText, etc.) restent dans `src/components/patient-detail/types.ts` et equivalent.
 
 ---
 
-### INCOHERENCE 5 : mockReviews contient encore `rating` numerique
+## Phase 2 : Split mockData.ts en modules
 
-Chaque review dans `mockReviews` (mockData.ts ligne 400-406) a encore un champ `rating: 5` ou `rating: 4`. Le profil public ne l'affiche plus mais le champ persiste et pourrait etre utilise par erreur.
+Decouper `src/data/mockData.ts` (1395L) en fichiers par domaine.
 
-**Solution** : Supprimer le champ `rating` de chaque review dans mockData.
+**Fichiers a creer :**
 
-**Fichier** : `src/data/mockData.ts`
+- `src/data/mocks/doctor.ts` — mockDoctorProfile, mockDoctors, mockAvailableSlots, mockReviews, mockFaqItems, mockDoctorConsultations, mockConsultationPatient, mockVitalsHistory, mockPatientConsultations, mockPatientDetailPrescriptions, mockPatientAnalyses, mockDoctorPrescriptions, mockDoctorStatsCards, mockMonthlyConsultations, mockPatientsByType, mockWeeklyRevenue, mockSchedule*, mockRecurDays, mockDefaultMotifs, mockDefaultHoraires, mockSubscription*, mockTeleconsultTransactions, mockAi* (doctor), mockProContacts, mockCabinetContacts, mockProMessages, mockCabinetMessages
+- `src/data/mocks/patient.ts` — mockPatients, mockFavoriteDoctors, mockHealthSummary, mockPatientAppointments*, mockPastAppointments, mockCancelledAppointments, mockRecentPrescriptions, mockPatientPrescriptions, mockNotifications, mockHealth*, mockPatientAi*, mockMessagingContacts, mockConversationMessages, mockPartnerPharmacies
+- `src/data/mocks/secretary.ts` — donnees extraites de SecretaryAgenda, SecretaryBilling, SecretaryDocuments, SecretaryPatients (actuellement inline)
+- `src/data/mocks/lab.ts` — donnees extraites de LaboratoryDashboard, LaboratoryPatients (actuellement inline)
+- `src/data/mocks/pharmacy.ts` — donnees extraites des pages pharmacy (si inline)
+- `src/data/mocks/common.ts` — specialties, specialtiesWithAll, languages, availDates, landing data
+- `src/data/mocks/admin.ts` — mockAdmin*
+- `src/data/mocks/index.ts` — barrel re-export
 
----
+**mockData.ts** : devient `export * from "./mocks";` — aucun import existant ne casse.
 
-### WORKFLOW 6 : Lien "Prendre RDV" depuis le profil public ne passe pas les infos
-
-Sur `DoctorPublicProfile`, les boutons "Prendre RDV" redirigent vers `/booking/1` mais ne transmettent pas le creneau selectionne (date/heure) en query params. Le workflow booking ne pre-remplit donc rien.
-
-**Solution** : Modifier les liens dans DoctorPublicProfile pour passer `?date=...&time=...` quand un slot est selectionne. PatientBooking lit deja `searchParams` (ligne 73-75).
-
-**Fichier** : `src/pages/public/DoctorPublicProfile.tsx`
-
----
-
-### WORKFLOW 7 : Navigation patient "Voir le compte-rendu" / "Voir l'ordonnance" cassee
-
-Dans PatientAppointments, les boutons "Voir le compte-rendu" et "Voir l'ordonnance" (lignes 212-213) sont affiches pour les RDV passes mais ne menent nulle part de concret (juste `/dashboard/patient/prescriptions`). Le compte-rendu n'a pas de page.
-
-**Solution** : Ajouter une modale de visualisation du compte-rendu (mock) dans le drawer des RDV passes. Pour l'ordonnance, pre-filtrer sur l'ID quand on navigue.
-
-**Fichier** : `src/pages/patient/PatientAppointments.tsx`
+**Pages a nettoyer (mocks inline a supprimer) :**
+- `SecretaryPatients.tsx` : `initialPatients` -> mocks/secretary.ts
+- `SecretaryDocuments.tsx` : `initialDocuments` -> mocks/secretary.ts
+- `SecretaryAgenda.tsx` : `initialAppointments` + `doctors` -> mocks/secretary.ts
+- `SecretaryBilling.tsx` : `initialInvoices` -> mocks/secretary.ts
+- `LaboratoryDashboard.tsx` : `initialAnalyses` -> mocks/lab.ts
+- `LaboratoryPatients.tsx` : `mockPatientAnalyses` -> mocks/lab.ts
+- `DoctorPatientDetail.tsx` : `mockTimeline` en useMemo inline -> extraire les donnees brutes
 
 ---
 
-### WORKFLOW 8 : Consultation "Demarrer" depuis Dashboard/Planning — toujours `/consultation/new`
+## Phase 3 : Composants partages
 
-Tous les liens "Demarrer consultation" pointent vers `/dashboard/doctor/consultation/new` sans passer l'ID du patient. La consultation s'ouvre toujours avec le meme patient mock (`mockConsultationPatient`).
+### 3a. `src/components/shared/ActionPalette.tsx`
 
-**Solution** : Passer le patient ID en query param (`/dashboard/doctor/consultation/new?patient=1`) et le lire dans `ConsultationContext` pour charger le bon patient depuis mockPatients.
+Composant generique Cmd+K. Remplace les implementations dupliquees dans DoctorPatientDetail et ConsultationsComponents.
 
-**Fichier** : `src/pages/doctor/DoctorDashboard.tsx`, `src/pages/doctor/DoctorSchedule.tsx`, `src/components/consultation/ConsultationContext.tsx`
+```text
+Props:
+  open, onClose
+  actions: { id, label, hint?, icon, group?, onRun }[]
+  placeholder?: string
+```
 
----
+### 3b. `src/components/shared/ConfirmDialog.tsx`
 
-### WORKFLOW 9 : Dossier patient "Ouvrir dossier" — toujours `/patients/1`
+Dialog de confirmation generique.
 
-Depuis le dashboard et le planning, "Ouvrir dossier" pointe vers `/dashboard/doctor/patients/1` quel que soit le patient. L'ID devrait correspondre au patient concerne.
+```text
+Props:
+  open, onConfirm, onCancel
+  title, description
+  confirmLabel?, variant?: "danger" | "warning" | "default"
+```
 
-**Solution** : Utiliser l'ID patient reel dans les liens. Pour les RDV du planning, mapper le nom du patient a son ID depuis mockPatients.
+### 3c. `src/components/shared/WorkflowDrawer.tsx`
 
-**Fichier** : `src/pages/doctor/DoctorDashboard.tsx`, `src/pages/doctor/DoctorSchedule.tsx`
+Sheet multi-etapes reutilisable (Rx, Labs, Documents).
 
----
+```text
+Props:
+  open, onClose, title
+  step, totalSteps, stepLabels[]
+  footer: ReactNode, children: ReactNode
+```
 
-### WORKFLOW 10 : Patient "Laisser un avis" apres consultation — inexistant
+### 3d. `src/components/shared/StatsGrid.tsx`
 
-Le workflow "apres consultation, le patient peut laisser un avis" n'existe pas. Il n'y a aucun moyen pour le patient de laisser un avis verifie.
+Grille de stats cards uniforme.
 
-**Solution** : Dans les RDV passes (tab "Passes" de PatientAppointments), ajouter un bouton "Laisser un avis" qui ouvre une modale avec un champ texte (pas d'etoiles). L'avis est marque "Consultation verifiee" automatiquement.
-
-**Fichier** : `src/pages/patient/PatientAppointments.tsx`
-
----
-
-### WORKFLOW 11 : Notifications badge "3" hardcode
-
-Le badge de notification dans le header affiche toujours "3" (ligne 241-243 DashboardLayout). Il devrait reflechir le nombre reel de notifications non lues depuis mockData.
-
-**Solution** : Importer `mockNotifications` et compter les non lues.
-
-**Fichier** : `src/components/layout/DashboardLayout.tsx`
-
----
-
-### INCOHERENCE 12 : PatientHealth menuItems counts statiques
-
-Les compteurs dans le menu de PatientHealth (lignes 13-21 : `count: 5`, `count: 4`, etc.) sont hardcodes. Ils ne refletent pas les ajouts/suppressions faits par l'utilisateur.
-
-**Solution** : Calculer les counts dynamiquement a partir des states (`documents.length`, `antecedents.length`, etc.).
-
-**Fichier** : `src/pages/patient/PatientHealth.tsx`
+```text
+Props:
+  items: { label, value, icon?, change?, color? }[]
+```
 
 ---
 
-### INCOHERENCE 13 : DoctorPatientDetail 3089 lignes — fichier monolithique
+## Phase 4 : Decoupage DoctorPatientDetail (3089L -> ~100L page)
 
-Le fichier fait 3089 lignes, ce qui le rend tres difficile a maintenir. Il melange types, composants UI, logique metier et donnees.
+### Types UI locaux :
+`src/components/patient-detail/types.ts` — MainTab, HistFilter, TimelineOpen, TimelineEvent, DocFileKind, PatientFile, Ante, VersionText, VersionAnte, VersionVitals, WorkflowStep, LabPanel
 
-**Solution** : Pas de refactoring structural dans cette iteration, mais noter pour le futur. Priorite aux corrections fonctionnelles.
+### Composants :
+```text
+src/components/patient-detail/
+  PatientDetailContext.tsx   -- State + handlers (notes, vitals, Rx, labs, docs, timeline)
+  PatientDetailHeader.tsx    -- Toolbar (retour, nom patient, boutons Actions/Creer/Imprimer)
+  PatientDetailTabs.tsx      -- Onglets + dispatch vers tab actif
+  TimelineView.tsx           -- Historique filtrable
+  NotesTab.tsx               -- Notes cliniques + versions
+  PrivateNotesTab.tsx        -- Notes privees + versions
+  AntecedentsTab.tsx         -- Antecedents + versions
+  VitalsTab.tsx              -- Constantes + graphique + versions
+  TreatmentTab.tsx           -- Traitement actif
+  DocumentsTab.tsx           -- Documents + upload
+  QuickNotesCard.tsx         -- Card notes rapides (colonne droite)
+  RxWorkflow.tsx             -- Drawer ordonnance 3 etapes (utilise WorkflowDrawer)
+  LabsWorkflow.tsx           -- Drawer analyses (utilise WorkflowDrawer)
+  DocWorkflow.tsx            -- Drawer documents (utilise WorkflowDrawer)
+  DetailSlide.tsx            -- Slide detail timeline item
+  types.ts                   -- Types UI locaux
+```
+
+La palette Actions utilise `ActionPalette` partage.
+
+**Page finale** (`DoctorPatientDetail.tsx`) : ~80L — Provider + layout grid + compose.
 
 ---
 
-## Plan d'execution (ordre de priorite)
+## Phase 5 : Reconstruire DoctorPrescriptions (1539L dead code -> vraie page ~30L)
 
-1. **Sidebar fix** (`DashboardLayout.tsx`) : `lg:sticky lg:top-0 lg:h-screen` + initiales dynamiques + badge notifications dynamique
-2. **Supprimer ratings etoiles** restants (`PatientBooking.tsx`, `SearchDoctors.tsx`, `mockData.ts`)
-3. **PatientBooking** : importer mockDoctorProfile au lieu de donnees locales
-4. **DoctorPublicProfile** : passer date/time en query params dans les liens booking
-5. **PatientAppointments** : ajouter workflow "Laisser un avis" + modale compte-rendu
-6. **PatientHealth** : counts dynamiques dans le menu
-7. **Links patient-ID corrects** : Dashboard et Planning du medecin passent le bon patient ID
-8. **Consultation context** : lire patient ID depuis query params
+Le fichier actuel est un doublon de l'ancien code consultations (il exporte `DoctorConsultations`). Il faut :
+
+1. **Supprimer tout le contenu** de DoctorPrescriptions.tsx
+2. **Creer une vraie page Ordonnances** avec le pattern Context+Components utilisant `mockDoctorPrescriptions`
+
+### Structure :
+```text
+src/components/doctor-prescriptions/
+  PrescriptionsContext.tsx    -- State (liste, filtres, detail, composer)
+  PrescriptionsToolbar.tsx    -- Recherche + filtres (actives/toutes/envoyees)
+  PrescriptionsStats.tsx      -- Stats (total, envoyees, en attente)
+  PrescriptionsList.tsx       -- Liste groupee par date
+  PrescriptionRow.tsx         -- Ligne + menu actions
+  PrescriptionDetail.tsx      -- Sheet detail
+  PrescriptionComposer.tsx    -- Drawer 3 etapes creer/modifier (utilise WorkflowDrawer)
+  types.ts                    -- Types UI locaux (PrescriptionFilter, ComposerStep, etc.)
+```
+
+**Page finale** (`DoctorPrescriptions.tsx`) : ~30L.
 
 ---
 
-## Fichiers modifies
+## Phase 6 : Extractions secondaires
 
-| Fichier | Changement |
-|---------|-----------|
-| `DashboardLayout.tsx` | Sidebar sticky desktop, initiales dynamiques, badge notifs dynamique |
-| `PatientBooking.tsx` | Import mockDoctorProfile, supprimer etoiles |
-| `SearchDoctors.tsx` | Supprimer etoiles, badge avis |
-| `mockData.ts` | Supprimer `rating` des reviews |
-| `DoctorPublicProfile.tsx` | Query params sur liens booking |
-| `PatientAppointments.tsx` | Modale avis, modale compte-rendu |
-| `PatientHealth.tsx` | Counts dynamiques |
-| `DoctorDashboard.tsx` | IDs patients corrects dans liens |
-| `DoctorSchedule.tsx` | IDs patients corrects dans liens |
-| `ConsultationContext.tsx` | Lire patient ID depuis URL |
+### DoctorSettings (376L -> ~100L)
+```text
+src/components/doctor-settings/
+  ProfileTab.tsx, AvailabilityTab.tsx, NotificationsTab.tsx, SecurityTab.tsx
+```
+
+### PatientHealth (487L -> ~120L)
+```text
+src/components/patient-health/
+  HealthMenu.tsx, SectionRenderer.tsx, AddItemModal.tsx, AiChat.tsx
+```
+
+### PatientAppointments (314L -> ~200L)
+```text
+src/components/patient-appointments/
+  ReviewModal.tsx, ReportModal.tsx
+```
+
+---
+
+## Phase 7 : Backend-ready handlers
+
+Standardiser TOUS les handlers :
+
+```typescript
+const handleCancel = (id: string) => {
+  // TODO BACKEND: POST /api/appointments/{id}/cancel
+  setItems(prev => prev.filter(a => a.id !== id));
+  toast({ title: "Annule", description: "Le RDV a ete annule." });
+};
+```
+
+Concerne tous les Context files.
+
+---
+
+## Phase 8 : Uniformisation UI
+
+- Boutons toolbar : `size="sm"` + `text-xs` partout
+- Sheet/Dialog : `ScrollArea` dans tous les `SheetContent` longs
+- DropdownMenu : corriger au cas par cas (pas de `modal={false}` global). Pattern :
+  - Pas de `<button>` imbrique dans un trigger
+  - `onSelect` au lieu de `onClick` dans les DropdownMenuItem
+  - `e.preventDefault()` / `e.stopPropagation()` quand necessaire
+- StatusBadge : utiliser le composant partage, supprimer les copies locales
+
+---
+
+## Resume fichiers
+
+### Fichiers crees (~40)
+
+| Dossier | Fichiers |
+|---------|----------|
+| `src/types/` | patient.ts, doctor.ts, prescription.ts, consultation.ts, document.ts, common.ts, index.ts |
+| `src/data/mocks/` | doctor.ts, patient.ts, secretary.ts, lab.ts, pharmacy.ts, common.ts, admin.ts, index.ts |
+| `src/components/shared/` | ActionPalette.tsx, ConfirmDialog.tsx, WorkflowDrawer.tsx, StatsGrid.tsx |
+| `src/components/patient-detail/` | PatientDetailContext.tsx, PatientDetailHeader.tsx, PatientDetailTabs.tsx, TimelineView.tsx, NotesTab.tsx, PrivateNotesTab.tsx, AntecedentsTab.tsx, VitalsTab.tsx, TreatmentTab.tsx, DocumentsTab.tsx, QuickNotesCard.tsx, RxWorkflow.tsx, LabsWorkflow.tsx, DocWorkflow.tsx, DetailSlide.tsx, types.ts |
+| `src/components/doctor-prescriptions/` | PrescriptionsContext.tsx, PrescriptionsToolbar.tsx, PrescriptionsStats.tsx, PrescriptionsList.tsx, PrescriptionRow.tsx, PrescriptionDetail.tsx, PrescriptionComposer.tsx, types.ts |
+| `src/components/doctor-settings/` | ProfileTab.tsx, AvailabilityTab.tsx, NotificationsTab.tsx, SecurityTab.tsx |
+| `src/components/patient-health/` | HealthMenu.tsx, SectionRenderer.tsx, AddItemModal.tsx, AiChat.tsx |
+| `src/components/patient-appointments/` | ReviewModal.tsx, ReportModal.tsx |
+
+### Fichiers modifies
+
+| Fichier | Resultat |
+|---------|----------|
+| `src/data/mockData.ts` | Barrel re-export (~3 lignes) |
+| `DoctorPatientDetail.tsx` | 3089L -> ~80L |
+| `DoctorPrescriptions.tsx` | 1539L dead code -> ~30L vraie page |
+| `DoctorSettings.tsx` | 376L -> ~100L |
+| `PatientHealth.tsx` | 487L -> ~120L |
+| `PatientAppointments.tsx` | 314L -> ~200L |
+| `SecretaryPatients.tsx` | Supprime inline mocks, importe depuis mocks/ |
+| `SecretaryDocuments.tsx` | Supprime inline mocks |
+| `SecretaryAgenda.tsx` | Supprime inline mocks |
+| `SecretaryBilling.tsx` | Supprime inline mocks |
+| `LaboratoryDashboard.tsx` | Supprime inline mocks |
+| `LaboratoryPatients.tsx` | Supprime inline mocks |
+
+### Ordre d'execution
+
+1. Types metier (`src/types/`)
+2. Split mocks (`src/data/mocks/`) + barrel mockData.ts + nettoyer inline dans toutes les pages
+3. Composants partages (ActionPalette, ConfirmDialog, WorkflowDrawer, StatsGrid)
+4. Decouper DoctorPatientDetail (16 fichiers)
+5. Reconstruire DoctorPrescriptions (8 fichiers)
+6. Extraire DoctorSettings, PatientHealth, PatientAppointments
+7. Backend-ready handlers (`// TODO BACKEND:`)
+8. Uniformisation UI (boutons, scroll, dropdowns au cas par cas)
+
