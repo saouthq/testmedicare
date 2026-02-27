@@ -5,7 +5,6 @@ import {
   Stethoscope,
   MapPin,
   Phone,
-  Star,
   Clock,
   CreditCard,
   Shield,
@@ -40,8 +39,8 @@ const doctorData = {
   subSpecialties: ["Diabétologie", "Médecine du sport"],
   photo: null,
   initials: "AB",
-  rating: 4.8,
   reviewCount: 127,
+  verifiedReviewCount: 122,
   address: "15 Av. de la Liberté, El Manar, 2092 Tunis",
   phone: "+216 71 234 567",
   convention: "Conventionné CNAM",
@@ -119,7 +118,6 @@ const availableSlots = [
 const reviews = [
   {
     author: "Amine B.",
-    rating: 5,
     date: "10 Fév 2026",
     text: "Très bon médecin, à l'écoute et professionnel.",
     helpful: 12,
@@ -127,7 +125,6 @@ const reviews = [
   },
   {
     author: "Fatma T.",
-    rating: 5,
     date: "5 Fév 2026",
     text: "Ponctuel et efficace. Explique bien les traitements.",
     helpful: 8,
@@ -135,7 +132,6 @@ const reviews = [
   },
   {
     author: "Mohamed S.",
-    rating: 4,
     date: "28 Jan 2026",
     text: "Bon suivi médical, cabinet propre et moderne.",
     helpful: 5,
@@ -143,7 +139,6 @@ const reviews = [
   },
   {
     author: "Nadia J.",
-    rating: 5,
     date: "20 Jan 2026",
     text: "Excellent suivi pour mon diabète.",
     helpful: 15,
@@ -151,7 +146,6 @@ const reviews = [
   },
   {
     author: "Sami A.",
-    rating: 4,
     date: "15 Jan 2026",
     text: "Bonne consultation, docteur à l'écoute.",
     helpful: 3,
@@ -184,14 +178,7 @@ const DoctorPublicProfile = () => {
   const isMobile = useIsMobile();
 
   const displayReviews = showAllReviews ? reviews : reviews.slice(0, 3);
-
-  const ratingDistribution = [
-    { stars: 5, count: 89, pct: 70 },
-    { stars: 4, count: 25, pct: 20 },
-    { stars: 3, count: 8, pct: 6 },
-    { stars: 2, count: 3, pct: 2 },
-    { stars: 1, count: 2, pct: 2 },
-  ];
+  const verifiedCount = reviews.filter(r => r.verified).length;
 
   const toggleSection = (key: string) => {
     setOpenSection(openSection === key ? null : key);
@@ -321,12 +308,12 @@ const DoctorPublicProfile = () => {
 
                 {/* Stats row – compact */}
                 <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mt-3">
-                  <div className="rounded-lg bg-warning/5 border border-warning/20 p-1.5 sm:p-2 text-center">
+                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-1.5 sm:p-2 text-center">
                     <div className="flex items-center justify-center gap-0.5">
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-warning text-warning" />
-                      <span className="text-sm sm:text-base font-bold text-foreground">{doctorData.rating}</span>
+                      <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+                      <span className="text-sm sm:text-base font-bold text-foreground">{doctorData.verifiedReviewCount}</span>
                     </div>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">{doctorData.reviewCount} avis</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Avis vérifiés</p>
                   </div>
                   <div className="rounded-lg bg-primary/5 border border-primary/20 p-1.5 sm:p-2 text-center">
                     <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary mx-auto" />
@@ -511,29 +498,13 @@ const DoctorPublicProfile = () => {
             {activeTab === "reviews" && (
               <div className="space-y-4 sm:space-y-5">
                 <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">
-                  <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="text-center shrink-0">
-                      <p className="text-3xl sm:text-4xl font-bold text-foreground">{doctorData.rating}</p>
-                      <div className="flex mt-1">
-                        {Array.from({ length: 5 }).map((_, j) => (
-                          <Star
-                            key={j}
-                            className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${j < Math.round(doctorData.rating) ? "fill-warning text-warning" : "text-muted"}`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{doctorData.reviewCount} avis</p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <CheckCircle className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="flex-1 space-y-1.5">
-                      {ratingDistribution.map((r) => (
-                        <div key={r.stars} className="flex items-center gap-2">
-                          <span className="text-xs w-6 text-right text-muted-foreground">{r.stars}★</span>
-                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-warning rounded-full" style={{ width: `${r.pct}%` }} />
-                          </div>
-                          <span className="text-xs w-8 text-muted-foreground">{r.count}</span>
-                        </div>
-                      ))}
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{doctorData.verifiedReviewCount} <span className="text-sm font-medium text-muted-foreground">avis vérifiés</span></p>
+                      <p className="text-xs text-muted-foreground">sur {doctorData.reviewCount} avis au total · Seuls les patients ayant consulté peuvent laisser un avis</p>
                     </div>
                   </div>
                 </div>
@@ -551,12 +522,12 @@ const DoctorPublicProfile = () => {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className="font-medium text-sm text-foreground">{r.author}</span>
-                              {r.verified && <Verified className="h-3.5 w-3.5 text-primary" />}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {Array.from({ length: r.rating }).map((_, j) => (
-                                <Star key={j} className="h-3 w-3 fill-warning text-warning" />
-                              ))}
+                              {r.verified && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                  <Verified className="h-3 w-3" />
+                                  Consultation vérifiée
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

@@ -654,9 +654,9 @@ export const mockWaitingRoom: WaitingRoomEntry[] = [
   { patient: "Nadia Jemni", arrivedAt: "10:05", appointment: "10:15", wait: "0 min", avatar: "NJ" },
 ];
 
-export const mockUrgentAlerts: UrgentAlert[] = [
-  { type: "result", patient: "Fatma Trabelsi", text: "Résultats analyses — Cholestérol élevé", severity: "high" },
-  { type: "message", patient: "Amine Ben Ali", text: "Question sur posologie Metformine", severity: "normal" },
+export const mockUrgentAlerts: (UrgentAlert & { link?: string })[] = [
+  { type: "result", patient: "Fatma Trabelsi", text: "Résultats analyses — Cholestérol élevé", severity: "high", link: "/dashboard/doctor/patients/2" },
+  { type: "message", patient: "Amine Ben Ali", text: "Question sur posologie Metformine", severity: "normal", link: "/dashboard/doctor/messages" },
 ];
 
 // ─── Doctor Consultations ────────────────────────────────────

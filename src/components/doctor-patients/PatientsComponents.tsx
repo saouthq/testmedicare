@@ -70,42 +70,36 @@ export function PatientsStats() {
   );
 }
 
-/* ── Selected Patient Bar ── */
+/* ── Selected Patient Bottom Bar ── */
 export function PatientsSelectedBar() {
   const ctx = usePatients();
   const p = ctx.selectedPatient;
   if (!p) return null;
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-card">
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">{p.avatar}</div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
-              {ctx.isFavorite(p.id) && <Star className="h-4 w-4 text-warning fill-warning" />}
-              <span className="text-xs text-muted-foreground shrink-0">{p.age} ans</span>
-              {p.nextAppointment && <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[10px] font-medium shrink-0"><Calendar className="h-3 w-3" />{p.nextAppointment}</span>}
-            </div>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {p.chronicConditions.slice(0, 2).map((c) => <span key={c} className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{c}</span>)}
-              {p.allergies.slice(0, 1).map((a) => <span key={a.name} className="flex items-center gap-0.5 text-[10px] font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full"><AlertTriangle className="h-2.5 w-2.5" />{a.name}</span>)}
-              {p.lastVisit && <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">Dernière visite : {p.lastVisit}</span>}
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-md shadow-elevated">
+      <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="flex items-center gap-3 overflow-x-auto">
+          <div className="flex items-center gap-3 min-w-0 shrink-0">
+            <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0">{p.avatar}</div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
+                {ctx.isFavorite(p.id) && <Star className="h-3.5 w-3.5 text-warning fill-warning shrink-0" />}
+                <span className="text-xs text-muted-foreground shrink-0">{p.age} ans</span>
+              </div>
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {p.chronicConditions.slice(0, 2).map((c) => <span key={c} className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">{c}</span>)}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2 md:ml-auto" onClick={(e) => e.stopPropagation()}>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.openPhone(p.phone)}><Phone className="mr-1 h-3.5 w-3.5" /> Appeler</Button>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.openWhatsApp(p.phone)}><MessageSquare className="mr-1 h-3.5 w-3.5" /> WhatsApp</Button>
-          <Button variant="outline" size="sm" className="text-xs" disabled={!p.email} onClick={() => ctx.openEmail(p.email, p.name)}><Mail className="mr-1 h-3.5 w-3.5" /> Email</Button>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.planAppointment(p)}><Calendar className="mr-1 h-3.5 w-3.5" /> RDV</Button>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.startConsultation(p)}><FileText className="mr-1 h-3.5 w-3.5" /> Consulter</Button>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.openQuickNote(p)}><FileText className="mr-1 h-3.5 w-3.5" /> Note</Button>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.exportPatientRecord(p)}><Download className="mr-1 h-3.5 w-3.5" /> Export</Button>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.printPatientRecord(p)}><Printer className="mr-1 h-3.5 w-3.5" /> Imprimer</Button>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.toggleFavorite(p.id)}><Star className={`mr-1 h-3.5 w-3.5 ${ctx.isFavorite(p.id) ? "fill-warning text-warning" : ""}`} />Favori</Button>
-          <Link to={`/dashboard/doctor/patients/${p.id}`}><Button variant="outline" size="sm" className="text-xs">Ouvrir <ChevronRight className="ml-1 h-3.5 w-3.5" /></Button></Link>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Désélectionner" onClick={() => ctx.setSelectedPatientId(null)}><X className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-1.5 ml-auto shrink-0">
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => ctx.openPhone(p.phone)}><Phone className="h-3.5 w-3.5" /></Button>
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => ctx.openWhatsApp(p.phone)}><MessageSquare className="h-3.5 w-3.5" /></Button>
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => ctx.planAppointment(p)}><Calendar className="h-3.5 w-3.5" /></Button>
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => ctx.startConsultation(p)}><FileText className="h-3.5 w-3.5" /></Button>
+            <Link to={`/dashboard/doctor/patients/${p.id}`}><Button variant="outline" size="sm" className="text-xs h-8">Ouvrir <ChevronRight className="ml-1 h-3.5 w-3.5" /></Button></Link>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Désélectionner" onClick={() => ctx.setSelectedPatientId(null)}><X className="h-4 w-4" /></Button>
+          </div>
         </div>
       </div>
     </div>

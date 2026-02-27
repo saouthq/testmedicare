@@ -120,7 +120,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const [pinned, setPinned] = useState(false);
   const [hidden, setHidden] = useState(false);
 
-  const expanded = pinned || hovered;
+  const expanded = pinned || hovered || sidebarOpen;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -178,7 +178,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 px-1.5 py-1.5 space-y-0.5 overflow-y-auto overflow-x-hidden">
+          <nav className="flex-1 min-h-0 px-1.5 py-1.5 space-y-0.5 overflow-y-auto overflow-x-hidden">
             {items.map((item) => {
               const isActive = location.pathname === item.url;
               return (
@@ -203,7 +203,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           </nav>
 
           {/* Footer */}
-          <div className="border-t px-1.5 py-2 space-y-0.5 shrink-0">
+          <div className="border-t px-1.5 py-2 space-y-0.5 shrink-0 flex-shrink-0">
             <Link
               to={`/dashboard/${role}/settings`}
               title={!expanded ? "Paramètres" : undefined}

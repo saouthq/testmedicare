@@ -3,7 +3,7 @@ import { useState } from "react";
 import { 
   Calendar, Clock, CheckCircle2, Play, 
   Bell, AlertTriangle, MessageSquare, Shield, Search,
-  Filter, MoreHorizontal, FileText, Video, RefreshCw, X
+  Filter, MoreHorizontal, FileText, Video, RefreshCw, X, ChevronRight
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -81,10 +81,11 @@ const DoctorDashboard = () => {
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {mockUrgentAlerts.map((a, i) => (
-                <div key={i} className={`rounded-lg border p-3 flex items-start gap-2 ${a.severity === "high" ? "border-destructive/30 bg-destructive/5" : "bg-card"}`}>
+                <Link key={i} to={(a as any).link || "/dashboard/doctor/patients"} className={`rounded-lg border p-3 flex items-start gap-2 cursor-pointer hover:shadow-sm transition-all ${a.severity === "high" ? "border-destructive/30 bg-destructive/5 hover:bg-destructive/10" : "bg-card hover:bg-muted/30"}`}>
                   {a.severity === "high" ? <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" /> : <MessageSquare className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                  <div><p className="text-xs font-medium text-foreground">{a.patient}</p><p className="text-xs text-muted-foreground mt-0.5">{a.text}</p></div>
-                </div>
+                  <div className="flex-1"><p className="text-xs font-medium text-foreground">{a.patient}</p><p className="text-xs text-muted-foreground mt-0.5">{a.text}</p></div>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                </Link>
               ))}
             </div>
           </div>
