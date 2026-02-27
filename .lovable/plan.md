@@ -1,115 +1,113 @@
 
 
-# Plan : Ameliorations multi-pages (Avis, Sidebar, Espace Sante, Espace Medecin)
+# Plan : Coherence Globale, Bugs et Centralisation des Donnees
 
-Ce plan couvre 7 axes d'amelioration demandes.
-
----
-
-## 1. Avis verifies sans notation par etoiles (DoctorPublicProfile)
-
-**Probleme** : Le profil public affiche un systeme de notation 5 etoiles (rating 4.8, distribution par etoiles) ce qui n'est pas adapte au contexte medical.
-
-**Solution** :
-- Supprimer le champ `rating` numerique et la distribution par etoiles (`ratingDistribution`)
-- Remplacer par un badge **"Avis verifies"** avec le nombre total d'avis
-- Chaque avis affiche uniquement : auteur, date, texte, et un badge "Consultation verifiee" si `verified: true`
-- Supprimer les `Star` des reviews individuelles
-- Ajouter un compteur "X avis verifies sur Y" en en-tete de section
-
-**Fichier** : `src/pages/public/DoctorPublicProfile.tsx`
+Ce plan couvre les corrections de bugs, la centralisation de toutes les donnees mock, et l'enrichissement de DoctorSettings pour une coherence parfaite entre les pages.
 
 ---
 
-## 2. Sidebar mobile amelioree (DashboardLayout)
-
-**Probleme** : Sur mobile, la sidebar est cachee (`-translate-x-full`) et quand on l'ouvre via le hamburger, on ne voit pas les labels. De plus, il faut scroller pour voir Parametres et Deconnexion.
-
-**Solution** :
-- Sur mobile (quand `sidebarOpen` est vrai), forcer la sidebar en mode **expanded complet** (w-64) avec textes visibles
-- Ajouter `overflow-y-auto` + `flex-shrink-0` sur le footer pour que Parametres/Deconnexion soient **toujours visibles** sans scroll
-- La nav du milieu prend `flex-1 overflow-y-auto min-h-0` pour que seule la liste des liens scrolle si necessaire
-- Sur desktop, garder le comportement actuel (icones seules + expand au hover)
+## 1. Sidebar : footer toujours visible
 
 **Fichier** : `src/components/layout/DashboardLayout.tsx`
 
+Le `<aside>` a `overflow-hidden` (ligne 150) qui empeche le flex layout de fonctionner correctement. Le footer (Parametres/Deconnexion) est pousse hors ecran sur les roles avec beaucoup d'items (medecin: 11 liens).
+
+**Correction** : Remplacer `overflow-hidden` par `overflow-x-hidden` sur le `<aside>`. La structure flex existante (nav `flex-1 overflow-y-auto` + footer `shrink-0`) fera le reste : seule la nav scrollera, le footer restera ancre en bas.
+
 ---
 
-## 3. Espace Sante : ajouter Supprimer et Modifier (PatientHealth)
+## 2. Dropdown "3 points" qui bloque le scroll
 
-**Probleme** : On peut ajouter des elements (antecedents, allergies, documents, etc.) mais pas les supprimer ni les modifier.
+**Fichier** : `src/components/doctor-patients/PatientsComponents.tsx`
 
-**Solution** :
-- Ajouter un bouton **supprimer** (icone Trash) sur chaque ligne de chaque categorie (antecedents, traitements, allergies, famille, chirurgies, vaccins, mesures, documents)
-- Ajouter un bouton **modifier** (icone Pencil) qui ouvre le meme `AddItemModal` pre-rempli avec les donnees existantes
-- Le swipe-to-delete n'est pas necessaire, un simple bouton dans un menu contextuel (3 dots) suffit
-- Confirmation via toast avant suppression definitive
-- Rendre la liste `documents` editable aussi (`useState` au lieu de `const`)
+**Correction** : Ajouter `modal={false}` sur `<DropdownMenu>` dans `PatientRowMenu` (ligne 171). Cela desactive le comportement modal de Radix qui bloque le scroll et les interactions sur le reste de la page.
+
+---
+
+## 3. Habitudes de vie editables
 
 **Fichier** : `src/pages/patient/PatientHealth.tsx`
 
----
+Actuellement `habits` est importe en `const` depuis mockData (ligne 29). Les autres categories sont en `useState` avec CRUD complet.
 
-## 4. Dashboard Medecin : Alertes cliquables
-
-**Probleme** : Les alertes ne sont pas cliquables pour naviguer vers la page concernee.
-
-**Solution** :
-- Wrapper chaque alerte dans un `Link` vers la page pertinente (ex: dossier patient, resultats labo)
-- Ajouter un `cursor-pointer` et un `hover:bg-muted/30` sur les cartes d'alerte
-- Chaque alerte mock aura un champ `link` optionnel
-
-**Fichier** : `src/pages/doctor/DoctorDashboard.tsx` + `src/data/mockData.ts`
+**Corrections** :
+- Convertir en `useState` : `const [habits, setHabits] = useState(initialHabits)`
+- Ajouter `habit: setHabits` dans les maps `handleDelete` et `handleSave`
+- Ajouter `ItemActions` sur chaque ligne de la section habitudes
+- Ajouter le bouton "Ajouter" dans le `SectionHeader`
+- Ajouter la config `habit` dans `AddItemModal` (champs : label, value)
 
 ---
 
-## 5. Consultations : Ameliorer UI et workflow
+## 4. PatientSettings : corriger le nom
 
-**Probleme** : Le design de la page consultations n'est pas satisfaisant.
+**Fichier** : `src/pages/patient/PatientSettings.tsx`
 
-**Solution** :
-- Simplifier la toolbar : fusionner la barre de recherche et les filtres sur une seule ligne plus aeree
-- Les cartes de consultation : design plus clair avec separation visuelle du temps, du patient et du statut
-- Ajouter une mini-timeline visuelle sur le cote gauche (trait vertical reliant les consultations d'un meme jour)
-- Les boutons d'action principaux (Demarrer, Cloturer) plus visibles
-- Le panel de cloture : simplifier les etapes (2 au lieu de 3)
-
-**Fichiers** : `src/components/doctor-consultations/ConsultationsComponents.tsx`
+Le profil affiche "Jean Dupont" alors que toutes les donnees mock utilisent "Amine Ben Ali". Corriger les `defaultValue` pour correspondre aux donnees de `mockPatients[0]`.
 
 ---
 
-## 6. Mes Patients : Sticky toolbar + scroll ameliore
+## 5. Centraliser mockDoctorProfile et supprimer les doublons
 
-**Probleme** : Quand on clique sur un patient, la barre d'info s'affiche en haut et pousse le contenu vers le bas. La toolbar et la premiere carte devraient rester visibles.
+**Fichier cible** : `src/data/mockData.ts`
 
-**Solution** :
-- Rendre la toolbar (`PatientsToolbar`) **sticky** (deja fait avec `sticky top-0`)
-- Deplacer `PatientsSelectedBar` en **panel lateral (Sheet)** ou en **barre flottante fixe en bas de page** au lieu de l'inserer dans le flux
-- Alternative : afficher la barre du patient selectionne en **sticky** juste sous la toolbar, avec un scroll automatique vers le patient selectionne dans la liste
+Le `mockDoctorProfile` existe deja dans mockData.ts (ligne 343) avec la plupart des champs. Il faut :
+- Ajouter les champs manquants : `verifiedReviewCount`, `email`, `convention` (pour DoctorSettings), `consultationDuration`
+- Supprimer `rating` du mockDoctorProfile (pas de notation par etoiles)
+- Supprimer `mockRatingDistribution` (lignes 413-419)
 
-**Fichiers** : `src/components/doctor-patients/PatientsComponents.tsx`
+**Fichier** : `src/pages/public/DoctorPublicProfile.tsx`
 
----
+Supprimer les 170 lignes de donnees locales (`doctorData`, `availableSlots`, `reviews`, `faqItems`) et importer depuis `@/data/mockData` :
+- `mockDoctorProfile` au lieu de `doctorData`
+- `mockAvailableSlots` au lieu de `availableSlots`
+- `mockReviews` au lieu de `reviews`
+- `mockFaqItems` au lieu de `faqItems`
 
-## 7. Dossier Patient : Renommer Timeline, ameliorations
+**Fichier** : `src/pages/doctor/DoctorDashboard.tsx`
 
-**Points demandes** :
-- Renommer "Timeline" en "Historique" dans les onglets
-- Retirer le bouton "Ramener les antecedents d'avant" (inutile)
-- Les constantes de consultation doivent etre reliees au dossier patient (afficher une note indiquant la source)
-- Clarifier comment creer un rappel (ajouter un bouton explicite)
-
-**Fichier** : `src/pages/doctor/DoctorPatientDetail.tsx`
+Importer `mockDoctorProfile` et remplacer le texte en dur "Dr. Ahmed Bouazizi" par `mockDoctorProfile.name`. Ajouter un lien "Completer mon profil" vers `/dashboard/doctor/settings`.
 
 ---
 
-## Ordre d'execution
+## 6. DoctorSettings enrichi
 
-1. **DashboardLayout** : Sidebar mobile (impact global, toutes les pages)
-2. **PatientHealth** : CRUD complet (supprimer, modifier)
-3. **DoctorPublicProfile** : Avis verifies sans etoiles
-4. **DoctorDashboard** : Alertes cliquables
-5. **ConsultationsComponents** : Redesign UI consultations
-6. **PatientsComponents** : Sticky toolbar + selected bar en bottom bar
-7. **DoctorPatientDetail** : Renommage + ameliorations mineures
+**Fichier** : `src/pages/doctor/DoctorSettings.tsx`
+
+Actuellement l'onglet Profil n'a que 2 cartes (infos perso + infos pro) avec des champs basiques. Le profil public affiche diplomes, actes, sous-specialites, affiliations, tarifs par motif, infos d'acces -- tout cela n'est pas editable.
+
+**Enrichissements de l'onglet Profil** (toutes les valeurs initiales lues depuis `mockDoctorProfile`) :
+
+- **Photo de profil** : zone avec initiales + bouton "Changer la photo"
+- **Sous-specialites** : chips editables avec ajout/suppression (tag input)
+- **Formations et Diplomes** : liste editable (titre, etablissement, annee) avec boutons ajouter/modifier/supprimer
+- **Expertises et Actes** : chips editables
+- **Affiliations** : liste editable
+- **Tarifs par motif** : tableau editable (nom, duree, prix) avec ajout/suppression de lignes
+- **Informations d'acces** : checkboxes (parking, handicap, ascenseur) + champ transport
+- **Bouton "Voir mon profil public"** : lien vers `/doctor/1`
+
+Les champs existants (nom, email, tel, adresse, specialite, n° ordre, convention, tarif, presentation, duree, langues) restent mais leurs `defaultValue` seront lues depuis `mockDoctorProfile` au lieu d'etre en dur.
+
+---
+
+## 7. Liens de navigation inter-pages
+
+| Depuis | Vers | Element |
+|--------|------|---------|
+| DoctorDashboard hero | DoctorSettings | Bouton "Completer mon profil" |
+| DoctorSettings profil | DoctorPublicProfile | Bouton "Voir mon profil public" |
+
+---
+
+## Fichiers modifies (ordre d'execution)
+
+1. `src/data/mockData.ts` -- enrichir mockDoctorProfile, supprimer ratingDistribution
+2. `src/components/layout/DashboardLayout.tsx` -- `overflow-hidden` -> `overflow-x-hidden`
+3. `src/components/doctor-patients/PatientsComponents.tsx` -- `modal={false}`
+4. `src/pages/patient/PatientHealth.tsx` -- habits editable avec CRUD
+5. `src/pages/patient/PatientSettings.tsx` -- corriger nom vers Amine Ben Ali
+6. `src/pages/public/DoctorPublicProfile.tsx` -- importer depuis mockData, supprimer doublons locaux
+7. `src/pages/doctor/DoctorDashboard.tsx` -- importer mockDoctorProfile, lien profil
+8. `src/pages/doctor/DoctorSettings.tsx` -- enrichir avec tous les champs editables
 
