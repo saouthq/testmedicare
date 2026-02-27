@@ -6,11 +6,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-import { 
-  specialtiesWithAll as specialties, 
-  availDates, 
-  mockDoctors as doctors 
-} from "@/data/mockData";
+import {
+  specialtiesWithAll as specialties,
+  availDates,
+  mockDoctors as doctors } from
+"@/data/mockData";
 
 const SearchDoctors = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState("Tous");
@@ -23,7 +23,7 @@ const SearchDoctors = () => {
   const [filterCnam, setFilterCnam] = useState(false);
   const isMobile = useIsMobile();
 
-  const filtered = doctors.filter(d => {
+  const filtered = doctors.filter((d) => {
     if (selectedSpecialty !== "Tous" && d.specialty !== selectedSpecialty) return false;
     if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase()) && !d.specialty.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (filterTeleconsult && !d.teleconsultation) return false;
@@ -63,18 +63,18 @@ const SearchDoctors = () => {
             <Button variant={filterCnam ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterCnam ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterCnam(!filterCnam)}>
               <Shield className="h-3 w-3 mr-1" />CNAM
             </Button>
-            {(filterTeleconsult || filterToday || filterCnam) && (
-              <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => { setFilterTeleconsult(false); setFilterToday(false); setFilterCnam(false); }}>
+            {(filterTeleconsult || filterToday || filterCnam) &&
+            <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => {setFilterTeleconsult(false);setFilterToday(false);setFilterCnam(false);}}>
                 Réinitialiser
               </Button>
-            )}
+            }
             <div className="flex-1" />
             <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => setShowMap(!showMap)}>
               <Map className="h-3 w-3 mr-1" />{showMap ? "Liste" : "Carte"}
             </Button>
           </div>
-          {showFilters && (
-            <div className="mt-3 pt-3 border-t grid gap-3 sm:grid-cols-3">
+          {showFilters &&
+          <div className="mt-3 pt-3 border-t grid gap-3 sm:grid-cols-3">
               <div><label className="text-xs font-medium text-muted-foreground">Tarif max (DT)</label><Input type="number" placeholder="70" className="mt-1 h-9" /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Langue</label><Input placeholder="Français, Arabe..." className="mt-1 h-9" /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Gouvernorat</label>
@@ -83,30 +83,30 @@ const SearchDoctors = () => {
                 </select>
               </div>
             </div>
-          )}
+          }
         </div>
 
         {/* Specialty chips */}
-        {isMobile ? (
-          <select value={selectedSpecialty} onChange={e => setSelectedSpecialty(e.target.value)} className="w-full rounded-xl border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-card">
-            {specialties.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {specialties.map(s => (
-              <button key={s} onClick={() => setSelectedSpecialty(s)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${selectedSpecialty === s ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"}`}>
+        {isMobile ?
+        <select value={selectedSpecialty} onChange={(e) => setSelectedSpecialty(e.target.value)} className="w-full rounded-xl border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-card">
+            {specialties.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select> :
+
+        <div className="flex flex-wrap gap-1.5">
+            {specialties.map((s) =>
+          <button key={s} onClick={() => setSelectedSpecialty(s)}
+          className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${selectedSpecialty === s ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"}`}>
                 {s}
               </button>
-            ))}
+          )}
           </div>
-        )}
+        }
 
-        {showMap && (
-          <div className="rounded-xl border bg-muted/30 h-48 flex items-center justify-center text-muted-foreground text-sm">
+        {showMap &&
+        <div className="rounded-xl border bg-muted/30 h-48 flex items-center justify-center text-muted-foreground text-sm">
             <Map className="h-6 w-6 mr-2 text-primary" /> Vue carte (à connecter)
           </div>
-        )}
+        }
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground font-medium">{filtered.length} résultat{filtered.length > 1 ? "s" : ""}</p>
@@ -120,13 +120,13 @@ const SearchDoctors = () => {
 
         {/* Doctor cards */}
         <div className="space-y-3">
-          {filtered.length === 0 && (
-            <div className="text-center py-12 rounded-xl border bg-card">
+          {filtered.length === 0 &&
+          <div className="text-center py-12 rounded-xl border bg-card">
               <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-muted-foreground font-medium">Aucun praticien trouvé</p>
               <p className="text-xs text-muted-foreground mt-1">Essayez de modifier vos filtres</p>
             </div>
-          )}
+          }
           {filtered.map((d, i) => {
             const hasAnyAvail = d.availAM.slice(0, dayRange).some(Boolean) || d.availPM.slice(0, dayRange).some(Boolean);
             return (
@@ -143,11 +143,11 @@ const SearchDoctors = () => {
                         <span className="truncate">{d.address}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-warning text-warning" />
-                          <span className="text-xs font-semibold text-foreground">{d.rating}</span>
-                          <span className="text-[11px] text-muted-foreground">({d.reviews})</span>
-                        </div>
+                        
+
+
+
+
                         <span className="text-[11px] text-muted-foreground">{d.price} DT</span>
                         {d.cnam && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Shield className="h-2.5 w-2.5" />CNAM</span>}
                         {d.teleconsultation && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Video className="h-2.5 w-2.5" />Vidéo</span>}
@@ -156,8 +156,8 @@ const SearchDoctors = () => {
                   </div>
 
                   <div className="mt-3 pt-3 border-t">
-                    {hasAnyAvail ? (
-                      <>
+                    {hasAnyAvail ?
+                    <>
                         <div className="flex items-center gap-1.5 mb-2.5">
                           <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
                           <span className="text-xs font-medium text-accent">{d.nextSlot}</span>
@@ -167,44 +167,44 @@ const SearchDoctors = () => {
                             <thead>
                               <tr>
                                 <td className="w-[60px]" />
-                                {visibleDates.map((date, j) => (
-                                  <th key={j} className="pb-1.5 px-1"><p className="text-[10px] font-semibold text-foreground leading-tight">{isMobile ? date.short : date.label}</p></th>
-                                ))}
+                                {visibleDates.map((date, j) =>
+                              <th key={j} className="pb-1.5 px-1"><p className="text-[10px] font-semibold text-foreground leading-tight">{isMobile ? date.short : date.label}</p></th>
+                              )}
                               </tr>
                             </thead>
                             <tbody>
                               <tr>
                                 <td className="text-[10px] font-medium text-muted-foreground text-left pr-1 py-1">Matin</td>
-                                {visibleDates.map((_, j) => (
-                                  <td key={j} className="py-1 px-1">
+                                {visibleDates.map((_, j) =>
+                              <td key={j} className="py-1 px-1">
                                     {d.availAM[j] ? <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span> : <span className="text-[11px] text-muted-foreground/30">—</span>}
                                   </td>
-                                ))}
+                              )}
                               </tr>
                               <tr>
                                 <td className="text-[10px] font-medium text-muted-foreground text-left pr-1 py-1">Après-midi</td>
-                                {visibleDates.map((_, j) => (
-                                  <td key={j} className="py-1 px-1">
+                                {visibleDates.map((_, j) =>
+                              <td key={j} className="py-1 px-1">
                                     {d.availPM[j] ? <span className="inline-block text-[10px] font-semibold text-accent bg-accent/10 rounded px-1.5 py-0.5">Dispo</span> : <span className="text-[11px] text-muted-foreground/30">—</span>}
                                   </td>
-                                ))}
+                              )}
                               </tr>
                             </tbody>
                           </table>
                         </div>
-                      </>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Prochaine disponibilité : <span className="font-medium text-foreground">{d.nextSlot}</span></p>
-                    )}
+                      </> :
+
+                    <p className="text-xs text-muted-foreground">Prochaine disponibilité : <span className="font-medium text-foreground">{d.nextSlot}</span></p>
+                    }
                   </div>
                 </div>
-              </Link>
-            );
+              </Link>);
+
           })}
         </div>
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>);
+
 };
 
 export default SearchDoctors;
