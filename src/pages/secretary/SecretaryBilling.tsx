@@ -7,33 +7,14 @@ import {
   Search, Plus, Download, Banknote, FileText, CheckCircle2, Clock,
   AlertCircle, CreditCard, ArrowUpRight, Eye, Printer, Send, Receipt, Shield, X, Save, Trash2
 } from "lucide-react";
+import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/data/mockData";
 
 interface Invoice {
   id: string; patient: string; doctor: string; date: string; amount: number;
   type: string; payment: string; status: string; avatar: string; cnam: boolean;
 }
 
-const initialInvoices: Invoice[] = [
-  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "CNAM", status: "paid", avatar: "AB", cnam: true },
-  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", cnam: true },
-  { id: "FAC-2026-085", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", date: "19 Fév", amount: 35, type: "Consultation G", payment: "Espèces", status: "paid", avatar: "MS", cnam: false },
-  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", cnam: true },
-  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", cnam: true },
-  { id: "FAC-2026-082", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Téléconsultation", payment: "Virement", status: "paid", avatar: "YB", cnam: false },
-  { id: "FAC-2026-080", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "15 Fév", amount: 60, type: "Suivi", payment: "—", status: "overdue", avatar: "RM", cnam: true },
-  { id: "FAC-2026-078", patient: "Salma Dridi", doctor: "Dr. Bouazizi", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "SD", cnam: true },
-];
-
-const actTypes = [
-  { label: "Consultation générale", price: 35 },
-  { label: "Consultation spécialisée", price: 60 },
-  { label: "1ère consultation", price: 80 },
-  { label: "Bilan complet", price: 150 },
-  { label: "Téléconsultation", price: 35 },
-  { label: "ECG", price: 40 },
-  { label: "Suivi", price: 35 },
-  { label: "Contrôle", price: 25 },
-];
+const actTypes = mockSecretaryBillingActTypes;
 
 const paymentMethods = [
   { method: "CNAM", count: 45, icon: Shield },
@@ -49,7 +30,7 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
 };
 
 const SecretaryBilling = () => {
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const [invoices, setInvoices] = useState<Invoice[]>(mockSecretaryBillingInvoices);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
@@ -75,6 +56,7 @@ const SecretaryBilling = () => {
   const totalOverdue = invoices.filter(i => i.status === "overdue").reduce((s, i) => s + i.amount, 0);
 
   const handleCreateInvoice = () => {
+    // TODO BACKEND: POST /api/invoices
     if (!newPatient.trim()) return;
     const total = newActs.reduce((s, a) => s + a.price, 0);
     const newId = `FAC-2026-${String(88 + invoices.length).padStart(3, "0")}`;
@@ -90,6 +72,7 @@ const SecretaryBilling = () => {
   };
 
   const handleMarkPaid = (inv: Invoice) => {
+    // TODO BACKEND: PATCH /api/invoices/{id} { status: "paid", payment }
     setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, status: "paid", payment: payMethod } : i));
     setShowPayModal(null);
     setSelectedInv(null);

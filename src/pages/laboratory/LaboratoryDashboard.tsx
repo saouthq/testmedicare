@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { mockLabAnalyses, mockLabAnalysisTypes } from "@/data/mockData";
+import { mockLabAnalysisTypes, mockLabDashboardAnalyses } from "@/data/mockData";
 
 type DashTab = "pipeline" | "results" | "new";
 type AnalysisStatus = "waiting" | "in_progress" | "ready" | "sent";
@@ -37,28 +37,8 @@ const statusConfig: Record<string, { label: string; class: string; icon: any; or
   sent: { label: "Envoyé", class: "bg-muted text-muted-foreground", icon: Send, order: 3 },
 };
 
-const initialAnalyses: DashAnalysis[] = [
-  { id: 1, patient: "Amine Ben Ali", avatar: "AB", type: "Bilan sanguin complet", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", amount: "85 DT", progress: 65, cnam: true, values: [
-    { name: "Glycémie", value: "1.05 g/L", ref: "0.70 - 1.10", status: "normal" },
-    { name: "HbA1c", value: "6.8%", ref: "< 7%", status: "normal" },
-    { name: "Cholestérol total", value: "2.45 g/L", ref: "< 2.00", status: "high" },
-  ]},
-  { id: 2, patient: "Fatma Trabelsi", avatar: "FT", type: "Analyse d'urine", doctor: "Dr. Gharbi", status: "ready", date: "19 Fév", priority: "normal", amount: "35 DT", progress: 100, cnam: true, values: [
-    { name: "pH", value: "6.0", ref: "4.5 - 8.0", status: "normal" },
-    { name: "Protéines", value: "Traces", ref: "Négatif", status: "high" },
-    { name: "Glucose", value: "Négatif", ref: "Négatif", status: "normal" },
-  ]},
-  { id: 3, patient: "Mohamed Sfar", avatar: "MS", type: "TSH - Thyroïde", doctor: "Dr. Hammami", status: "waiting", date: "20 Fév", priority: "urgent", amount: "45 DT", progress: 0, cnam: false },
-  { id: 4, patient: "Nadia Jemni", avatar: "NJ", type: "Glycémie à jeun", doctor: "Dr. Bouazizi", status: "ready", date: "18 Fév", priority: "normal", amount: "25 DT", progress: 100, cnam: true, values: [
-    { name: "Glycémie à jeun", value: "1.32 g/L", ref: "0.70 - 1.10", status: "high" },
-  ]},
-  { id: 5, patient: "Sami Ayari", avatar: "SA", type: "Hémogramme (NFS)", doctor: "Dr. Bouazizi", status: "in_progress", date: "20 Fév", priority: "normal", amount: "40 DT", progress: 40, cnam: true },
-  { id: 6, patient: "Rania Meddeb", avatar: "RM", type: "Bilan lipidique", doctor: "Dr. Gharbi", status: "sent", date: "17 Fév", priority: "normal", amount: "55 DT", progress: 100, cnam: true },
-  { id: 7, patient: "Karim Mansour", avatar: "KM", type: "CRP + VS", doctor: "Dr. Bouazizi", status: "waiting", date: "20 Fév", priority: "urgent", amount: "30 DT", progress: 0, cnam: true },
-];
-
 const LaboratoryDashboard = () => {
-  const [analyses, setAnalyses] = useState<DashAnalysis[]>(initialAnalyses);
+  const [analyses, setAnalyses] = useState<DashAnalysis[]>(mockLabDashboardAnalyses as DashAnalysis[]);
   const [activeTab, setActiveTab] = useState<DashTab>("pipeline");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -93,6 +73,7 @@ const LaboratoryDashboard = () => {
   });
 
   const handleAdvanceStatus = (id: number) => {
+    // TODO BACKEND: PATCH /api/lab/analyses/{id} { status: nextStatus }
     setAnalyses(prev => prev.map(a => {
       if (a.id !== id) return a;
       if (a.status === "waiting") return { ...a, status: "in_progress" as AnalysisStatus, progress: 10 };
@@ -103,6 +84,7 @@ const LaboratoryDashboard = () => {
   };
 
   const handleAddAnalysis = () => {
+    // TODO BACKEND: POST /api/lab/analyses
     if (!newPatient || !newType) return;
     const maxId = Math.max(...analyses.map(a => a.id), 0);
     setAnalyses(prev => [...prev, {
@@ -130,6 +112,7 @@ const LaboratoryDashboard = () => {
   };
 
   const handleSaveEdit = () => {
+    // TODO BACKEND: PUT /api/lab/analyses/{id}/results
     if (editingId === null) return;
     setAnalyses(prev => prev.map(a => a.id === editingId ? { ...a, values: editingValues } : a));
     setEditingId(null);

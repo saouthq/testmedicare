@@ -20,6 +20,7 @@ const LaboratoryResults = () => {
   });
 
   const handleSend = (id: string) => {
+    // TODO BACKEND: POST /api/lab/results/{id}/send
     setResults(prev => prev.map(r => r.id === id ? { ...r, sent: true } : r));
   };
 
@@ -29,6 +30,7 @@ const LaboratoryResults = () => {
   };
 
   const handleSaveEdit = (id: string) => {
+    // TODO BACKEND: PUT /api/lab/results/{id}
     setResults(prev => prev.map(r => r.id === id ? { ...r, values: editValues } : r));
     setEditingId(null);
   };

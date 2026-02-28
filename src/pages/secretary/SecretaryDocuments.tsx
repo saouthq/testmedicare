@@ -4,25 +4,22 @@ import { FileText, Search, Upload, Download, Eye, Trash2, Image, File, Shield, X
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { mockSecretaryDocumentsFull, mockDocumentCategories } from "@/data/mockData";
+
+const iconMap: Record<string, any> = { FileText, Shield, File, Image };
 
 interface Document {
   id: number; name: string; type: string; size: string; date: string; category: string;
   icon: any; patient?: string; status?: "validated" | "pending" | "draft";
 }
 
-const initialDocuments: Document[] = [
-  { id: 1, name: "Fiche patient - Amine Ben Ali", type: "PDF", size: "245 Ko", date: "20 Fév 2026", category: "Fiches patients", icon: FileText, patient: "Amine Ben Ali", status: "validated" },
-  { id: 2, name: "Bulletin de soins CNAM - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "CNAM", icon: Shield, patient: "Fatma Trabelsi", status: "validated" },
-  { id: 3, name: "Ordonnance ORD-2026-045", type: "PDF", size: "89 Ko", date: "20 Fév 2026", category: "Ordonnances", icon: FileText, patient: "Amine Ben Ali", status: "validated" },
-  { id: 4, name: "Résultats analyses - Mohamed Sfar", type: "PDF", size: "1.2 Mo", date: "15 Fév 2026", category: "Analyses", icon: File, patient: "Mohamed Sfar", status: "pending" },
-  { id: 5, name: "Facture Février 2026", type: "PDF", size: "56 Ko", date: "1 Fév 2026", category: "Comptabilité", icon: FileText, status: "validated" },
-  { id: 6, name: "Certificat médical - Sami Ayari", type: "PDF", size: "34 Ko", date: "19 Fév 2026", category: "Certificats", icon: FileText, patient: "Sami Ayari", status: "draft" },
-  { id: 7, name: "Déclaration CNAM mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "CNAM", icon: Shield, status: "validated" },
-  { id: 8, name: "Convention CNAM - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "CNAM", icon: Shield, status: "validated" },
-  { id: 9, name: "Radiographie thorax - Nadia Jemni", type: "DICOM", size: "8.5 Mo", date: "12 Fév 2026", category: "Imagerie", icon: Image, patient: "Nadia Jemni", status: "validated" },
-];
+const initialDocuments: Document[] = mockSecretaryDocumentsFull.map(d => ({
+  ...d,
+  icon: iconMap[d.iconKey] || FileText,
+  patient: d.patient ?? undefined,
+}));
 
-const categories = ["Tous", "Fiches patients", "Ordonnances", "CNAM", "Analyses", "Certificats", "Comptabilité", "Imagerie"];
+const categories = mockDocumentCategories;
 
 const statusConfig: Record<string, { label: string; class: string }> = {
   validated: { label: "Validé", class: "bg-accent/10 text-accent" },
@@ -78,6 +75,7 @@ const SecretaryDocuments = () => {
   };
 
   const deleteDoc = (id: number) => {
+    // TODO BACKEND: DELETE /api/documents/{id}
     setDocuments(prev => prev.filter(d => d.id !== id));
     if (selectedDoc?.id === id) setSelectedDoc(null);
   };

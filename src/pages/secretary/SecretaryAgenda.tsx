@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { mockSecretaryAgendaDoctors, mockSecretaryAgendaAppointments } from "@/data/mockData";
 
 type ViewMode = "timeline" | "list";
 type AppointmentStatus = "done" | "in_progress" | "in_waiting" | "confirmed" | "upcoming" | "cancelled" | "no_show";
@@ -29,25 +30,7 @@ interface AgendaAppointment {
   waitTime?: number;
 }
 
-const doctors = ["Tous", "Dr. Bouazizi", "Dr. Gharbi", "Dr. Hammami"];
-
-const initialAppointments: AgendaAppointment[] = [
-  { id: 1, time: "08:00", endTime: "08:30", patient: "Karim Mansour", avatar: "KM", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi diabète", status: "done", phone: "+216 71 111 111", cnam: true, notes: "Glycémie stable" },
-  { id: 2, time: "08:30", endTime: "09:00", patient: "Leila Chahed", avatar: "LC", doctor: "Dr. Gharbi", type: "Suivi", motif: "Tension artérielle", status: "done", phone: "+216 71 222 222", cnam: true },
-  { id: 3, time: "09:00", endTime: "09:30", patient: "Hana Kammoun", avatar: "HK", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Douleurs dorsales", status: "done", phone: "+216 71 333 333", cnam: true },
-  { id: 4, time: "09:30", endTime: "10:00", patient: "Amine Ben Ali", avatar: "AB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Suivi diabète", status: "in_progress", phone: "+216 71 234 567", cnam: true, arrivedAt: "09:15" },
-  { id: 5, time: "09:45", endTime: "10:15", patient: "Fatma Trabelsi", avatar: "FT", doctor: "Dr. Gharbi", type: "Suivi", motif: "Cardio - ECG", status: "in_waiting", phone: "+216 22 345 678", cnam: true, arrivedAt: "09:20", waitTime: 25 },
-  { id: 6, time: "10:00", endTime: "10:30", patient: "Mohamed Sfar", avatar: "MS", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Post-opératoire", status: "in_waiting", phone: "+216 55 456 789", cnam: false, arrivedAt: "09:40", waitTime: 15 },
-  { id: 7, time: "10:30", endTime: "11:00", patient: "Nadia Jemni", avatar: "NJ", doctor: "Dr. Hammami", type: "1ère visite", motif: "Consultation dermatologique", status: "confirmed", phone: "+216 98 567 890", cnam: true },
-  { id: 8, time: "11:00", endTime: "11:30", patient: "Sami Ayari", avatar: "SA", doctor: "Dr. Bouazizi", type: "1ère visite", motif: "Bilan complet", status: "confirmed", phone: "+216 29 678 901", cnam: true },
-  { id: 9, time: "11:30", endTime: "12:00", patient: "Bilel Nasri", avatar: "BN", doctor: "Dr. Gharbi", type: "Suivi", motif: "Hypertension", status: "upcoming", phone: "+216 50 789 012", cnam: true },
-  { id: 10, time: "14:00", endTime: "14:30", patient: "Youssef Belhadj", avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Renouvellement ordonnance", status: "confirmed", phone: "+216 71 890 123", cnam: false, teleconsultation: true },
-  { id: 11, time: "14:30", endTime: "15:00", patient: "Salma Dridi", avatar: "SD", doctor: "Dr. Hammami", type: "Consultation", motif: "Acné sévère", status: "upcoming", phone: "+216 71 901 234", cnam: true },
-  { id: 12, time: "15:00", endTime: "15:30", patient: "Olfa Ben Salah", avatar: "OB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Fatigue chronique", status: "upcoming", phone: "+216 55 012 345", cnam: true },
-  { id: 13, time: "15:30", endTime: "16:00", patient: "Rania Meddeb", avatar: "RM", doctor: "Dr. Gharbi", type: "Contrôle", motif: "ECG de contrôle", status: "cancelled", phone: "+216 71 123 456", cnam: true },
-  { id: 14, time: "16:00", endTime: "16:30", patient: "Imen Bouhlel", avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "upcoming", phone: "+216 50 234 567", cnam: true },
-  { id: 15, time: "16:30", endTime: "17:00", patient: "Walid Jlassi", avatar: "WJ", doctor: "Dr. Hammami", type: "Consultation", motif: "Eczéma", status: "upcoming", phone: "+216 22 345 678", cnam: false },
-];
+const doctors = mockSecretaryAgendaDoctors;
 
 const statusConfig: Record<AppointmentStatus, { label: string; class: string; bgClass: string; icon: any }> = {
   done: { label: "Terminé", class: "bg-muted text-muted-foreground", bgClass: "bg-muted/30 opacity-60", icon: CheckCircle2 },
@@ -71,7 +54,7 @@ const typeColors: Record<string, string> = {
 const SecretaryAgenda = () => {
   const [view, setView] = useState<ViewMode>("timeline");
   const [selectedDoctor, setSelectedDoctor] = useState("Tous");
-  const [appointments, setAppointments] = useState(initialAppointments);
+  const [appointments, setAppointments] = useState(mockSecretaryAgendaAppointments as AgendaAppointment[]);
   const [selectedApt, setSelectedApt] = useState<AgendaAppointment | null>(null);
   const [showNewRdv, setShowNewRdv] = useState(false);
   const [search, setSearch] = useState("");
@@ -92,22 +75,27 @@ const SecretaryAgenda = () => {
   const progress = totalActive > 0 ? Math.round((doneCount / totalActive) * 100) : 0;
 
   const handleAccueil = (id: number) => {
+    // TODO BACKEND: PATCH /api/appointments/{id} { status: "in_waiting", arrivedAt }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "in_waiting" as AppointmentStatus, arrivedAt: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }), waitTime: 0 } : a));
   };
 
   const handleCall = (id: number) => {
+    // TODO BACKEND: PATCH /api/appointments/{id} { status: "in_progress" }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "in_progress" as AppointmentStatus } : a));
   };
 
   const handleDone = (id: number) => {
+    // TODO BACKEND: PATCH /api/appointments/{id} { status: "done" }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "done" as AppointmentStatus } : a));
   };
 
   const handleCancel = (id: number) => {
+    // TODO BACKEND: PATCH /api/appointments/{id} { status: "cancelled" }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "cancelled" as AppointmentStatus } : a));
   };
 
   const handleNoShow = (id: number) => {
+    // TODO BACKEND: PATCH /api/appointments/{id} { status: "no_show" }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "no_show" as AppointmentStatus } : a));
   };
 
