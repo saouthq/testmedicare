@@ -4,68 +4,18 @@ import { Search, Phone, Mail, Plus, ChevronRight, Calendar, Edit, FileText, Cloc
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-
-const initialPatients = [
-  { 
-    id: 1, name: "Amine Ben Ali", phone: "+216 71 234 567", email: "amine@email.tn", 
-    lastVisit: "20 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: "28 Fév 14:30",
-    cnamId: "12345678", assurance: "CNAM", dob: "15/03/1991", avatar: "AB",
-    balance: 0, notes: "Suivi diabète régulier", gouvernorat: "Tunis",
-    history: [
-      { date: "20 Fév 2026", type: "Consultation", doctor: "Dr. Bouazizi", motif: "Suivi diabète", amount: "35 DT", paid: true },
-      { date: "10 Jan 2026", type: "Contrôle", doctor: "Dr. Bouazizi", motif: "Bilan annuel", amount: "35 DT", paid: true },
-      { date: "15 Nov 2025", type: "Consultation", doctor: "Dr. Gharbi", motif: "ECG contrôle", amount: "50 DT", paid: true },
-    ]
-  },
-  { 
-    id: 2, name: "Fatma Trabelsi", phone: "+216 22 345 678", email: "fatma@email.tn", 
-    lastVisit: "18 Fév 2026", doctor: "Dr. Gharbi", nextAppointment: "25 Fév 10:00",
-    cnamId: "23456789", assurance: "CNAM", dob: "12/07/1970", avatar: "FT",
-    balance: 60, notes: "Hypertension — suivi cardio", gouvernorat: "Ariana",
-    history: [
-      { date: "18 Fév 2026", type: "Suivi", doctor: "Dr. Gharbi", motif: "Tension artérielle", amount: "50 DT", paid: false },
-      { date: "5 Jan 2026", type: "Consultation", doctor: "Dr. Gharbi", motif: "Bilan cardio", amount: "50 DT", paid: true },
-    ]
-  },
-  { 
-    id: 3, name: "Mohamed Sfar", phone: "+216 55 456 789", email: "med@email.tn", 
-    lastVisit: "15 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null,
-    cnamId: "—", assurance: "Privée", dob: "05/01/1998", avatar: "MS",
-    balance: 0, notes: "Suivi post-opératoire", gouvernorat: "Ben Arous",
-    history: [
-      { date: "15 Fév 2026", type: "Contrôle", doctor: "Dr. Bouazizi", motif: "Post-opératoire", amount: "35 DT", paid: true },
-    ]
-  },
-  { 
-    id: 4, name: "Nadia Jemni", phone: "+216 98 567 890", email: "nadia@email.tn", 
-    lastVisit: "10 Fév 2026", doctor: "Dr. Hammami", nextAppointment: "3 Mar 09:00",
-    cnamId: "34567890", assurance: "CNAM", dob: "18/11/1959", avatar: "NJ",
-    balance: 25, notes: "Arthrose — anti-inflammatoires", gouvernorat: "Manouba",
-    history: [
-      { date: "10 Fév 2026", type: "Consultation", doctor: "Dr. Hammami", motif: "Douleurs articulaires", amount: "45 DT", paid: false },
-    ]
-  },
-  { 
-    id: 5, name: "Sami Ayari", phone: "+216 29 678 901", email: "sami@email.tn", 
-    lastVisit: "8 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null,
-    cnamId: "45678901", assurance: "CNAM", dob: "22/06/1984", avatar: "SA",
-    balance: 0, notes: "Asthme léger", gouvernorat: "Tunis",
-    history: [
-      { date: "8 Fév 2026", type: "Consultation", doctor: "Dr. Bouazizi", motif: "Renouvellement traitement", amount: "35 DT", paid: true },
-    ]
-  },
-];
+import { mockSecretaryPatientsWithHistory } from "@/data/mockData";
 
 type DetailTab = "info" | "history" | "billing";
 
 const SecretaryPatients = () => {
   const [search, setSearch] = useState("");
   const [showNewPatient, setShowNewPatient] = useState(false);
-  const [patients, setPatients] = useState(initialPatients);
+  const [patients, setPatients] = useState(mockSecretaryPatientsWithHistory);
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [detailTab, setDetailTab] = useState<DetailTab>("info");
-  const [editForm, setEditForm] = useState<typeof initialPatients[0] | null>(null);
+  const [editForm, setEditForm] = useState<typeof mockSecretaryPatientsWithHistory[0] | null>(null);
   const [saved, setSaved] = useState(false);
 
   const selectedPatient = selectedPatientId ? patients.find(p => p.id === selectedPatientId) : null;
@@ -82,6 +32,7 @@ const SecretaryPatients = () => {
   };
 
   const handleSaveEdit = () => {
+    // TODO BACKEND: PUT /api/patients/{id}
     if (editForm) {
       setPatients(prev => prev.map(p => p.id === editForm.id ? editForm : p));
       setEditMode(false);
@@ -90,7 +41,8 @@ const SecretaryPatients = () => {
     }
   };
 
-  const handleAddPatient = (newP: Omit<typeof initialPatients[0], "id" | "history">) => {
+  const handleAddPatient = (newP: Omit<typeof mockSecretaryPatientsWithHistory[0], "id" | "history">) => {
+    // TODO BACKEND: POST /api/patients
     const id = Math.max(...patients.map(p => p.id)) + 1;
     setPatients(prev => [{ ...newP, id, history: [] }, ...prev]);
     setShowNewPatient(false);

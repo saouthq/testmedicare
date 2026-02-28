@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search, User, Calendar, FileText, FlaskConical, Phone, Eye, Shield, ChevronRight, Activity, Send, Download, Clock, CheckCircle2, AlertCircle, Printer, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockLabPatients } from "@/data/mockData";
+import { mockLabPatients, mockLabPatientAnalysesHistory } from "@/data/mockData";
 
 type DetailTab = "info" | "analyses" | "results";
 
@@ -12,26 +12,6 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
   ready: { label: "Prêt", class: "bg-accent/10 text-accent", icon: CheckCircle2 },
   waiting: { label: "En attente", class: "bg-warning/10 text-warning", icon: AlertCircle },
   sent: { label: "Envoyé", class: "bg-muted text-muted-foreground", icon: CheckCircle2 },
-};
-
-// Mock analysis history per patient
-const mockPatientAnalyses: Record<string, { id: string; type: string; date: string; status: string; doctor: string; amount: string }[]> = {
-  "Amine Ben Ali": [
-    { id: "ANA-001", type: "Glycémie à jeun", date: "20 Fév 2026", status: "ready", doctor: "Dr. Bouazizi", amount: "15 DT" },
-    { id: "ANA-005", type: "HbA1c", date: "15 Jan 2026", status: "sent", doctor: "Dr. Bouazizi", amount: "35 DT" },
-    { id: "ANA-009", type: "Bilan lipidique", date: "10 Nov 2025", status: "sent", doctor: "Dr. Bouazizi", amount: "40 DT" },
-  ],
-  "Fatma Trabelsi": [
-    { id: "ANA-002", type: "NFS", date: "18 Fév 2026", status: "in_progress", doctor: "Dr. Gharbi", amount: "25 DT" },
-    { id: "ANA-006", type: "Bilan rénal", date: "5 Jan 2026", status: "sent", doctor: "Dr. Gharbi", amount: "35 DT" },
-  ],
-  "Mohamed Sfar": [
-    { id: "ANA-003", type: "Bilan hépatique", date: "15 Fév 2026", status: "waiting", doctor: "Dr. Bouazizi", amount: "45 DT" },
-  ],
-  "Nadia Jemni": [
-    { id: "ANA-004", type: "TSH", date: "10 Fév 2026", status: "ready", doctor: "Dr. Hammami", amount: "30 DT" },
-    { id: "ANA-007", type: "Vitamine D", date: "20 Déc 2025", status: "sent", doctor: "Dr. Hammami", amount: "25 DT" },
-  ],
 };
 
 const LaboratoryPatients = () => {
@@ -43,7 +23,7 @@ const LaboratoryPatients = () => {
     !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.phone.includes(search)
   );
 
-  const patientAnalyses = selectedPatient ? (mockPatientAnalyses[selectedPatient.name] || []) : [];
+  const patientAnalyses = selectedPatient ? (mockLabPatientAnalysesHistory[selectedPatient.name] || []) : [];
 
   return (
     <DashboardLayout role="laboratory" title="Patients">
