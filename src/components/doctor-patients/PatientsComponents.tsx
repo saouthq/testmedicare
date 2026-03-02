@@ -12,6 +12,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ActionPaletteShared from "@/components/shared/ActionPalette";
 
 import { usePatients, type PatientFilter, type SortKey } from "./PatientsContext";
 
@@ -201,56 +202,28 @@ function PatientRowMenu({ patient: p }: { patient: any }) {
 /* ── Actions Palette ── */
 export function PatientsPalette() {
   const ctx = usePatients();
-  if (!ctx.actionsOpen) return null;
+
+  const mapped = ctx.paletteFlat.map(a => ({
+    id: a.id,
+    label: a.title,
+    hint: a.hint,
+    meta: a.meta,
+    group: a.group,
+    disabled: a.disabled,
+    onRun: a.onRun,
+  }));
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => ctx.setActionsOpen(false)}>
-      <div className="bg-card rounded-xl border shadow-elevated w-full max-w-xl mx-4 animate-scale-in overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input ref={ctx.actionsInputRef} value={ctx.actionsQ} onChange={(e) => { ctx.setActionsQ(e.target.value); ctx.setActionsIndex(0); }}
-                placeholder={ctx.palettePatient ? `Action pour ${ctx.palettePatient.name}…` : "Rechercher un patient ou une action…"} className="pl-10 h-10" />
-            </div>
-            {ctx.palettePatient && (
-              <button className="rounded-lg border bg-muted px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
-                onClick={() => { ctx.setActionsQ(""); ctx.setActionsIndex(0); }}>{ctx.palettePatient.avatar} · Changer</button>
-            )}
-            <span className="rounded-lg border bg-muted px-2 py-1 text-[11px] text-muted-foreground">Ctrl+K</span>
-          </div>
-        </div>
-        <div className="max-h-[52vh] overflow-y-auto">
-          {ctx.paletteSections.map((section) => (
-            <div key={section.group} className="py-2">
-              <div className="px-4 py-1 text-[11px] font-semibold text-muted-foreground">{section.group}</div>
-              <div className="px-2">
-                {section.items.map((a) => {
-                  const idx = ctx.paletteFlat.findIndex((x) => x.id === a.id);
-                  const active = idx === ctx.actionsIndex;
-                  return (
-                    <button key={a.id} disabled={a.disabled} onMouseEnter={() => ctx.setActionsIndex(idx)} onClick={() => !a.disabled && a.onRun()}
-                      className={`w-full rounded-xl px-3 py-2 text-left transition-colors ${a.disabled ? "opacity-50 cursor-not-allowed" : active ? "bg-primary/10" : "hover:bg-muted/60"}`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-foreground truncate">{a.title}</div>
-                          {a.meta && <div className="text-[11px] text-muted-foreground truncate">{a.meta}</div>}
-                        </div>
-                        <div className="text-xs text-muted-foreground">{a.hint}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-          {ctx.paletteFlat.length === 0 && <div className="p-6 text-center"><p className="text-sm font-medium text-foreground">Aucune action</p></div>}
-        </div>
-        <div className="p-3 border-t flex items-center justify-between">
-          <div className="text-xs text-muted-foreground">↑↓ naviguer · Entrée lancer · Esc fermer</div>
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.setActionsOpen(false)}>Fermer</Button>
-        </div>
-      </div>
-    </div>
+    <ActionPaletteShared
+      open={ctx.actionsOpen}
+      onClose={() => ctx.setActionsOpen(false)}
+      actions={mapped}
+      query={ctx.actionsQ}
+      onQueryChange={v => { ctx.setActionsQ(v); ctx.setActionsIndex(0); }}
+      placeholder={ctx.palettePatient ? `Action pour ${ctx.palettePatient.name}…` : "Rechercher un patient ou une action…"}
+      contextLabel={ctx.palettePatient ? `${ctx.palettePatient.avatar}` : undefined}
+      contextAction={() => { ctx.setActionsQ(""); ctx.setActionsIndex(0); }}
+    />
   );
 }
 

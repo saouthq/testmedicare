@@ -1,8 +1,10 @@
+import React from "react";
 import { AlertTriangle, CheckCircle2, History, Pill, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useConsultation } from "./ConsultationContext";
+import ActionPaletteShared from "@/components/shared/ActionPalette";
 
 export function CloseModal() {
   const ctx = useConsultation();
@@ -108,43 +110,25 @@ export function HistoryDrawer() {
 
 export function CommandPalette() {
   const ctx = useConsultation();
-  if (!ctx.paletteOpen) return null;
+
+  const mapped = ctx.filteredPalette.map(a => ({
+    id: a.id,
+    label: a.label,
+    hint: a.hint,
+    icon: a.icon as React.ReactNode,
+    group: "Actions",
+    onRun: a.onRun,
+  }));
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm" onClick={() => ctx.setPaletteOpen(false)}>
-      <div className="max-w-lg w-[92%] mx-auto mt-24 rounded-2xl border bg-card shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="p-3 border-b flex items-center gap-2">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input ref={ctx.paletteInputRef} value={ctx.paletteQuery} onChange={e => { ctx.setPaletteQuery(e.target.value); ctx.setPaletteIndex(0); }} placeholder="Rechercher une action…" className="h-9" />
-          <span className="text-[11px] text-muted-foreground px-2 py-1 rounded-full bg-muted">Ctrl+K</span>
-        </div>
-        <div className="p-2">
-          {ctx.filteredPalette.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground">Aucune action.</div>
-          ) : (
-            <div className="space-y-1">
-              {ctx.filteredPalette.map((a, i) => (
-                <button key={a.id}
-                  className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl ${i === ctx.paletteIndex ? "bg-muted" : "hover:bg-muted/60"}`}
-                  onMouseEnter={() => ctx.setPaletteIndex(i)}
-                  onClick={() => { ctx.setPaletteOpen(false); a.onRun(); }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">{a.icon}</span>
-                    <span className="text-sm font-medium text-foreground">{a.label}</span>
-                  </div>
-                  {a.hint && <span className="text-xs text-muted-foreground">{a.hint}</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="p-3 border-t flex items-center justify-between text-xs text-muted-foreground">
-          <span>↑ ↓ pour naviguer · Entrée pour lancer · Esc pour fermer</span>
-          <Button variant="ghost" size="sm" className="h-8" onClick={() => ctx.setPaletteOpen(false)}>Fermer</Button>
-        </div>
-      </div>
-    </div>
+    <ActionPaletteShared
+      open={ctx.paletteOpen}
+      onClose={() => ctx.setPaletteOpen(false)}
+      actions={mapped}
+      query={ctx.paletteQuery}
+      onQueryChange={v => { ctx.setPaletteQuery(v); ctx.setPaletteIndex(0); }}
+      placeholder="Rechercher une action…"
+    />
   );
 }
 
