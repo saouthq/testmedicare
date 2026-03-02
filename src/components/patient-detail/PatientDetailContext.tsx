@@ -20,6 +20,7 @@ import type {
   VitalsData, RxDraftItem, LabPanel,
 } from "./types";
 import { makeCode, nowAt, dateLabel, buildRxItemsLabel } from "./helpers";
+import { Stethoscope, Pill, Droplets, FileText, ChevronRight, ClipboardList, History, MessageSquare, Phone, Calendar, Printer } from "lucide-react";
 
 /* ---- Context value type ---- */
 interface PatientDetailValue {
@@ -469,7 +470,6 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
   // ── Actions palette items ──
   const actions = useMemo(() => {
     type AG = "Consultation" | "Créer" | "Dossier" | "Communication" | "Utilitaires";
-    const { Stethoscope, Pill, Droplets, FileText, ChevronRight, ClipboardList, History, MessageSquare, Phone, Calendar, Printer } = require("lucide-react");
     const items: Array<{ id: string; group: AG; label: string; hint?: string; icon: ReactNode; run: () => void }> = [
       { id: "new-consult", group: "Consultation", label: "Nouvelle consultation", hint: "Ouvrir le module", icon: <Stethoscope className="h-4 w-4" />, run: () => toast({ title: "Nouvelle consultation", description: "Workflow intra‑page (UI). À brancher." }) },
       { id: "rx", group: "Créer", label: "Créer une ordonnance", hint: "Composer → signer → envoyer", icon: <Pill className="h-4 w-4" />, run: openRx },
