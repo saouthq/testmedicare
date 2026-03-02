@@ -1,16 +1,19 @@
 /**
  * PrescriptionsComponents — UI de la page Ordonnances.
- * Toolbar, Stats, Liste, Row, Detail Sheet.
+ * Toolbar, Stats, Liste, Row, Detail Sheet, ActionPalette.
  */
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Copy, FileText, Printer, Search, Send } from "lucide-react";
 import { usePrescriptions } from "./PrescriptionsContext";
+import ActionPaletteShared, { type ActionItem } from "@/components/shared/ActionPalette";
 import type { PrescriptionFilter } from "./types";
 import type { Prescription } from "@/types";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 /* ── Stats ── */
 export function PrescriptionsStats() {
@@ -55,12 +58,45 @@ export function PrescriptionsToolbar() {
             </Button>
           ))}
         </div>
-        <div className="relative w-full max-w-xl">
-          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher patient, ordonnance…" className="h-9 pl-9 text-sm" />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher patient, ordonnance…" className="h-9 pl-9 text-sm" />
+          </div>
+          <PrescriptionsActionButton />
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Actions Button + Palette ── */
+function PrescriptionsActionButton() {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ctx = usePrescriptions();
+
+  const actions: ActionItem[] = [
+    { id: "print-all", label: "Imprimer toutes les ordonnances", hint: "À brancher", group: "Actions", onRun: () => toast({ title: "Impression", description: "À brancher." }) },
+    { id: "export-csv", label: "Exporter CSV", hint: "Liste filtrée", group: "Actions", onRun: () => toast({ title: "Export CSV", description: "À brancher." }) },
+    { id: "new-rx", label: "Nouvelle ordonnance", hint: "Créer", group: "Actions", onRun: () => toast({ title: "Nouvelle ordonnance", description: "Workflow à brancher." }) },
+    { id: "filter-all", label: "Toutes", group: "Filtrer", onRun: () => { ctx.setFilter("all"); } },
+    { id: "filter-active", label: "Actives", group: "Filtrer", onRun: () => { ctx.setFilter("active"); } },
+    { id: "filter-expired", label: "Expirées", group: "Filtrer", onRun: () => { ctx.setFilter("expired"); } },
+    { id: "filter-sent", label: "Envoyées", group: "Filtrer", onRun: () => { ctx.setFilter("sent"); } },
+  ];
+
+  const filtered = q.trim()
+    ? actions.filter(a => `${a.label} ${a.hint || ""}`.toLowerCase().includes(q.trim().toLowerCase()))
+    : actions;
+
+  return (
+    <>
+      <Button variant="outline" size="sm" className="text-xs" onClick={() => { setOpen(true); setQ(""); }}>
+        <Search className="h-3.5 w-3.5 mr-1" />Actions
+      </Button>
+      <ActionPaletteShared open={open} onClose={() => setOpen(false)} actions={filtered} query={q} onQueryChange={setQ} placeholder="Rechercher une action…" />
+    </>
   );
 }
 

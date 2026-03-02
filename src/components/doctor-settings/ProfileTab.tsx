@@ -1,20 +1,34 @@
-import { useState } from "react";
+/**
+ * ProfileTab — Refonte Doctolib-style.
+ * 2 colonnes : aperçu profil + sections éditables avec indicateur de complétion.
+ *
+ * // TODO BACKEND: PUT /api/doctor/profile
+ */
+import { useState, useMemo } from "react";
+import { Award, Briefcase, Camera, CreditCard, Globe, GraduationCap, MapPin, Navigation, Plus, Trash2, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
-import {
-  Eye, Camera, Briefcase, GraduationCap, Award, CreditCard, Navigation,
-  Plus, Trash2, Pencil, X, Save,
-} from "lucide-react";
 import { mockDoctorProfile } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import ProfileCompletionBar, { type CompletionItem } from "./ProfileCompletionBar";
+import ProfilePreview from "./ProfilePreview";
+import ProfileSection from "./ProfileSection";
+import ProfileSectionEditor from "./ProfileSectionEditor";
+
+type EditingSection = null | "identity" | "cabinet" | "specialties" | "tarifs" | "actes" | "languages" | "diplomas" | "affiliations" | "description";
 
 const ProfileTab = () => {
   const p = mockDoctorProfile;
 
-  const [firstName] = useState(p.name.replace("Dr. ", "").split(" ")[0]);
-  const [lastName] = useState(p.name.replace("Dr. ", "").split(" ").slice(1).join(" "));
+  // State
+  const [firstName, setFirstName] = useState(p.name.replace("Dr. ", "").split(" ")[0]);
+  const [lastName, setLastName] = useState(p.name.replace("Dr. ", "").split(" ").slice(1).join(" "));
+  const [email, setEmail] = useState(p.email);
+  const [phone, setPhone] = useState(p.phone);
+  const [address, setAddress] = useState(p.address);
+  const [presentation, setPresentation] = useState(p.presentation);
+  const [specialty] = useState(p.specialty);
   const [subSpecialties, setSubSpecialties] = useState(p.subSpecialties);
   const [newSubSpec, setNewSubSpec] = useState("");
   const [diplomas, setDiplomas] = useState(p.diplomas);
@@ -23,12 +37,37 @@ const ProfileTab = () => {
   const [memberships, setMemberships] = useState(p.memberships);
   const [newMembership, setNewMembership] = useState("");
   const [motifs, setMotifs] = useState(p.motifs);
+  const [languages, setLanguages] = useState(p.languages);
+  const [newLang, setNewLang] = useState("");
   const [accessInfo, setAccessInfo] = useState(p.accessInfo);
 
-  const [editDiploma, setEditDiploma] = useState<number | null>(null);
+  // Editing
+  const [editing, setEditing] = useState<EditingSection>(null);
   const [diplomaForm, setDiplomaForm] = useState({ title: "", school: "", year: "" });
-  const [editMotif, setEditMotif] = useState<number | null>(null);
   const [motifForm, setMotifForm] = useState({ name: "", duration: "", price: "" });
+
+  // Completion
+  const completionItems = useMemo<CompletionItem[]>(() => [
+    { key: "photo", label: "Photo de profil", done: false, onClick: () => toast({ title: "Photo", description: "Upload à brancher." }) },
+    { key: "presentation", label: "Description / Présentation", done: !!presentation.trim(), onClick: () => setEditing("description") },
+    { key: "address", label: "Adresse du cabinet", done: !!address.trim(), onClick: () => setEditing("cabinet") },
+    { key: "phone", label: "Téléphone", done: !!phone.trim(), onClick: () => setEditing("identity") },
+    { key: "subspecialties", label: "Sous-spécialités", done: subSpecialties.length > 0, onClick: () => setEditing("specialties") },
+    { key: "tarifs", label: "Au moins 1 tarif", done: motifs.length > 0, onClick: () => setEditing("tarifs") },
+    { key: "diplomas", label: "Diplômes", done: diplomas.length > 0, onClick: () => setEditing("diplomas") },
+    { key: "languages", label: "Langues parlées", done: languages.length > 0, onClick: () => setEditing("languages") },
+  ], [presentation, address, phone, subSpecialties, motifs, diplomas, languages]);
+
+  // Preview data
+  const previewData = useMemo(() => ({
+    initials: p.initials,
+    name: `Dr. ${firstName} ${lastName}`,
+    specialty, subSpecialties, address, phone, languages,
+    rating: (p as any).rating ?? 4.8, reviewCount: p.reviewCount,
+    consultationDuration: String(p.consultationDuration),
+    priceConsultation: String(p.priceRange.consultation),
+    presentation,
+  }), [firstName, lastName, specialty, subSpecialties, address, phone, languages, presentation, p]);
 
   const addChip = (value: string, list: string[], setter: (v: string[]) => void, inputSetter: (v: string) => void) => {
     if (value.trim() && !list.includes(value.trim())) {
@@ -37,79 +76,228 @@ const ProfileTab = () => {
     }
   };
 
-  const handleSave = () => {
-    // TODO BACKEND: PUT /api/doctor/profile — envoyer toutes les données du profil
-    toast({ title: "Enregistré", description: "Vos modifications ont été sauvegardées." });
+  const handleSave = (section: EditingSection) => {
+    // TODO BACKEND: PUT /api/doctor/profile/{section}
+    setEditing(null);
+    toast({ title: "Enregistré", description: "Modifications sauvegardées." });
   };
 
   return (
     <div className="space-y-6">
-      <Link to="/doctor/1" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-        <Eye className="h-4 w-4" />Voir mon profil public
-      </Link>
+      <ProfileCompletionBar items={completionItems} />
 
-      {/* Photo + Personal info */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <h3 className="font-semibold text-foreground mb-4">Informations personnelles</h3>
-        <div className="flex items-center gap-4 mb-5">
-          <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center text-primary-foreground text-xl font-bold shrink-0">
-            {p.initials}
-          </div>
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* Sections éditables */}
+        <div className="space-y-4">
+          {/* Identity */}
+          <ProfileSection icon={User} title="Identité" onEdit={() => setEditing("identity")}>
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl gradient-primary flex items-center justify-center text-primary-foreground text-lg font-bold shrink-0">
+                {p.initials}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Dr. {firstName} {lastName}</p>
+                <p className="text-xs text-muted-foreground">{email} · {phone}</p>
+              </div>
+            </div>
+          </ProfileSection>
+
+          {/* Cabinet */}
+          <ProfileSection icon={MapPin} title="Cabinet" summary={address || "Adresse non renseignée"} onEdit={() => setEditing("cabinet")}>
+            <div className="text-sm text-foreground">{address || "—"}</div>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {accessInfo.parking && <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full">🅿️ Parking</span>}
+              {accessInfo.handicap && <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full">♿ Accès handicapé</span>}
+              {accessInfo.elevator && <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full">🛗 Ascenseur</span>}
+            </div>
+          </ProfileSection>
+
+          {/* Specialties */}
+          <ProfileSection icon={Briefcase} title="Spécialités" onEdit={() => setEditing("specialties")}>
+            <p className="text-sm font-medium text-foreground mb-2">{specialty}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {subSpecialties.map(s => (
+                <span key={s} className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">{s}</span>
+              ))}
+              {subSpecialties.length === 0 && <span className="text-xs text-muted-foreground">Aucune sous-spécialité</span>}
+            </div>
+          </ProfileSection>
+
+          {/* Tarifs */}
+          <ProfileSection icon={CreditCard} title="Tarifs par motif" onEdit={() => setEditing("tarifs")}>
+            {motifs.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {motifs.map((m, i) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="py-2 font-medium text-foreground">{m.name}</td>
+                        <td className="py-2 text-muted-foreground">{m.duration}</td>
+                        <td className="py-2 font-bold text-primary">{m.price}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : <p className="text-xs text-muted-foreground">Aucun tarif configuré</p>}
+          </ProfileSection>
+
+          {/* Actes */}
+          <ProfileSection icon={Briefcase} title="Expertises & Actes" onEdit={() => setEditing("actes")}>
+            <div className="flex flex-wrap gap-1.5">
+              {actes.map(a => (
+                <span key={a} className="text-[11px] bg-primary/5 text-foreground border border-primary/20 px-2 py-0.5 rounded-lg">{a}</span>
+              ))}
+              {actes.length === 0 && <span className="text-xs text-muted-foreground">Aucun acte</span>}
+            </div>
+          </ProfileSection>
+
+          {/* Languages */}
+          <ProfileSection icon={Globe} title="Langues" onEdit={() => setEditing("languages")}>
+            <div className="flex flex-wrap gap-1.5">
+              {languages.map(l => (
+                <span key={l} className="text-[11px] bg-muted px-2 py-0.5 rounded-full">{l}</span>
+              ))}
+            </div>
+          </ProfileSection>
+
+          {/* Diplomas */}
+          <ProfileSection icon={GraduationCap} title="Formations & Diplômes" onEdit={() => setEditing("diplomas")}>
+            <div className="space-y-2">
+              {diplomas.map((d, i) => (
+                <div key={i} className="rounded-lg border p-3 bg-muted/20">
+                  <p className="text-sm font-medium text-foreground">{d.title}</p>
+                  <p className="text-xs text-muted-foreground">{d.school} · {d.year}</p>
+                </div>
+              ))}
+              {diplomas.length === 0 && <p className="text-xs text-muted-foreground">Aucun diplôme</p>}
+            </div>
+          </ProfileSection>
+
+          {/* Affiliations */}
+          <ProfileSection icon={Award} title="Affiliations" onEdit={() => setEditing("affiliations")}>
+            <div className="space-y-1.5">
+              {memberships.map((m, i) => (
+                <p key={i} className="text-sm text-foreground">{m}</p>
+              ))}
+              {memberships.length === 0 && <p className="text-xs text-muted-foreground">Aucune affiliation</p>}
+            </div>
+          </ProfileSection>
+
+          {/* Description */}
+          <ProfileSection icon={User} title="Description" onEdit={() => setEditing("description")}>
+            <p className="text-sm text-foreground whitespace-pre-line line-clamp-4">
+              {presentation || "Aucune description."}
+            </p>
+          </ProfileSection>
+        </div>
+
+        {/* Preview */}
+        <div className="hidden lg:block">
+          <ProfilePreview data={previewData} />
+        </div>
+      </div>
+
+      {/* ═══ EDITORS ═══ */}
+
+      {/* Identity */}
+      <ProfileSectionEditor open={editing === "identity"} onClose={() => setEditing(null)} title="Identité" description="Informations personnelles" onSave={() => handleSave("identity")}>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center text-primary-foreground text-xl font-bold shrink-0">{p.initials}</div>
           <div>
             <Button variant="outline" size="sm" className="text-xs"><Camera className="h-3.5 w-3.5 mr-1" />Changer la photo</Button>
             <p className="text-[11px] text-muted-foreground mt-1">JPG ou PNG, max 2 Mo</p>
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div><Label>Prénom</Label><Input defaultValue={firstName} className="mt-1" /></div>
-          <div><Label>Nom</Label><Input defaultValue={lastName} className="mt-1" /></div>
-          <div><Label>Email</Label><Input defaultValue={p.email} className="mt-1" /></div>
-          <div><Label>Téléphone</Label><Input defaultValue={p.phone} className="mt-1" /></div>
-          <div className="sm:col-span-2"><Label>Adresse du cabinet</Label><Input defaultValue={p.address} className="mt-1" /></div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div><Label className="text-xs">Prénom</Label><Input value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1" /></div>
+          <div><Label className="text-xs">Nom</Label><Input value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1" /></div>
+          <div><Label className="text-xs">Email</Label><Input value={email} onChange={e => setEmail(e.target.value)} className="mt-1" /></div>
+          <div><Label className="text-xs">Téléphone</Label><Input value={phone} onChange={e => setPhone(e.target.value)} className="mt-1" /></div>
         </div>
-      </div>
+      </ProfileSectionEditor>
 
-      {/* Professional info */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <h3 className="font-semibold text-foreground mb-4">Informations professionnelles</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div><Label>Spécialité</Label><Input defaultValue={p.specialty} className="mt-1" /></div>
-          <div><Label>N° Ordre des Médecins</Label><Input defaultValue={p.orderNumber} className="mt-1" /></div>
-          <div><Label>Convention CNAM</Label>
-            <select defaultValue={p.convention} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-              <option>Conventionné Secteur 1</option><option>Conventionné Secteur 2</option><option>Non conventionné</option>
-            </select>
+      {/* Cabinet */}
+      <ProfileSectionEditor open={editing === "cabinet"} onClose={() => setEditing(null)} title="Cabinet" description="Adresse et informations d'accès" onSave={() => handleSave("cabinet")}>
+        <div><Label className="text-xs">Adresse</Label><Input value={address} onChange={e => setAddress(e.target.value)} className="mt-1" /></div>
+        <div><Label className="text-xs">Transport en commun</Label><Input value={accessInfo.publicTransport} onChange={e => setAccessInfo(a => ({ ...a, publicTransport: e.target.value }))} className="mt-1" /></div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={accessInfo.parking} onChange={() => setAccessInfo(a => ({ ...a, parking: !a.parking }))} className="rounded border-input h-4 w-4" /><span className="text-sm">🅿️ Parking</span></label>
+          <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={accessInfo.handicap} onChange={() => setAccessInfo(a => ({ ...a, handicap: !a.handicap }))} className="rounded border-input h-4 w-4" /><span className="text-sm">♿ Accès handicapé</span></label>
+          <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={accessInfo.elevator} onChange={() => setAccessInfo(a => ({ ...a, elevator: !a.elevator }))} className="rounded border-input h-4 w-4" /><span className="text-sm">🛗 Ascenseur</span></label>
+        </div>
+      </ProfileSectionEditor>
+
+      {/* Specialties */}
+      <ProfileSectionEditor open={editing === "specialties"} onClose={() => setEditing(null)} title="Spécialités" description="Spécialité principale et sous-spécialités" onSave={() => handleSave("specialties")}>
+        <div><Label className="text-xs">Spécialité principale</Label><Input value={specialty} readOnly className="mt-1 bg-muted/50" /></div>
+        <div>
+          <Label className="text-xs">Sous-spécialités</Label>
+          <div className="flex flex-wrap gap-2 my-2">
+            {subSpecialties.map((s, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full">
+                {s}<button onClick={() => setSubSpecialties(prev => prev.filter((_, idx) => idx !== i))}><X className="h-3 w-3" /></button>
+              </span>
+            ))}
           </div>
-          <div><Label>Tarif consultation (DT)</Label><Input defaultValue={p.priceRange.consultation} className="mt-1" type="number" /></div>
-          <div className="sm:col-span-2"><Label>Présentation</Label><textarea defaultValue={p.presentation} rows={4} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm" /></div>
-          <div><Label>Durée de consultation (min)</Label><Input defaultValue={p.consultationDuration} className="mt-1" type="number" /></div>
-          <div><Label>Langues parlées</Label><Input defaultValue={p.languages.join(", ")} className="mt-1" /></div>
+          <div className="flex gap-2">
+            <Input value={newSubSpec} onChange={e => setNewSubSpec(e.target.value)} placeholder="Ajouter…" className="flex-1" onKeyDown={e => e.key === "Enter" && addChip(newSubSpec, subSpecialties, setSubSpecialties, setNewSubSpec)} />
+            <Button variant="outline" size="sm" onClick={() => addChip(newSubSpec, subSpecialties, setSubSpecialties, setNewSubSpec)}><Plus className="h-4 w-4" /></Button>
+          </div>
         </div>
-      </div>
+      </ProfileSectionEditor>
 
-      {/* Sub-specialties */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Briefcase className="h-4 w-4 text-primary" />Sous-spécialités</h3>
+      {/* Tarifs */}
+      <ProfileSectionEditor open={editing === "tarifs"} onClose={() => setEditing(null)} title="Tarifs par motif" description="Configurez vos tarifs de consultation" onSave={() => handleSave("tarifs")}>
+        <div className="space-y-2">
+          {motifs.map((m, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-lg border p-3">
+              <div className="flex-1 grid gap-2 sm:grid-cols-3">
+                <Input value={m.name} onChange={e => setMotifs(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Motif" className="text-xs h-8" />
+                <Input value={m.duration} onChange={e => setMotifs(prev => prev.map((x, j) => j === i ? { ...x, duration: e.target.value } : x))} placeholder="Durée" className="text-xs h-8" />
+                <Input value={m.price} onChange={e => setMotifs(prev => prev.map((x, j) => j === i ? { ...x, price: e.target.value } : x))} placeholder="Prix" className="text-xs h-8" />
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => setMotifs(prev => prev.filter((_, j) => j !== i))}><Trash2 className="h-3.5 w-3.5" /></Button>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" className="text-xs w-full" onClick={() => setMotifs(prev => [...prev, { name: "", duration: "", price: "" }])}>
+            <Plus className="h-3.5 w-3.5 mr-1" />Ajouter un motif
+          </Button>
+        </div>
+      </ProfileSectionEditor>
+
+      {/* Actes */}
+      <ProfileSectionEditor open={editing === "actes"} onClose={() => setEditing(null)} title="Expertises & Actes" onSave={() => handleSave("actes")}>
         <div className="flex flex-wrap gap-2 mb-3">
-          {subSpecialties.map((s, i) => (
-            <span key={i} className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full">
-              {s}
-              <button onClick={() => setSubSpecialties(prev => prev.filter((_, idx) => idx !== i))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+          {actes.map((a, i) => (
+            <span key={i} className="inline-flex items-center gap-1 text-xs bg-primary/5 text-foreground border border-primary/20 px-3 py-1.5 rounded-lg">
+              {a}<button onClick={() => setActes(prev => prev.filter((_, idx) => idx !== i))}><X className="h-3 w-3" /></button>
             </span>
           ))}
         </div>
         <div className="flex gap-2">
-          <Input value={newSubSpec} onChange={e => setNewSubSpec(e.target.value)} placeholder="Ajouter une sous-spécialité..." className="flex-1" onKeyDown={e => e.key === "Enter" && addChip(newSubSpec, subSpecialties, setSubSpecialties, setNewSubSpec)} />
-          <Button variant="outline" size="sm" onClick={() => addChip(newSubSpec, subSpecialties, setSubSpecialties, setNewSubSpec)}><Plus className="h-4 w-4" /></Button>
+          <Input value={newActe} onChange={e => setNewActe(e.target.value)} placeholder="Ajouter un acte…" className="flex-1" onKeyDown={e => e.key === "Enter" && addChip(newActe, actes, setActes, setNewActe)} />
+          <Button variant="outline" size="sm" onClick={() => addChip(newActe, actes, setActes, setNewActe)}><Plus className="h-4 w-4" /></Button>
         </div>
-      </div>
+      </ProfileSectionEditor>
+
+      {/* Languages */}
+      <ProfileSectionEditor open={editing === "languages"} onClose={() => setEditing(null)} title="Langues parlées" onSave={() => handleSave("languages")}>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {languages.map((l, i) => (
+            <span key={i} className="inline-flex items-center gap-1 text-xs bg-muted px-3 py-1.5 rounded-full">
+              {l}<button onClick={() => setLanguages(prev => prev.filter((_, idx) => idx !== i))}><X className="h-3 w-3" /></button>
+            </span>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Input value={newLang} onChange={e => setNewLang(e.target.value)} placeholder="Ajouter une langue…" className="flex-1" onKeyDown={e => e.key === "Enter" && addChip(newLang, languages, setLanguages, setNewLang)} />
+          <Button variant="outline" size="sm" onClick={() => addChip(newLang, languages, setLanguages, setNewLang)}><Plus className="h-4 w-4" /></Button>
+        </div>
+      </ProfileSectionEditor>
 
       {/* Diplomas */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground flex items-center gap-2"><GraduationCap className="h-4 w-4 text-primary" />Formations & Diplômes</h3>
-          <Button variant="outline" size="sm" onClick={() => { setEditDiploma(-1); setDiplomaForm({ title: "", school: "", year: "" }); }}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>
-        </div>
+      <ProfileSectionEditor open={editing === "diplomas"} onClose={() => setEditing(null)} title="Formations & Diplômes" onSave={() => handleSave("diplomas")}>
         <div className="space-y-2">
           {diplomas.map((d, i) => (
             <div key={i} className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
@@ -117,54 +305,25 @@ const ProfileTab = () => {
                 <p className="text-sm font-medium text-foreground">{d.title}</p>
                 <p className="text-xs text-muted-foreground">{d.school} · {d.year}</p>
               </div>
-              <div className="flex gap-1">
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setEditDiploma(i); setDiplomaForm(d); }}><Pencil className="h-3.5 w-3.5" /></Button>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => setDiplomas(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-3.5 w-3.5" /></Button>
-              </div>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => setDiplomas(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-3.5 w-3.5" /></Button>
             </div>
           ))}
-        </div>
-        {editDiploma !== null && (
-          <div className="mt-3 rounded-lg border p-4 bg-primary/5">
+          <div className="rounded-lg border p-4 bg-primary/5">
             <div className="grid gap-3 sm:grid-cols-3">
               <div><Label className="text-xs">Titre *</Label><Input value={diplomaForm.title} onChange={e => setDiplomaForm(f => ({ ...f, title: e.target.value }))} className="mt-1" /></div>
               <div><Label className="text-xs">Établissement</Label><Input value={diplomaForm.school} onChange={e => setDiplomaForm(f => ({ ...f, school: e.target.value }))} className="mt-1" /></div>
               <div><Label className="text-xs">Année</Label><Input value={diplomaForm.year} onChange={e => setDiplomaForm(f => ({ ...f, year: e.target.value }))} className="mt-1" /></div>
             </div>
-            <div className="flex gap-2 mt-3">
-              <Button variant="outline" size="sm" onClick={() => setEditDiploma(null)}>Annuler</Button>
-              <Button size="sm" className="gradient-primary text-primary-foreground" disabled={!diplomaForm.title.trim()} onClick={() => {
-                // TODO BACKEND: POST/PUT /api/doctor/diplomas
-                if (editDiploma === -1) setDiplomas(prev => [...prev, diplomaForm]);
-                else setDiplomas(prev => prev.map((d, i) => i === editDiploma ? diplomaForm : d));
-                setEditDiploma(null);
-                toast({ title: editDiploma === -1 ? "Ajouté" : "Modifié" });
-              }}><Save className="h-3.5 w-3.5 mr-1" />{editDiploma === -1 ? "Ajouter" : "Enregistrer"}</Button>
-            </div>
+            <Button size="sm" className="text-xs mt-3" disabled={!diplomaForm.title.trim()} onClick={() => {
+              setDiplomas(prev => [...prev, diplomaForm]);
+              setDiplomaForm({ title: "", school: "", year: "" });
+            }}><Plus className="h-3.5 w-3.5 mr-1" />Ajouter</Button>
           </div>
-        )}
-      </div>
-
-      {/* Expertises & Actes */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Briefcase className="h-4 w-4 text-primary" />Expertises & Actes</h3>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {actes.map((a, i) => (
-            <span key={i} className="inline-flex items-center gap-1 text-xs bg-primary/5 text-foreground border border-primary/20 px-3 py-1.5 rounded-lg">
-              {a}
-              <button onClick={() => setActes(prev => prev.filter((_, idx) => idx !== i))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
-            </span>
-          ))}
         </div>
-        <div className="flex gap-2">
-          <Input value={newActe} onChange={e => setNewActe(e.target.value)} placeholder="Ajouter un acte..." className="flex-1" onKeyDown={e => e.key === "Enter" && addChip(newActe, actes, setActes, setNewActe)} />
-          <Button variant="outline" size="sm" onClick={() => addChip(newActe, actes, setActes, setNewActe)}><Plus className="h-4 w-4" /></Button>
-        </div>
-      </div>
+      </ProfileSectionEditor>
 
       {/* Affiliations */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Award className="h-4 w-4 text-primary" />Affiliations</h3>
+      <ProfileSectionEditor open={editing === "affiliations"} onClose={() => setEditing(null)} title="Affiliations" onSave={() => handleSave("affiliations")}>
         <div className="space-y-2 mb-3">
           {memberships.map((m, i) => (
             <div key={i} className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
@@ -174,89 +333,22 @@ const ProfileTab = () => {
           ))}
         </div>
         <div className="flex gap-2">
-          <Input value={newMembership} onChange={e => setNewMembership(e.target.value)} placeholder="Ajouter une affiliation..." className="flex-1" onKeyDown={e => { if (e.key === "Enter") addChip(newMembership, memberships, setMemberships, setNewMembership); }} />
+          <Input value={newMembership} onChange={e => setNewMembership(e.target.value)} placeholder="Ajouter…" className="flex-1" onKeyDown={e => { if (e.key === "Enter") addChip(newMembership, memberships, setMemberships, setNewMembership); }} />
           <Button variant="outline" size="sm" onClick={() => addChip(newMembership, memberships, setMemberships, setNewMembership)}><Plus className="h-4 w-4" /></Button>
         </div>
-      </div>
+      </ProfileSectionEditor>
 
-      {/* Tarifs par motif */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Tarifs par motif</h3>
-          <Button variant="outline" size="sm" onClick={() => { setEditMotif(-1); setMotifForm({ name: "", duration: "", price: "" }); }}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="pb-2 font-medium">Motif</th>
-                <th className="pb-2 font-medium">Durée</th>
-                <th className="pb-2 font-medium">Prix</th>
-                <th className="pb-2 w-16"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {motifs.map((m, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td className="py-2.5 font-medium text-foreground">{m.name}</td>
-                  <td className="py-2.5 text-muted-foreground">{m.duration}</td>
-                  <td className="py-2.5 font-bold text-primary">{m.price}</td>
-                  <td className="py-2.5">
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setEditMotif(i); setMotifForm(m); }}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => setMotifs(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-3.5 w-3.5" /></Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {editMotif !== null && (
-          <div className="mt-3 rounded-lg border p-4 bg-primary/5">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div><Label className="text-xs">Motif *</Label><Input value={motifForm.name} onChange={e => setMotifForm(f => ({ ...f, name: e.target.value }))} className="mt-1" /></div>
-              <div><Label className="text-xs">Durée</Label><Input value={motifForm.duration} onChange={e => setMotifForm(f => ({ ...f, duration: e.target.value }))} placeholder="Ex: 30 min" className="mt-1" /></div>
-              <div><Label className="text-xs">Prix</Label><Input value={motifForm.price} onChange={e => setMotifForm(f => ({ ...f, price: e.target.value }))} placeholder="Ex: 35 DT" className="mt-1" /></div>
-            </div>
-            <div className="flex gap-2 mt-3">
-              <Button variant="outline" size="sm" onClick={() => setEditMotif(null)}>Annuler</Button>
-              <Button size="sm" className="gradient-primary text-primary-foreground" disabled={!motifForm.name.trim()} onClick={() => {
-                // TODO BACKEND: POST/PUT /api/doctor/motifs
-                if (editMotif === -1) setMotifs(prev => [...prev, motifForm]);
-                else setMotifs(prev => prev.map((m, i) => i === editMotif ? motifForm : m));
-                setEditMotif(null);
-                toast({ title: editMotif === -1 ? "Motif ajouté" : "Motif modifié" });
-              }}><Save className="h-3.5 w-3.5 mr-1" />{editMotif === -1 ? "Ajouter" : "Enregistrer"}</Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Access info */}
-      <div className="rounded-xl border bg-card p-6 shadow-card">
-        <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Navigation className="h-4 w-4 text-primary" />Informations d'accès</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={accessInfo.parking} onChange={() => setAccessInfo(a => ({ ...a, parking: !a.parking }))} className="rounded border-input h-5 w-5" />
-            <span className="text-sm text-foreground">🅿️ Parking disponible</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={accessInfo.handicap} onChange={() => setAccessInfo(a => ({ ...a, handicap: !a.handicap }))} className="rounded border-input h-5 w-5" />
-            <span className="text-sm text-foreground">♿ Accès handicapé</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={accessInfo.elevator} onChange={() => setAccessInfo(a => ({ ...a, elevator: !a.elevator }))} className="rounded border-input h-5 w-5" />
-            <span className="text-sm text-foreground">🛗 Ascenseur</span>
-          </label>
-          <div className="sm:col-span-2">
-            <Label>Transport en commun</Label>
-            <Input value={accessInfo.publicTransport} onChange={e => setAccessInfo(a => ({ ...a, publicTransport: e.target.value }))} className="mt-1" />
-          </div>
-        </div>
-      </div>
-
-      <Button className="gradient-primary text-primary-foreground shadow-primary-glow" onClick={handleSave}><Save className="h-4 w-4 mr-2" />Enregistrer</Button>
+      {/* Description */}
+      <ProfileSectionEditor open={editing === "description"} onClose={() => setEditing(null)} title="Description" description="Présentez-vous aux patients" onSave={() => handleSave("description")}>
+        <textarea
+          value={presentation}
+          onChange={e => setPresentation(e.target.value)}
+          rows={8}
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+          placeholder="Décrivez votre parcours, votre approche, vos domaines d'expertise…"
+        />
+        <p className="text-[11px] text-muted-foreground">{presentation.length} caractères</p>
+      </ProfileSectionEditor>
     </div>
   );
 };
