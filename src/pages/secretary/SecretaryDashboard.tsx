@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { mockSecretaryWaitingRoom, mockSecretaryAppointments } from "@/data/mockData";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import ActionPalette, { type ActionItem } from "@/components/shared/ActionPalette";
-import SecretaryTeleconsultPanel, { type TeleconsultAppointment } from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
+import SecretaryTeleconsultPanel from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
 
 type DashTab = "overview" | "billing" | "patients";
 
@@ -114,13 +114,7 @@ const SecretaryDashboard = () => {
   const inProgressCount = waitingRoom.filter(w => w.status === "in_consultation").length;
   const doneCount = appointments.filter(a => a.status === "done").length;
 
-  // Teleconsultation appointments for supervision panel
-  const teleconsultAppts: TeleconsultAppointment[] = appointments
-    .filter((a: any) => a.teleconsultation === true)
-    .map(a => ({
-      id: a.id, time: a.time, patient: a.patient, avatar: a.avatar,
-      doctor: a.doctor, status: "upcoming" as const,
-    }));
+  // Teleconsult panel now reads from shared store — no local filtering needed
 
   /* ── Waiting room handlers ── */
 
@@ -412,10 +406,8 @@ const SecretaryDashboard = () => {
                 </div>
               </div>
 
-              {/* Teleconsultations du jour */}
-              {teleconsultAppts.length > 0 && (
-                <SecretaryTeleconsultPanel appointments={teleconsultAppts} />
-              )}
+              {/* Téléconsultations du jour — lit le store partagé */}
+              <SecretaryTeleconsultPanel />
             </div>
 
             {/* Right sidebar */}

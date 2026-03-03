@@ -7,6 +7,8 @@ import { Link } from "react-router-dom";
 import StatusBadge from "@/components/shared/StatusBadge";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import { mockScheduleDays, mockScheduleHours, mockScheduleAppointments, mockRecurDays, mockPatients } from "@/data/mockData";
+import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
+import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 
 const getPatientId = (name: string) => {
   const p = mockPatients.find(p => p.name === name);
@@ -24,6 +26,7 @@ const colorMap: Record<string, string> = {
 };
 
 const DoctorSchedule = () => {
+  const teleconsultSessions = useTeleconsultSessions();
   const [view, setView] = useState<ViewMode>("week");
   const [selectedDay, setSelectedDay] = useState("Lun 17");
   const [modal, setModal] = useState<ModalType>(null);
@@ -235,6 +238,15 @@ const DoctorSchedule = () => {
               )}
               <Button variant="outline" className="w-full justify-start h-9 text-sm" onClick={() => handleAction("arrived")}><Play className="h-4 w-4 mr-2 text-primary" />Marquer arrivé</Button>
               <Link to={`/dashboard/doctor/consultation/new?patient=${selectedApt ? getPatientId(selectedApt.patient) : 1}`}><Button variant="outline" className="w-full justify-start h-9 text-sm"><Play className="h-4 w-4 mr-2 text-accent" />Démarrer consultation</Button></Link>
+              {selectedApt.teleconsultation && (() => {
+                const matchSession = teleconsultSessions.find(ts => ts.patientName === selectedApt.patient);
+                if (matchSession) return (
+                  <div className="mb-2">
+                    <DoctorJoinTeleconsultButton sessionId={matchSession.id} />
+                  </div>
+                );
+                return null;
+              })()}
               <Button variant="outline" className="w-full justify-start h-9 text-sm"><MessageSquare className="h-4 w-4 mr-2 text-primary" />Message patient</Button>
               <Button variant="outline" className="w-full justify-start h-9 text-sm"><RefreshCw className="h-4 w-4 mr-2 text-warning" />Déplacer</Button>
               <Button variant="outline" className="w-full justify-start h-9 text-sm hover:text-destructive hover:bg-destructive/10" onClick={() => handleAction("cancel")}><X className="h-4 w-4 mr-2" />Annuler RDV</Button>

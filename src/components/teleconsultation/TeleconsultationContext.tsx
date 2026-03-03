@@ -7,6 +7,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/hooks/use-toast";
 import type { TelePhase, ConnectionQuality, MediaState, ChatMessage, TeleSummary, DossierTab } from "./types";
+import { useTeleconsultSessions, startCall as storeStartCall, endSession as storeEndSession } from "./teleconsultSessionStore";
 
 interface TeleCtx {
   role: "patient" | "doctor";
@@ -119,8 +120,16 @@ export function TeleconsultationProvider({ role, children }: { role: "patient" |
     setNewMessage("");
   }, [newMessage, role]);
 
+  const sessions = useTeleconsultSessions();
+  // Find the first active session for this role
+  const activeSession = sessions.find(s => s.status !== "ended");
+
   const startCall = useCallback(() => {
     // TODO BACKEND: POST /api/teleconsultation/join
+    // Update shared store
+    if (activeSession) {
+      storeStartCall(activeSession.id);
+    }
     setPhase("call");
     let seconds = 0;
     intervalRef.current = setInterval(() => {
@@ -130,15 +139,19 @@ export function TeleconsultationProvider({ role, children }: { role: "patient" |
       const s = String(seconds % 60).padStart(2, "0");
       setCallDuration(`${h}:${m}:${s}`);
     }, 1000);
-  }, []);
+  }, [activeSession]);
 
   const endCall = useCallback(() => setPhase("ending"), []);
   const confirmEnd = useCallback(() => {
     // TODO BACKEND: POST /api/teleconsultation/end
     if (intervalRef.current) clearInterval(intervalRef.current);
+    // Update shared store
+    if (activeSession) {
+      storeEndSession(activeSession.id);
+    }
     setPhase("summary");
     toast({ title: "Consultation terminée", description: "Récapitulatif disponible." });
-  }, []);
+  }, [activeSession]);
   const cancelEnd = useCallback(() => setPhase("call"), []);
 
   const toggleMute = () => setMedia(m => ({ ...m, isMuted: !m.isMuted }));

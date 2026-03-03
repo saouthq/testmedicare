@@ -7,6 +7,7 @@
  *   - ended / expired : muted + CTA "Contacter le cabinet"
  *
  * Rafraîchit automatiquement toutes les 30 secondes.
+ * Met à jour le store partagé quand le patient rejoint.
  */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,17 +15,20 @@ import { Video, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { getTeleconsultJoinState, type TeleconsultJoinResult } from "./teleconsultHelpers";
+import { patientJoin } from "./teleconsultSessionStore";
 
 interface JoinTeleconsultButtonProps {
   /** Date/heure ISO du RDV */
   scheduledAt: string;
+  /** ID de session téléconsultation (pour le store partagé) */
+  sessionId?: string;
   /** Date courante (injectable pour tests/démo) */
   now?: Date;
   /** Afficher en pleine largeur */
   fullWidth?: boolean;
 }
 
-export default function JoinTeleconsultButton({ scheduledAt, now, fullWidth = false }: JoinTeleconsultButtonProps) {
+export default function JoinTeleconsultButton({ scheduledAt, sessionId, now, fullWidth = false }: JoinTeleconsultButtonProps) {
   const navigate = useNavigate();
   const [joinState, setJoinState] = useState<TeleconsultJoinResult>(() =>
     getTeleconsultJoinState(scheduledAt, now ?? new Date())
@@ -40,6 +44,9 @@ export default function JoinTeleconsultButton({ scheduledAt, now, fullWidth = fa
 
   const handleJoin = () => {
     // TODO BACKEND: validate join / session — vérifier que le patient a le droit de rejoindre
+    if (sessionId) {
+      patientJoin(sessionId);
+    }
     toast({ title: "Connexion à la téléconsultation…", description: "Vérification de la session en cours." });
     navigate("/dashboard/patient/teleconsultation");
   };

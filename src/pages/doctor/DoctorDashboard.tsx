@@ -9,6 +9,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts, mockDoctorProfile, mockPatients } from "@/data/mockData";
+import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
+import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 
 const getPatientId = (name: string) => {
   const p = mockPatients.find(p => p.name === name);
@@ -21,6 +23,7 @@ const DoctorDashboard = () => {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
+  const teleconsultSessions = useTeleconsultSessions();
 
   const doneCount = mockTodaySchedule.filter(s => s.status === "done").length;
   const totalCount = mockTodaySchedule.length;
@@ -78,6 +81,33 @@ const DoctorDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Teleconsultations actives */}
+        {teleconsultSessions.filter(s => s.status !== "ended").length > 0 && (
+          <div className="rounded-xl border bg-card shadow-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Video className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-foreground text-sm">Téléconsultations</h3>
+              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                {teleconsultSessions.filter(s => s.status !== "ended").length}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {teleconsultSessions.filter(s => s.status !== "ended").map(session => (
+                <div key={session.id} className="flex items-center gap-3 rounded-lg border p-3 bg-primary/5 border-primary/20">
+                  <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-xs font-medium text-primary-foreground">{session.patientAvatar}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{session.patientName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(session.scheduledAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · Téléconsultation
+                    </p>
+                  </div>
+                  <DoctorJoinTeleconsultButton sessionId={session.id} compact />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Alerts */}
         {mockUrgentAlerts.length > 0 && (
@@ -163,6 +193,12 @@ const DoctorDashboard = () => {
                 <div className="flex items-center gap-1.5 shrink-0">
                   {s.status === "done" && <span className="rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[11px] font-medium flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Terminé</span>}
                           {s.status === "current" && <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(s.patient)}`}><Button size="sm" className="h-7 text-xs gradient-primary text-primary-foreground"><Play className="h-3 w-3 mr-1" />En cours</Button></Link>}
+                  {s.status === "upcoming" && s.teleconsultation && (() => {
+                    // Match to a teleconsult session by patient name
+                    const matchSession = teleconsultSessions.find(ts => ts.patientName === s.patient);
+                    if (matchSession) return <DoctorJoinTeleconsultButton sessionId={matchSession.id} compact />;
+                    return null;
+                  })()}
                   {s.status === "upcoming" && (
                     <>
                       <span className="rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[11px] font-medium hidden sm:inline">À venir</span>
