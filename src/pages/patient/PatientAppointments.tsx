@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
 import EmptyState from "@/components/shared/EmptyState";
+import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsultButton";
 
 type Tab = "upcoming" | "past" | "cancelled";
 
@@ -20,13 +21,10 @@ const PatientAppointments = () => {
   const [appointments, setAppointments] = useState(initialAppointments);
   const [cancelledList, setCancelledList] = useState(mockCancelledAppointments);
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
-  // Drawer state for appointment detail
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
-  // Review modal
   const [showReviewModal, setShowReviewModal] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState("");
   const [reviewSent, setReviewSent] = useState<Set<number>>(new Set());
-  // Report modal
   const [showReportModal, setShowReportModal] = useState<number | null>(null);
 
   const handleCancel = (id: number) => {
@@ -62,7 +60,7 @@ const PatientAppointments = () => {
           <Link to="/search"><Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm"><Plus className="h-4 w-4 mr-2" />Nouveau RDV</Button></Link>
         </div>
 
-        {/* ── Upcoming: compact clickable cards ── */}
+        {/* ── Upcoming ── */}
         {tab === "upcoming" && (
           <div className="space-y-3">
             {appointments.length === 0 && <EmptyState icon={Calendar} title="Aucun rendez-vous à venir" description="Prenez rendez-vous avec un praticien." actionLabel="Prendre un RDV" actionLink="/search" />}
@@ -87,6 +85,12 @@ const PatientAppointments = () => {
                         <span>·</span>
                         <span className="flex items-center gap-0.5">{a.type === "teleconsultation" ? <><Video className="h-3 w-3 text-primary" />Téléconsult</> : <><MapPin className="h-3 w-3" /><span className="truncate max-w-[120px] sm:max-w-none">{a.address}</span></>}</span>
                       </div>
+                      {/* Bouton rejoindre inline pour les téléconsultations */}
+                      {a.type === "teleconsultation" && (a as any).scheduledAt && (
+                        <div className="mt-2" onClick={e => e.stopPropagation()}>
+                          <JoinTeleconsultButton scheduledAt={(a as any).scheduledAt} />
+                        </div>
+                      )}
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </div>
@@ -96,7 +100,7 @@ const PatientAppointments = () => {
           </div>
         )}
 
-        {/* ── Past: compact clickable cards ── */}
+        {/* ── Past ── */}
         {tab === "past" && (
           <div className="space-y-3">
             {initialPastAppointments.length === 0 && <EmptyState icon={Calendar} title="Aucun rendez-vous passé" description="Vos rendez-vous passés apparaîtront ici." />}
@@ -140,11 +144,10 @@ const PatientAppointments = () => {
         )}
       </div>
 
-      {/* ── Detail drawer (bottom sheet style) ── */}
+      {/* ── Detail drawer ── */}
       {(currentApt || currentPast) && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setDrawerApt(null)}>
           <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            {/* Handle bar mobile */}
             <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
             
             {currentApt && (
@@ -181,7 +184,14 @@ const PatientAppointments = () => {
                 <p className="text-[10px] text-muted-foreground">📋 {currentApt.cancellationPolicy}</p>
                 {/* Actions */}
                 <div className="space-y-2">
-                  {currentApt.type === "teleconsultation" && <Link to="/dashboard/patient/teleconsultation" className="block"><Button className="w-full gradient-primary text-primary-foreground"><Video className="h-4 w-4 mr-2" />Rejoindre la téléconsultation</Button></Link>}
+                  {/* Bouton teleconsultation dynamique */}
+                  {currentApt.type === "teleconsultation" && (currentApt as any).scheduledAt && (
+                    <JoinTeleconsultButton scheduledAt={(currentApt as any).scheduledAt} fullWidth />
+                  )}
+                  {/* Fallback si pas de scheduledAt (ancien mock) */}
+                  {currentApt.type === "teleconsultation" && !(currentApt as any).scheduledAt && (
+                    <JoinTeleconsultButton scheduledAt={new Date(Date.now() + 10 * 60_000).toISOString()} fullWidth />
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
                     {currentApt.canModify && <Link to={`/booking/${currentApt.id}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button></Link>}
@@ -259,19 +269,18 @@ const PatientAppointments = () => {
               placeholder="Partagez votre expérience avec ce praticien..."
               value={reviewText}
               onChange={e => setReviewText(e.target.value)}
-              className="min-h-[100px] mb-4"
+              rows={4}
             />
-            <Button
-              className="w-full gradient-primary text-primary-foreground"
-              disabled={!reviewText.trim()}
-              onClick={() => {
-                setReviewSent(prev => new Set(prev).add(showReviewModal));
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setShowReviewModal(null)}>Annuler</Button>
+              <Button className="flex-1 gradient-primary text-primary-foreground" disabled={!reviewText.trim()} onClick={() => {
+                setReviewSent(prev => new Set([...prev, showReviewModal]));
                 setShowReviewModal(null);
                 setReviewText("");
-              }}
-            >
-              <Send className="h-4 w-4 mr-2" />Envoyer mon avis
-            </Button>
+              }}>
+                <Send className="h-3.5 w-3.5 mr-1" />Envoyer
+              </Button>
+            </div>
           </div>
         </div>
       );
@@ -283,26 +292,20 @@ const PatientAppointments = () => {
       if (!apt) return null;
       return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowReportModal(null)}>
-          <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
             <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-foreground">Compte-rendu</h3>
               <button onClick={() => setShowReportModal(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
             </div>
-            <div className="text-sm text-muted-foreground mb-3">
-              <p className="font-medium text-foreground">{apt.doctor}</p>
-              <p>{apt.specialty} · {apt.date}</p>
+            <p className="text-sm text-muted-foreground mb-2">{apt.doctor} · {apt.date}</p>
+            <div className="rounded-lg bg-muted/50 p-4 text-sm text-foreground space-y-2">
+              <p><strong>Motif :</strong> {apt.motif}</p>
+              <p><strong>Examen clinique :</strong> État général satisfaisant. Constantes normales.</p>
+              <p><strong>Diagnostic :</strong> Suivi de routine — pas d'anomalie détectée.</p>
+              <p><strong>Conduite à tenir :</strong> Continuer le traitement en cours. Prochain contrôle dans 3 mois.</p>
             </div>
-            <div className="rounded-xl border bg-muted/30 p-4 space-y-3 text-sm">
-              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Motif</p><p className="text-foreground">{apt.motif}</p></div>
-              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Examen clinique</p><p className="text-muted-foreground">Examen physique normal. Constantes dans les normes. TA 12/8, FC 72 bpm.</p></div>
-              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Diagnostic</p><p className="text-muted-foreground">État de santé satisfaisant. Poursuite du traitement en cours.</p></div>
-              <div><p className="font-semibold text-foreground text-xs uppercase tracking-wider mb-1">Conduite à tenir</p><p className="text-muted-foreground">Continuer le traitement prescrit. Contrôle dans 3 mois. Bilan sanguin à réaliser avant la prochaine consultation.</p></div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button variant="outline" className="flex-1 text-xs"><FileText className="h-3.5 w-3.5 mr-1" />Télécharger PDF</Button>
-              <Button variant="outline" className="flex-1 text-xs" onClick={() => setShowReportModal(null)}>Fermer</Button>
-            </div>
+            <Button variant="outline" className="w-full mt-4 text-xs" onClick={() => setShowReportModal(null)}>Fermer</Button>
           </div>
         </div>
       );

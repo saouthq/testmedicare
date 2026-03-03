@@ -47,6 +47,8 @@ export interface PatientAppointment {
   cancellationPolicy: string;
   documents: string[];
   instructions: string;
+  /** Date/heure ISO pour le calcul d'accès téléconsultation */
+  scheduledAt?: string;
 }
 
 export interface PastAppointment {

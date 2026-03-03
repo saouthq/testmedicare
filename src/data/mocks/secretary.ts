@@ -3,6 +3,12 @@
  */
 import type { ChatContact, ChatMessage } from "@/types";
 
+/* ── Secretary Team (pour DoctorSecretary) ── */
+export const mockSecretaryTeam = [
+  { id: 1, name: "Leila Hammami", email: "leila@cabinet-bouazizi.tn", phone: "+216 71 234 568", status: "active" as const, since: "Jan 2025", lastLogin: "Aujourd'hui 08:30", permissions: ["agenda", "patients", "facturation", "documents"] },
+  { id: 2, name: "Sara Jelassi", email: "sara@cabinet-bouazizi.tn", phone: "+216 55 987 654", status: "active" as const, since: "Mar 2025", lastLogin: "Hier 17:45", permissions: ["agenda", "patients"] },
+];
+
 export const mockSecretaryWaitingRoom = [
   { id: 1, patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", motif: "Suivi diabète", status: "waiting" as string, avatar: "AB", cnam: true, waitMin: 15 },
   { id: 2, patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", motif: "Bilan cardiaque", status: "waiting" as string, avatar: "FT", cnam: true, waitMin: 10 },
