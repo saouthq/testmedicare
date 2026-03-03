@@ -2,16 +2,35 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { 
   Calendar, Clock, CheckCircle2, Play, Bell, MapPin, RefreshCw, Plus, Timer,
   Users, Search, Phone, Shield, FileText, Banknote, Eye, X, ChevronRight,
-  UserCheck, Stethoscope, Video, AlertTriangle, MessageSquare, Send
+  UserCheck, Stethoscope, Video, AlertTriangle, MessageSquare, Send,
+  UserX, StickyNote, Command
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { toast } from "@/hooks/use-toast";
 import { mockSecretaryWaitingRoom, mockSecretaryAppointments } from "@/data/mockData";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import ActionPalette, { type ActionItem } from "@/components/shared/ActionPalette";
+import SecretaryTeleconsultPanel, { type TeleconsultAppointment } from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
 
 type DashTab = "overview" | "billing" | "patients";
+
+/* ── Waiting room statuses enrichis ── */
+type WaitingStatus = "upcoming" | "arrived" | "waiting" | "called" | "in_consultation" | "done" | "absent";
+
+const waitingStatusConfig: Record<WaitingStatus, { label: string; className: string; icon: any }> = {
+  upcoming:          { label: "À venir",          className: "bg-muted/50 text-muted-foreground",                icon: Clock },
+  arrived:           { label: "Arrivé",           className: "bg-accent/10 text-accent",                        icon: UserCheck },
+  waiting:           { label: "En attente",       className: "bg-warning/10 text-warning",                      icon: Clock },
+  called:            { label: "Appelé",           className: "bg-accent/10 text-accent animate-pulse",          icon: Bell },
+  in_consultation:   { label: "En consultation",  className: "bg-primary/10 text-primary",                      icon: Stethoscope },
+  done:              { label: "Terminé",          className: "bg-muted text-muted-foreground",                  icon: CheckCircle2 },
+  absent:            { label: "Absent",           className: "bg-destructive/10 text-destructive",              icon: UserX },
+};
 
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
   done: { label: "Terminé", class: "bg-muted text-muted-foreground", icon: CheckCircle2 },
@@ -38,7 +57,10 @@ const recentPatients = [
 ];
 
 const SecretaryDashboard = () => {
-  const [waitingRoom, setWaitingRoom] = useState(mockSecretaryWaitingRoom);
+  // Enriched waiting room with full lifecycle statuses
+  const [waitingRoom, setWaitingRoom] = useState(
+    mockSecretaryWaitingRoom.map(w => ({ ...w, status: w.status as WaitingStatus, internalNote: "" }))
+  );
   const [appointments, setAppointments] = useState(mockSecretaryAppointments);
   const [refreshing, setRefreshing] = useState(false);
   const [timeSlot, setTimeSlot] = useState<"morning" | "afternoon">("morning");
@@ -60,26 +82,100 @@ const SecretaryDashboard = () => {
   // Search
   const [searchPatient, setSearchPatient] = useState("");
 
+  // Internal note modal
+  const [noteTarget, setNoteTarget] = useState<number | null>(null);
+  const [noteText, setNoteText] = useState("");
+
+  // ConfirmDialog
+  const [confirmAction, setConfirmAction] = useState<{
+    open: boolean; title: string; description: string;
+    variant: "danger" | "warning" | "default"; confirmLabel: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", description: "", variant: "default", confirmLabel: "Confirmer", onConfirm: () => {} });
+
+  // ActionPalette (Ctrl+K)
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState("");
+
+  // Ctrl+K shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setPaletteOpen(true); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const morningAppts = appointments.filter(a => parseInt(a.time) < 13);
   const afternoonAppts = appointments.filter(a => parseInt(a.time) >= 13);
   const displayedAppts = timeSlot === "morning" ? morningAppts : afternoonAppts;
 
-  const waitingCount = waitingRoom.filter(w => w.status === "waiting" || w.status === "called").length;
-  const inProgressCount = appointments.filter(a => a.status === "in_progress").length;
+  const waitingCount = waitingRoom.filter(w => w.status === "waiting" || w.status === "called" || w.status === "arrived").length;
+  const inProgressCount = waitingRoom.filter(w => w.status === "in_consultation").length;
   const doneCount = appointments.filter(a => a.status === "done").length;
-  const totalActive = appointments.filter(a => a.status !== "done").length;
+
+  // Teleconsultation appointments for supervision panel
+  const teleconsultAppts: TeleconsultAppointment[] = appointments
+    .filter((a: any) => a.teleconsultation === true)
+    .map(a => ({
+      id: a.id, time: a.time, patient: a.patient, avatar: a.avatar,
+      doctor: a.doctor, status: "upcoming" as const,
+    }));
+
+  /* ── Waiting room handlers ── */
+
+  const handleCheckin = (id: number) => {
+    // TODO BACKEND: PATCH /api/appointments/{id}/checkin
+    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "arrived" as WaitingStatus } : w));
+    const p = waitingRoom.find(w => w.id === id);
+    toast({ title: "Check-in effectué", description: `${p?.patient} est arrivé(e).` });
+  };
 
   const handleCallPatient = (id: number) => {
-    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "called" } : w));
+    // TODO BACKEND: PATCH /api/appointments/{id}/call
+    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "called" as WaitingStatus } : w));
   };
 
   const handleSendToConsult = (id: number) => {
-    setWaitingRoom(prev => prev.filter(w => w.id !== id));
+    // TODO BACKEND: PATCH /api/appointments/{id}/start-consultation
+    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "in_consultation" as WaitingStatus } : w));
     setAppointments(prev => prev.map(a => {
-      const wr = mockSecretaryWaitingRoom.find(w => w.id === id);
+      const wr = waitingRoom.find(w => w.id === id);
       if (wr && a.patient === wr.patient) return { ...a, status: "in_progress" };
       return a;
     }));
+  };
+
+  const handleFinish = (id: number) => {
+    // TODO BACKEND: PATCH /api/appointments/{id}/finish
+    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "done" as WaitingStatus } : w));
+    toast({ title: "Consultation terminée" });
+  };
+
+  const handleMarkAbsent = (id: number) => {
+    const p = waitingRoom.find(w => w.id === id);
+    setConfirmAction({
+      open: true,
+      title: "Marquer comme absent",
+      description: `Marquer ${p?.patient} comme absent ? Le RDV sera considéré comme non honoré.`,
+      variant: "warning",
+      confirmLabel: "Marquer absent",
+      onConfirm: () => {
+        // TODO BACKEND: PATCH /api/appointments/{id}/no-show
+        setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "absent" as WaitingStatus } : w));
+        toast({ title: "Patient marqué absent", description: `${p?.patient} — RDV non honoré.` });
+        setConfirmAction(prev => ({ ...prev, open: false }));
+      },
+    });
+  };
+
+  const handleSaveNote = () => {
+    if (!noteTarget || !noteText.trim()) return;
+    // TODO BACKEND: POST /api/appointments/{id}/notes
+    setWaitingRoom(prev => prev.map(w => w.id === noteTarget ? { ...w, internalNote: noteText } : w));
+    toast({ title: "Note enregistrée" });
+    setNoteTarget(null);
+    setNoteText("");
   };
 
   const handleRefresh = () => { setRefreshing(true); setTimeout(() => setRefreshing(false), 1000); };
@@ -90,18 +186,33 @@ const SecretaryDashboard = () => {
 
   const handleCreateInvoice = () => {
     if (!invoicePatient || invoiceActs.length === 0) return;
+    // TODO BACKEND: POST /api/billing/invoice
+    toast({ title: "Facture créée", description: `${invoiceTotal} DT encaissé pour ${invoicePatient}.` });
     setShowQuickInvoice(false);
     setInvoicePatient("");
     setInvoiceActs([]);
   };
 
   const invoiceTotal = invoiceActs.reduce((s, a) => s + a.price, 0);
-
   const selectedApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
+  const filteredPatients = recentPatients.filter(p => !searchPatient || p.name.toLowerCase().includes(searchPatient.toLowerCase()));
 
-  const filteredPatients = recentPatients.filter(p => 
-    !searchPatient || p.name.toLowerCase().includes(searchPatient.toLowerCase())
-  );
+  /* ── ActionPalette items ── */
+  const paletteActions: ActionItem[] = useMemo(() => {
+    const items: ActionItem[] = [
+      { id: "checkin", group: "Actions", label: "Check-in patient", hint: "Accueillir", icon: <UserCheck className="h-4 w-4" />, onRun: () => toast({ title: "Sélectionnez un patient", description: "Cliquez sur un patient dans la salle d'attente." }) },
+      { id: "call", group: "Actions", label: "Appeler un patient", icon: <Bell className="h-4 w-4" />, onRun: () => toast({ title: "Sélectionnez un patient" }) },
+      { id: "invoice", group: "Actions", label: "Encaisser un patient", icon: <Banknote className="h-4 w-4" />, onRun: () => { setActiveTab("billing"); setShowQuickInvoice(true); } },
+      { id: "new-rdv", group: "Navigation", label: "Nouveau RDV", icon: <Calendar className="h-4 w-4" />, onRun: () => window.location.assign("/dashboard/secretary/agenda") },
+      { id: "new-patient", group: "Navigation", label: "Nouveau patient", icon: <Users className="h-4 w-4" />, onRun: () => setShowNewPatient(true) },
+      { id: "agenda", group: "Navigation", label: "Voir l'agenda", icon: <Calendar className="h-4 w-4" />, onRun: () => window.location.assign("/dashboard/secretary/agenda") },
+      { id: "documents", group: "Navigation", label: "Documents", icon: <FileText className="h-4 w-4" />, onRun: () => window.location.assign("/dashboard/secretary/documents") },
+      { id: "messages", group: "Navigation", label: "Messagerie", icon: <MessageSquare className="h-4 w-4" />, onRun: () => window.location.assign("/dashboard/secretary/messages") },
+    ];
+    if (!paletteQuery) return items;
+    const q = paletteQuery.toLowerCase();
+    return items.filter(i => i.label.toLowerCase().includes(q) || (i.group || "").toLowerCase().includes(q));
+  }, [paletteQuery]);
 
   return (
     <DashboardLayout role="secretary" title="Tableau de bord">
@@ -115,6 +226,9 @@ const SecretaryDashboard = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setPaletteOpen(true)}>
+              <Command className="h-3.5 w-3.5 mr-1" />Actions <span className="ml-1 text-muted-foreground text-[10px]">Ctrl+K</span>
+            </Button>
             <Button variant="outline" size="sm" className="text-xs" onClick={handleRefresh}>
               <RefreshCw className={`h-3.5 w-3.5 mr-1 ${refreshing ? "animate-spin" : ""}`} />Actualiser
             </Button>
@@ -167,7 +281,7 @@ const SecretaryDashboard = () => {
         {activeTab === "overview" && (
           <div className="grid gap-5 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-5">
-              {/* Waiting Room */}
+              {/* Waiting Room — enriched with full lifecycle */}
               <div className="rounded-xl border border-warning/30 bg-card shadow-card">
                 <div className="flex items-center justify-between border-b px-5 py-4">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -179,41 +293,78 @@ const SecretaryDashboard = () => {
                   <div className="p-8 text-center"><Timer className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Salle d'attente vide</p></div>
                 ) : (
                   <div className="divide-y">
-                    {waitingRoom.map((w) => (
-                      <div key={w.id} className={`p-4 transition-colors ${w.status === "called" ? "bg-accent/5" : "hover:bg-muted/30"}`}>
-                        <div className="flex items-center gap-4">
-                          <div className={`h-11 w-11 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${w.status === "called" ? "bg-accent text-accent-foreground" : "bg-warning/10 text-warning"}`}>
-                            {w.avatar}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-semibold text-foreground text-sm">{w.patient}</p>
-                              {w.status === "called" && <span className="text-[10px] bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-bold animate-pulse">APPELÉ</span>}
-                              {w.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                    {waitingRoom.map((w) => {
+                      const sConfig = waitingStatusConfig[w.status];
+                      const SIcon = sConfig.icon;
+                      return (
+                        <div key={w.id} className={`p-4 transition-colors ${w.status === "called" ? "bg-accent/5" : w.status === "absent" ? "bg-destructive/5 opacity-60" : "hover:bg-muted/30"}`}>
+                          <div className="flex items-center gap-4">
+                            <div className={`h-11 w-11 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                              w.status === "called" ? "bg-accent text-accent-foreground" :
+                              w.status === "absent" ? "bg-destructive/10 text-destructive" :
+                              w.status === "in_consultation" ? "bg-primary/10 text-primary" :
+                              "bg-warning/10 text-warning"
+                            }`}>
+                              {w.avatar}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">{w.doctor} · {w.motif} · RDV {w.appointment}</p>
-                            <div className="flex items-center gap-1 mt-1">
-                              <Timer className="h-3 w-3 text-muted-foreground" />
-                              <span className={`text-[11px] font-medium ${w.waitMin > 15 ? "text-destructive" : w.waitMin > 10 ? "text-warning" : "text-muted-foreground"}`}>
-                                Arrivé à {w.arrivedAt} · {w.waitMin} min d'attente
-                              </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-semibold text-foreground text-sm">{w.patient}</p>
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${sConfig.className}`}>
+                                  <SIcon className="h-3 w-3" />{sConfig.label}
+                                </span>
+                                {w.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">{w.doctor} · {w.motif} · RDV {w.appointment}</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <Timer className="h-3 w-3 text-muted-foreground" />
+                                <span className={`text-[11px] font-medium ${w.waitMin > 15 ? "text-destructive" : w.waitMin > 10 ? "text-warning" : "text-muted-foreground"}`}>
+                                  Arrivé à {w.arrivedAt} · {w.waitMin} min d'attente
+                                </span>
+                              </div>
+                              {w.internalNote && (
+                                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                                  <StickyNote className="h-3 w-3" />Note : {w.internalNote}
+                                </p>
+                              )}
                             </div>
-                          </div>
-                          <div className="flex gap-2 shrink-0">
-                            {w.status === "waiting" && (
-                              <Button size="sm" className="h-8 text-xs gradient-primary text-primary-foreground" onClick={() => handleCallPatient(w.id)}>
-                                <Bell className="h-3.5 w-3.5 mr-1" />Appeler
-                              </Button>
-                            )}
-                            {w.status === "called" && (
-                              <Button size="sm" className="h-8 text-xs bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => handleSendToConsult(w.id)}>
-                                <Play className="h-3.5 w-3.5 mr-1" />En consultation
-                              </Button>
-                            )}
+                            {/* Actions contextuelles par statut */}
+                            <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
+                              {w.status === "upcoming" && (
+                                <Button size="sm" className="h-7 text-[10px]" variant="outline" onClick={() => handleCheckin(w.id)}>
+                                  <UserCheck className="h-3 w-3 mr-1" />Check-in
+                                </Button>
+                              )}
+                              {(w.status === "arrived" || w.status === "waiting") && (
+                                <>
+                                  <Button size="sm" className="h-7 text-[10px] gradient-primary text-primary-foreground" onClick={() => handleCallPatient(w.id)}>
+                                    <Bell className="h-3 w-3 mr-1" />Appeler
+                                  </Button>
+                                  <Button size="sm" className="h-7 text-[10px]" variant="outline" onClick={() => { setNoteTarget(w.id); setNoteText(w.internalNote); }}>
+                                    <StickyNote className="h-3 w-3 mr-1" />Note
+                                  </Button>
+                                </>
+                              )}
+                              {w.status === "called" && (
+                                <Button size="sm" className="h-7 text-[10px] bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => handleSendToConsult(w.id)}>
+                                  <Play className="h-3 w-3 mr-1" />En consultation
+                                </Button>
+                              )}
+                              {w.status === "in_consultation" && (
+                                <Button size="sm" className="h-7 text-[10px]" variant="outline" onClick={() => handleFinish(w.id)}>
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />Terminer
+                                </Button>
+                              )}
+                              {w.status !== "done" && w.status !== "absent" && (
+                                <Button size="sm" className="h-7 text-[10px] text-destructive" variant="ghost" onClick={() => handleMarkAbsent(w.id)}>
+                                  <UserX className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -241,12 +392,13 @@ const SecretaryDashboard = () => {
                         }`}>
                         <div className="w-12 text-center shrink-0">
                           <p className="text-sm font-semibold text-foreground">{a.time}</p>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${config.class}`}>{config.label}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${config?.class || ""}`}>{config?.label || a.status}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-foreground text-sm">{a.patient}</p>
                             {a.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                            {(a as any).teleconsultation && <Video className="h-3 w-3 text-primary" />}
                           </div>
                           <p className="text-xs text-muted-foreground">{a.type} · {a.doctor}</p>
                         </div>
@@ -259,9 +411,14 @@ const SecretaryDashboard = () => {
                   })}
                 </div>
               </div>
+
+              {/* Teleconsultations du jour */}
+              {teleconsultAppts.length > 0 && (
+                <SecretaryTeleconsultPanel appointments={teleconsultAppts} />
+              )}
             </div>
 
-            {/* Right sidebar - Quick actions */}
+            {/* Right sidebar */}
             <div className="space-y-5">
               {/* Quick actions */}
               <div className="rounded-xl border bg-card shadow-card p-5">
@@ -522,7 +679,7 @@ const SecretaryDashboard = () => {
               </div>
               <div className="space-y-2">
                 {selectedApt.status === "upcoming" && (
-                  <Button size="sm" className="w-full text-xs" variant="outline" onClick={() => { /* accueillir */ setDrawerApt(null); }}>
+                  <Button size="sm" className="w-full text-xs" variant="outline" onClick={() => { setDrawerApt(null); }}>
                     <UserCheck className="h-3.5 w-3.5 mr-1" />Accueillir le patient
                   </Button>
                 )}
@@ -532,7 +689,22 @@ const SecretaryDashboard = () => {
                 <Button size="sm" className="w-full text-xs" variant="outline">
                   <Phone className="h-3.5 w-3.5 mr-1" />Appeler le patient
                 </Button>
-                <Button size="sm" className="w-full text-xs text-destructive border-destructive/30" variant="outline">
+                <Button size="sm" className="w-full text-xs text-destructive border-destructive/30" variant="outline" onClick={() => {
+                  setConfirmAction({
+                    open: true,
+                    title: "Annuler le RDV",
+                    description: `Annuler le RDV de ${selectedApt.patient} à ${selectedApt.time} ?`,
+                    variant: "danger",
+                    confirmLabel: "Annuler le RDV",
+                    onConfirm: () => {
+                      // TODO BACKEND: DELETE /api/appointments/{id}
+                      setAppointments(prev => prev.filter(a => a.id !== selectedApt.id));
+                      toast({ title: "RDV annulé" });
+                      setConfirmAction(prev => ({ ...prev, open: false }));
+                      setDrawerApt(null);
+                    },
+                  });
+                }}>
                   <X className="h-3.5 w-3.5 mr-1" />Annuler le RDV
                 </Button>
               </div>
@@ -544,7 +716,7 @@ const SecretaryDashboard = () => {
       {/* ── New patient modal ── */}
       {showNewPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowNewPatient(false)}>
-          <div className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-foreground">Nouveau patient</h3>
               <button onClick={() => setShowNewPatient(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
@@ -569,12 +741,64 @@ const SecretaryDashboard = () => {
               <div><Label className="text-xs">Notes</Label><textarea rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" placeholder="Notes..." /></div>
               <div className="flex gap-2 pt-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowNewPatient(false)}>Annuler</Button>
-                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={() => setShowNewPatient(false)}>Créer le patient</Button>
+                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={() => {
+                  // TODO BACKEND: POST /api/patients
+                  toast({ title: "Patient créé", description: "Le nouveau patient a été ajouté." });
+                  setShowNewPatient(false);
+                }}>Créer le patient</Button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* ── Internal note modal ── */}
+      {noteTarget !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setNoteTarget(null)}>
+          <div className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-foreground">Note interne</h3>
+              <button onClick={() => setNoteTarget(null)}><X className="h-5 w-5 text-muted-foreground" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              {waitingRoom.find(w => w.id === noteTarget)?.patient} — note visible uniquement par l'équipe du cabinet.
+            </p>
+            <Textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="Ex: Patient allergique, prévoir salle 2..."
+              rows={3}
+            />
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setNoteTarget(null)}>Annuler</Button>
+              <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleSaveNote} disabled={!noteText.trim()}>
+                <StickyNote className="h-3.5 w-3.5 mr-1" />Enregistrer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ConfirmDialog */}
+      <ConfirmDialog
+        open={confirmAction.open}
+        onConfirm={confirmAction.onConfirm}
+        onCancel={() => setConfirmAction(prev => ({ ...prev, open: false }))}
+        title={confirmAction.title}
+        description={confirmAction.description}
+        variant={confirmAction.variant}
+        confirmLabel={confirmAction.confirmLabel}
+      />
+
+      {/* ActionPalette (Ctrl+K) */}
+      <ActionPalette
+        open={paletteOpen}
+        onClose={() => { setPaletteOpen(false); setPaletteQuery(""); }}
+        actions={paletteActions}
+        query={paletteQuery}
+        onQueryChange={setPaletteQuery}
+        placeholder="Rechercher une action secrétaire…"
+      />
     </DashboardLayout>
   );
 };
