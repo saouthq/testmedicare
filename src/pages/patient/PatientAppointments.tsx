@@ -88,7 +88,7 @@ const PatientAppointments = () => {
                       {/* Bouton rejoindre inline pour les téléconsultations */}
                       {a.type === "teleconsultation" && (a as any).scheduledAt && (
                         <div className="mt-2" onClick={e => e.stopPropagation()}>
-                          <JoinTeleconsultButton scheduledAt={(a as any).scheduledAt} />
+                          <JoinTeleconsultButton scheduledAt={(a as any).scheduledAt} sessionId={(a as any).sessionId || "teleconsult-1"} />
                         </div>
                       )}
                     </div>
@@ -186,11 +186,11 @@ const PatientAppointments = () => {
                 <div className="space-y-2">
                   {/* Bouton teleconsultation dynamique */}
                   {currentApt.type === "teleconsultation" && (currentApt as any).scheduledAt && (
-                    <JoinTeleconsultButton scheduledAt={(currentApt as any).scheduledAt} fullWidth />
+                    <JoinTeleconsultButton scheduledAt={(currentApt as any).scheduledAt} sessionId={(currentApt as any).sessionId || "teleconsult-1"} fullWidth />
                   )}
                   {/* Fallback si pas de scheduledAt (ancien mock) */}
                   {currentApt.type === "teleconsultation" && !(currentApt as any).scheduledAt && (
-                    <JoinTeleconsultButton scheduledAt={new Date(Date.now() + 10 * 60_000).toISOString()} fullWidth />
+                    <JoinTeleconsultButton scheduledAt={new Date(Date.now() + 10 * 60_000).toISOString()} sessionId="teleconsult-1" fullWidth />
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>

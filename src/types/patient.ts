@@ -49,6 +49,8 @@ export interface PatientAppointment {
   instructions: string;
   /** Date/heure ISO pour le calcul d'accès téléconsultation */
   scheduledAt?: string;
+  /** ID de session partagée pour le store téléconsultation */
+  sessionId?: string;
 }
 
 export interface PastAppointment {
