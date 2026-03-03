@@ -1,198 +1,145 @@
+# Plan : Teleconsultation Patient Join + Workflow Secretaire + Uniformisation
 
+## 1. JoinTeleconsultButton et helper (Teleconsultation Patient)
 
-# Plan : ActionPalette unifiee + Teleconsultation complete + Profil Doctolib-style
+### Nouveau fichier : `src/components/teleconsultation/teleconsultHelpers.ts`
 
-## Partie A : ActionPalette unifiee pour tout l'espace Medecin
+Helper pur `getTeleconsultJoinState(appointment, now)` :
 
-### Constat actuel
-4 implementations differentes de la palette d'actions :
-1. `PatientsPalette` dans `PatientsComponents.tsx` (la plus complete - overlay blur, sections, hints, footer, bouton Fermer, mode patient selectionne)
-2. `PatientDetailActions` dans `patient-detail/PatientDetailActions.tsx`
-3. `CommandPalette` dans `consultation/ConsultationModals.tsx`
-4. Palette inline dans `ConsultationsComponents.tsx` (via ConsultationsContext)
+- Input : un objet RDV (avec `date`, `time`, `type`) + Date courante
+- Output : `{ state: "too_early" | "countdown" | "ready" | "in_call" | "ended" | "expired", minutesToOpen: number, label: string, disabled: boolean }`
+- Logique : T-15min = ready, T+60min = expired, entre = countdown avec minutes
 
-### Solution
-Refondre `src/components/shared/ActionPalette.tsx` en s'alignant sur le design de `PatientsPalette` (la version la plus aboutie), puis remplacer les 4 implementations.
+### Nouveau fichier : `src/components/teleconsultation/JoinTeleconsultButton.tsx`
 
-#### Nouveau `ActionPalette.tsx` — Interface unifiee
-```text
-Props:
-  open: boolean
-  onClose: () => void
-  actions: ActionItem[]
-  placeholder?: string
-  contextLabel?: string        // Ex: "Amine Ben Ali" quand patient selectionne
-  contextAction?: () => void   // "Changer" bouton
-  inputRef?: RefObject<HTMLInputElement>
-  query: string
-  onQueryChange: (v: string) => void
-  activeIndex: number
-  onActiveIndexChange: (v: number) => void
-```
+Composant reutilisable avec :
 
-Design identique partout :
-- Overlay `bg-foreground/20 backdrop-blur-sm`
-- Card `rounded-xl border bg-card shadow-elevated max-w-xl`
-- Header : Search icon + Input + badge contextuel optionnel + badge `Ctrl+K`
-- Body : sections groupees avec titre `text-[11px] font-semibold text-muted-foreground`
-- Items : `rounded-xl px-3 py-2`, active = `bg-primary/10`, hint a droite, meta en dessous
-- Footer : `↑↓ naviguer · Entree lancer · Esc fermer` + bouton `Fermer`
-- Keyboard : ArrowDown/Up/Enter/Escape geres en interne
+- Accepte un appointment en props + optionnel `now` pour tests
+- Appelle `getTeleconsultJoinState` en interne avec `useEffect` + interval (actualise toutes les 30s)
+- Affiche un `Button` avec etats visuels :
+  - `too_early` : disabled, gris, "Disponible dans X min"
+  - `countdown` : disabled, pulse, "Disponible dans X min"
+  - `ready` : gradient-primary, "Rejoindre la consultation"
+  - `in_call` : accent, "Consultation en cours"
+  - `ended` / `expired` : muted, "Consultation terminee" ou "Expiree" + CTA "Contacter le cabinet"
+- `onClick` : navigate vers `/dashboard/patient/teleconsultation` avec `// TODO BACKEND: validate join / session`
 
-#### `ActionItem` type unifie
-```text
-{
-  id: string
-  label: string
-  hint?: string
-  icon?: ReactNode
-  group?: string
-  meta?: string
-  disabled?: boolean
-  onRun: () => void
-}
-```
+### Modification : `src/pages/patient/PatientAppointments.tsx`
 
-#### Fichiers modifies
+- Remplacer le bouton "Rejoindre la teleconsultation" statique (ligne 184) par `<JoinTeleconsultButton appointment={currentApt} />`
+- Ajouter `JoinTeleconsultButton` dans les cartes "upcoming" pour les RDV de type teleconsultation
+- Supprimer le lien direct `/dashboard/patient/teleconsultation` en dur
 
-| Fichier | Modification |
-|---------|-------------|
-| `src/components/shared/ActionPalette.tsx` | Refonte complete, design PatientsPalette |
-| `src/components/doctor-patients/PatientsComponents.tsx` | Supprimer `PatientsPalette`, utiliser `ActionPalette` |
-| `src/components/doctor-patients/PatientsContext.tsx` | Adapter les types palette pour matcher `ActionItem` |
-| `src/components/patient-detail/PatientDetailActions.tsx` | Remplacer par wrapper autour de `ActionPalette` |
-| `src/components/consultation/ConsultationModals.tsx` | `CommandPalette` utilise `ActionPalette` |
-| `src/components/consultation/ConsultationContext.tsx` | Adapter types palette |
-| `src/components/doctor-consultations/ConsultationsComponents.tsx` | Palette locale remplacee par `ActionPalette` |
-| `src/components/doctor-consultations/ConsultationsContext.tsx` | Adapter types palette |
-| `src/components/doctor-prescriptions/PrescriptionsComponents.tsx` | Ajouter bouton Actions + `ActionPalette` |
-| `src/components/doctor-prescriptions/PrescriptionsContext.tsx` | Ajouter state palette + actions |
+### Modification : mock data `src/data/mocks/patient.ts`
+
+- Ajouter un champ `scheduledAt` (ISO string) aux appointments mock pour que le helper puisse calculer les etats temporels
+- Un RDV mock sera regle a "dans 10 min" pour demo du countdown
 
 ---
 
-## Partie B : Teleconsultation video complete
+## 2. Teleconsultation Secretaire — Supervision
 
-### Constat actuel
-`Teleconsultation.tsx` (592L) = un seul fichier monolithique avec 3 phases (checklist, call, summary). Manque : ecran d'attente, panneau dossier/notes pendant l'appel, flow de fin structure, qualite reseau, partage ecran UI, notes rapides.
+### Nouveau fichier : `src/components/secretary-teleconsult/SecretaryTeleconsultPanel.tsx`
 
-### Solution
-Decouper en composants modulaires + ajouter les ecrans manquants.
+Panel de supervision des teleconsultations du jour :
 
-#### Nouvelles phases
-```text
-patient: checklist -> waiting -> call -> summary
-doctor:  waiting -> call -> notes-panel -> end-confirm -> summary -> done
-```
+- Liste des teleconsultations extraites des appointments (`type === "Teleconsultation"`)
+- Pour chaque : nom patient, heure, statut (A venir / Patient pret / En cours / Termine)
+- Actions : "Envoyer rappel" (toast), "Reprogrammer" (toast), "Voir statut connexion" (badge)
+- Pas de video, juste supervision textuelle
 
-#### Structure fichiers
-```text
-src/components/teleconsultation/
-  TeleconsultationContext.tsx   -- State global (phase, media, chat, notes, summary)
-  PreCheckScreen.tsx            -- Checklist patient (camera/micro/audio test, device picker, preview video, connexion)
-  WaitingScreen.tsx             -- Ecran attente (statut patient, copier lien, envoyer message, re-test micro)
-  CallScreen.tsx                -- Layout video (video principale, mini preview, controles, timer, qualite reseau)
-  CallControls.tsx              -- Boutons (mute, camera, haut-parleur, partage ecran UI, chat, notes)
-  ChatPanel.tsx                 -- Panel chat lateral
-  DossierPanel.tsx              -- Panel dossier/notes pendant l'appel (notes, Rx, analyses, docs, historique)
-  EndConfirmDialog.tsx          -- "Terminer la consultation" -> confirmation
-  SummaryScreen.tsx             -- Recap (notes + docs generes) + actions finales (envoyer, PDF, retour)
-  types.ts                      -- Types UI locaux
-```
+### Modification : `src/pages/secretary/SecretaryDashboard.tsx`
 
-#### Page finale `Teleconsultation.tsx` : ~30L
-```text
-<TeleconsultationProvider role={role}>
-  <DashboardLayout role={role} title="Teleconsultation">
-    <TeleconsultationRouter />  -- switch sur phase
-  </DashboardLayout>
-</TeleconsultationProvider>
-```
-
-#### Fonctionnalites ajoutees
-- **Pre-check** : preview video (placeholder), test audio avec feedback visuel, selecteur device (dropdown), indicateur connexion
-- **Attente** : statut anime ("En attente" / "Patient rejoint" / "Connexion faible"), actions (copier lien, envoyer message, re-tester)
-- **Appel** : indicateur qualite reseau (Excellente/Bonne/Faible avec couleurs), bouton partage ecran (toast UI-only), bouton haut-parleur, bouton notes rapides
-- **Panel Dossier** : onglets (Notes | Rx | Analyses | Docs | Historique), editable en live, apercu docs
-- **Fin** : dialog confirmation -> ecran recap avec tout, boutons envoyer/PDF/retour
-
-Tous les handlers : `// TODO BACKEND: POST /api/teleconsultation/...`
+- Ajouter une section "Teleconsultations du jour" dans l'onglet overview, sous le planning
+- Filtrer les appointments avec `teleconsultation: true` et afficher le panel
+- Actions avec `// TODO BACKEND: secretary teleconsult supervision`
 
 ---
 
-## Partie C : Profil medecin Doctolib-style
+## 3. Workflow Secretaire rattachee (Doctor Settings + Secretary Dashboard)
 
-### Constat actuel
-`ProfileTab.tsx` (262L) = formulaire brut lineaire. Pas d'apercu, pas de completion, pas d'edition par section.
+### Modification : `src/pages/doctor/DoctorSecretary.tsx`
 
-### Solution
-Page "Mon profil" en 2 zones avec indicateur de completion et edition par section.
+Refonte pour ajouter :
 
-#### Structure fichiers
-```text
-src/components/doctor-settings/
-  ProfileTab.tsx               -- Refonte : layout 2 colonnes (preview + sections editables)
-  ProfilePreview.tsx           -- Apercu profil tel que vu par les patients (mini DoctorPublicProfile)
-  ProfileSection.tsx           -- Composant section generique (titre, icone, bouton Modifier, contenu)
-  ProfileCompletionBar.tsx     -- Barre "Profil : 65%" + checklist elements manquants
-  ProfileSectionEditor.tsx     -- Sheet/Drawer edition d'une section (champs + preview live)
-```
+- State local `secretaries` avec mock (au lieu du const statique) avec champs `status: "invited" | "active" | "suspended"`
+- Bouton "Activer" pour les invitees (change status -> active + toast)
+- Bouton "Suspendre" / "Reactiver" pour les actives (toggle + toast + ConfirmDialog)
+- Modal "Ajouter secretaire" : genere un mock avec statut "Invitee" + toast "Invitation envoyee"
+- Tous handlers : `// TODO BACKEND: POST /api/secretary/invite`, `PATCH /api/secretary/{id}/activate`
 
-#### UX Flow
-1. En haut : `ProfileCompletionBar` — barre de progression + checklist clickable
-2. Layout 2 colonnes (desktop) / 1 colonne (mobile) :
-   - **Gauche** : `ProfilePreview` — rendu identique au profil public (avatar, nom, specialite, infos, horaires, avis)
-   - **Droite** : Sections editables empilees, chacune avec bouton "Modifier"
-3. Clic "Modifier" sur une section -> `Sheet` lateral avec formulaire de la section + preview live dans le `ProfilePreview`
-4. "Enregistrer" / "Annuler" dans le Sheet
+### Modification : `src/pages/secretary/SecretaryDashboard.tsx`
 
-#### Sections editables
-| Section | Champs |
-|---------|--------|
-| Identite | Photo, prenom, nom, email, telephone |
-| Cabinet | Adresse, acces (parking, handicap, ascenseur, transport) |
-| Specialites | Specialite principale, sous-specialites (chips) |
-| Tarifs | Tableau motifs (nom, duree, prix) |
-| Actes & Expertises | Liste chips |
-| Langues | Liste chips |
-| Horaires | Grille semaine AM/PM |
-| Diplomes & Experience | Liste editable (titre, ecole, annee) |
-| Affiliations | Liste editable |
-| Description | Textarea presentation |
+Enrichir la salle d'attente avec :
 
-#### Indicateur de completion
-Calcul base sur : photo uploaded, description remplie, au moins 1 horaire, au moins 1 tarif, telephone, adresse, sous-specialites, diplomes. Affiche pourcentage + items manquants cliquables (scroll vers la section).
+- Statuts complets : "A venir" -> "Arrive" -> "En attente" -> "En consultation" -> "Termine" -> "Absent"
+- Actions contextuelles par statut :
+  - A venir : "Check-in" (passe a Arrive)
+  - Arrive/En attente : "Appeler", "Note interne"
+  - Appele : "En consultation"
+  - En consultation : "Terminer"
+  - Tout statut : "Marquer absent"
+- Notes internes (modal simple avec Textarea + toast)
+- Label "Absent" au lieu de "No-show" partout
+
+### Ajout mock : `src/data/mocks/secretary.ts`
+
+- Ajouter `mockSecretaryTeam` : liste de secretaires mock avec statuts
+- Ajouter champ `teleconsultation: true` sur certains appointments existants (deja present sur id:8)
+
+---
+
+## 4. Uniformisation UI/UX
+
+### ActionPalette sur pages Secretaire
+
+- Modification : `src/pages/secretary/SecretaryDashboard.tsx` — Ajouter un bouton "Actions" + raccourci Ctrl+K utilisant le composant `ActionPalette` partage
+- Actions secretaire : Check-in patient, Appeler, Encaisser, Nouveau RDV, Nouveau patient, Voir agenda, Documents, Messagerie
+
+### ConfirmDialog unique
+
+- Remplacement dans `SecretaryDashboard` et `DoctorSecretary` : utiliser `ConfirmDialog` (deja existant dans `src/components/shared/ConfirmDialog.tsx`) pour les actions destructives (annuler RDV, suspendre secretaire, marquer absent)
+
+### Labels FR coherents
+
+- Remplacer "No-show" par "Absent" dans `StatusBadge`, `SecretaryDashboard`, `PatientAppointments`
+
+### Boutons uniformes
+
+- Verifier que toutes les toolbars utilisent `size="sm"` + `text-xs`
 
 ---
 
 ## Resume technique
 
-### Fichiers crees (~15)
-| Dossier | Fichiers |
-|---------|----------|
-| `src/components/teleconsultation/` | TeleconsultationContext.tsx, PreCheckScreen.tsx, WaitingScreen.tsx, CallScreen.tsx, CallControls.tsx, ChatPanel.tsx, DossierPanel.tsx, EndConfirmDialog.tsx, SummaryScreen.tsx, types.ts |
-| `src/components/doctor-settings/` | ProfilePreview.tsx, ProfileSection.tsx, ProfileCompletionBar.tsx, ProfileSectionEditor.tsx |
+### Fichiers crees (3)
 
-### Fichiers modifies (~12)
-| Fichier | Modification |
-|---------|-------------|
-| `src/components/shared/ActionPalette.tsx` | Refonte complete |
-| `src/components/doctor-patients/PatientsComponents.tsx` | Supprimer PatientsPalette, utiliser ActionPalette |
-| `src/components/doctor-patients/PatientsContext.tsx` | Adapter types |
-| `src/components/patient-detail/PatientDetailActions.tsx` | Utiliser ActionPalette |
-| `src/components/patient-detail/PatientDetailContext.tsx` | Adapter types |
-| `src/components/consultation/ConsultationModals.tsx` | CommandPalette utilise ActionPalette |
-| `src/components/consultation/ConsultationContext.tsx` | Adapter types |
-| `src/components/doctor-consultations/ConsultationsComponents.tsx` | Utiliser ActionPalette |
-| `src/components/doctor-consultations/ConsultationsContext.tsx` | Adapter types |
-| `src/components/doctor-prescriptions/PrescriptionsComponents.tsx` | Ajouter palette |
-| `src/components/doctor-prescriptions/PrescriptionsContext.tsx` | Ajouter state palette |
-| `src/components/doctor-settings/ProfileTab.tsx` | Refonte Doctolib-style |
-| `src/pages/teleconsultation/Teleconsultation.tsx` | Slim ~30L |
+
+| Fichier                                                              | Description                                 |
+| -------------------------------------------------------------------- | ------------------------------------------- |
+| `src/components/teleconsultation/teleconsultHelpers.ts`              | Helper `getTeleconsultJoinState`            |
+| `src/components/teleconsultation/JoinTeleconsultButton.tsx`          | Bouton rejoindre teleconsult avec countdown |
+| `src/components/secretary-teleconsult/SecretaryTeleconsultPanel.tsx` | Panel supervision teleconsult secretaire    |
+
+
+### Fichiers modifies (7)
+
+
+| Fichier                                      | Modification                                                           |
+| -------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/pages/patient/PatientAppointments.tsx`  | Utiliser JoinTeleconsultButton                                         |
+| `src/pages/secretary/SecretaryDashboard.tsx` | Salle attente enrichie + teleconsult panel + ActionPalette + labels FR |
+| `src/pages/doctor/DoctorSecretary.tsx`       | Workflow invitation/activation/suspension                              |
+| `src/data/mocks/patient.ts`                  | Ajouter scheduledAt aux mocks                                          |
+| `src/data/mocks/secretary.ts`                | Ajouter mockSecretaryTeam                                              |
+| `src/components/shared/StatusBadge.tsx`      | "Absent" au lieu de "No-show"                                          |
+| `src/data/mocks/index.ts`                    | Re-exports nouveaux mocks                                              |
+
 
 ### Ordre d'execution
-1. Refondre `ActionPalette.tsx` (le composant partage)
-2. Remplacer les 4 palettes locales par `ActionPalette`
-3. Ajouter palette aux Ordonnances
-4. Creer les composants teleconsultation + refondre la page
-5. Creer les composants profil + refondre `ProfileTab`
 
+1. Helper teleconsult + JoinTeleconsultButton + mocks patient
+2. Integrer dans PatientAppointments
+3. Refonte DoctorSecretary (invitation/activation)
+4. Enrichir SecretaryDashboard (salle attente + teleconsult + palette)
+5. Uniformisation labels + ConfirmDialog
