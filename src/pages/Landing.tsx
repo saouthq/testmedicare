@@ -1,133 +1,293 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import PublicHeader from "@/components/public/PublicHeader";
+import SeoHelmet from "@/components/seo/SeoHelmet";
 import { Button } from "@/components/ui/button";
-import { Calendar, Search, Shield, Clock, Users, Stethoscope, Pill, FlaskConical, ChevronRight, Star, MapPin, Building2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Search, Shield, Clock, Users, Stethoscope, Pill, FlaskConical, ChevronRight, Building2,
+  Video, MapPin, Star, Hospital, Moon, CheckCircle, Lock, Heart,
+} from "lucide-react";
+import { mockClinics, mockHospitals, mockPublicPharmacies } from "@/data/mocks/establishments";
+import { mockTopMedicines } from "@/data/mocks/medicines";
 
 const specialties = ["Médecin généraliste", "Dentiste", "Ophtalmologue", "Dermatologue", "Gynécologue", "Pédiatre", "Kinésithérapeute", "Cardiologue"];
 
-const features = [
-  { icon: Calendar, title: "Prise de RDV en ligne", description: "Réservez votre rendez-vous 24h/24, 7j/7 en quelques clics." },
-  { icon: Clock, title: "Rappels automatiques", description: "Recevez des rappels par SMS au +216 avant chaque consultation." },
-  { icon: Shield, title: "Prise en charge CNAM", description: "Trouvez des praticiens conventionnés CNAM partout en Tunisie." },
-  { icon: Users, title: "Téléconsultation", description: "Consultez votre médecin à distance depuis votre domicile." },
-];
-
-const roles = [
-  { icon: Stethoscope, title: "Médecins", description: "Gérez votre agenda, vos patients et vos consultations.", link: "/dashboard/doctor", color: "bg-primary/10 text-primary" },
-  { icon: Users, title: "Patients", description: "Prenez RDV, consultez vos ordonnances et votre historique.", link: "/dashboard/patient", color: "bg-accent/10 text-accent" },
-  { icon: Pill, title: "Pharmacies", description: "Recevez et gérez les ordonnances de vos patients.", link: "/dashboard/pharmacy", color: "bg-warning/10 text-warning" },
-  { icon: FlaskConical, title: "Laboratoires", description: "Gérez les analyses et partagez les résultats.", link: "/dashboard/laboratory", color: "bg-destructive/10 text-destructive" },
-  { icon: Building2, title: "Secrétariat", description: "Pilotez le cabinet : agenda, facturation, patients.", link: "/dashboard/secretary", color: "bg-primary/10 text-primary" },
-];
+type SearchTab = "doctors" | "clinics" | "hospitals" | "pharmacies" | "medicines";
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<SearchTab>("doctors");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
+
+  const handleSearch = () => {
+    if (activeTab === "doctors") navigate(`/search?q=${searchQuery}`);
+    else if (activeTab === "clinics") navigate(`/clinics`);
+    else if (activeTab === "hospitals") navigate(`/hospitals`);
+    else if (activeTab === "pharmacies") navigate(`/pharmacies`);
+    else if (activeTab === "medicines") navigate(`/medicaments`);
+  };
+
+  const tabs: { key: SearchTab; label: string; icon: any }[] = [
+    { key: "doctors", label: "Médecins", icon: Stethoscope },
+    { key: "clinics", label: "Cliniques", icon: Building2 },
+    { key: "hospitals", label: "Hôpitaux", icon: Hospital },
+    { key: "pharmacies", label: "Pharmacies", icon: Pill },
+    { key: "medicines", label: "Médicaments", icon: FlaskConical },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
-      <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary"><Stethoscope className="h-5 w-5 text-primary-foreground" /></div>
-            <span className="text-xl font-bold text-foreground">Medicare</span>
-            <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium hidden sm:block">Tunisie 🇹🇳</span>
-          </Link>
-          <div className="hidden items-center gap-8 md:flex">
-            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Fonctionnalités</a>
-            <a href="#roles" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pour qui ?</a>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/login"><Button variant="ghost" size="sm">Se connecter</Button></Link>
-            <Link to="/register"><Button size="sm" className="gradient-primary text-primary-foreground shadow-primary-glow">S'inscrire</Button></Link>
-          </div>
-        </div>
-      </nav>
+      <SeoHelmet title="Medicare Tunisie — Prenez rendez-vous avec un médecin en ligne" description="La plateforme médicale complète en Tunisie. Trouvez un médecin, une clinique, un hôpital ou une pharmacie. Prenez RDV en ligne 24h/24." />
+      <PublicHeader />
 
-      <section className="relative overflow-hidden py-20 lg:py-32">
+      {/* Hero */}
+      <section className="relative overflow-hidden py-16 lg:py-24">
         <div className="absolute inset-0 gradient-hero opacity-5" />
         <div className="container mx-auto px-4 relative">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="animate-fade-in text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          <div className="mx-auto max-w-3xl text-center mb-10">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl animate-fade-in">
               Votre santé en Tunisie,{" "}<span className="text-primary">simplifiée</span>
             </h1>
-            <p className="mt-6 animate-fade-in text-lg text-muted-foreground" style={{ animationDelay: "0.1s" }}>
-              La plateforme médicale complète qui connecte patients, médecins, pharmacies et laboratoires en Tunisie. 
-              Praticiens conventionnés CNAM, paiement en Dinars, prise de RDV en ligne.
+            <p className="mt-4 text-base text-muted-foreground animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              Trouvez un médecin, une clinique, un hôpital ou une pharmacie. Prenez RDV en ligne 24h/24, praticiens CNAM, paiement en Dinars.
             </p>
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              <div className="relative w-full max-w-lg">
-                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                <input type="text" placeholder="Rechercher un praticien, une spécialité..." className="h-12 w-full rounded-xl border bg-card pl-12 pr-4 text-foreground shadow-card focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+
+          {/* Multi-tab search */}
+          <div className="mx-auto max-w-2xl animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            <div className="rounded-2xl border bg-card shadow-elevated overflow-hidden">
+              <div className="flex border-b overflow-x-auto">
+                {tabs.map(t => (
+                  <button key={t.key} onClick={() => setActiveTab(t.key)}
+                    className={`flex items-center gap-1.5 px-4 py-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors flex-1 justify-center border-b-2 ${activeTab === t.key ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                    <t.icon className="h-3.5 w-3.5" />{t.label}
+                  </button>
+                ))}
               </div>
-              <Button size="lg" className="gradient-primary text-primary-foreground shadow-primary-glow h-12 px-8">Rechercher</Button>
+              <div className="p-4 space-y-3">
+                {activeTab === "doctors" && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input placeholder="Spécialité, nom du médecin..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1" />
+                    <Input placeholder="Ville..." value={cityQuery} onChange={e => setCityQuery(e.target.value)} className="sm:w-36" />
+                  </div>
+                )}
+                {activeTab === "clinics" && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input placeholder="Ville..." className="flex-1" />
+                    <Input placeholder="Spécialité / service..." className="flex-1" />
+                  </div>
+                )}
+                {activeTab === "hospitals" && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input placeholder="Ville..." className="flex-1" />
+                    <Input placeholder="Service..." className="flex-1" />
+                  </div>
+                )}
+                {activeTab === "pharmacies" && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input placeholder="Ville..." className="flex-1" />
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <input type="checkbox" className="rounded" /><Moon className="h-3.5 w-3.5" />De garde
+                    </label>
+                  </div>
+                )}
+                {activeTab === "medicines" && (
+                  <Input placeholder="Nom du médicament (ex: Doliprane, Augmentin...)" />
+                )}
+                <Button onClick={handleSearch} className="w-full gradient-primary text-primary-foreground shadow-primary-glow">
+                  <Search className="h-4 w-4 mr-1.5" />Rechercher
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Specialties */}
       <section className="border-y bg-card py-8">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {specialties.map((s) => (
+          <h2 className="text-center text-sm font-medium text-muted-foreground mb-4">Spécialités populaires</h2>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {specialties.map(s => (
               <Link key={s} to="/search" className="rounded-full border bg-background px-4 py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary hover:shadow-card">{s}</Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="features" className="py-20">
+      {/* Establishments */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-foreground">Tout ce dont vous avez besoin</h2>
-            <p className="mt-4 text-muted-foreground">Une plateforme complète adaptée au système de santé tunisien.</p>
-          </div>
-          <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((f, i) => (
-              <div key={f.title} className="group rounded-xl border bg-card p-6 shadow-card transition-all hover:shadow-card-hover animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"><f.icon className="h-6 w-6 text-primary" /></div>
-                <h3 className="mt-4 font-semibold text-foreground">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{f.description}</p>
-              </div>
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">Établissements recommandés</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+            {mockClinics.slice(0, 3).map(c => (
+              <Link key={c.id} to={`/clinic/${c.slug}`} className="group rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all">
+                <div className="flex items-center gap-3 mb-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{c.name}</h3>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{c.city}</p>
+                <div className="flex items-center gap-1 mt-1"><Star className="h-3 w-3 text-warning fill-warning" /><span className="text-xs font-medium">{c.rating}</span></div>
+              </Link>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section id="roles" className="border-t bg-muted/50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-foreground">Pour tous les acteurs de santé</h2>
-            <p className="mt-4 text-muted-foreground">Chaque professionnel dispose de son propre espace adapté à ses besoins.</p>
-          </div>
-          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-            {roles.map((r, i) => (
-              <Link key={r.title} to={r.link} className="group rounded-xl border bg-card p-6 shadow-card transition-all hover:shadow-card-hover hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${r.color}`}><r.icon className="h-6 w-6" /></div>
-                <h3 className="mt-4 font-semibold text-foreground group-hover:text-primary transition-colors">{r.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{r.description}</p>
-                <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">Accéder <ChevronRight className="ml-1 h-4 w-4" /></div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {mockHospitals.slice(0, 4).map(h => (
+              <Link key={h.id} to={`/hospital/${h.slug}`} className="group rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all">
+                <div className="flex items-center gap-2 mb-1">
+                  <Hospital className="h-4 w-4 text-destructive" />
+                  <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">{h.name}</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">{h.city}</p>
+                {h.urgences && <span className="text-[10px] text-destructive font-medium">🚨 Urgences</span>}
               </Link>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Pharmacies de garde */}
+      <section className="border-t bg-muted/30 py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-foreground">Pharmacies de garde</h2>
+            <Link to="/pharmacies" className="text-sm text-primary hover:underline flex items-center gap-1">Voir toutes <ChevronRight className="h-3 w-3" /></Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {mockPublicPharmacies.filter(p => p.deGarde).slice(0, 3).map(p => (
+              <Link key={p.id} to={`/pharmacy/${p.slug}`} className="group rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all">
+                <div className="flex items-center gap-2 mb-1">
+                  <Pill className="h-4 w-4 text-accent" />
+                  <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">{p.name}</h3>
+                  <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">De garde</span>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{p.city} · {p.horaires}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Top medicines */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-foreground">Médicaments les plus recherchés</h2>
+            <Link to="/medicaments" className="text-sm text-primary hover:underline flex items-center gap-1">Voir l'annuaire <ChevronRight className="h-3 w-3" /></Link>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {mockTopMedicines.map(m => (
+              <Link key={m.id} to={`/medicament/${m.slug}`} className="rounded-full border bg-card px-4 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-all shadow-card">
+                {m.name} · <span className="text-xs">{m.form}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="border-t bg-card py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-10">Comment ça marche ?</h2>
+          <div className="grid gap-8 sm:grid-cols-3 max-w-3xl mx-auto">
+            {[
+              { step: "1", icon: Search, title: "Recherchez", desc: "Trouvez un praticien par spécialité, ville ou nom." },
+              { step: "2", icon: Clock, title: "Réservez", desc: "Choisissez un créneau et confirmez en quelques clics." },
+              { step: "3", icon: CheckCircle, title: "Consultez", desc: "Rendez-vous en cabinet ou en téléconsultation." },
+            ].map((s, i) => (
+              <div key={i} className="text-center animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className="h-14 w-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 text-primary-foreground font-bold text-lg">{s.step}</div>
+                <h3 className="font-semibold text-foreground mb-1">{s.title}</h3>
+                <p className="text-sm text-muted-foreground">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust */}
       <section className="border-t py-16">
         <div className="container mx-auto px-4">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">Confiance & Confidentialité</h2>
+          <div className="grid gap-6 sm:grid-cols-3 max-w-3xl mx-auto">
+            {[
+              { icon: Shield, title: "Données sécurisées", desc: "Vos données de santé sont chiffrées et protégées." },
+              { icon: Lock, title: "Confidentialité", desc: "Aucune donnée n'est partagée sans votre consentement." },
+              { icon: Heart, title: "Qualité vérifiée", desc: "Tous les praticiens sont vérifiés et diplômés." },
+            ].map((f, i) => (
+              <div key={i} className="rounded-xl border bg-card p-5 shadow-card text-center">
+                <f.icon className="h-8 w-8 text-primary mx-auto mb-3" />
+                <h3 className="font-semibold text-foreground mb-1">{f.title}</h3>
+                <p className="text-xs text-muted-foreground">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="border-t bg-muted/30 py-12">
+        <div className="container mx-auto px-4">
           <div className="grid gap-8 text-center sm:grid-cols-4">
-            {[{ value: "5 000+", label: "Praticiens" }, { value: "500K+", label: "Patients" }, { value: "2M+", label: "RDV pris" }, { value: "4.8/5", label: "Satisfaction" }].map((s) => (
+            {[{ value: "5 000+", label: "Praticiens" }, { value: "500K+", label: "Patients" }, { value: "2M+", label: "RDV pris" }, { value: "4.8/5", label: "Satisfaction" }].map(s => (
               <div key={s.label}><div className="text-3xl font-bold text-primary">{s.value}</div><div className="mt-1 text-sm text-muted-foreground">{s.label}</div></div>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="border-t bg-card py-12">
+      {/* CTA Pro */}
+      <section className="border-t py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-3">Vous êtes professionnel de santé ?</h2>
+          <p className="text-muted-foreground mb-6 max-w-lg mx-auto">Rejoignez Medicare pour gérer votre agenda, vos patients et booster votre visibilité en ligne.</p>
+          <Link to="/register"><Button size="lg" className="gradient-primary text-primary-foreground shadow-primary-glow">Devenir partenaire <ChevronRight className="ml-1 h-4 w-4" /></Button></Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t bg-card py-10">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary"><Stethoscope className="h-4 w-4 text-primary-foreground" /></div>
-              <span className="font-bold text-foreground">Medicare</span>
-              <span className="text-xs text-muted-foreground">Tunisie</span>
+          <div className="grid gap-8 sm:grid-cols-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center"><Stethoscope className="h-4 w-4 text-primary-foreground" /></div>
+                <span className="font-bold text-foreground">Medicare</span>
+              </div>
+              <p className="text-xs text-muted-foreground">La plateforme médicale complète pour la Tunisie.</p>
             </div>
-            <p className="text-sm text-muted-foreground">© 2026 Medicare Tunisie. Tous droits réservés.</p>
+            <div>
+              <h4 className="font-semibold text-foreground text-sm mb-3">Annuaires</h4>
+              <div className="space-y-1.5">
+                <Link to="/search" className="block text-xs text-muted-foreground hover:text-foreground">Médecins</Link>
+                <Link to="/clinics" className="block text-xs text-muted-foreground hover:text-foreground">Cliniques</Link>
+                <Link to="/hospitals" className="block text-xs text-muted-foreground hover:text-foreground">Hôpitaux</Link>
+                <Link to="/pharmacies" className="block text-xs text-muted-foreground hover:text-foreground">Pharmacies</Link>
+                <Link to="/medicaments" className="block text-xs text-muted-foreground hover:text-foreground">Médicaments</Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground text-sm mb-3">Espaces</h4>
+              <div className="space-y-1.5">
+                <Link to="/dashboard/patient" className="block text-xs text-muted-foreground hover:text-foreground">Patient</Link>
+                <Link to="/dashboard/doctor" className="block text-xs text-muted-foreground hover:text-foreground">Médecin</Link>
+                <Link to="/dashboard/pharmacy" className="block text-xs text-muted-foreground hover:text-foreground">Pharmacie</Link>
+                <Link to="/dashboard/laboratory" className="block text-xs text-muted-foreground hover:text-foreground">Laboratoire</Link>
+                <Link to="/dashboard/secretary" className="block text-xs text-muted-foreground hover:text-foreground">Secrétariat</Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground text-sm mb-3">Aide</h4>
+              <div className="space-y-1.5">
+                <a href="#how-it-works" className="block text-xs text-muted-foreground hover:text-foreground">Comment ça marche</a>
+                <Link to="/register" className="block text-xs text-muted-foreground hover:text-foreground">Devenir partenaire</Link>
+              </div>
+            </div>
+          </div>
+          <div className="border-t pt-6 text-center">
+            <p className="text-xs text-muted-foreground">© 2026 Medicare Tunisie. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

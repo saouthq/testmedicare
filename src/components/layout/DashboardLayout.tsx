@@ -97,9 +97,17 @@ const navItems: Record<string, NavItem[]> = {
   admin: [
     { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
     { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
+    { title: "Organisations", url: "/dashboard/admin/organizations", icon: Building2 },
+    { title: "Rendez-vous", url: "/dashboard/admin/appointments", icon: Calendar },
+    { title: "Validations", url: "/dashboard/admin/verifications", icon: ShieldCheck },
     { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
+    { title: "Paiements", url: "/dashboard/admin/payments", icon: CreditCard },
     { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
+    { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
+    { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
+    { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
     { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
+    { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
     { title: "Journal", url: "/dashboard/admin/logs", icon: ScrollText },
   ],
 };

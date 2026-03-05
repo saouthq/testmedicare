@@ -29,7 +29,6 @@ import DoctorPatientDetail from "./pages/doctor/DoctorPatientDetail";
 import DoctorSettings from "./pages/doctor/DoctorSettings";
 import DoctorStats from "./pages/doctor/DoctorStats";
 import DoctorSecretary from "./pages/doctor/DoctorSecretary";
-// DoctorSubscription removed — merged into DoctorBilling
 import DoctorOnboarding from "./pages/doctor/DoctorOnboarding";
 import DoctorBilling from "./pages/doctor/DoctorBilling";
 import DoctorConnect from "./pages/doctor/DoctorConnect";
@@ -66,9 +65,27 @@ import AdminModeration from "./pages/admin/AdminModeration";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogs from "./pages/admin/AdminLogs";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminAppointments from "./pages/admin/AdminAppointments";
+import AdminVerifications from "./pages/admin/AdminVerifications";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
+import AdminReferenceData from "./pages/admin/AdminReferenceData";
+import AdminNotificationTemplates from "./pages/admin/AdminNotificationTemplates";
+import AdminSupport from "./pages/admin/AdminSupport";
+import AdminGuard from "./components/admin/AdminGuard";
 
 // Public
 import DoctorPublicProfile from "./pages/public/DoctorPublicProfile";
+import ClinicsDirectory from "./pages/public/ClinicsDirectory";
+import ClinicDetail from "./pages/public/ClinicDetail";
+import HospitalsDirectory from "./pages/public/HospitalsDirectory";
+import HospitalDetail from "./pages/public/HospitalDetail";
+import PharmaciesDirectory from "./pages/public/PharmaciesDirectory";
+import PharmacyDetail from "./pages/public/PharmacyDetail";
+import MedicinesDirectory from "./pages/public/MedicinesDirectory";
+import MedicineDetail from "./pages/public/MedicineDetail";
+import PublicBooking from "./pages/public/PublicBooking";
 
 // Shared
 import Messages from "./pages/messaging/Messages";
@@ -87,16 +104,24 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Public doctor profile - clean route */}
+          {/* Public directories */}
           <Route path="/doctor/:id" element={<DoctorPublicProfile />} />
-
-          {/* Patient - clean booking route */}
           <Route path="/search" element={<SearchDoctors />} />
-          <Route path="/booking/:doctorId" element={<PatientBooking />} />
+          <Route path="/booking/:doctorId" element={<PublicBooking />} />
+          <Route path="/clinics" element={<ClinicsDirectory />} />
+          <Route path="/clinic/:slug" element={<ClinicDetail />} />
+          <Route path="/hospitals" element={<HospitalsDirectory />} />
+          <Route path="/hospital/:slug" element={<HospitalDetail />} />
+          <Route path="/pharmacies" element={<PharmaciesDirectory />} />
+          <Route path="/pharmacy/:slug" element={<PharmacyDetail />} />
+          <Route path="/medicaments" element={<MedicinesDirectory />} />
+          <Route path="/medicament/:slug" element={<MedicineDetail />} />
+
           {/* Legacy redirects */}
           <Route path="/dashboard/patient/search" element={<Navigate to="/search" replace />} />
           <Route path="/dashboard/patient/booking" element={<Navigate to="/booking/1" replace />} />
 
+          {/* Patient */}
           <Route path="/dashboard/patient" element={<PatientDashboard />} />
           <Route path="/dashboard/patient/appointments" element={<PatientAppointments />} />
           <Route path="/dashboard/patient/prescriptions" element={<PatientPrescriptions />} />
@@ -153,14 +178,22 @@ const App = () => (
           <Route path="/dashboard/secretary/settings" element={<SecretarySettings />} />
           <Route path="/dashboard/secretary/messages" element={<Messages role="secretary" />} />
 
-          {/* Admin */}
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
-          <Route path="/dashboard/admin/users" element={<AdminUsers />} />
-          <Route path="/dashboard/admin/subscriptions" element={<AdminSubscriptions />} />
-          <Route path="/dashboard/admin/moderation" element={<AdminModeration />} />
-          <Route path="/dashboard/admin/settings" element={<AdminSettings />} />
-          <Route path="/dashboard/admin/logs" element={<AdminLogs />} />
-          <Route path="/dashboard/admin/analytics" element={<AdminAnalytics />} />
+          {/* Admin — wrapped in AdminGuard */}
+          <Route path="/dashboard/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+          <Route path="/dashboard/admin/users" element={<AdminGuard><AdminUsers /></AdminGuard>} />
+          <Route path="/dashboard/admin/organizations" element={<AdminGuard><AdminOrganizations /></AdminGuard>} />
+          <Route path="/dashboard/admin/appointments" element={<AdminGuard><AdminAppointments /></AdminGuard>} />
+          <Route path="/dashboard/admin/verifications" element={<AdminGuard><AdminVerifications /></AdminGuard>} />
+          <Route path="/dashboard/admin/subscriptions" element={<AdminGuard><AdminSubscriptions /></AdminGuard>} />
+          <Route path="/dashboard/admin/payments" element={<AdminGuard><AdminPayments /></AdminGuard>} />
+          <Route path="/dashboard/admin/moderation" element={<AdminGuard><AdminModeration /></AdminGuard>} />
+          <Route path="/dashboard/admin/audit-logs" element={<AdminGuard><AdminAuditLogs /></AdminGuard>} />
+          <Route path="/dashboard/admin/reference-data" element={<AdminGuard><AdminReferenceData /></AdminGuard>} />
+          <Route path="/dashboard/admin/notification-templates" element={<AdminGuard><AdminNotificationTemplates /></AdminGuard>} />
+          <Route path="/dashboard/admin/analytics" element={<AdminGuard><AdminAnalytics /></AdminGuard>} />
+          <Route path="/dashboard/admin/support" element={<AdminGuard><AdminSupport /></AdminGuard>} />
+          <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
+          <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
