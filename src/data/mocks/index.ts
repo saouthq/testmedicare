@@ -8,3 +8,5 @@ export * from "./secretary";
 export * from "./lab";
 export * from "./pharmacy";
 export * from "./admin";
+export * from "./medicines";
+export * from "./establishments";
