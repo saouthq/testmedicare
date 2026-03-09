@@ -4,6 +4,7 @@ import { Send, Bot, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockAiInitialMessages, mockAiResponses, ChatMessage } from "@/data/mockData";
+import FeatureGate from "@/components/shared/FeatureGate";
 
 const DoctorAIAssistant = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(mockAiInitialMessages);
