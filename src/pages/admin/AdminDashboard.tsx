@@ -1,31 +1,30 @@
 /**
- * Admin Dashboard — Operational overview with actionable widgets
- * Includes: KPIs, validations, tickets, litiges, garde, meds, revenue, logs
+ * Admin Dashboard — Enhanced with system health, campaigns, real-time activity
  * TODO BACKEND: Replace mock data with real API calls
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Link } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Users, ShieldCheck, MessageSquare, ScrollText, Pill, Clock,
   ArrowUpRight, ArrowRight, AlertTriangle, TrendingUp, BarChart3,
-  Gavel, CreditCard, Building2, Calendar, Flag,
+  Gavel, CreditCard, Flag, Activity, Server, Zap, Bell, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
-  mockAdminStats, mockAdminRevenue, mockAdminPendingApprovals,
+  mockAdminRevenue, mockAdminPendingApprovals,
   mockAdminRecentActivity, mockTopSearchedMeds, mockGuardPharmacies, mockAdminTickets,
   mockAdminUsers, mockAdminReports,
 } from "@/data/mockData";
 import { getLogs } from "@/services/admin/adminAuditService";
 
-/** KPI cards with specific icons + links */
+/** KPI cards */
 const kpiConfig = [
   { icon: Users, label: "Utilisateurs", link: "/dashboard/admin/users" },
   { icon: Gavel, label: "Litiges ouverts", link: "/dashboard/admin/disputes" },
-  { icon: ShieldCheck, label: "Validations", link: "/dashboard/admin/verifications" },
-  { icon: CreditCard, label: "Revenus", link: "/dashboard/admin/payments" },
+  { icon: ShieldCheck, label: "Validations KYC", link: "/dashboard/admin/verifications" },
+  { icon: CreditCard, label: "Revenus ce mois", link: "/dashboard/admin/payments" },
 ];
 
 const AdminDashboard = () => {
@@ -35,7 +34,6 @@ const AdminDashboard = () => {
   const guardToday = mockGuardPharmacies.filter(p => p.isGuard).length;
   const openReports = mockAdminReports.filter(r => r.status === "pending").length;
 
-  // Dynamic KPI values
   const kpiValues = [
     { value: mockAdminUsers.length.toLocaleString(), change: "+12%", color: "text-primary" },
     { value: "3", change: "À traiter", color: "text-destructive" },
@@ -46,7 +44,7 @@ const AdminDashboard = () => {
   return (
     <DashboardLayout role="admin" title="Administration">
       <div className="space-y-6">
-        {/* KPI Stats — each links to its page */}
+        {/* KPI Stats */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {kpiConfig.map((kpi, i) => (
             <Link key={i} to={kpi.link} className="rounded-xl border bg-card p-5 shadow-card hover:shadow-md transition-all group cursor-pointer">
@@ -58,6 +56,31 @@ const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground mt-1 group-hover:text-primary transition-colors">{kpi.label}</p>
             </Link>
           ))}
+        </div>
+
+        {/* System Health Banner */}
+        <div className="rounded-xl border bg-card p-5 shadow-card">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+              <Server className="h-4 w-4 text-accent" />Santé système
+            </h3>
+            <span className="text-xs font-medium bg-accent/10 text-accent px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Activity className="h-3 w-3" />Opérationnel
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: "Uptime", value: "99.97%", color: "text-accent" },
+              { label: "Temps réponse", value: "142ms", color: "text-primary" },
+              { label: "En ligne", value: "234", color: "text-foreground" },
+              { label: "Requêtes/min", value: "1,247", color: "text-foreground" },
+            ].map((s, i) => (
+              <div key={i} className="text-center">
+                <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-[10px] text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Action widgets row — 4 cols */}
@@ -100,7 +123,7 @@ const AdminDashboard = () => {
               {mockAdminTickets.filter(t => t.status === "open").slice(0, 3).map(t => (
                 <div key={t.id} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
                   <div>
-                    <p className="font-medium text-foreground text-xs">{t.subject}</p>
+                    <p className="font-medium text-foreground text-xs truncate max-w-[140px]">{t.subject}</p>
                     <p className="text-[10px] text-muted-foreground">{t.requester}</p>
                   </div>
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${t.priority === "high" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
@@ -173,6 +196,15 @@ const AdminDashboard = () => {
               </div>
               <Link to="/dashboard/admin/moderation" className="text-xs text-primary hover:underline">Modérer →</Link>
             </div>
+            <div className="rounded-xl border bg-card p-4 shadow-card">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                  <Bell className="h-4 w-4 text-primary" />Campagnes
+                </h3>
+                <span className="text-xs font-bold text-primary">2 actives</span>
+              </div>
+              <Link to="/dashboard/admin/campaigns" className="text-xs text-primary hover:underline">Voir →</Link>
+            </div>
           </div>
         </div>
 
@@ -203,17 +235,17 @@ const AdminDashboard = () => {
 
           <div className="rounded-xl border bg-card p-6 shadow-card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><ScrollText className="h-4 w-4 text-accent" />Logs récents</h3>
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><ScrollText className="h-4 w-4 text-accent" />Audit logs récents</h3>
               <Link to="/dashboard/admin/audit-logs" className="text-xs text-primary hover:underline">Tout voir</Link>
             </div>
             {recentLogs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Aucun log récent</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Aucun log récent. Les actions admin apparaîtront ici.</p>
             ) : (
               <div className="space-y-3">
                 {recentLogs.map(log => (
                   <div key={log.id} className="flex items-start gap-3 text-sm">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-xs text-foreground truncate">{log.summary}</p>
                       <p className="text-[10px] text-muted-foreground">{log.actorAdminName} · {new Date(log.createdAt).toLocaleString("fr-TN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
                     </div>
@@ -239,7 +271,9 @@ const AdminDashboard = () => {
           </div>
 
           <div className="rounded-xl border bg-card p-6 shadow-card">
-            <h3 className="font-semibold text-foreground mb-4">Activité récente</h3>
+            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-warning" />Activité en temps réel
+            </h3>
             <div className="space-y-3">
               {mockAdminRecentActivity.map((a, i) => (
                 <div key={i} className="flex items-center gap-3 text-sm py-2 border-b last:border-0">
