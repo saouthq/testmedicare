@@ -1,18 +1,28 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Star, Clock, Phone, CheckCircle2 } from "lucide-react";
+import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Clock, Phone, CheckCircle2, AlertCircle, Package, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 
-import { mockPatientPrescriptions as initialPrescriptions, mockPartnerPharmacies } from "@/data/mockData";
+import { mockPatientPrescriptions as initialPrescriptions, mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
+
+const MAX_PHARMACIES = 6;
+
+const statusConfig: Record<PharmacyResponse["status"], { label: string; class: string; icon: any }> = {
+  pending: { label: "En attente", class: "bg-muted text-muted-foreground", icon: Clock },
+  preparing: { label: "En préparation", class: "bg-warning/10 text-warning", icon: Package },
+  ready: { label: "Prête à retirer", class: "bg-accent/10 text-accent", icon: CheckCircle2 },
+  unavailable: { label: "Non disponible", class: "bg-destructive/10 text-destructive", icon: AlertCircle },
+};
 
 const PatientPrescriptions = () => {
   const [filter, setFilter] = useState("all");
-  const [prescriptions, setPrescriptions] = useState(initialPrescriptions);
+  const [prescriptions, setPrescriptions] = useState<PrescriptionWithPharmacies[]>(initialPrescriptions);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sendingToPharmacy, setSendingToPharmacy] = useState<string | null>(null);
   const [pharmacySearch, setPharmacySearch] = useState("");
-  const [selectedPharmacy, setSelectedPharmacy] = useState<string | null>(null);
+  const [selectedPharmacies, setSelectedPharmacies] = useState<string[]>([]);
 
   const filtered = filter === "all" ? prescriptions : prescriptions.filter(p => p.status === filter);
 
@@ -21,20 +31,63 @@ const PatientPrescriptions = () => {
     ph.address.toLowerCase().includes(pharmacySearch.toLowerCase())
   );
 
-  const handleSendToPharmacy = (id: string) => {
-    const pharmacy = mockPartnerPharmacies.find(ph => ph.id === selectedPharmacy);
-    if (!pharmacy) return;
-    setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, pharmacy: pharmacy.name } : p));
+  const togglePharmacySelection = (id: string) => {
+    setSelectedPharmacies(prev => {
+      if (prev.includes(id)) return prev.filter(p => p !== id);
+      if (prev.length >= MAX_PHARMACIES) {
+        toast({ title: "Limite atteinte", description: `Maximum ${MAX_PHARMACIES} pharmacies.`, variant: "destructive" });
+        return prev;
+      }
+      return [...prev, id];
+    });
+  };
+
+  const handleSendToPharmacies = (id: string) => {
+    const pharmacyResponses: PharmacyResponse[] = selectedPharmacies.map(phId => {
+      const ph = mockPartnerPharmacies.find(p => p.id === phId);
+      return { pharmacyId: phId, pharmacyName: ph?.name || "", status: "pending" as const };
+    });
+    setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, sentToPharmacies: [...(p.sentToPharmacies || []), ...pharmacyResponses] } : p));
     setSendingToPharmacy(null);
-    setSelectedPharmacy(null);
+    setSelectedPharmacies([]);
     setPharmacySearch("");
+    toast({ title: "Ordonnance envoyée", description: `Envoyée à ${pharmacyResponses.length} pharmacie(s).` });
   };
 
   const handleCancelSend = () => {
     setSendingToPharmacy(null);
-    setSelectedPharmacy(null);
+    setSelectedPharmacies([]);
     setPharmacySearch("");
   };
+
+  // Simulate pharmacy response (mock)
+  const simulatePharmacyResponse = (prescriptionId: string, pharmacyId: string) => {
+    const statuses: PharmacyResponse["status"][] = ["preparing", "ready", "unavailable"];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    
+    setPrescriptions(prev => prev.map(p => {
+      if (p.id !== prescriptionId) return p;
+      const updated = (p.sentToPharmacies || []).map(ph => {
+        if (ph.pharmacyId !== pharmacyId) return ph;
+        return {
+          ...ph,
+          status: randomStatus,
+          respondedAt: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+          pickupTime: randomStatus === "ready" ? "Avant 18h" : undefined,
+          alternatives: randomStatus === "unavailable" ? [{ medication: "Metformine 850mg", alternative: "Glucophage 850mg (équivalent)" }] : undefined,
+        };
+      });
+      return { ...p, sentToPharmacies: updated };
+    }));
+
+    // Add notification if ready
+    if (randomStatus === "ready") {
+      toast({ title: "Ordonnance prête !", description: "Une pharmacie a confirmé la disponibilité." });
+    }
+  };
+
+  const getSentCount = (p: PrescriptionWithPharmacies) => (p.sentToPharmacies || []).length;
+  const canSendMore = (p: PrescriptionWithPharmacies) => getSentCount(p) < MAX_PHARMACIES;
 
   return (
     <DashboardLayout role="patient" title="Mes ordonnances">
@@ -65,8 +118,10 @@ const PatientPrescriptions = () => {
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${p.status === "active" ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
                           {p.status === "active" ? "Active" : "Expirée"}
                         </span>
-                        {p.cnam && <span className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />CNAM</span>}
-                        {p.pharmacy && <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">📦 {p.pharmacy}</span>}
+                        {p.cnam && <span className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />Assuré</span>}
+                        {getSentCount(p) > 0 && (
+                          <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">📦 {getSentCount(p)} pharmacie(s)</span>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">{p.doctor} · {p.date}</p>
                       <div className="mt-3 space-y-1">
@@ -80,25 +135,67 @@ const PatientPrescriptions = () => {
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${expandedId === p.id ? "rotate-180" : ""}`} />
                 </div>
               </div>
+              
               {expandedId === p.id && (
-                <div className="border-t px-5 py-4 bg-muted/10">
+                <div className="border-t px-5 py-4 bg-muted/10 space-y-4">
+                  {/* Actions */}
                   <div className="flex gap-2 flex-wrap">
                     <Button variant="outline" size="sm"><Eye className="h-4 w-4 mr-1" />Voir le détail</Button>
                     <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" />Télécharger PDF</Button>
                     <Button variant="outline" size="sm"><Printer className="h-4 w-4 mr-1" />Imprimer</Button>
-                    {p.status === "active" && !p.pharmacy && sendingToPharmacy !== p.id && (
+                    {p.status === "active" && canSendMore(p) && sendingToPharmacy !== p.id && (
                       <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setSendingToPharmacy(p.id)}>
                         <Send className="h-4 w-4 mr-1" />Envoyer à une pharmacie
                       </Button>
                     )}
                   </div>
 
+                  {/* Pharmacy tracking */}
+                  {(p.sentToPharmacies || []).length > 0 && (
+                    <div className="rounded-xl border bg-card p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold text-foreground">Suivi des pharmacies</h4>
+                        <span className="text-xs text-muted-foreground">{getSentCount(p)}/{MAX_PHARMACIES}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {(p.sentToPharmacies || []).map((ph, idx) => {
+                          const config = statusConfig[ph.status];
+                          const Icon = config.icon;
+                          return (
+                            <div key={idx} className="rounded-lg border p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium text-foreground">{ph.pharmacyName}</p>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${config.class}`}>
+                                      <Icon className="h-3 w-3" />{config.label}
+                                    </span>
+                                  </div>
+                                  {ph.respondedAt && <p className="text-[11px] text-muted-foreground mt-0.5">Répondu à {ph.respondedAt}</p>}
+                                  {ph.pickupTime && <p className="text-xs text-accent font-medium mt-1">📍 Retrait : {ph.pickupTime}</p>}
+                                  {ph.alternatives && ph.alternatives.map((alt, i) => (
+                                    <p key={i} className="text-xs text-muted-foreground mt-1">💊 {alt.medication} → {alt.alternative}</p>
+                                  ))}
+                                </div>
+                                {ph.status === "pending" && (
+                                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => simulatePharmacyResponse(p.id, ph.pharmacyId)}>
+                                    <RefreshCw className="h-3 w-3 mr-1" />Simuler réponse
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Pharmacy search/selection panel */}
                   {sendingToPharmacy === p.id && (
-                    <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                          <Send className="h-4 w-4 text-primary" />Choisir une pharmacie partenaire
+                          <Send className="h-4 w-4 text-primary" />Choisir des pharmacies (max {MAX_PHARMACIES - getSentCount(p)})
                         </h4>
                         <button onClick={handleCancelSend} className="text-muted-foreground hover:text-foreground">
                           <X className="h-4 w-4" />
@@ -115,13 +212,29 @@ const PatientPrescriptions = () => {
                         />
                       </div>
 
+                      {selectedPharmacies.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedPharmacies.map(id => {
+                            const ph = mockPartnerPharmacies.find(p => p.id === id);
+                            return (
+                              <span key={id} className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                                {ph?.name}
+                                <button onClick={() => togglePharmacySelection(id)}><X className="h-3 w-3" /></button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       <div className="max-h-56 overflow-y-auto space-y-2">
-                        {filteredPharmacies.map(ph => (
+                        {filteredPharmacies
+                          .filter(ph => !(p.sentToPharmacies || []).some(s => s.pharmacyId === ph.id))
+                          .map(ph => (
                           <button
                             key={ph.id}
-                            onClick={() => setSelectedPharmacy(ph.id)}
+                            onClick={() => togglePharmacySelection(ph.id)}
                             className={`w-full text-left rounded-lg border p-3 transition-all ${
-                              selectedPharmacy === ph.id
+                              selectedPharmacies.includes(ph.id)
                                 ? "border-primary bg-primary/10 ring-1 ring-primary"
                                 : "bg-background hover:border-primary/50 hover:bg-muted/30"
                             }`}
@@ -140,16 +253,13 @@ const PatientPrescriptions = () => {
                                   <MapPin className="h-3 w-3 shrink-0" />{ph.address}
                                 </p>
                                 <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
-                                    <Star className="h-3 w-3 text-warning" />{ph.rating}
-                                  </span>
                                   <span className="text-[11px] text-muted-foreground">{ph.distance}</span>
                                   <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
                                     <Phone className="h-3 w-3" />{ph.phone}
                                   </span>
                                 </div>
                               </div>
-                              {selectedPharmacy === ph.id && (
+                              {selectedPharmacies.includes(ph.id) && (
                                 <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                               )}
                             </div>
@@ -165,18 +275,18 @@ const PatientPrescriptions = () => {
                         <Button
                           size="sm"
                           className="gradient-primary text-primary-foreground"
-                          disabled={!selectedPharmacy}
-                          onClick={() => handleSendToPharmacy(p.id)}
+                          disabled={selectedPharmacies.length === 0}
+                          onClick={() => handleSendToPharmacies(p.id)}
                         >
                           <Send className="h-3.5 w-3.5 mr-1" />
-                          Confirmer l'envoi
+                          Envoyer ({selectedPharmacies.length})
                         </Button>
                       </div>
                     </div>
                   )}
 
-                  {p.status === "active" && !sendingToPharmacy && (
-                    <p className="text-xs text-muted-foreground mt-3">💡 Vous pouvez envoyer cette ordonnance directement à une pharmacie partenaire pour préparer vos médicaments.</p>
+                  {p.status === "active" && !sendingToPharmacy && getSentCount(p) === 0 && (
+                    <p className="text-xs text-muted-foreground">💡 Vous pouvez envoyer cette ordonnance à jusqu'à {MAX_PHARMACIES} pharmacies pour comparer les disponibilités.</p>
                   )}
                 </div>
               )}

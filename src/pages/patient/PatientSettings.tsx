@@ -3,22 +3,31 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Bell, Shield, Save, Globe, Trash2, LogOut, Eye, EyeOff } from "lucide-react";
+import { User, Bell, Shield, Save, Globe, Trash2, Eye, FileCheck, CheckCircle2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { mockAssurances, mockPatientConsents } from "@/data/mockData";
+import { toast } from "@/hooks/use-toast";
 
-type Tab = "profile" | "notifications" | "security" | "privacy";
+type Tab = "profile" | "notifications" | "security" | "privacy" | "consents";
 
 const PatientSettings = () => {
   const [tab, setTab] = useState<Tab>("profile");
-  const [showPassword, setShowPassword] = useState(false);
   const isMobile = useIsMobile();
+  const [insurance, setInsurance] = useState("maghrebia");
+  const [insuranceNumber, setInsuranceNumber] = useState("MAG-2024-001234");
+  const [consents, setConsents] = useState(mockPatientConsents);
 
   const tabs = [
     { key: "profile" as Tab, label: "Profil", icon: User },
     { key: "notifications" as Tab, label: "Notifications", icon: Bell },
     { key: "security" as Tab, label: "Sécurité", icon: Shield },
     { key: "privacy" as Tab, label: "Confidentialité", icon: Eye },
+    { key: "consents" as Tab, label: "Consentements", icon: FileCheck },
   ];
+
+  const handleSave = () => {
+    toast({ title: "Paramètres enregistrés", description: "Vos modifications ont été sauvegardées." });
+  };
 
   return (
     <DashboardLayout role="patient" title="Paramètres">
@@ -60,20 +69,42 @@ const PatientSettings = () => {
                 <div className="sm:col-span-2"><Label>Adresse</Label><Input defaultValue="El Manar, Tunis" className="mt-1" /></div>
               </div>
             </div>
+            
             <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">
               <h3 className="font-semibold text-foreground mb-4">Informations médicales</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label>N° Assuré CNAM</Label><Input defaultValue="12345678" className="mt-1" /></div>
+                <div>
+                  <Label>Assurance</Label>
+                  <select 
+                    value={insurance} 
+                    onChange={e => setInsurance(e.target.value)}
+                    className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                  >
+                    {mockAssurances.map(a => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>N° d'assuré <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                  <Input 
+                    value={insuranceNumber} 
+                    onChange={e => setInsuranceNumber(e.target.value)}
+                    placeholder="Numéro d'assuré" 
+                    className="mt-1"
+                    disabled={insurance === "none"} 
+                  />
+                </div>
                 <div><Label>Groupe sanguin</Label>
                   <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
                     <option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
                   </select>
                 </div>
-                <div className="sm:col-span-2"><Label>Allergies connues</Label><Input defaultValue="Pénicilline" className="mt-1" /></div>
+                <div><Label>Allergies connues</Label><Input defaultValue="Pénicilline" className="mt-1" /></div>
                 <div className="sm:col-span-2"><Label>Médecin traitant</Label><Input defaultValue="Dr. Ahmed Bouazizi" className="mt-1" /></div>
               </div>
             </div>
-            <Button className="gradient-primary text-primary-foreground shadow-primary-glow"><Save className="h-4 w-4 mr-2" />Enregistrer</Button>
+            <Button onClick={handleSave} className="gradient-primary text-primary-foreground shadow-primary-glow"><Save className="h-4 w-4 mr-2" />Enregistrer</Button>
           </div>
         )}
 
@@ -85,8 +116,9 @@ const PatientSettings = () => {
                 { label: "Rappel de rendez-vous", desc: "Recevoir un rappel avant chaque RDV" },
                 { label: "Résultats d'analyses", desc: "Notification quand vos résultats sont disponibles" },
                 { label: "Nouvelles ordonnances", desc: "Alerte quand une ordonnance est émise" },
+                { label: "Ordonnance prête", desc: "Notification quand une pharmacie confirme la disponibilité" },
+                { label: "Feuille de soins", desc: "Notification quand une feuille de soins est disponible" },
                 { label: "Messages du médecin", desc: "Notification pour chaque message reçu" },
-                { label: "Promotions santé", desc: "Offres et informations santé" },
               ].map((n, i) => (
                 <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 border-b last:border-0">
                   <div><p className="text-sm font-medium text-foreground">{n.label}</p><p className="text-xs text-muted-foreground">{n.desc}</p></div>
@@ -98,7 +130,7 @@ const PatientSettings = () => {
                 </div>
               ))}
             </div>
-            <Button className="mt-6 gradient-primary text-primary-foreground shadow-primary-glow"><Save className="h-4 w-4 mr-2" />Enregistrer</Button>
+            <Button onClick={handleSave} className="mt-6 gradient-primary text-primary-foreground shadow-primary-glow"><Save className="h-4 w-4 mr-2" />Enregistrer</Button>
           </div>
         )}
 
@@ -145,6 +177,76 @@ const PatientSettings = () => {
             <div className="mt-6 pt-4 border-t">
               <Button variant="outline" size="sm"><Globe className="h-4 w-4 mr-2" />Télécharger mes données (RGPD)</Button>
             </div>
+          </div>
+        )}
+
+        {tab === "consents" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">
+              <h3 className="font-semibold text-foreground mb-2">Consentements</h3>
+              <p className="text-sm text-muted-foreground mb-4">Gérez vos autorisations de partage de données médicales.</p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start justify-between py-3 border-b gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Partage d'ordonnances avec les pharmacies</p>
+                    <p className="text-xs text-muted-foreground">Permet aux pharmacies de préparer vos médicaments à l'avance.</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={consents.shareWithPharmacy} 
+                    onChange={e => setConsents(prev => ({ ...prev, shareWithPharmacy: e.target.checked }))}
+                    className="rounded border-input h-5 w-5 shrink-0 mt-1" 
+                  />
+                </div>
+
+                <div className="flex items-start justify-between py-3 border-b gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Accès aux résultats de laboratoire</p>
+                    <p className="text-xs text-muted-foreground">Vos résultats d'analyses seront automatiquement ajoutés à votre dossier.</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={consents.shareLabResults} 
+                    onChange={e => setConsents(prev => ({ ...prev, shareLabResults: e.target.checked }))}
+                    className="rounded border-input h-5 w-5 shrink-0 mt-1" 
+                  />
+                </div>
+
+                <div className="flex items-start justify-between py-3 border-b gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Partage du dossier médical</p>
+                    <p className="text-xs text-muted-foreground">Permet aux médecins consultés d'accéder à votre historique médical complet.</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={consents.shareMedicalRecord} 
+                    onChange={e => setConsents(prev => ({ ...prev, shareMedicalRecord: e.target.checked }))}
+                    className="rounded border-input h-5 w-5 shrink-0 mt-1" 
+                  />
+                </div>
+
+                <div className="flex items-start justify-between py-3 gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Communications promotionnelles</p>
+                    <p className="text-xs text-muted-foreground">Recevoir des offres et informations santé de nos partenaires.</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={consents.receivePromotions} 
+                    onChange={e => setConsents(prev => ({ ...prev, receivePromotions: e.target.checked }))}
+                    className="rounded border-input h-5 w-5 shrink-0 mt-1" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-accent/5 border border-accent/20 p-4">
+              <p className="text-sm font-medium text-accent flex items-center gap-2"><CheckCircle2 className="h-4 w-4" />Vos droits</p>
+              <p className="text-xs text-muted-foreground mt-1">Vous pouvez à tout moment retirer votre consentement. Cela n'affectera pas les traitements de données déjà effectués.</p>
+            </div>
+
+            <Button onClick={handleSave} className="gradient-primary text-primary-foreground shadow-primary-glow"><Save className="h-4 w-4 mr-2" />Enregistrer les consentements</Button>
           </div>
         )}
       </div>
