@@ -44,7 +44,7 @@ export function createInvoice(invoice: Omit<SharedInvoice, "id">) {
   // Notify the other role
   if (invoice.createdBy === "secretary") {
     pushNotification({
-      type: "system",
+      type: "generic",
       title: "Nouvelle facture créée",
       message: `Facture ${id} · ${invoice.patient} · ${invoice.amount} DT`,
       targetRole: "doctor",
