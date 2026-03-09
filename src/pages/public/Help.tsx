@@ -67,7 +67,7 @@ const faqCategories = [
       },
       {
         q: "Les consultations sont-elles prises en charge par l'assurance ?",
-        a: "De nombreux praticiens sont conventionnés CNAM ou acceptent les assurances privées. Filtrez par 'Assurance' lors de votre recherche pour trouver des praticiens conventionnés.",
+        a: "De nombreux praticiens sont conventionnés ou acceptent les assurances publiques et privées. Filtrez par 'Assurance' lors de votre recherche pour trouver des praticiens conventionnés.",
       },
       {
         q: "Comment fonctionne le tiers payant ?",
