@@ -9,7 +9,8 @@ import AdminSpotlight from "@/components/admin/AdminSpotlight";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
 import { getEnabledFeatures } from "@/stores/featureMatrixStore";
-import { Lock } from "lucide-react";
+import { useAdminModules, isSidebarUrlEnabled, getDisabledModuleForRoute } from "@/stores/adminModulesStore";
+import { Lock, Power } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
