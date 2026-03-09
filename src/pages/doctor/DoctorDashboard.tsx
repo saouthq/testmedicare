@@ -46,6 +46,8 @@ const DoctorDashboard = () => {
   return (
     <DashboardLayout role="doctor" title="Tableau de bord">
       <div className="space-y-6">
+        {/* Upgrade banner for Essentiel plan */}
+        <UpgradeBanner />
         {/* Profile completion banner */}
         {completionPercent < 100 && (
           <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-center gap-4">
