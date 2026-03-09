@@ -207,12 +207,12 @@ export const mockSecretaryAgendaAppointments = [
   { id: 7, time: "10:30", endTime: "11:00", patient: "Nadia Jemni", avatar: "NJ", doctor: "Dr. Hammami", type: "1ère visite", motif: "Consultation dermatologique", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
   { id: 8, time: "11:00", endTime: "11:30", patient: "Sami Ayari", avatar: "SA", doctor: "Dr. Bouazizi", type: "1ère visite", motif: "Bilan complet", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
   { id: 9, time: "11:30", endTime: "12:00", patient: "Bilel Nasri", avatar: "BN", doctor: "Dr. Gharbi", type: "Suivi", motif: "Hypertension", status: "upcoming", phone: "+216 50 789 012", assurance: "STAR Assurances" },
-  { id: 10, time: "14:00", endTime: "14:30", patient: "Youssef Belhadj", avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Renouvellement ordonnance", status: "confirmed", phone: "+216 71 890 123", assurance: "", teleconsultation: true },
-  { id: 11, time: "14:30", endTime: "15:00", patient: "Salma Dridi", avatar: "SD", doctor: "Dr. Hammami", type: "Consultation", motif: "Acné sévère", status: "upcoming", phone: "+216 71 901 234", assurance: "CNAM" },
-  { id: 12, time: "15:00", endTime: "15:30", patient: "Olfa Ben Salah", avatar: "OB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Fatigue chronique", status: "upcoming", phone: "+216 55 012 345", assurance: "GAT" },
-  { id: 13, time: "15:30", endTime: "16:00", patient: "Rania Meddeb", avatar: "RM", doctor: "Dr. Gharbi", type: "Contrôle", motif: "ECG de contrôle", status: "cancelled", phone: "+216 71 123 456", assurance: "CNRPS" },
-  { id: 14, time: "16:00", endTime: "16:30", patient: "Imen Bouhlel", avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "upcoming", phone: "+216 50 234 567", assurance: "CNAM" },
-  { id: 15, time: "16:30", endTime: "17:00", patient: "Walid Jlassi", avatar: "WJ", doctor: "Dr. Hammami", type: "Consultation", motif: "Eczéma", status: "upcoming", phone: "+216 22 345 678", assurance: "" },
+  { id: 10, time: "14:00", endTime: "14:30", patient: "Youssef Belhadj", avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Renouvellement ordonnance", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
+  { id: 11, time: "14:30", endTime: "15:00", patient: "Salma Dridi", avatar: "SD", doctor: "Dr. Hammami", type: "Consultation", motif: "Acné sévère", status: "upcoming", phone: "+216 71 901 234", assurance: "Assurance publique" },
+  { id: 12, time: "15:00", endTime: "15:30", patient: "Olfa Ben Salah", avatar: "OB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Fatigue chronique", status: "upcoming", phone: "+216 55 012 345", assurance: "GAT Assurances" },
+  { id: 13, time: "15:30", endTime: "16:00", patient: "Rania Meddeb", avatar: "RM", doctor: "Dr. Gharbi", type: "Contrôle", motif: "ECG de contrôle", status: "cancelled", phone: "+216 71 123 456", assurance: "CNRPS (retraités)" },
+  { id: 14, time: "16:00", endTime: "16:30", patient: "Imen Bouhlel", avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "upcoming", phone: "+216 50 234 567", assurance: "Assurance publique" },
+  { id: 15, time: "16:30", endTime: "17:00", patient: "Walid Jlassi", avatar: "WJ", doctor: "Dr. Hammami", type: "Consultation", motif: "Eczéma", status: "upcoming", phone: "+216 22 345 678", assurance: "Sans assurance" },
 ];
 
 export const mockSecretaryStats = {
