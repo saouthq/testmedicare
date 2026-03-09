@@ -79,7 +79,7 @@ export const mockPharmacyPrescriptions: PharmacyPrescription[] = [
   },
   {
     id: "ORD-2026-040", patient: "Rania Meddeb", avatar: "RM", doctor: "Dr. Gharbi",
-    date: "16 Fév 2026", assurance: "CNAM", numAssurance: "99887766",
+    date: "16 Fév 2026", assurance: "Assurance publique", numAssurance: "99887766",
     patientPhone: "+216 52 789 012", urgent: false, total: "11 DT", status: "partial",
     items: [
       { name: "Bisoprolol", dosage: "5mg", quantity: 30, availability: "available", price: "11 DT" },
