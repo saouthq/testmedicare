@@ -1,12 +1,14 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical, FlaskConical } from "lucide-react";
 import AddItemModal from "@/components/patient-health/AddItemModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
+import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
+import { mockLabDemands } from "@/data/mocks/lab";
 
 type HealthSection = "menu" | "documents" | "antecedents" | "treatments" | "allergies" | "habits" | "family" | "surgeries" | "vaccinations" | "measures" | "ai";
 
