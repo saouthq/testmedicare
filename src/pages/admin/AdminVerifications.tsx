@@ -183,10 +183,15 @@ const AdminVerifications = () => {
 
     const newStatus = motifAction.type === "approve" ? "approved" : "rejected";
     setVerifications(prev => prev.map(x => x.id === motifAction.id ? { ...x, status: newStatus, events: [...x.events, event] } : x));
+
+    // Also update registration store if this came from partner registration
+    if (v.id.startsWith("reg-")) {
+      updateRegistrationStatus(v.id, newStatus as any, motif);
+    }
+
     appendLog(`verification_${newStatus}`, "verification", motifAction.id, `${v.entityName} ${newStatus === "approved" ? "approuvé(e)" : "refusé(e)"} — Motif : ${motif}`);
     toast({ title: `${v.entityName} ${newStatus === "approved" ? "approuvé(e)" : "refusé(e)"}`, variant: newStatus === "rejected" ? "destructive" : "default" });
     setMotifAction(null);
-    // Update drawer
     if (drawerItem?.id === motifAction.id) {
       setDrawerItem(prev => prev ? { ...prev, status: newStatus, events: [...prev.events, event] } : null);
     }
@@ -200,6 +205,11 @@ const AdminVerifications = () => {
     };
     setVerifications(prev => prev.map(x => x.id === drawerItem.id ? { ...x, events: [...x.events, event] } : x));
     setDrawerItem(prev => prev ? { ...prev, events: [...prev.events, event] } : null);
+
+    if (drawerItem.id.startsWith("reg-")) {
+      addRegistrationEvent(drawerItem.id, "relance", "Relance envoyée par email pour complément de dossier");
+    }
+
     appendLog("verification_relance", "verification", drawerItem.id, `Relance envoyée à ${drawerItem.entityName}`);
     toast({ title: "Relance envoyée", description: `Email envoyé à ${drawerItem.email}` });
   };
