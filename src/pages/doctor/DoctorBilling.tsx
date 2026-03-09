@@ -232,6 +232,78 @@ const DoctorBilling = () => {
           </div>
         </div>
       )}
+
+      {/* ═══ CABINET TAB — Shared billing from secretary ═══ */}
+      {tab === "cabinet" && (
+        <div className="space-y-6">
+          {/* Stats */}
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-xl border bg-card p-4 shadow-card text-center">
+              <p className="text-2xl font-bold text-foreground">{cabinetStats.total} DT</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+            <div className="rounded-xl border bg-accent/5 border-accent/20 p-4 text-center">
+              <p className="text-2xl font-bold text-accent">{cabinetStats.paid} DT</p>
+              <p className="text-xs text-muted-foreground">Encaissé</p>
+            </div>
+            <div className="rounded-xl border bg-warning/5 border-warning/20 p-4 text-center">
+              <p className="text-2xl font-bold text-warning">{cabinetStats.pending} DT</p>
+              <p className="text-xs text-muted-foreground">En attente</p>
+            </div>
+            <div className="rounded-xl border bg-destructive/5 border-destructive/20 p-4 text-center">
+              <p className="text-2xl font-bold text-destructive">{cabinetStats.overdue} DT</p>
+              <p className="text-xs text-muted-foreground">Impayé</p>
+            </div>
+          </div>
+
+          {/* Invoice list */}
+          <div className="rounded-xl border bg-card shadow-card overflow-hidden">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />Factures du cabinet
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Factures créées par la secrétaire ou le système</p>
+            </div>
+            {sharedInvoices.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                Aucune facture. Les factures créées par la secrétaire apparaîtront ici.
+              </div>
+            ) : (
+              <div className="divide-y">
+                {sharedInvoices.map(inv => (
+                  <div key={inv.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                        {inv.avatar}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{inv.patient}</p>
+                        <p className="text-[11px] text-muted-foreground">{inv.id} · {inv.date} · {inv.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-foreground">{inv.amount} DT</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        inv.status === "paid" ? "bg-accent/10 text-accent" :
+                        inv.status === "pending" ? "bg-warning/10 text-warning" :
+                        "bg-destructive/10 text-destructive"
+                      }`}>
+                        {inv.status === "paid" ? "Payé" : inv.status === "pending" ? "En attente" : "Impayé"}
+                      </span>
+                      {inv.status !== "paid" && (
+                        <Button size="sm" variant="outline" className="h-7 text-[10px]"
+                          onClick={() => { markInvoicePaid(inv.id, "Espèces"); }}>
+                          <CheckCircle2 className="h-3 w-3 mr-1" />Encaisser
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
