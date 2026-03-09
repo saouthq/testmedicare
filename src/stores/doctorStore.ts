@@ -188,3 +188,26 @@ export function getProfileCompletionPercent(profile: DoctorProfileCompletion): n
   const vals = Object.values(profile);
   return Math.round((vals.filter(Boolean).length / vals.length) * 100);
 }
+
+/** Request renewal from patient side — creates a pending request in doctor's store */
+export function requestRenewal(data: {
+  patientName: string;
+  patientAvatar: string;
+  prescriptionId: string;
+  items: string[];
+}) {
+  const id = `ren-${Date.now()}`;
+  renewalRequestsStore.set(prev => [
+    {
+      id,
+      patientName: data.patientName,
+      patientAvatar: data.patientAvatar,
+      prescriptionId: data.prescriptionId,
+      items: data.items,
+      requestedAt: new Date().toISOString(),
+      status: "pending" as const,
+    },
+    ...prev,
+  ]);
+  return id;
+}

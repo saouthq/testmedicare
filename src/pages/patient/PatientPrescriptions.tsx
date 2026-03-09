@@ -3,10 +3,11 @@
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Clock, Phone, CheckCircle2, AlertCircle, Package, RefreshCw } from "lucide-react";
+import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Clock, Phone, CheckCircle2, AlertCircle, Package, RefreshCw, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { requestRenewal } from "@/stores/doctorStore";
 
 import { mockPatientPrescriptions as initialPrescriptions, mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
 import { useSharedPrescriptions, sendPrescriptionToPharmacies } from "@/stores/prescriptionsStore";
@@ -174,6 +175,19 @@ const PatientPrescriptions = () => {
                     {p.status === "active" && canSendMore(p) && sendingToPharmacy !== p.id && (
                       <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setSendingToPharmacy(p.id)}>
                         <Send className="h-4 w-4 mr-1" />Envoyer à une pharmacie
+                      </Button>
+                    )}
+                    {p.status === "active" && (
+                      <Button variant="outline" size="sm" onClick={() => {
+                        requestRenewal({
+                          patientName: "Amine Ben Ali",
+                          patientAvatar: "AB",
+                          prescriptionId: p.id,
+                          items: p.items,
+                        });
+                        toast({ title: "Demande envoyée", description: `Demande de renouvellement de ${p.id} envoyée à ${p.doctor}. Visible dans son dashboard.` });
+                      }}>
+                        <RotateCcw className="h-4 w-4 mr-1" />Demander un renouvellement
                       </Button>
                     )}
                   </div>
