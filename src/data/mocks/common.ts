@@ -12,11 +12,13 @@ export const specialtiesWithAll = ["Tous", ...specialties.slice(0, 9)];
 
 export const languages = ["Français", "Arabe", "Anglais", "Allemand", "Italien", "Espagnol"];
 
-// ─── Assurances (remplace CNAM) ──────────────────────────────
+// ─── Assurances (référentiel unique Tunisie) ─────────────────
+// Note: Remplace CNAM par système "Assurance" générique
 
 export const mockAssurances = [
   { id: "cnam", name: "CNAM", type: "public" },
   { id: "cnrps", name: "CNRPS", type: "public" },
+  { id: "cnss", name: "CNSS", type: "public" },
   { id: "maghrebia", name: "Assurances Maghrebia", type: "private" },
   { id: "star", name: "STAR Assurances", type: "private" },
   { id: "gat", name: "GAT Assurances", type: "private" },
@@ -24,8 +26,12 @@ export const mockAssurances = [
   { id: "ami", name: "AMI Assurances", type: "private" },
   { id: "bh", name: "BH Assurance", type: "private" },
   { id: "ctama", name: "CTAMA", type: "private" },
+  { id: "lloyd", name: "Lloyd Assurances", type: "private" },
   { id: "none", name: "Sans assurance", type: "none" },
 ];
+
+// Helper to get assurance options for select inputs
+export const getAssuranceOptions = () => mockAssurances.map(a => ({ value: a.id, label: a.name }));
 
 export const availDates = [
   { label: "Lun 17", short: "17/02", morning: true, afternoon: true },
@@ -72,3 +78,12 @@ export const mockCabinetRules = {
   latePolicy: "Un retard de plus de 15 minutes peut entraîner l'annulation du RDV.",
   paymentMethods: ["Espèces", "Carte bancaire", "Virement"],
 };
+
+// ─── Tunisian Governorates ───────────────────────────────────
+
+export const gouvernorats = [
+  "Tunis", "Ariana", "Ben Arous", "Manouba", "Nabeul", "Zaghouan", "Bizerte",
+  "Béja", "Jendouba", "Le Kef", "Siliana", "Sousse", "Monastir", "Mahdia",
+  "Sfax", "Kairouan", "Kasserine", "Sidi Bouzid", "Gabès", "Médenine",
+  "Tataouine", "Gafsa", "Tozeur", "Kébili",
+];
