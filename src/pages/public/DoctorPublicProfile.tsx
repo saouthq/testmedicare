@@ -124,7 +124,7 @@ const DoctorPublicProfile = () => {
                   </div>
                   <div className="rounded-lg bg-primary/5 border border-primary/20 p-1.5 sm:p-2 text-center">
                     <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary mx-auto" />
-                    <p className="text-[9px] sm:text-[10px] text-primary font-medium">CNAM</p>
+                    <p className="text-[9px] sm:text-[10px] text-primary font-medium">Assurance</p>
                   </div>
                   <div className="rounded-lg bg-accent/5 border border-accent/20 p-1.5 sm:p-2 text-center">
                     <p className="text-sm sm:text-base font-bold text-foreground">{doctorData.experience}</p>
@@ -316,7 +316,7 @@ const DoctorPublicProfile = () => {
           <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-12 text-sm font-semibold" onClick={() => navigate("/booking/1")}>
             <Calendar className="h-4 w-4 mr-2" />Prendre rendez-vous
           </Button>
-          <p className="text-[10px] text-muted-foreground text-center mt-1">Prise en charge CNAM · Annulation gratuite 24h avant</p>
+          <p className="text-[10px] text-muted-foreground text-center mt-1">Prise en charge Assurance · Annulation gratuite 24h avant</p>
         </div>
       </div>
       <div className="h-24" />
