@@ -25,7 +25,7 @@ const HospitalDashboard = () => {
   return (
     <DashboardLayout role="hospital" title="Tableau de bord – Hôpital">
       <div className="space-y-6">
-        <StatsGrid stats={stats} />
+        <StatsGrid items={items} />
 
         {/* Alerts */}
         {(pendingAdmissions > 0 || equipmentIssues > 0 || occupancyRate > 85) && (
