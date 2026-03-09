@@ -43,7 +43,7 @@ export interface PharmacyPrescription {
   items: PharmacyPrescriptionItem[];
   status: PharmacyPrescriptionStatus;
   total: string;
-  assurance: string;         // "CNAM", "CNRPS", "Sans assurance"…
+  assurance: string;         // "Assurance publique", "Maghrebia", "STAR", "Sans assurance"…
   numAssurance?: string;
   urgent: boolean;
   pickupTime?: string;       // e.g. "14:30", required when ready_pickup

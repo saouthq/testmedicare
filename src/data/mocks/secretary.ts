@@ -16,16 +16,16 @@ export const mockSecretaryWaitingRoom = [
 ];
 
 export const mockSecretaryAppointments = [
-  { id: 1, time: "08:30", patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Consultation", status: "done" as string, avatar: "KM", amount: "35 DT", assurance: "CNAM" },
-  { id: 2, time: "09:00", patient: "Leila Chahed", doctor: "Dr. Gharbi", type: "Suivi", status: "done" as string, avatar: "LC", amount: "45 DT", assurance: "CNRPS" },
-  { id: 3, time: "09:30", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", status: "in_progress" as string, avatar: "AB", amount: "35 DT", assurance: "CNAM" },
-  { id: 4, time: "09:45", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", status: "waiting" as string, avatar: "FT", amount: "45 DT", assurance: "CNAM" },
+  { id: 1, time: "08:30", patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Consultation", status: "done" as string, avatar: "KM", amount: "35 DT", assurance: "Assurance publique" },
+  { id: 2, time: "09:00", patient: "Leila Chahed", doctor: "Dr. Gharbi", type: "Suivi", status: "done" as string, avatar: "LC", amount: "45 DT", assurance: "Assurance publique" },
+  { id: 3, time: "09:30", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", status: "in_progress" as string, avatar: "AB", amount: "35 DT", assurance: "Maghrebia" },
+  { id: 4, time: "09:45", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", status: "waiting" as string, avatar: "FT", amount: "45 DT", assurance: "Assurance publique" },
   { id: 5, time: "10:00", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", type: "Contrôle", status: "upcoming" as string, avatar: "MS", amount: "35 DT", assurance: "Sans assurance" },
-  { id: 6, time: "10:30", patient: "Nadia Jemni", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "NJ", amount: "40 DT", assurance: "CNAM" },
-  { id: 7, time: "11:00", patient: "Sami Ayari", doctor: "Dr. Bouazizi", type: "Première visite", status: "upcoming" as string, avatar: "SA", amount: "50 DT", assurance: "CNAM" },
+  { id: 6, time: "10:30", patient: "Nadia Jemni", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "NJ", amount: "40 DT", assurance: "Assurance publique" },
+  { id: 7, time: "11:00", patient: "Sami Ayari", doctor: "Dr. Bouazizi", type: "Première visite", status: "upcoming" as string, avatar: "SA", amount: "50 DT", assurance: "Assurance publique" },
   { id: 8, time: "14:00", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", type: "Téléconsultation", status: "upcoming" as string, avatar: "YB", teleconsultation: true, amount: "35 DT", assurance: "Sans assurance" },
   { id: 9, time: "14:30", patient: "Salma Dridi", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "SD", amount: "40 DT", assurance: "Maghrebia" },
-  { id: 10, time: "15:00", patient: "Hana Kammoun", doctor: "Dr. Bouazizi", type: "Suivi", status: "upcoming" as string, avatar: "HK", amount: "35 DT", assurance: "CNAM" },
+  { id: 10, time: "15:00", patient: "Hana Kammoun", doctor: "Dr. Bouazizi", type: "Suivi", status: "upcoming" as string, avatar: "HK", amount: "35 DT", assurance: "Assurance publique" },
   { id: 11, time: "15:30", patient: "Bilel Nasri", doctor: "Dr. Gharbi", type: "Consultation", status: "upcoming" as string, avatar: "BN", amount: "45 DT", assurance: "STAR" },
   { id: 12, time: "16:00", patient: "Olfa Ben Salah", doctor: "Dr. Hammami", type: "Suivi", status: "upcoming" as string, avatar: "OB", amount: "40 DT", assurance: "Sans assurance" },
 ];

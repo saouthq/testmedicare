@@ -158,5 +158,4 @@ export interface PartnerPharmacy {
   distance: string;
   phone: string;
   openNow: boolean;
-  rating: number;
 }

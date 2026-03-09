@@ -1,6 +1,6 @@
 /**
  * Pharmacy Dashboard — Counters + today's prescriptions
- * Patient-sent model. CNAM → Assurance.
+ * Patient-sent model.
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import {

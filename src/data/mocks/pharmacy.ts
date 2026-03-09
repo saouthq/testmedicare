@@ -115,9 +115,9 @@ export const mockPickupTimePresets = [
 
 /* ── History (deliveries) ──────────────────────────────── */
 export const mockPharmacyHistory = [
-  { id: "DEL-078", patient: "Nadia Jemni", prescription: "ORD-2026-042", items: ["Ventoline 100µg"], date: "18 Fév 2026", time: "10:00", pharmacist: "S. Maalej", amount: 18, assurance: "CNAM", avatar: "NJ", type: "full" as const },
+  { id: "DEL-078", patient: "Nadia Jemni", prescription: "ORD-2026-042", items: ["Ventoline 100µg"], date: "18 Fév 2026", time: "10:00", pharmacist: "S. Maalej", amount: 18, assurance: "Assurance publique", avatar: "NJ", type: "full" as const },
   { id: "DEL-077", patient: "Sami Ayari", prescription: "ORD-2026-041", items: ["Paracétamol 1g", "Amoxicilline 500mg"], date: "17 Fév 2026", time: "11:20", pharmacist: "A. Kchaou", amount: 11.7, assurance: "Maghrebia", avatar: "SA", type: "full" as const },
-  { id: "DEL-076", patient: "Rania Meddeb", prescription: "ORD-2026-040", items: ["Bisoprolol 5mg"], date: "16 Fév 2026", time: "15:30", pharmacist: "A. Kchaou", amount: 11, assurance: "CNAM", avatar: "RM", type: "partial" as const },
+  { id: "DEL-076", patient: "Rania Meddeb", prescription: "ORD-2026-040", items: ["Bisoprolol 5mg"], date: "16 Fév 2026", time: "15:30", pharmacist: "A. Kchaou", amount: 11, assurance: "Assurance publique", avatar: "RM", type: "partial" as const },
   { id: "DEL-075", patient: "Mohamed Sfar", prescription: "ORD-2026-043", items: ["Ibuprofène 400mg", "Tramadol 50mg"], date: "19 Fév 2026", time: "14:30", pharmacist: "S. Maalej", amount: 17.8, assurance: "Sans assurance", avatar: "MS", type: "full" as const },
 ];
 

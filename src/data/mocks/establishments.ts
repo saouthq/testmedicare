@@ -10,7 +10,6 @@ export interface MockClinic {
   address: string;
   phone: string;
   services: string[];
-  rating: number;
   description: string;
 }
 
