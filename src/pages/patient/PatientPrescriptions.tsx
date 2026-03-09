@@ -177,6 +177,19 @@ const PatientPrescriptions = () => {
                         <Send className="h-4 w-4 mr-1" />Envoyer à une pharmacie
                       </Button>
                     )}
+                    {p.status === "active" && (
+                      <Button variant="outline" size="sm" onClick={() => {
+                        requestRenewal({
+                          patientName: "Amine Ben Ali",
+                          patientAvatar: "AB",
+                          prescriptionId: p.id,
+                          items: p.items,
+                        });
+                        toast({ title: "Demande envoyée", description: `Demande de renouvellement de ${p.id} envoyée à ${p.doctor}. Visible dans son dashboard.` });
+                      }}>
+                        <RotateCcw className="h-4 w-4 mr-1" />Demander un renouvellement
+                      </Button>
+                    )}
                   </div>
 
                   {/* Pharmacy tracking */}
