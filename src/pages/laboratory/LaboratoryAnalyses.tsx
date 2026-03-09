@@ -1,9 +1,9 @@
 /**
- * Laboratory Inbox — Main demand processing page
- * Demands created by doctors only. Lab changes status + uploads PDF results.
+ * Laboratory Inbox — Now uses cross-role labStore for persistent state.
+ * Status changes + PDF uploads persist in localStorage and notify patient/doctor.
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FlaskConical, Search, Clock, CheckCircle2, AlertCircle, Activity,
   Shield, Eye, Send, Inbox, Upload, FileText, Download, Trash2, X,
@@ -11,8 +11,13 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockLabDemands, type LabDemand, type LabDemandStatus, type LabPdf } from "@/data/mocks/lab";
+import { mockLabDemands, type LabDemandStatus, type LabPdf } from "@/data/mocks/lab";
 import { toast } from "sonner";
+import {
+  useSharedLabDemands, initLabStoreIfEmpty,
+  updateLabDemandStatus, addLabPdf, removeLabPdf,
+  type SharedLabDemand,
+} from "@/stores/labStore";
 
 const statusConfig: Record<string, { label: string; cls: string; icon: any }> = {
   received:       { label: "Reçue",          cls: "bg-warning/10 text-warning", icon: Inbox },
@@ -22,11 +27,18 @@ const statusConfig: Record<string, { label: string; cls: string; icon: any }> = 
 };
 
 const LaboratoryAnalyses = () => {
-  const [demands, setDemands] = useState<LabDemand[]>(mockLabDemands);
+  // Initialize store with mock data on first load
+  useEffect(() => {
+    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
+  }, []);
+
+  const [demands, setDemands] = useSharedLabDemands();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<LabDemand | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmTransmit, setConfirmTransmit] = useState(false);
+
+  const selected = selectedId ? demands.find((d) => d.id === selectedId) || null : null;
 
   const filtered = demands.filter(d => {
     if (filter !== "all" && d.status !== filter) return false;
@@ -35,38 +47,35 @@ const LaboratoryAnalyses = () => {
   }).sort((a, b) => {
     if (a.priority === "urgent" && b.priority !== "urgent") return -1;
     if (b.priority === "urgent" && a.priority !== "urgent") return 1;
-    const order = { received: 0, in_progress: 1, results_ready: 2, transmitted: 3 };
-    return order[a.status] - order[b.status];
+    const order: Record<string, number> = { received: 0, in_progress: 1, results_ready: 2, transmitted: 3 };
+    return (order[a.status] || 0) - (order[b.status] || 0);
   });
 
-  /* ── Status transitions ── */
+  /* ── Status transitions — writes to store + notifications ── */
   const handleSetStatus = (id: string, status: LabDemandStatus) => {
-    // TODO BACKEND: PATCH /api/lab/demands/{id} { status }
-    setDemands(prev => prev.map(d => d.id === id ? { ...d, status } : d));
-    if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null);
+    updateLabDemandStatus(id, status);
     const labels: Record<string, string> = { in_progress: "En cours", results_ready: "Résultat prêt", transmitted: "Transmis" };
     toast.success(`Demande ${id} → ${labels[status]}`);
+    if (status === "transmitted") {
+      toast.info("📤 Notification envoyée au médecin et au patient");
+    }
   };
 
-  /* ── Mock PDF upload ── */
+  /* ── Mock PDF upload — writes to store ── */
   const handleUploadPdf = (id: string) => {
-    // TODO BACKEND: POST /api/lab/demands/{id}/pdfs (multipart)
-    const newPdf: LabPdf = {
+    const newPdf = {
       id: `PDF-${Date.now()}`,
       name: `Resultat_${id}_${Date.now().toString(36)}.pdf`,
       size: `${Math.floor(Math.random() * 400 + 100)} Ko`,
-      uploadedAt: "20 Fév 2026",
+      uploadedAt: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }),
     };
-    setDemands(prev => prev.map(d => d.id === id ? { ...d, pdfs: [...d.pdfs, newPdf] } : d));
-    if (selected?.id === id) setSelected(prev => prev ? { ...prev, pdfs: [...prev.pdfs, newPdf] } : null);
+    addLabPdf(id, newPdf);
     toast.success("PDF ajouté");
   };
 
-  /* ── Delete PDF ── */
+  /* ── Delete PDF — writes to store ── */
   const handleDeletePdf = (demandId: string, pdfId: string) => {
-    // TODO BACKEND: DELETE /api/lab/demands/{demandId}/pdfs/{pdfId}
-    setDemands(prev => prev.map(d => d.id === demandId ? { ...d, pdfs: d.pdfs.filter(p => p.id !== pdfId) } : d));
-    if (selected?.id === demandId) setSelected(prev => prev ? { ...prev, pdfs: prev.pdfs.filter(p => p.id !== pdfId) } : null);
+    removeLabPdf(demandId, pdfId);
     toast.success("PDF supprimé");
   };
 
@@ -125,8 +134,8 @@ const LaboratoryAnalyses = () => {
                 const cfg = statusConfig[d.status];
                 return (
                   <tr key={d.id}
-                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${selected?.id === d.id ? "bg-primary/5" : ""} ${d.priority === "urgent" ? "border-l-4 border-l-destructive" : ""}`}
-                    onClick={() => { setSelected(d); setConfirmTransmit(false); }}>
+                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedId === d.id ? "bg-primary/5" : ""} ${d.priority === "urgent" ? "border-l-4 border-l-destructive" : ""}`}
+                    onClick={() => { setSelectedId(d.id); setConfirmTransmit(false); }}>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
@@ -156,7 +165,7 @@ const LaboratoryAnalyses = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      <Button size="sm" variant="outline" className="text-[10px] h-7" onClick={e => { e.stopPropagation(); setSelected(d); }}>
+                      <Button size="sm" variant="outline" className="text-[10px] h-7" onClick={e => { e.stopPropagation(); setSelectedId(d.id); }}>
                         <Eye className="h-3 w-3 mr-1" />Ouvrir
                       </Button>
                     </td>
@@ -173,7 +182,7 @@ const LaboratoryAnalyses = () => {
 
       {/* ══ Detail Drawer ══ */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setSelectedId(null)}>
           <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
 
@@ -190,7 +199,7 @@ const LaboratoryAnalyses = () => {
               </div>
               <div className="flex items-center gap-2">
                 {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
-                <button onClick={() => setSelected(null)}><X className="h-5 w-5 text-muted-foreground" /></button>
+                <button onClick={() => setSelectedId(null)}><X className="h-5 w-5 text-muted-foreground" /></button>
               </div>
             </div>
 
@@ -216,7 +225,7 @@ const LaboratoryAnalyses = () => {
               </div>
             </div>
 
-            {/* Examens requested */}
+            {/* Examens */}
             <div className="rounded-lg border p-3 mb-4">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Examens demandés</p>
               <div className="flex flex-wrap gap-1.5">
@@ -253,7 +262,7 @@ const LaboratoryAnalyses = () => {
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5 text-muted-foreground" /></Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toast.info("Téléchargement PDF (mock)")}><Download className="h-3.5 w-3.5 text-muted-foreground" /></Button>
                         {!isLocked && (
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDeletePdf(selected.id, pdf.id)}>
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -264,7 +273,6 @@ const LaboratoryAnalyses = () => {
                   ))}
                 </div>
               )}
-              {/* Upload button (only if not transmitted) */}
               {!isLocked && (
                 <Button variant="outline" size="sm" className="mt-2 w-full text-xs" onClick={() => handleUploadPdf(selected.id)}>
                   <Upload className="h-3.5 w-3.5 mr-1.5" />Ajouter un PDF (mock)

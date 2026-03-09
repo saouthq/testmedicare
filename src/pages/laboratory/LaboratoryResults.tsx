@@ -1,20 +1,29 @@
 /**
- * Laboratory Results — History of demands with PDFs attached (transmitted)
- * Read-only listing with quick download.
+ * Laboratory Results — Reads from cross-role labStore for persistent state.
+ * Shows demands with PDFs attached (results_ready + transmitted).
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, Download, Send, Eye, Shield, User, Calendar, Search, CheckCircle2, Stethoscope, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockLabDemands, type LabDemand } from "@/data/mocks/lab";
+import { mockLabDemands } from "@/data/mocks/lab";
+import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
+import { toast } from "sonner";
 
 const LaboratoryResults = () => {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "results_ready" | "transmitted">("all");
 
+  // Initialize store with mock data on first load
+  useEffect(() => {
+    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
+  }, []);
+
+  const [demands] = useSharedLabDemands();
+
   // Only demands that have PDFs or are results_ready/transmitted
-  const withResults = mockLabDemands.filter(d => d.status === "results_ready" || d.status === "transmitted");
+  const withResults = demands.filter(d => d.status === "results_ready" || d.status === "transmitted");
 
   const filtered = withResults.filter(d => {
     if (search && !d.patient.toLowerCase().includes(search.toLowerCase()) && !d.id.toLowerCase().includes(search.toLowerCase())) return false;
@@ -93,7 +102,7 @@ const LaboratoryResults = () => {
                           <p className="text-[10px] text-muted-foreground">{pdf.size} · {pdf.uploadedAt}</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" className="text-xs shrink-0">
+                      <Button variant="outline" size="sm" className="text-xs shrink-0" onClick={() => toast.info("Téléchargement PDF (mock)")}>
                         <Download className="h-3.5 w-3.5 mr-1" />Télécharger
                       </Button>
                     </div>

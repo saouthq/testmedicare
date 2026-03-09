@@ -99,6 +99,7 @@ import AdminGuard from "./components/admin/AdminGuard";
 // Shared
 import Messages from "./pages/messaging/Messages";
 import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
+import SimulationPanel from "./components/shared/SimulationPanel";
 
 const queryClient = new QueryClient();
 
@@ -215,6 +216,8 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        {/* Floating simulation panel for cross-role workflow testing */}
+        <SimulationPanel />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

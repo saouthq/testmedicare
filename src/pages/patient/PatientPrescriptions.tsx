@@ -1,3 +1,6 @@
+/**
+ * PatientPrescriptions — Multi-pharmacy send + cross-role tracking via stores.
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Clock, Phone, CheckCircle2, AlertCircle, Package, RefreshCw } from "lucide-react";
@@ -6,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 
 import { mockPatientPrescriptions as initialPrescriptions, mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
+import { useSharedPrescriptions, sendPrescriptionToPharmacies } from "@/stores/prescriptionsStore";
 
 const MAX_PHARMACIES = 6;
 
@@ -18,13 +22,46 @@ const statusConfig: Record<PharmacyResponse["status"], { label: string; class: s
 
 const PatientPrescriptions = () => {
   const [filter, setFilter] = useState("all");
-  const [prescriptions, setPrescriptions] = useState<PrescriptionWithPharmacies[]>(initialPrescriptions);
+  const [prescriptions] = useState<PrescriptionWithPharmacies[]>(initialPrescriptions);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sendingToPharmacy, setSendingToPharmacy] = useState<string | null>(null);
   const [pharmacySearch, setPharmacySearch] = useState("");
   const [selectedPharmacies, setSelectedPharmacies] = useState<string[]>([]);
 
-  const filtered = filter === "all" ? prescriptions : prescriptions.filter(p => p.status === filter);
+  // Read cross-role shared prescriptions
+  const [sharedPrescriptions] = useSharedPrescriptions();
+
+  // Merge local mock data with shared store data for display
+  const mergedPrescriptions = prescriptions.map((p) => {
+    const shared = sharedPrescriptions.find((sp) => sp.id === p.id);
+    if (shared) {
+      // Map shared pharmacy responses to local format
+      const sharedResponses: PharmacyResponse[] = shared.sentToPharmacies.map((sph) => ({
+        pharmacyId: sph.pharmacyId,
+        pharmacyName: sph.pharmacyName,
+        status: sph.status,
+        respondedAt: sph.respondedAt,
+        pickupTime: sph.pickupTime,
+        alternatives: sph.alternatives,
+      }));
+      // Merge: keep local + add shared
+      const existingIds = (p.sentToPharmacies || []).map((ph) => ph.pharmacyId);
+      const newOnes = sharedResponses.filter((r) => !existingIds.includes(r.pharmacyId));
+      return {
+        ...p,
+        sentToPharmacies: [
+          ...(p.sentToPharmacies || []).map((existing) => {
+            const updated = sharedResponses.find((sr) => sr.pharmacyId === existing.pharmacyId);
+            return updated || existing;
+          }),
+          ...newOnes,
+        ],
+      };
+    }
+    return p;
+  });
+
+  const filtered = filter === "all" ? mergedPrescriptions : mergedPrescriptions.filter(p => p.status === filter);
 
   const filteredPharmacies = mockPartnerPharmacies.filter(ph =>
     ph.name.toLowerCase().includes(pharmacySearch.toLowerCase()) ||
@@ -43,47 +80,38 @@ const PatientPrescriptions = () => {
   };
 
   const handleSendToPharmacies = (id: string) => {
-    const pharmacyResponses: PharmacyResponse[] = selectedPharmacies.map(phId => {
-      const ph = mockPartnerPharmacies.find(p => p.id === phId);
-      return { pharmacyId: phId, pharmacyName: ph?.name || "", status: "pending" as const };
+    const p = mergedPrescriptions.find((rx) => rx.id === id);
+    if (!p) return;
+
+    const pharmacies = selectedPharmacies.map((phId) => {
+      const ph = mockPartnerPharmacies.find((p) => p.id === phId);
+      return { id: phId, name: ph?.name || "" };
     });
-    setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, sentToPharmacies: [...(p.sentToPharmacies || []), ...pharmacyResponses] } : p));
+
+    // Write to cross-role store
+    sendPrescriptionToPharmacies(
+      {
+        id: p.id,
+        patientName: "Amine Ben Ali", // TODO: get from session
+        doctorName: p.doctor,
+        date: p.date,
+        items: p.items,
+        assurance: p.assurance,
+        total: p.total,
+      },
+      pharmacies
+    );
+
     setSendingToPharmacy(null);
     setSelectedPharmacies([]);
     setPharmacySearch("");
-    toast({ title: "Ordonnance envoyée", description: `Envoyée à ${pharmacyResponses.length} pharmacie(s).` });
+    toast({ title: "Ordonnance envoyée", description: `Envoyée à ${pharmacies.length} pharmacie(s). Visible côté pharmacie.` });
   };
 
   const handleCancelSend = () => {
     setSendingToPharmacy(null);
     setSelectedPharmacies([]);
     setPharmacySearch("");
-  };
-
-  // Simulate pharmacy response (mock)
-  const simulatePharmacyResponse = (prescriptionId: string, pharmacyId: string) => {
-    const statuses: PharmacyResponse["status"][] = ["preparing", "ready", "unavailable"];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    
-    setPrescriptions(prev => prev.map(p => {
-      if (p.id !== prescriptionId) return p;
-      const updated = (p.sentToPharmacies || []).map(ph => {
-        if (ph.pharmacyId !== pharmacyId) return ph;
-        return {
-          ...ph,
-          status: randomStatus,
-          respondedAt: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-          pickupTime: randomStatus === "ready" ? "Avant 18h" : undefined,
-          alternatives: randomStatus === "unavailable" ? [{ medication: "Metformine 850mg", alternative: "Glucophage 850mg (équivalent)" }] : undefined,
-        };
-      });
-      return { ...p, sentToPharmacies: updated };
-    }));
-
-    // Add notification if ready
-    if (randomStatus === "ready") {
-      toast({ title: "Ordonnance prête !", description: "Une pharmacie a confirmé la disponibilité." });
-    }
   };
 
   const getSentCount = (p: PrescriptionWithPharmacies) => (p.sentToPharmacies || []).length;
@@ -94,7 +122,7 @@ const PatientPrescriptions = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-1 rounded-lg border bg-card p-1 w-fit">
-            {[{ key: "all", label: "Toutes", count: prescriptions.length }, { key: "active", label: "Actives", count: prescriptions.filter(p => p.status === "active").length }, { key: "expired", label: "Expirées", count: prescriptions.filter(p => p.status === "expired").length }].map(f => (
+            {[{ key: "all", label: "Toutes", count: mergedPrescriptions.length }, { key: "active", label: "Actives", count: mergedPrescriptions.filter(p => p.status === "active").length }, { key: "expired", label: "Expirées", count: mergedPrescriptions.filter(p => p.status === "expired").length }].map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)}
                 className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                 {f.label} ({f.count})
@@ -140,9 +168,9 @@ const PatientPrescriptions = () => {
                 <div className="border-t px-5 py-4 bg-muted/10 space-y-4">
                   {/* Actions */}
                   <div className="flex gap-2 flex-wrap">
-                    <Button variant="outline" size="sm"><Eye className="h-4 w-4 mr-1" />Voir le détail</Button>
-                    <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" />Télécharger PDF</Button>
-                    <Button variant="outline" size="sm"><Printer className="h-4 w-4 mr-1" />Imprimer</Button>
+                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Aperçu ordonnance (mock)" })}><Eye className="h-4 w-4 mr-1" />Voir le détail</Button>
+                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Téléchargement PDF (mock)" })}><Download className="h-4 w-4 mr-1" />Télécharger PDF</Button>
+                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Impression (mock)" })}><Printer className="h-4 w-4 mr-1" />Imprimer</Button>
                     {p.status === "active" && canSendMore(p) && sendingToPharmacy !== p.id && (
                       <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setSendingToPharmacy(p.id)}>
                         <Send className="h-4 w-4 mr-1" />Envoyer à une pharmacie
@@ -177,11 +205,6 @@ const PatientPrescriptions = () => {
                                     <p key={i} className="text-xs text-muted-foreground mt-1">💊 {alt.medication} → {alt.alternative}</p>
                                   ))}
                                 </div>
-                                {ph.status === "pending" && (
-                                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => simulatePharmacyResponse(p.id, ph.pharmacyId)}>
-                                    <RefreshCw className="h-3 w-3 mr-1" />Simuler réponse
-                                  </Button>
-                                )}
                               </div>
                             </div>
                           );
