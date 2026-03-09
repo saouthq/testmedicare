@@ -8,15 +8,33 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
+// Public pages
+import PublicSearch from "./pages/public/PublicSearch";
+import DoctorPublicProfile from "./pages/public/DoctorPublicProfile";
+import PublicBooking from "./pages/public/PublicBooking";
+import ClinicsDirectory from "./pages/public/ClinicsDirectory";
+import ClinicDetail from "./pages/public/ClinicDetail";
+import HospitalsDirectory from "./pages/public/HospitalsDirectory";
+import HospitalDetail from "./pages/public/HospitalDetail";
+import PharmaciesDirectory from "./pages/public/PharmaciesDirectory";
+import PharmacyDetail from "./pages/public/PharmacyDetail";
+import MedicinesDirectory from "./pages/public/MedicinesDirectory";
+import MedicineDetail from "./pages/public/MedicineDetail";
+import FindAppointments from "./pages/public/FindAppointments";
+import MyAppointments from "./pages/public/MyAppointments";
+import HowItWorks from "./pages/public/HowItWorks";
+import Help from "./pages/public/Help";
+import BecomePartner from "./pages/public/BecomePartner";
+import Legal from "./pages/public/Legal";
+
 // Patient
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientAppointments from "./pages/patient/PatientAppointments";
-import SearchDoctors from "./pages/patient/SearchDoctors";
 import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
-import PatientBooking from "./pages/patient/PatientBooking";
 import PatientNotifications from "./pages/patient/PatientNotifications";
 import PatientHealth from "./pages/patient/PatientHealth";
 import PatientSettings from "./pages/patient/PatientSettings";
+import PatientBooking from "./pages/patient/PatientBooking";
 
 // Doctor
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -75,19 +93,6 @@ import AdminNotificationTemplates from "./pages/admin/AdminNotificationTemplates
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminGuard from "./components/admin/AdminGuard";
 
-// Public
-import DoctorPublicProfile from "./pages/public/DoctorPublicProfile";
-import ClinicsDirectory from "./pages/public/ClinicsDirectory";
-import ClinicDetail from "./pages/public/ClinicDetail";
-import HospitalsDirectory from "./pages/public/HospitalsDirectory";
-import HospitalDetail from "./pages/public/HospitalDetail";
-import PharmaciesDirectory from "./pages/public/PharmaciesDirectory";
-import PharmacyDetail from "./pages/public/PharmacyDetail";
-import MedicinesDirectory from "./pages/public/MedicinesDirectory";
-import MedicineDetail from "./pages/public/MedicineDetail";
-import PublicBooking from "./pages/public/PublicBooking";
-import FindAppointments from "./pages/public/FindAppointments";
-
 // Shared
 import Messages from "./pages/messaging/Messages";
 import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
@@ -105,10 +110,11 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Public directories */}
+          {/* Public directories & pages */}
+          <Route path="/search" element={<PublicSearch />} />
           <Route path="/doctor/:id" element={<DoctorPublicProfile />} />
-          <Route path="/search" element={<SearchDoctors />} />
           <Route path="/booking/:doctorId" element={<PublicBooking />} />
+          <Route path="/my-appointments" element={<MyAppointments />} />
           <Route path="/clinics" element={<ClinicsDirectory />} />
           <Route path="/clinic/:slug" element={<ClinicDetail />} />
           <Route path="/hospitals" element={<HospitalsDirectory />} />
@@ -117,7 +123,11 @@ const App = () => (
           <Route path="/pharmacy/:slug" element={<PharmacyDetail />} />
           <Route path="/medicaments" element={<MedicinesDirectory />} />
           <Route path="/medicament/:slug" element={<MedicineDetail />} />
-          <Route path="/find-appointments" element={<FindAppointments />} />
+          <Route path="/find-appointments" element={<Navigate to="/my-appointments" replace />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/become-partner" element={<BecomePartner />} />
+          <Route path="/legal/:page" element={<Legal />} />
 
           {/* Legacy redirects */}
           <Route path="/dashboard/patient/search" element={<Navigate to="/search" replace />} />

@@ -316,7 +316,7 @@ const DoctorPublicProfile = () => {
           <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-12 text-sm font-semibold" onClick={() => navigate("/booking/1")}>
             <Calendar className="h-4 w-4 mr-2" />Prendre rendez-vous
           </Button>
-          <p className="text-[10px] text-muted-foreground text-center mt-1">Prise en charge CNAM · Annulation gratuite 24h avant</p>
+          <p className="text-[10px] text-muted-foreground text-center mt-1">Prise en charge Assurance · Annulation gratuite 24h avant</p>
         </div>
       </div>
       <div className="h-24" />
