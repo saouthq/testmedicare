@@ -15,6 +15,7 @@ import { downloadCalendarEvent } from "@/lib/calendarExport";
 import { usePatientAppointments, usePatientProfile, cancelAppointment, getDashboardStats } from "@/stores/patientStore";
 import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors, mockHealthDocuments, mockVaccinations, mockTreatments } from "@/data/mockData";
 import { useNotifications } from "@/stores/notificationsStore";
+import { requestRenewal } from "@/stores/doctorStore";
 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
