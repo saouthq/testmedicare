@@ -183,7 +183,7 @@ export function PrescriptionDetail() {
               <SheetDescription className="text-xs">
                 {selected.status === "active" ? "Ordonnance active" : "Ordonnance expirée"}
                 {selected.sent ? " • Envoyée" : " • Non envoyée"}
-                {selected.cnam ? " • Assuré" : ""}
+                {selected.assurance ? ` • ${selected.assurance}` : ""}
               </SheetDescription>
             </SheetHeader>
 
