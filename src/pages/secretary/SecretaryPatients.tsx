@@ -304,7 +304,7 @@ const SecretaryPatients = () => {
 };
 
 const NewPatientForm = ({ onAdd, onCancel }: { onAdd: (p: any) => void; onCancel: () => void }) => {
-  const [form, setForm] = useState({ name: "", firstName: "", phone: "", email: "", dob: "", cnamId: "", assurance: "CNAM", doctor: "Dr. Bouazizi", gouvernorat: "Tunis", notes: "" });
+  const [form, setForm] = useState({ name: "", firstName: "", phone: "", email: "", dob: "", numAssure: "", assurance: "Assurance publique", doctor: "Dr. Bouazizi", gouvernorat: "Tunis", notes: "" });
 
   const handleSubmit = () => {
     if (!form.firstName || !form.name) return;
@@ -312,7 +312,7 @@ const NewPatientForm = ({ onAdd, onCancel }: { onAdd: (p: any) => void; onCancel
       name: `${form.firstName} ${form.name}`,
       avatar: `${form.firstName[0]}${form.name[0]}`.toUpperCase(),
       phone: form.phone, email: form.email, dob: form.dob,
-      cnamId: form.cnamId || "—", assurance: form.assurance,
+      numAssure: form.numAssure || "—", assurance: form.assurance,
       doctor: form.doctor, gouvernorat: form.gouvernorat,
       nextAppointment: null, lastVisit: null,
       balance: 0, notes: form.notes,
