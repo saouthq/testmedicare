@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockDoctorProfile } from "@/data/mockData";
 import {
-  MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar, Stethoscope,
+  MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar, FileText, Pill, Activity, User,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -36,7 +36,7 @@ const daysOfMonth = () => {
   return d;
 };
 
-type Step = "auth" | "motif" | "date" | "confirm" | "done";
+type Step = "auth" | "motif" | "date" | "confirm" | "done" | "create-account";
 
 const PublicBooking = () => {
   const { doctorId } = useParams();
@@ -58,11 +58,27 @@ const PublicBooking = () => {
 
   const handleConfirm = () => {
     // TODO BACKEND: POST /api/appointments/create
+    // Store guest appointment in localStorage
+    const guestAppointments = JSON.parse(localStorage.getItem("guestAppointments") || "[]");
+    guestAppointments.push({
+      id: `guest-${Date.now()}`,
+      phone: guestPhone,
+      doctor: doctor.name,
+      specialty: doctor.specialty,
+      date: `${selectedDay} Fév 2026`,
+      time: selectedSlot,
+      motif: selectedMotif,
+      status: "confirmed",
+      createdAt: new Date().toISOString(),
+    });
+    localStorage.setItem("guestAppointments", JSON.stringify(guestAppointments));
+    
     toast({ title: "RDV confirmé !", description: `Votre rendez-vous avec ${doctor.name} est prévu le ${selectedDay} Février 2026 à ${selectedSlot}.` });
     setStep("done");
   };
 
-  const isLoggedIn = !!localStorage.getItem("guestPatientId") || !!localStorage.getItem("userRole");
+  const isLoggedIn = !!localStorage.getItem("userRole") && localStorage.getItem("userRole") !== "guest";
+  const isGuestSession = !!localStorage.getItem("guestPatientId");
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +100,7 @@ const PublicBooking = () => {
         </div>
 
         {/* Step: Auth */}
-        {step === "auth" && !isLoggedIn && (
+        {step === "auth" && !isLoggedIn && !isGuestSession && (
           <div className="space-y-4">
             <GuestOtpFlow onVerified={handleOtpVerified} />
             <div className="text-center text-sm text-muted-foreground">
@@ -92,7 +108,7 @@ const PublicBooking = () => {
             </div>
           </div>
         )}
-        {step === "auth" && isLoggedIn && (
+        {step === "auth" && (isLoggedIn || isGuestSession) && (
           <div className="rounded-xl border bg-card p-5 shadow-card text-center">
             <CheckCircle2 className="h-8 w-8 text-accent mx-auto mb-2" />
             <p className="font-medium text-foreground">Vous êtes connecté</p>
@@ -169,16 +185,73 @@ const PublicBooking = () => {
           </div>
         )}
 
-        {/* Step: Done */}
+        {/* Step: Done - Show create account option */}
         {step === "done" && (
-          <div className="rounded-xl border bg-card p-6 shadow-card text-center">
-            <CheckCircle2 className="h-12 w-12 text-accent mx-auto mb-3" />
-            <h3 className="text-xl font-bold text-foreground">Rendez-vous confirmé !</h3>
-            <p className="text-muted-foreground mt-2">Votre rendez-vous avec {doctor.name} est prévu le {selectedDay} Février 2026 à {selectedSlot}.</p>
-            <p className="text-xs text-muted-foreground mt-1">Un SMS de confirmation a été envoyé.</p>
-            <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-              <Link to="/dashboard/patient/appointments"><Button variant="outline">Voir mes RDV</Button></Link>
+          <div className="space-y-4">
+            <div className="rounded-xl border bg-card p-6 shadow-card text-center">
+              <CheckCircle2 className="h-12 w-12 text-accent mx-auto mb-3" />
+              <h3 className="text-xl font-bold text-foreground">Rendez-vous confirmé !</h3>
+              <p className="text-muted-foreground mt-2">Votre rendez-vous avec {doctor.name} est prévu le {selectedDay} Février 2026 à {selectedSlot}.</p>
+              <p className="text-xs text-muted-foreground mt-1">Un SMS de confirmation a été envoyé.</p>
+            </div>
+
+            {/* Account creation prompt (for guest users) */}
+            {!isLoggedIn && (
+              <div className="rounded-xl border bg-primary/5 border-primary/20 p-5 shadow-card">
+                <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2"><User className="h-5 w-5 text-primary" />Créer un compte Medicare</h4>
+                <p className="text-sm text-muted-foreground mb-4">En créant un compte, vous bénéficiez de :</p>
+                <ul className="space-y-2 mb-4">
+                  <li className="flex items-center gap-2 text-sm text-foreground"><Calendar className="h-4 w-4 text-accent" />Accès à tous vos rendez-vous</li>
+                  <li className="flex items-center gap-2 text-sm text-foreground"><FileText className="h-4 w-4 text-accent" />Vos documents médicaux centralisés</li>
+                  <li className="flex items-center gap-2 text-sm text-foreground"><Pill className="h-4 w-4 text-accent" />Vos ordonnances numériques</li>
+                  <li className="flex items-center gap-2 text-sm text-foreground"><Activity className="h-4 w-4 text-accent" />Vos résultats d'analyses</li>
+                  <li className="flex items-center gap-2 text-sm text-foreground"><Shield className="h-4 w-4 text-accent" />Suivi des pharmacies</li>
+                </ul>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={() => setStep("create-account")} className="gradient-primary text-primary-foreground">
+                    <User className="h-4 w-4 mr-2" />Créer un compte
+                  </Button>
+                  <Button variant="ghost" onClick={() => navigate("/")} className="text-muted-foreground">
+                    Plus tard
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <Link to="/find-appointments"><Button variant="outline">Retrouver mes RDV</Button></Link>
               <Link to="/"><Button className="gradient-primary text-primary-foreground">Retour à l'accueil</Button></Link>
+            </div>
+          </div>
+        )}
+
+        {/* Step: Create Account (simple form) */}
+        {step === "create-account" && (
+          <div className="rounded-xl border bg-card p-5 shadow-card space-y-4">
+            <h3 className="font-semibold text-foreground">Créer votre compte</h3>
+            <p className="text-sm text-muted-foreground">Complétez vos informations pour finaliser votre inscription.</p>
+            <div className="space-y-3">
+              <div><label className="text-xs font-medium text-muted-foreground">Prénom</label><Input placeholder="Votre prénom" className="mt-1" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Nom</label><Input placeholder="Votre nom" className="mt-1" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Email</label><Input type="email" placeholder="votre@email.tn" className="mt-1" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Mot de passe</label><Input type="password" placeholder="Choisissez un mot de passe" className="mt-1" /></div>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Le téléphone {guestPhone} sera associé à votre compte.</p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep("done")}>Retour</Button>
+              <Button 
+                onClick={() => {
+                  // TODO BACKEND: POST /api/auth/register
+                  localStorage.setItem("userRole", "patient");
+                  localStorage.removeItem("guestPatientId");
+                  toast({ title: "Compte créé !", description: "Bienvenue sur Medicare." });
+                  navigate("/dashboard/patient/appointments");
+                }} 
+                className="flex-1 gradient-primary text-primary-foreground"
+              >
+                Créer mon compte
+              </Button>
             </div>
           </div>
         )}

@@ -1,5 +1,5 @@
 /**
- * Mock data — Common (specialties, languages, landing, etc.)
+ * Mock data — Common (specialties, languages, landing, assurances, etc.)
  */
 
 export const specialties = [
@@ -11,6 +11,21 @@ export const specialties = [
 export const specialtiesWithAll = ["Tous", ...specialties.slice(0, 9)];
 
 export const languages = ["Français", "Arabe", "Anglais", "Allemand", "Italien", "Espagnol"];
+
+// ─── Assurances (remplace CNAM) ──────────────────────────────
+
+export const mockAssurances = [
+  { id: "cnam", name: "CNAM", type: "public" },
+  { id: "cnrps", name: "CNRPS", type: "public" },
+  { id: "maghrebia", name: "Assurances Maghrebia", type: "private" },
+  { id: "star", name: "STAR Assurances", type: "private" },
+  { id: "gat", name: "GAT Assurances", type: "private" },
+  { id: "carte", name: "CARTE Assurance", type: "private" },
+  { id: "ami", name: "AMI Assurances", type: "private" },
+  { id: "bh", name: "BH Assurance", type: "private" },
+  { id: "ctama", name: "CTAMA", type: "private" },
+  { id: "none", name: "Sans assurance", type: "none" },
+];
 
 export const availDates = [
   { label: "Lun 17", short: "17/02", morning: true, afternoon: true },
@@ -29,7 +44,7 @@ export const mockLandingSpecialties = ["Médecin généraliste", "Dentiste", "Op
 export const mockLandingFeatures = [
   { title: "Prise de RDV en ligne", description: "Réservez votre rendez-vous 24h/24, 7j/7 en quelques clics." },
   { title: "Rappels automatiques", description: "Recevez des rappels par SMS au +216 avant chaque consultation." },
-  { title: "Prise en charge CNAM", description: "Trouvez des praticiens conventionnés CNAM partout en Tunisie." },
+  { title: "Prise en charge Assurance", description: "Trouvez des praticiens conventionnés partout en Tunisie." },
   { title: "Téléconsultation", description: "Consultez votre médecin à distance depuis votre domicile." },
 ];
 
@@ -47,3 +62,13 @@ export const mockLandingStats = [
   { value: "2M+", label: "RDV pris" },
   { value: "4.8/5", label: "Satisfaction" },
 ];
+
+// ─── Cabinet Rules (règles du cabinet) ──────────────────────
+
+export const mockCabinetRules = {
+  cancellationHours: 24,
+  maxReschedules: 2,
+  noShowPolicy: "Après 2 absences non justifiées, une caution pourra être demandée.",
+  latePolicy: "Un retard de plus de 15 minutes peut entraîner l'annulation du RDV.",
+  paymentMethods: ["Espèces", "Carte bancaire", "Virement"],
+};

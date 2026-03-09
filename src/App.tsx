@@ -86,6 +86,7 @@ import PharmacyDetail from "./pages/public/PharmacyDetail";
 import MedicinesDirectory from "./pages/public/MedicinesDirectory";
 import MedicineDetail from "./pages/public/MedicineDetail";
 import PublicBooking from "./pages/public/PublicBooking";
+import FindAppointments from "./pages/public/FindAppointments";
 
 // Shared
 import Messages from "./pages/messaging/Messages";
@@ -116,6 +117,7 @@ const App = () => (
           <Route path="/pharmacy/:slug" element={<PharmacyDetail />} />
           <Route path="/medicaments" element={<MedicinesDirectory />} />
           <Route path="/medicament/:slug" element={<MedicineDetail />} />
+          <Route path="/find-appointments" element={<FindAppointments />} />
 
           {/* Legacy redirects */}
           <Route path="/dashboard/patient/search" element={<Navigate to="/search" replace />} />
