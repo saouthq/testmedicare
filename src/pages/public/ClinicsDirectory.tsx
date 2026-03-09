@@ -41,7 +41,7 @@ const ClinicsDirectory = () => {
         <p className="text-sm text-muted-foreground mb-4">{filtered.length} clinique(s) trouvée(s)</p>
         <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map(c => (
-            <DirectoryCard key={c.id} name={c.name} city={c.city} address={c.address} phone={c.phone} tags={c.services} href={`/clinic/${c.slug}`} badge={`⭐ ${c.rating}`} />
+            <DirectoryCard key={c.id} name={c.name} city={c.city} address={c.address} phone={c.phone} tags={c.services} href={`/clinic/${c.slug}`} badge={`${c.services.length} services`} />
           ))}
         </div>
       </div>

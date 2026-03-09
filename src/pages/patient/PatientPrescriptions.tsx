@@ -118,7 +118,7 @@ const PatientPrescriptions = () => {
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${p.status === "active" ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
                           {p.status === "active" ? "Active" : "Expirée"}
                         </span>
-                        {p.cnam && <span className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />Assuré</span>}
+                        {p.assurance && <span className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />Assuré</span>}
                         {getSentCount(p) > 0 && (
                           <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">📦 {getSentCount(p)} pharmacie(s)</span>
                         )}

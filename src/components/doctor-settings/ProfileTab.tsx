@@ -63,7 +63,7 @@ const ProfileTab = () => {
     initials: p.initials,
     name: `Dr. ${firstName} ${lastName}`,
     specialty, subSpecialties, address, phone, languages,
-    rating: (p as any).rating ?? 4.8, reviewCount: p.reviewCount,
+    reviewCount: p.reviewCount,
     consultationDuration: String(p.consultationDuration),
     priceConsultation: String(p.priceRange.consultation),
     presentation,

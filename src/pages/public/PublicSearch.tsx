@@ -261,10 +261,10 @@ const PublicSearch = () => {
                         {/* Avis vérifiés (pas d'étoiles) */}
                         <div className="flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3 text-primary" />
-                          <span className="text-xs font-medium text-foreground">{d.reviews} avis</span>
+                          <span className="text-xs font-medium text-foreground">{d.reviewCount} avis</span>
                         </div>
                         <span className="text-[11px] text-muted-foreground">{d.price} DT</span>
-                        {d.cnam && (
+                        {d.acceptsInsurance && (
                           <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full">
                             <Shield className="h-2.5 w-2.5" />Assurance
                           </span>

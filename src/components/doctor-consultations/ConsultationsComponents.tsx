@@ -119,7 +119,7 @@ function ConsultationCard({ c }: { c: ConsultUi }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-foreground truncate">{c.patient}</span>
                 <Badge variant={badge.variant} className="text-[11px] px-2 py-0.5">{badge.label}</Badge>
-                {c.cnam && <Badge variant="secondary" className="text-[11px] px-2 py-0.5">CNAM</Badge>}
+                {c.assurance && <Badge variant="secondary" className="text-[11px] px-2 py-0.5">Assuré</Badge>}
               </div>
               <div className="text-sm text-muted-foreground truncate">
                 {c.motif} • <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{c.time}</span>

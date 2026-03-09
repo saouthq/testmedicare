@@ -206,7 +206,7 @@ export function PrescriptionDetail() {
                   <div className="flex justify-between"><span className="text-muted-foreground">Montant</span><span className="font-medium">{selected.total}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Médecin</span><span className="font-medium">{selected.doctor}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Pharmacie</span><span className="font-medium">{selected.pharmacy || "Non assignée"}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Assurance</span><span className="font-medium">{selected.cnam ? "Oui" : "Non"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Assurance</span><span className="font-medium">{selected.assurance || "Non"}</span></div>
                 </div>
               </div>
 
