@@ -1,8 +1,10 @@
 /**
  * Become Partner Page — Doctolib-style pricing with activity selector, plan comparison table
+ * Connected to admin promos/promotions store — shows active promos dynamically
+ * Registration feeds into AdminVerifications KYC queue
  * TODO BACKEND: Replace with real API
  */
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
@@ -15,8 +17,11 @@ import { toast } from "@/hooks/use-toast";
 import {
   Stethoscope, FlaskConical, Pill, Building2, CheckCircle2, Users,
   Calendar, TrendingUp, Shield, Video, Clock, ChevronRight, Check, X,
-  FileText, Bot, BarChart3, MessageSquare, Phone,
+  FileText, Bot, BarChart3, MessageSquare, Phone, Gift, Sparkles, Upload,
 } from "lucide-react";
+import { getPromotions } from "@/services/admin/adminPromotionsService";
+import { submitRegistration } from "@/stores/partnerRegistrationStore";
+import type { Promotion } from "@/types/promotion";
 
 // ── Activity types with specialties ──
 type ActivityType = "generaliste" | "specialiste" | "dentiste" | "kine" | "laboratory" | "pharmacy" | "clinic";
@@ -135,10 +140,7 @@ const getComparison = (activity: ActivityType): ComparisonFeature[] => {
   const plans = plansByActivity[activity];
   if (!plans || plans.length < 2) return [];
 
-  const allFeatures = new Set<string>();
-  plans.forEach(p => p.features.forEach(f => { if (!f.startsWith("Tout ")) allFeatures.add(f); }));
-
-  const categorized: ComparisonFeature[] = [
+  return [
     {
       category: "Agenda & RDV",
       features: [
@@ -173,17 +175,25 @@ const getComparison = (activity: ActivityType): ComparisonFeature[] => {
       ],
     },
   ];
+};
 
-  return categorized;
+/** Describe a promo in a human-readable banner line */
+const promoDescription = (p: Promotion): string => {
+  switch (p.type) {
+    case "free_months": return `${p.value} mois gratuits`;
+    case "percent_discount": return `${p.value}% de réduction`;
+    case "fixed_amount": return `${p.value} DT de remise`;
+    case "free_trial": return `${p.value} mois d'essai gratuit`;
+  }
 };
 
 // ── Component ──
 const BecomePartner = () => {
   const [activity, setActivity] = useState<ActivityType>("generaliste");
   const [billing, setBilling] = useState<"monthly" | "yearly">("yearly");
-  const [showForm, setShowForm] = useState(false);
+  const [step, setStep] = useState<"pricing" | "register" | "success">("pricing");
   const [selectedPlan, setSelectedPlan] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [selectedPlanPrice, setSelectedPlanPrice] = useState(0);
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "", organization: "", specialty: "", city: "", message: "",
   });
@@ -192,9 +202,27 @@ const BecomePartner = () => {
   const comparison = getComparison(activity);
   const currentActivity = activities.find(a => a.id === activity)!;
 
-  const handleSelectPlan = (planName: string) => {
-    setSelectedPlan(planName);
-    setShowForm(true);
+  // ── Get active promos from admin store ──
+  const activePromos = useMemo(() => {
+    const now = new Date();
+    return getPromotions().filter(p =>
+      p.status === "active" &&
+      new Date(p.startDate) <= now &&
+      new Date(p.endDate) >= now
+    );
+  }, []);
+
+  // Applicable auto-apply promos for current plan selection
+  const applicablePromo = useMemo(() => {
+    const planKey = selectedPlan.toLowerCase().includes("pro") || selectedPlan.toLowerCase().includes("premium") ? "pro" : "basic";
+    return activePromos.find(p => p.autoApply && p.newDoctorsOnly && (p.target === "all" || p.target === planKey));
+  }, [activePromos, selectedPlan]);
+
+  const handleSelectPlan = (plan: PlanConfig) => {
+    const price = billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+    setSelectedPlan(plan.name);
+    setSelectedPlanPrice(price);
+    setStep("register");
     setTimeout(() => {
       document.getElementById("partner-form")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -202,14 +230,40 @@ const BecomePartner = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Partner request:", { activity, plan: selectedPlan, billing, ...formData });
-    toast({ title: "Demande envoyée !", description: "Notre équipe vous contactera sous 24h." });
-    setSubmitted(true);
+
+    // Submit to shared store — appears in admin KYC
+    submitRegistration({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      organization: formData.organization || undefined,
+      activity,
+      specialty: formData.specialty || undefined,
+      city: formData.city,
+      plan: selectedPlan,
+      planPrice: selectedPlanPrice,
+      billing,
+      message: formData.message || undefined,
+    });
+
+    toast({ title: "Inscription envoyée !", description: "Votre dossier est en cours de vérification." });
+    setStep("success");
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const requiredDocs = useMemo(() => {
+    if (["generaliste", "specialiste", "dentiste", "kine"].includes(activity))
+      return ["Diplôme de médecine / d'exercice", "CIN recto/verso", "Attestation d'inscription à l'Ordre"];
+    if (activity === "laboratory")
+      return ["Autorisation d'exercice", "Registre de commerce", "CIN du gérant"];
+    if (activity === "pharmacy")
+      return ["Licence de pharmacie", "Registre de commerce", "CIN du titulaire"];
+    return ["Autorisation sanitaire", "Registre de commerce", "Convention cadre"];
+  }, [activity]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -218,6 +272,26 @@ const BecomePartner = () => {
         description="Découvrez nos tarifs personnalisés selon votre activité. Médecin, laboratoire, pharmacie ou clinique — rejoignez Medicare."
       />
       <PublicHeader />
+
+      {/* Active promo banner — connected to admin promotions */}
+      {activePromos.length > 0 && (
+        <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center">
+            <Gift className="h-5 w-5 animate-pulse" />
+            <span className="text-sm font-medium">
+              🎉 Offre en cours : {activePromos.map(p => promoDescription(p)).join(" • ")}
+              {activePromos[0]?.requireCode && activePromos[0]?.promoCode && (
+                <span className="ml-2 bg-primary-foreground/20 px-2 py-0.5 rounded text-xs font-bold">
+                  Code : {activePromos[0].promoCode}
+                </span>
+              )}
+            </span>
+            <span className="text-xs opacity-80">
+              Valable jusqu'au {new Date(activePromos[0].endDate).toLocaleDateString("fr-TN", { day: "numeric", month: "long", year: "numeric" })}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <div className="bg-gradient-to-b from-primary/5 to-background border-b">
@@ -249,193 +323,228 @@ const BecomePartner = () => {
       <div className="container mx-auto px-4 py-10 max-w-6xl">
         <Breadcrumbs items={[{ label: "Tarifs & Abonnements" }]} />
 
-        {/* Activity Selector — Doctolib style */}
-        <div className="flex justify-center mb-10">
-          <div className="rounded-2xl border bg-card p-6 shadow-card max-w-lg w-full">
-            <p className="text-center font-semibold text-foreground mb-4">Sélectionnez votre activité</p>
-            <Select value={activity} onValueChange={v => setActivity(v as ActivityType)}>
-              <SelectTrigger className="w-full h-12 text-base">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {activities.map(a => (
-                  <SelectItem key={a.id} value={a.id}>
-                    <span className="flex items-center gap-2">
-                      <a.icon className="h-4 w-4" />
-                      {a.label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Steps indicator */}
+        <div className="flex items-center justify-center gap-2 mb-10">
+          {[
+            { key: "pricing", label: "1. Choisir un plan" },
+            { key: "register", label: "2. Créer votre compte" },
+            { key: "success", label: "3. Vérification KYC" },
+          ].map((s, i) => (
+            <div key={s.key} className="flex items-center gap-2">
+              {i > 0 && <div className={`h-px w-8 ${step === s.key || (step === "success" && i <= 2) || (step === "register" && i <= 1) ? "bg-primary" : "bg-border"}`} />}
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                step === s.key ? "bg-primary text-primary-foreground" :
+                (step === "success" || (step === "register" && s.key === "pricing")) ? "bg-accent/10 text-accent" :
+                "bg-muted text-muted-foreground"
+              }`}>
+                {(step === "success" || (step === "register" && s.key === "pricing")) && <CheckCircle2 className="h-3 w-3" />}
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
 
-            {/* Specialty sub-select */}
-            {currentActivity.specialties && (
-              <div className="mt-3">
-                <Select value={formData.specialty} onValueChange={v => handleChange("specialty", v)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Précisez votre spécialité..." />
+        {/* ── STEP 1: Pricing ── */}
+        {step === "pricing" && (
+          <>
+            {/* Activity Selector */}
+            <div className="flex justify-center mb-10">
+              <div className="rounded-2xl border bg-card p-6 shadow-card max-w-lg w-full">
+                <p className="text-center font-semibold text-foreground mb-4">Sélectionnez votre activité</p>
+                <Select value={activity} onValueChange={v => setActivity(v as ActivityType)}>
+                  <SelectTrigger className="w-full h-12 text-base">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {currentActivity.specialties.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    {activities.map(a => (
+                      <SelectItem key={a.id} value={a.id}>
+                        <span className="flex items-center gap-2"><a.icon className="h-4 w-4" />{a.label}</span>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Billing toggle */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-1 rounded-full border bg-card p-1">
-            <button
-              onClick={() => setBilling("monthly")}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${billing === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Mensuel
-            </button>
-            <button
-              onClick={() => setBilling("yearly")}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${billing === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Annuel <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${billing === "yearly" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-accent/10 text-accent"}`}>-20%</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Plan Cards */}
-        <div className={`grid gap-6 mb-16 ${plans.length === 1 ? "max-w-md mx-auto" : plans.length === 2 ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
-          {plans.map((plan, i) => {
-            const price = billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
-            return (
-              <div key={i} className={`rounded-2xl border p-6 shadow-card relative flex flex-col ${plan.highlighted ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20" : "bg-card"}`}>
-                {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-4 py-1 rounded-full">
-                    Recommandé
+                {currentActivity.specialties && (
+                  <div className="mt-3">
+                    <Select value={formData.specialty} onValueChange={v => handleChange("specialty", v)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Précisez votre spécialité..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currentActivity.specialties.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground">{plan.subtitle}</p>
-                </div>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-foreground">{price}</span>
-                  <span className="text-muted-foreground ml-1">DT</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {billing === "yearly"
-                      ? `TTC / mois / soignant. Facturé une fois par an, ou ${plan.monthlyPrice} DT en paiement mensuel.`
-                      : "TTC / mois / soignant. Sans engagement."}
-                  </p>
-                </div>
-                <Button
-                  className={`w-full mb-6 ${plan.highlighted ? "gradient-primary text-primary-foreground shadow-primary-glow" : ""}`}
-                  variant={plan.highlighted ? "default" : "outline"}
-                  onClick={() => handleSelectPlan(plan.name)}
+              </div>
+            </div>
+
+            {/* Billing toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center gap-1 rounded-full border bg-card p-1">
+                <button
+                  onClick={() => setBilling("monthly")}
+                  className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${billing === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  En savoir plus
-                </Button>
-                <div className="flex-1 space-y-2.5">
-                  {plan.features.map((f, j) => (
-                    <div key={j} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-                      <span className="text-sm text-foreground">{f}</span>
-                    </div>
-                  ))}
-                </div>
+                  Mensuel
+                </button>
+                <button
+                  onClick={() => setBilling("yearly")}
+                  className={`rounded-full px-5 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${billing === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Annuel <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${billing === "yearly" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-accent/10 text-accent"}`}>-20%</span>
+                </button>
               </div>
-            );
-          })}
-        </div>
+            </div>
 
-        {/* Comparison Table */}
-        {comparison.length > 0 && (
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold text-foreground text-center mb-8">
-              Comparatif détaillé
-            </h2>
-            <div className="rounded-2xl border bg-card shadow-card overflow-hidden">
-              {/* Header */}
-              <div className="grid border-b" style={{ gridTemplateColumns: `1.5fr ${plans.map(() => "1fr").join(" ")}` }}>
-                <div className="p-4 bg-muted/30" />
-                {plans.map((plan, i) => (
-                  <div key={i} className={`p-4 text-center ${plan.highlighted ? "bg-primary/5" : "bg-muted/30"}`}>
-                    <p className="font-bold text-foreground">{plan.name}</p>
-                    <p className="text-sm text-primary font-semibold">
-                      {billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice} DT
-                    </p>
-                  </div>
-                ))}
-              </div>
+            {/* Plan Cards */}
+            <div className={`grid gap-6 mb-16 ${plans.length === 1 ? "max-w-md mx-auto" : plans.length === 2 ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
+              {plans.map((plan, i) => {
+                const price = billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+                // Check if there's a promo for this plan
+                const planKey = plan.name.toLowerCase().includes("pro") || plan.name.toLowerCase().includes("premium") ? "pro" : "basic";
+                const promo = activePromos.find(p => p.autoApply && p.newDoctorsOnly && (p.target === "all" || p.target === planKey));
 
-              {/* Categories */}
-              {comparison.map((cat, ci) => (
-                <div key={ci}>
-                  <div className="grid border-b bg-muted/20" style={{ gridTemplateColumns: `1.5fr ${plans.map(() => "1fr").join(" ")}` }}>
-                    <div className="p-3 px-4">
-                      <p className="text-sm font-semibold text-primary">{cat.category}</p>
-                    </div>
-                    {plans.map((_, i) => <div key={i} />)}
-                  </div>
-                  {cat.features.map((feat, fi) => (
-                    <div key={fi} className="grid border-b last:border-0" style={{ gridTemplateColumns: `1.5fr ${plans.map(() => "1fr").join(" ")}` }}>
-                      <div className="p-3 px-4 flex items-center">
-                        <span className="text-sm text-foreground">{feat.name}</span>
+                return (
+                  <div key={i} className={`rounded-2xl border p-6 shadow-card relative flex flex-col ${plan.highlighted ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20" : "bg-card"}`}>
+                    {plan.highlighted && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-4 py-1 rounded-full">
+                        Recommandé
                       </div>
-                      {feat.plans.map((has, i) => (
-                        <div key={i} className={`p-3 flex items-center justify-center ${plans[i]?.highlighted ? "bg-primary/[0.02]" : ""}`}>
-                          {has ? (
-                            <div className="h-5 w-5 rounded-full bg-accent/10 flex items-center justify-center">
-                              <Check className="h-3 w-3 text-accent" />
+                    )}
+                    {/* Promo badge */}
+                    {promo && (
+                      <div className="absolute -top-3 right-4 bg-accent text-accent-foreground text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />{promoDescription(promo)}
+                      </div>
+                    )}
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
+                      <p className="text-sm text-muted-foreground">{plan.subtitle}</p>
+                    </div>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold text-foreground">{price}</span>
+                      <span className="text-muted-foreground ml-1">DT</span>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {billing === "yearly"
+                          ? `TTC / mois / soignant. Facturé une fois par an, ou ${plan.monthlyPrice} DT en paiement mensuel.`
+                          : "TTC / mois / soignant. Sans engagement."}
+                      </p>
+                      {promo && (
+                        <p className="text-xs text-accent font-medium mt-2 flex items-center gap-1">
+                          <Gift className="h-3 w-3" />
+                          {promoDescription(promo)} — appliqué automatiquement à l'inscription
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      className={`w-full mb-6 ${plan.highlighted ? "gradient-primary text-primary-foreground shadow-primary-glow" : ""}`}
+                      variant={plan.highlighted ? "default" : "outline"}
+                      onClick={() => handleSelectPlan(plan)}
+                    >
+                      S'inscrire maintenant <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                    <div className="flex-1 space-y-2.5">
+                      {plan.features.map((f, j) => (
+                        <div key={j} className="flex items-start gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+                          <span className="text-sm text-foreground">{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Comparison Table */}
+            {comparison.length > 0 && (
+              <div className="mb-16">
+                <h2 className="text-2xl font-bold text-foreground text-center mb-8">Comparatif détaillé</h2>
+                <div className="rounded-2xl border bg-card shadow-card overflow-hidden">
+                  <div className="grid border-b" style={{ gridTemplateColumns: `1.5fr ${plans.map(() => "1fr").join(" ")}` }}>
+                    <div className="p-4 bg-muted/30" />
+                    {plans.map((plan, i) => (
+                      <div key={i} className={`p-4 text-center ${plan.highlighted ? "bg-primary/5" : "bg-muted/30"}`}>
+                        <p className="font-bold text-foreground">{plan.name}</p>
+                        <p className="text-sm text-primary font-semibold">{billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice} DT</p>
+                      </div>
+                    ))}
+                  </div>
+                  {comparison.map((cat, ci) => (
+                    <div key={ci}>
+                      <div className="grid border-b bg-muted/20" style={{ gridTemplateColumns: `1.5fr ${plans.map(() => "1fr").join(" ")}` }}>
+                        <div className="p-3 px-4"><p className="text-sm font-semibold text-primary">{cat.category}</p></div>
+                        {plans.map((_, i) => <div key={i} />)}
+                      </div>
+                      {cat.features.map((feat, fi) => (
+                        <div key={fi} className="grid border-b last:border-0" style={{ gridTemplateColumns: `1.5fr ${plans.map(() => "1fr").join(" ")}` }}>
+                          <div className="p-3 px-4 flex items-center"><span className="text-sm text-foreground">{feat.name}</span></div>
+                          {feat.plans.map((has, i) => (
+                            <div key={i} className={`p-3 flex items-center justify-center ${plans[i]?.highlighted ? "bg-primary/[0.02]" : ""}`}>
+                              {has ? (
+                                <div className="h-5 w-5 rounded-full bg-accent/10 flex items-center justify-center"><Check className="h-3 w-3 text-accent" /></div>
+                              ) : (
+                                <X className="h-4 w-4 text-muted-foreground/30" />
+                              )}
                             </div>
-                          ) : (
-                            <X className="h-4 w-4 text-muted-foreground/30" />
-                          )}
+                          ))}
                         </div>
                       ))}
                     </div>
                   ))}
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Benefits */}
+            <div className="mb-16">
+              <h2 className="text-2xl font-bold text-foreground text-center mb-8">Pourquoi rejoindre Medicare ?</h2>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  { icon: Calendar, title: "Agenda en ligne", desc: "Gérez votre planning et recevez des RDV 24h/24 depuis votre profil public." },
+                  { icon: Users, title: "Nouveaux patients", desc: "Augmentez votre visibilité et attirez de nouveaux patients sur la plateforme." },
+                  { icon: Video, title: "Téléconsultation", desc: "Proposez des consultations vidéo sécurisées avec paiement intégré." },
+                  { icon: Shield, title: "Dossier patient", desc: "Accédez à l'historique médical complet et partagé de vos patients." },
+                  { icon: Bot, title: "Assistant IA", desc: "Aide au diagnostic et suggestions thérapeutiques basées sur l'IA." },
+                  { icon: Clock, title: "Gain de temps", desc: "Réduisez les absences de 50% avec les rappels SMS automatiques." },
+                ].map((b, i) => (
+                  <div key={i} className="rounded-xl border bg-card p-5 shadow-card">
+                    <b.icon className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold text-foreground mb-2">{b.title}</h3>
+                    <p className="text-sm text-muted-foreground">{b.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
 
-        {/* Benefits */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-foreground text-center mb-8">
-            Pourquoi rejoindre Medicare ?
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { icon: Calendar, title: "Agenda en ligne", desc: "Gérez votre planning et recevez des RDV 24h/24 depuis votre profil public." },
-              { icon: Users, title: "Nouveaux patients", desc: "Augmentez votre visibilité et attirez de nouveaux patients sur la plateforme." },
-              { icon: Video, title: "Téléconsultation", desc: "Proposez des consultations vidéo sécurisées avec paiement intégré." },
-              { icon: Shield, title: "Dossier patient", desc: "Accédez à l'historique médical complet et partagé de vos patients." },
-              { icon: Bot, title: "Assistant IA", desc: "Aide au diagnostic et suggestions thérapeutiques basées sur l'IA." },
-              { icon: Clock, title: "Gain de temps", desc: "Réduisez les absences de 50% avec les rappels SMS automatiques." },
-            ].map((b, i) => (
-              <div key={i} className="rounded-xl border bg-card p-5 shadow-card">
-                <b.icon className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-foreground mb-2">{b.title}</h3>
-                <p className="text-sm text-muted-foreground">{b.desc}</p>
+        {/* ── STEP 2: Registration Form ── */}
+        {step === "register" && (
+          <div id="partner-form" className="max-w-2xl mx-auto">
+            {/* Plan summary */}
+            <div className="rounded-xl border bg-primary/5 p-4 mb-6 flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-sm text-muted-foreground">Plan sélectionné</p>
+                <p className="font-bold text-foreground">{selectedPlan} — {selectedPlanPrice} DT/{billing === "yearly" ? "mois (annuel)" : "mois"}</p>
+                {applicablePromo && (
+                  <p className="text-xs text-accent flex items-center gap-1 mt-1">
+                    <Gift className="h-3 w-3" />{promoDescription(applicablePromo)} sera appliqué à votre compte
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
+              <Button variant="outline" size="sm" onClick={() => setStep("pricing")}>Changer de plan</Button>
+            </div>
 
-        {/* Contact / Form */}
-        <div id="partner-form" className="rounded-2xl border bg-card p-6 sm:p-8 shadow-elevated max-w-2xl mx-auto mb-16">
-          {!submitted ? (
-            <>
+            <div className="rounded-2xl border bg-card p-6 sm:p-8 shadow-elevated">
               <h2 className="text-xl font-bold text-foreground text-center mb-2">
-                {showForm && selectedPlan
-                  ? `Demande pour le plan ${selectedPlan}`
-                  : "Échanger avec un conseiller"}
+                Créer votre compte {currentActivity.label}
               </h2>
               <p className="text-sm text-muted-foreground text-center mb-6">
-                Remplissez ce formulaire, notre équipe vous contacte sous 24h.
+                Remplissez vos informations. Votre compte sera activé après vérification de vos documents (KYC).
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -450,7 +559,7 @@ const BecomePartner = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Email *</label>
+                  <label className="text-xs font-medium text-muted-foreground">Email professionnel *</label>
                   <Input type="email" value={formData.email} onChange={e => handleChange("email", e.target.value)} required className="mt-1" />
                 </div>
                 <div>
@@ -462,6 +571,20 @@ const BecomePartner = () => {
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Nom de l'établissement *</label>
                     <Input value={formData.organization} onChange={e => handleChange("organization", e.target.value)} required className="mt-1" />
+                  </div>
+                )}
+
+                {currentActivity.specialties && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Spécialité *</label>
+                    <Select value={formData.specialty} onValueChange={v => handleChange("specialty", v)}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Sélectionnez..." /></SelectTrigger>
+                      <SelectContent>
+                        {currentActivity.specialties.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
@@ -477,46 +600,118 @@ const BecomePartner = () => {
                   </Select>
                 </div>
 
+                {/* Required documents */}
+                <div className="rounded-lg border border-warning/20 bg-warning/5 p-4">
+                  <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <Upload className="h-4 w-4 text-warning" />
+                    Documents requis pour la vérification
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Votre compte sera activé après vérification de ces documents par notre équipe.
+                  </p>
+                  <ul className="space-y-1.5">
+                    {requiredDocs.map((doc, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                        <FileText className="h-3.5 w-3.5 text-warning" />
+                        {doc}
+                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">requis</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-[10px] text-muted-foreground mt-3">
+                    📧 Les documents seront demandés par email après soumission du formulaire.
+                  </p>
+                </div>
+
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Message (optionnel)</label>
                   <Textarea value={formData.message} onChange={e => handleChange("message", e.target.value)} placeholder="Présentez-vous brièvement..." rows={3} className="mt-1" />
                 </div>
 
                 <Button type="submit" className="w-full gradient-primary text-primary-foreground shadow-primary-glow">
-                  Envoyer ma demande <ChevronRight className="h-4 w-4 ml-1" />
+                  Soumettre mon inscription <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  En soumettant ce formulaire, vous acceptez nos CGU et notre politique de confidentialité.
+                  En soumettant ce formulaire, vous acceptez nos <Link to="/legal" className="underline">CGU</Link> et notre politique de confidentialité.
                 </p>
               </form>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <CheckCircle2 className="h-16 w-16 text-accent mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-foreground mb-2">Demande envoyée !</h2>
-              <p className="text-muted-foreground mb-6">
-                Merci pour votre intérêt. Notre équipe vous contactera sous 24h pour finaliser votre inscription.
-              </p>
-              <Button variant="outline" onClick={() => { setSubmitted(false); setFormData({ firstName: "", lastName: "", email: "", phone: "", organization: "", specialty: "", city: "", message: "" }); }}>
-                Envoyer une autre demande
-              </Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* ── STEP 3: Success / KYC Pending ── */}
+        {step === "success" && (
+          <div className="max-w-xl mx-auto text-center py-8">
+            <div className="rounded-2xl border bg-card p-8 shadow-elevated">
+              <div className="h-20 w-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="h-10 w-10 text-accent" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Inscription envoyée ! 🎉</h2>
+              <p className="text-muted-foreground mb-6">
+                Votre dossier est en cours de vérification par notre équipe. 
+                Vous recevrez un email de confirmation sous <strong>24 à 48h</strong>.
+              </p>
+
+              {/* KYC timeline */}
+              <div className="rounded-xl border p-5 text-left mb-6">
+                <p className="text-sm font-semibold text-foreground mb-4">Prochaines étapes</p>
+                <div className="space-y-4">
+                  {[
+                    { done: true, label: "Formulaire d'inscription complété", desc: "Vos informations ont été enregistrées" },
+                    { done: false, label: "Envoi des documents justificatifs", desc: "Un email vous sera envoyé avec les instructions" },
+                    { done: false, label: "Vérification KYC par notre équipe", desc: "Délai moyen : 24-48h ouvrables" },
+                    { done: false, label: "Activation de votre compte", desc: "Accès à votre espace professionnel" },
+                  ].map((s, i) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {s.done ? <Check className="h-3 w-3" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
+                        </div>
+                        {i < 3 && <div className={`h-full w-px mt-1 ${s.done ? "bg-accent" : "bg-border"}`} />}
+                      </div>
+                      <div className="pb-4">
+                        <p className={`text-sm font-medium ${s.done ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p>
+                        <p className="text-xs text-muted-foreground">{s.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {applicablePromo && (
+                <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 mb-6 text-left">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Gift className="h-4 w-4 text-accent" />Offre appliquée à votre futur compte
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {promoDescription(applicablePromo)} — sera activé dès la validation de votre dossier.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <Button variant="outline" onClick={() => { setStep("pricing"); setFormData({ firstName: "", lastName: "", email: "", phone: "", organization: "", specialty: "", city: "", message: "" }); }}>
+                  Nouvelle inscription
+                </Button>
+                <Link to="/">
+                  <Button variant="ghost">Retour à l'accueil</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CTA bottom */}
-        <div className="text-center pb-12">
-          <p className="text-muted-foreground mb-4">Des questions ? Contactez notre équipe commerciale</p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Button variant="outline" size="lg" className="gap-2">
-              <Phone className="h-4 w-4" />+216 71 000 000
-            </Button>
-            <Button variant="outline" size="lg" className="gap-2">
-              <MessageSquare className="h-4 w-4" />commercial@medicare.tn
-            </Button>
+        {step === "pricing" && (
+          <div className="text-center pb-12">
+            <p className="text-muted-foreground mb-4">Des questions ? Contactez notre équipe commerciale</p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <Button variant="outline" size="lg" className="gap-2"><Phone className="h-4 w-4" />+216 71 000 000</Button>
+              <Button variant="outline" size="lg" className="gap-2"><MessageSquare className="h-4 w-4" />commercial@medicare.tn</Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
