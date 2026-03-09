@@ -345,7 +345,7 @@ const PatientAppointments = () => {
                 {currentApt.address && (
                   <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
                     <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button onClick={() => toast({ title: "Itinéraire", description: "Ouverture de Google Maps bientôt disponible." })} className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
+                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button onClick={() => openGoogleMapsDirections(currentApt.address!)} className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
                   </div>
                 )}
 
