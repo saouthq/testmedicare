@@ -296,7 +296,23 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     if (!slideIsLastStep) { setSlideStep(s => s + 1); return; }
     const now = new Date();
     if (slideType === "rx") { setRxSignedAt(now); flash(rxSendToPatient || rxSendToPharmacy ? "Ordonnance signée et envoyée." : "Ordonnance signée."); closeSlide(); return; }
-    if (slideType === "labs") { setLabsSignedAt(now); flash(labsSendToLab || labsSendToPatient ? "Analyses signées et envoyées." : "Analyses signées."); closeSlide(); return; }
+    if (slideType === "labs") {
+      setLabsSignedAt(now);
+      // Cross-role sync: send lab demand to labStore
+      if (labsSendToLab && analyses.length > 0) {
+        createLabDemand({
+          patient: patient.name,
+          patientDob: patient.dob || "",
+          avatar: initials,
+          prescriber: "Dr. Bouazizi",
+          examens: [...analyses],
+          notes: labsNote,
+        });
+      }
+      flash(labsSendToLab || labsSendToPatient ? "Analyses signées et envoyées au labo." : "Analyses signées.");
+      closeSlide();
+      return;
+    }
     if (slideType === "report") { setReportSignedAt(now); flash(reportSendToPatient ? "Compte-rendu signé et envoyé." : "Compte-rendu signé."); closeSlide(); return; }
     if (slideType === "certificate") { setCertSignedAt(now); flash("Certificat signé."); closeSlide(); return; }
     if (slideType === "sickleave") { setSlSignedAt(now); flash("Arrêt de travail signé."); closeSlide(); return; }
