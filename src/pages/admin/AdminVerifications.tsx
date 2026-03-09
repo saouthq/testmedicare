@@ -1,6 +1,7 @@
 /**
  * Admin Validations KYC — Enhanced with timeline, relance, notes internes, stats
- * Connected to partnerRegistrationStore for new registrations from BecomePartner
+ * Connected to partnerRegistrationStore and featureMatrixStore
+ * Shows activity, specialty, plan, and enabled features for each registration
  * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -8,6 +9,7 @@ import { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle, XCircle, FileText, Eye, Calendar, MapPin, Mail, Clock,
   Send, RefreshCw, MessageSquare, AlertTriangle, Shield, Gift, CreditCard,
+  Stethoscope, Layers, User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +20,12 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { getRegistrations, updateRegistrationStatus, addRegistrationEvent } from "@/stores/partnerRegistrationStore";
 import type { PartnerRegistration } from "@/stores/partnerRegistrationStore";
+import {
+  getEnabledFeatureLabels,
+  planNameToTier,
+  activities as matrixActivities,
+  type ActivityType,
+} from "@/stores/featureMatrixStore";
 
 type Tab = "doctors" | "labs" | "pharmacies";
 
@@ -41,6 +49,13 @@ interface Verification {
   status: string;
   docs: string[];
   events: VerifEvent[];
+  // Extended fields from registration
+  _plan?: string;
+  _planPrice?: number;
+  _billing?: "monthly" | "yearly";
+  _promoApplied?: string;
+  _activity?: string;
+  _registrationId?: string;
 }
 
 const initialVerifications: Verification[] = [
@@ -48,17 +63,15 @@ const initialVerifications: Verification[] = [
     id: "v-1", entityType: "doctor", entityName: "Dr. Karim Bouzid", specialty: "Cardiologue",
     city: "Tunis", email: "karim@email.tn", phone: "+216 71 111 222", submittedAt: "08 Mar 2026", status: "pending",
     docs: ["Diplôme de médecine", "CIN recto/verso", "Attestation d'inscription à l'Ordre"],
-    events: [
-      { id: "e1", type: "submitted", text: "Dossier soumis avec 3 documents", author: "Dr. Karim Bouzid", createdAt: "2026-03-08T10:00:00" },
-    ],
+    events: [{ id: "e1", type: "submitted", text: "Dossier soumis avec 3 documents", author: "Dr. Karim Bouzid", createdAt: "2026-03-08T10:00:00" }],
+    _plan: "Pro", _planPrice: 169, _billing: "yearly", _activity: "specialiste",
   },
   {
     id: "v-2", entityType: "doctor", entityName: "Dr. Nadia Hamdi", specialty: "Dermatologue",
     city: "Ariana", email: "nadia@email.tn", phone: "+216 71 333 444", submittedAt: "09 Mar 2026", status: "pending",
     docs: ["Diplôme de médecine", "CIN recto/verso"],
-    events: [
-      { id: "e2", type: "submitted", text: "Dossier soumis avec 2 documents", author: "Dr. Nadia Hamdi", createdAt: "2026-03-09T08:00:00" },
-    ],
+    events: [{ id: "e2", type: "submitted", text: "Dossier soumis avec 2 documents", author: "Dr. Nadia Hamdi", createdAt: "2026-03-09T08:00:00" }],
+    _plan: "Essentiel", _planPrice: 59, _billing: "monthly", _activity: "specialiste",
   },
   {
     id: "v-3", entityType: "lab", entityName: "Labo MedTest", specialty: "Analyses médicales",
@@ -68,6 +81,7 @@ const initialVerifications: Verification[] = [
       { id: "e3", type: "submitted", text: "Dossier soumis avec 4 documents", author: "Labo MedTest", createdAt: "2026-03-07T14:00:00" },
       { id: "e4", type: "note", text: "Certificat d'accréditation à vérifier auprès du TUNAC", author: "Admin", createdAt: "2026-03-08T09:00:00" },
     ],
+    _plan: "Premium", _planPrice: 149, _billing: "yearly", _activity: "laboratory",
   },
   {
     id: "v-4", entityType: "pharmacy", entityName: "Pharmacie El Amal", specialty: "Officine",
@@ -77,6 +91,7 @@ const initialVerifications: Verification[] = [
       { id: "e5", type: "submitted", text: "Dossier soumis avec 3 documents", author: "Pharmacie El Amal", createdAt: "2026-03-06T11:00:00" },
       { id: "e6", type: "relance", text: "Relance envoyée par email pour complément (autorisation DPHM manquante)", author: "Admin", createdAt: "2026-03-07T10:00:00" },
     ],
+    _plan: "Standard", _planPrice: 79, _billing: "monthly", _activity: "pharmacy",
   },
   {
     id: "v-5", entityType: "doctor", entityName: "Dr. Sami Trabelsi", specialty: "Généraliste",
@@ -86,6 +101,7 @@ const initialVerifications: Verification[] = [
       { id: "e7", type: "submitted", text: "Dossier soumis", author: "Dr. Sami Trabelsi", createdAt: "2026-03-01T09:00:00" },
       { id: "e8", type: "approved", text: "Dossier approuvé — Tous les documents conformes", author: "Admin", createdAt: "2026-03-02T14:00:00" },
     ],
+    _plan: "Pro", _planPrice: 149, _billing: "yearly", _activity: "generaliste",
   },
   {
     id: "v-6", entityType: "lab", entityName: "Labo XYZ", specialty: "Analyses",
@@ -96,6 +112,7 @@ const initialVerifications: Verification[] = [
       { id: "e10", type: "docs_requested", text: "Documents complémentaires demandés (autorisation, RC)", author: "Admin", createdAt: "2026-02-26T09:00:00" },
       { id: "e11", type: "rejected", text: "Dossier refusé — Aucun complément reçu après relance", author: "Admin", createdAt: "2026-03-05T16:00:00" },
     ],
+    _plan: "Standard", _planPrice: 79, _billing: "monthly", _activity: "laboratory",
   },
 ];
 
@@ -105,22 +122,25 @@ const statusLabels: Record<string, string> = { pending: "En attente", approved: 
 const eventIcons: Record<string, any> = { submitted: FileText, note: MessageSquare, relance: Send, approved: CheckCircle, rejected: XCircle, docs_requested: AlertTriangle };
 const eventColors: Record<string, string> = { submitted: "text-primary", note: "text-muted-foreground", relance: "text-warning", approved: "text-accent", rejected: "text-destructive", docs_requested: "text-warning" };
 
+/** Get activity label */
+const getActivityLabel = (activity?: string): string => {
+  if (!activity) return "";
+  return matrixActivities.find(a => a.id === activity)?.label || activity;
+};
+
 const AdminVerifications = () => {
   const [tab, setTab] = useState<Tab>("doctors");
 
-  // Merge hardcoded verifications with registrations from partner store
   const buildVerifications = (): Verification[] => {
     const base = [...initialVerifications];
     const registrations = getRegistrations();
 
-    // Convert registrations to Verification format
     registrations.forEach(reg => {
       const entityType = reg.type === "lab" ? "lab" : reg.type === "pharmacy" ? "pharmacy" : reg.type === "clinic" ? "pharmacy" : "doctor";
       const entityName = reg.type === "doctor"
         ? `Dr. ${reg.firstName} ${reg.lastName}`
         : reg.organization || `${reg.firstName} ${reg.lastName}`;
 
-      // Don't add duplicates (check by id)
       if (base.some(v => v.id === reg.id)) return;
 
       base.unshift({
@@ -135,13 +155,13 @@ const AdminVerifications = () => {
         status: reg.status,
         docs: reg.docs,
         events: reg.events as VerifEvent[],
-        // Extra fields for display
         _plan: reg.plan,
         _planPrice: reg.planPrice,
         _billing: reg.billing,
         _promoApplied: reg.promoApplied,
+        _activity: reg.activity,
         _registrationId: reg.id,
-      } as Verification & Record<string, any>);
+      });
     });
 
     return base;
@@ -152,7 +172,6 @@ const AdminVerifications = () => {
   const [drawerItem, setDrawerItem] = useState<Verification | null>(null);
   const [adminNote, setAdminNote] = useState("");
 
-  // Refresh from store periodically (for cross-tab sync)
   useEffect(() => {
     const interval = setInterval(() => {
       setVerifications(buildVerifications());
@@ -184,13 +203,22 @@ const AdminVerifications = () => {
     const newStatus = motifAction.type === "approve" ? "approved" : "rejected";
     setVerifications(prev => prev.map(x => x.id === motifAction.id ? { ...x, status: newStatus, events: [...x.events, event] } : x));
 
-    // Also update registration store if this came from partner registration
     if (v.id.startsWith("reg-")) {
       updateRegistrationStatus(v.id, newStatus as any, motif);
     }
 
-    appendLog(`verification_${newStatus}`, "verification", motifAction.id, `${v.entityName} ${newStatus === "approved" ? "approuvé(e)" : "refusé(e)"} — Motif : ${motif}`);
-    toast({ title: `${v.entityName} ${newStatus === "approved" ? "approuvé(e)" : "refusé(e)"}`, variant: newStatus === "rejected" ? "destructive" : "default" });
+    const statusText = newStatus === "approved" ? "approuvé(e)" : "refusé(e)";
+    appendLog(`verification_${newStatus}`, "verification", motifAction.id, `${v.entityName} ${statusText} — Motif : ${motif}`);
+    
+    if (newStatus === "approved") {
+      toast({
+        title: `✅ ${v.entityName} approuvé(e)`,
+        description: `Compte ${getActivityLabel(v._activity)} activé — Plan ${v._plan || "N/A"}`,
+      });
+    } else {
+      toast({ title: `${v.entityName} refusé(e)`, variant: "destructive" });
+    }
+    
     setMotifAction(null);
     if (drawerItem?.id === motifAction.id) {
       setDrawerItem(prev => prev ? { ...prev, status: newStatus, events: [...prev.events, event] } : null);
@@ -224,6 +252,15 @@ const AdminVerifications = () => {
     setDrawerItem(prev => prev ? { ...prev, events: [...prev.events, event] } : null);
     setAdminNote("");
     toast({ title: "Note ajoutée" });
+  };
+
+  /** Get enabled features for a verification item */
+  const getItemFeatures = (item: Verification): string[] => {
+    if (!item._activity || !item._plan) return [];
+    try {
+      const tier = planNameToTier(item._plan, item._activity as ActivityType);
+      return getEnabledFeatureLabels(item._activity as ActivityType, tier, item.specialty || undefined);
+    } catch { return []; }
   };
 
   return (
@@ -283,22 +320,27 @@ const AdminVerifications = () => {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[v.status]}`}>{statusLabels[v.status]}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
-                     <span>{v.specialty}</span>
-                     <span>·</span>
-                     <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{v.city}</span>
-                     <span>·</span>
-                     <span>{v.docs.length} doc(s)</span>
-                     <span>·</span>
-                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{v.submittedAt}</span>
-                     {(v as any)._plan && (
-                       <span className="flex items-center gap-1 text-primary"><CreditCard className="h-3 w-3" />{(v as any)._plan} — {(v as any)._planPrice} DT</span>
-                     )}
-                     {(v as any)._promoApplied && (
-                       <span className="flex items-center gap-1 text-accent"><Gift className="h-3 w-3" />{(v as any)._promoApplied}</span>
-                     )}
-                     {v.events.filter(e => e.type === "relance").length > 0 && (
-                       <span className="text-warning flex items-center gap-1"><RefreshCw className="h-3 w-3" />{v.events.filter(e => e.type === "relance").length} relance(s)</span>
-                     )}
+                    {v._activity && (
+                      <span className="flex items-center gap-1 text-foreground font-medium">
+                        <Stethoscope className="h-3 w-3" />{getActivityLabel(v._activity)}
+                      </span>
+                    )}
+                    <span>{v.specialty}</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{v.city}</span>
+                    <span>·</span>
+                    <span>{v.docs.length} doc(s)</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{v.submittedAt}</span>
+                    {v._plan && (
+                      <span className="flex items-center gap-1 text-primary"><CreditCard className="h-3 w-3" />{v._plan} — {v._planPrice} DT</span>
+                    )}
+                    {v._promoApplied && (
+                      <span className="flex items-center gap-1 text-accent"><Gift className="h-3 w-3" />{v._promoApplied}</span>
+                    )}
+                    {v.events.filter(e => e.type === "relance").length > 0 && (
+                      <span className="text-warning flex items-center gap-1"><RefreshCw className="h-3 w-3" />{v.events.filter(e => e.type === "relance").length} relance(s)</span>
+                    )}
                   </p>
                 </div>
                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => { e.stopPropagation(); setDrawerItem(v); }}>
@@ -333,7 +375,7 @@ const AdminVerifications = () => {
         />
       )}
 
-      {/* Dossier drawer with timeline */}
+      {/* Dossier drawer with timeline + features */}
       <Sheet open={!!drawerItem} onOpenChange={() => { setDrawerItem(null); setAdminNote(""); }}>
         <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
           {drawerItem && (
@@ -341,8 +383,11 @@ const AdminVerifications = () => {
               <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
                 <SheetTitle>Dossier — {drawerItem.entityName}</SheetTitle>
                 <SheetDescription className="sr-only">Détail du dossier KYC</SheetDescription>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[drawerItem.status]}`}>{statusLabels[drawerItem.status]}</span>
+                  {drawerItem._activity && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{getActivityLabel(drawerItem._activity)}</span>
+                  )}
                   <span className="text-xs text-muted-foreground">{drawerItem.specialty}</span>
                 </div>
               </SheetHeader>
@@ -356,28 +401,58 @@ const AdminVerifications = () => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground"><Calendar className="h-4 w-4" />Soumis le {drawerItem.submittedAt}</div>
                   </div>
 
-                  {/* Plan & promo info (for registrations from BecomePartner) */}
-                  {(drawerItem as any)._plan && (
+                  {/* Plan & promo info */}
+                  {drawerItem._plan && (
                     <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
                       <h4 className="text-sm font-semibold text-foreground flex items-center gap-1">
                         <CreditCard className="h-4 w-4 text-primary" />Abonnement demandé
                       </h4>
                       <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Activité</span>
+                        <span className="text-sm font-semibold text-foreground">{getActivityLabel(drawerItem._activity)}</span>
+                      </div>
+                      {drawerItem.specialty && drawerItem._activity === "specialiste" && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Spécialité</span>
+                          <span className="text-sm font-semibold text-foreground">{drawerItem.specialty}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Plan</span>
-                        <span className="text-sm font-semibold text-foreground">{(drawerItem as any)._plan}</span>
+                        <span className="text-sm font-semibold text-foreground">{drawerItem._plan}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Prix</span>
-                        <span className="text-sm font-semibold text-foreground">{(drawerItem as any)._planPrice} DT/{(drawerItem as any)._billing === "yearly" ? "mois (annuel)" : "mois"}</span>
+                        <span className="text-sm font-semibold text-foreground">{drawerItem._planPrice} DT/{drawerItem._billing === "yearly" ? "mois (annuel)" : "mois"}</span>
                       </div>
-                      {(drawerItem as any)._promoApplied && (
+                      {drawerItem._promoApplied && (
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Promo</span>
-                          <span className="text-sm font-medium text-accent flex items-center gap-1"><Gift className="h-3.5 w-3.5" />{(drawerItem as any)._promoApplied}</span>
+                          <span className="text-sm font-medium text-accent flex items-center gap-1"><Gift className="h-3.5 w-3.5" />{drawerItem._promoApplied}</span>
                         </div>
                       )}
                     </div>
                   )}
+
+                  {/* Enabled features for this plan/activity/specialty */}
+                  {(() => {
+                    const features = getItemFeatures(drawerItem);
+                    return features.length > 0 ? (
+                      <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-1 mb-3">
+                          <Layers className="h-4 w-4 text-accent" />Fonctionnalités activées ({features.length})
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {features.map((f, i) => (
+                            <span key={i} className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">{f}</span>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-2">
+                          Basé sur : {getActivityLabel(drawerItem._activity)}{drawerItem.specialty && drawerItem._activity === "specialiste" ? ` — ${drawerItem.specialty}` : ""} — Plan {drawerItem._plan}
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
 
                   {/* Documents */}
                   <div>
@@ -409,14 +484,11 @@ const AdminVerifications = () => {
                         const color = eventColors[event.type] || "text-muted-foreground";
                         return (
                           <div key={event.id} className="flex items-start gap-3">
-                            <div className="mt-0.5 shrink-0">
-                              <Icon className={`h-4 w-4 ${color}`} />
-                            </div>
+                            <div className="mt-0.5 shrink-0"><Icon className={`h-4 w-4 ${color}`} /></div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-foreground">{event.text}</p>
                               <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                                <span>{event.author}</span>
-                                <span>·</span>
+                                <span>{event.author}</span><span>·</span>
                                 <span>{new Date(event.createdAt).toLocaleString("fr-TN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                               </div>
                             </div>
@@ -430,7 +502,6 @@ const AdminVerifications = () => {
 
               {/* Footer */}
               <div className="border-t px-6 py-4 space-y-3 shrink-0">
-                {/* Admin note */}
                 <div className="flex gap-2">
                   <Input placeholder="Ajouter une note interne..." value={adminNote} onChange={e => setAdminNote(e.target.value)}
                     className="text-xs" onKeyDown={e => e.key === "Enter" && handleAddNote()} />

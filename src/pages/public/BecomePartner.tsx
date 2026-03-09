@@ -1,6 +1,7 @@
 /**
  * Become Partner Page — Doctolib-style pricing with activity selector, plan comparison table
  * Connected to admin promos/promotions store — shows active promos dynamically
+ * Features shown per plan come from the shared Feature Matrix store (admin-configurable)
  * Registration feeds into AdminVerifications KYC queue
  * TODO BACKEND: Replace with real API
  */
@@ -21,160 +22,27 @@ import {
 } from "lucide-react";
 import { getPromotions } from "@/services/admin/adminPromotionsService";
 import { submitRegistration } from "@/stores/partnerRegistrationStore";
+import {
+  activities as matrixActivities,
+  publicPlansByActivity,
+  getEnabledFeatureLabels,
+  planNameToTier,
+  featureCatalog,
+  plansByActivity as matrixPlansByActivity,
+  type ActivityType,
+  type PublicPlanConfig,
+} from "@/stores/featureMatrixStore";
 import type { Promotion } from "@/types/promotion";
 
-// ── Activity types with specialties ──
-type ActivityType = "generaliste" | "specialiste" | "dentiste" | "kine" | "laboratory" | "pharmacy" | "clinic";
-
-interface ActivityConfig {
-  id: ActivityType;
-  label: string;
-  icon: any;
-  specialties?: string[];
-}
-
-const activities: ActivityConfig[] = [
-  { id: "generaliste", label: "Médecin généraliste", icon: Stethoscope },
-  { id: "specialiste", label: "Médecin spécialiste", icon: Stethoscope, specialties: ["Cardiologue", "Dermatologue", "Gynécologue", "Ophtalmologue", "ORL", "Pédiatre", "Pneumologue", "Rhumatologue", "Urologue", "Neurologue", "Autre"] },
-  { id: "dentiste", label: "Dentiste", icon: Stethoscope },
-  { id: "kine", label: "Kinésithérapeute", icon: Stethoscope },
-  { id: "laboratory", label: "Laboratoire d'analyses", icon: FlaskConical },
-  { id: "pharmacy", label: "Pharmacie", icon: Pill },
-  { id: "clinic", label: "Clinique / Établissement", icon: Building2 },
-];
-
-// ── Plans per activity ──
-interface PlanConfig {
-  name: string;
-  subtitle: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  highlighted?: boolean;
-  features: string[];
-}
-
-const plansByActivity: Record<ActivityType, PlanConfig[]> = {
-  generaliste: [
-    {
-      name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 49, yearlyPrice: 39,
-      features: ["Agenda en ligne 24h/24", "Prise de RDV patients", "Rappels SMS automatiques", "Fiche patient basique", "Support email"],
-    },
-    {
-      name: "Pro", subtitle: "Gestion complète", monthlyPrice: 149, yearlyPrice: 129, highlighted: true,
-      features: ["Tout Essentiel +", "Dossier médical complet", "Ordonnances numériques", "Téléconsultation vidéo", "Statistiques détaillées", "Assistant IA diagnostic", "Messagerie patient", "Support prioritaire"],
-    },
-    {
-      name: "Cabinet +", subtitle: "Multi-praticiens", monthlyPrice: 299, yearlyPrice: 249,
-      features: ["Tout Pro +", "Jusqu'à 5 praticiens", "Secrétariat partagé", "Facturation centralisée", "Compte-rendu automatisé", "API & intégrations", "Account manager dédié"],
-    },
-  ],
-  specialiste: [
-    {
-      name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 59, yearlyPrice: 49,
-      features: ["Agenda en ligne 24h/24", "Prise de RDV patients", "Rappels SMS automatiques", "Fiche patient basique", "Support email"],
-    },
-    {
-      name: "Pro", subtitle: "Gestion clinique", monthlyPrice: 169, yearlyPrice: 139, highlighted: true,
-      features: ["Tout Essentiel +", "Dossier médical complet", "Ordonnances spécialisées", "Téléconsultation HD", "Demandes d'analyses", "Statistiques avancées", "Assistant IA spécialisé", "Support prioritaire"],
-    },
-    {
-      name: "Cabinet +", subtitle: "Multi-praticiens", monthlyPrice: 329, yearlyPrice: 279,
-      features: ["Tout Pro +", "Jusqu'à 5 praticiens", "Secrétariat partagé", "Facturation centralisée", "Protocoles personnalisés", "API & intégrations", "Account manager dédié"],
-    },
-  ],
-  dentiste: [
-    {
-      name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 49, yearlyPrice: 39,
-      features: ["Agenda en ligne 24h/24", "Prise de RDV patients", "Rappels SMS automatiques", "Fiche patient basique", "Support email"],
-    },
-    {
-      name: "Pro", subtitle: "Gestion complète", monthlyPrice: 149, yearlyPrice: 129, highlighted: true,
-      features: ["Tout Essentiel +", "Dossier dentaire complet", "Schéma dentaire numérique", "Devis & plans de traitement", "Statistiques détaillées", "Messagerie patient", "Support prioritaire"],
-    },
-  ],
-  kine: [
-    {
-      name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29,
-      features: ["Agenda en ligne 24h/24", "Prise de RDV patients", "Rappels SMS automatiques", "Fiche patient basique", "Support email"],
-    },
-    {
-      name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, highlighted: true,
-      features: ["Tout Essentiel +", "Bilan & suivi kinésithérapie", "Exercices à domicile", "Téléconsultation", "Statistiques", "Support prioritaire"],
-    },
-  ],
-  laboratory: [
-    {
-      name: "Standard", subtitle: "Gestion labo", monthlyPrice: 79, yearlyPrice: 59,
-      features: ["Réception demandes d'analyses", "Upload résultats PDF", "Notification patients", "Tableau de bord", "Support email"],
-    },
-    {
-      name: "Premium", subtitle: "Labo connecté", monthlyPrice: 149, yearlyPrice: 129, highlighted: true,
-      features: ["Tout Standard +", "Intégration automates", "Résultats en temps réel", "API praticiens", "Statistiques avancées", "Support prioritaire"],
-    },
-  ],
-  pharmacy: [
-    {
-      name: "Standard", subtitle: "Gestion pharmacie", monthlyPrice: 79, yearlyPrice: 59,
-      features: ["Réception ordonnances numériques", "Gestion de stock basique", "Pharmacie de garde", "Tableau de bord", "Support email"],
-    },
-    {
-      name: "Premium", subtitle: "Pharmacie connectée", monthlyPrice: 149, yearlyPrice: 129, highlighted: true,
-      features: ["Tout Standard +", "Stock avancé & alertes", "Substitution automatique", "Statistiques avancées", "Multi-points de vente", "Support prioritaire"],
-    },
-  ],
-  clinic: [
-    {
-      name: "Établissement", subtitle: "Gestion multi-services", monthlyPrice: 499, yearlyPrice: 399, highlighted: true,
-      features: ["Gestion multi-praticiens illimitée", "Secrétariat centralisé", "Dossier médical partagé", "Facturation & reporting", "Téléconsultation", "API & intégrations", "Account manager dédié", "Formation sur site"],
-    },
-  ],
-};
-
-// ── Feature comparison table ──
-interface ComparisonFeature {
-  category: string;
-  features: { name: string; plans: boolean[] }[];
-}
-
-const getComparison = (activity: ActivityType): ComparisonFeature[] => {
-  const plans = plansByActivity[activity];
-  if (!plans || plans.length < 2) return [];
-
-  return [
-    {
-      category: "Agenda & RDV",
-      features: [
-        { name: "Agenda en ligne 24h/24", plans: plans.map(p => p.features.some(f => f.includes("Agenda"))) },
-        { name: "Rappels SMS automatiques", plans: plans.map(p => p.features.some(f => f.includes("Rappels"))) },
-        { name: "Prise de RDV patients", plans: plans.map(p => p.features.some(f => f.includes("RDV"))) },
-      ],
-    },
-    {
-      category: "Dossier médical",
-      features: [
-        { name: "Fiche patient basique", plans: plans.map(() => true) },
-        { name: "Dossier médical complet", plans: plans.map(p => p.features.some(f => f.includes("Dossier") && f.includes("complet"))) },
-        { name: "Ordonnances numériques", plans: plans.map(p => p.features.some(f => f.includes("Ordonnances"))) },
-      ],
-    },
-    {
-      category: "Fonctionnalités avancées",
-      features: [
-        { name: "Téléconsultation vidéo", plans: plans.map(p => p.features.some(f => f.includes("Téléconsultation"))) },
-        { name: "Assistant IA", plans: plans.map(p => p.features.some(f => f.includes("IA"))) },
-        { name: "Statistiques détaillées", plans: plans.map(p => p.features.some(f => f.includes("Statistiques"))) },
-        { name: "Messagerie patient", plans: plans.map(p => p.features.some(f => f.includes("Messagerie"))) },
-      ],
-    },
-    {
-      category: "Support & Services",
-      features: [
-        { name: "Support email", plans: plans.map(() => true) },
-        { name: "Support prioritaire", plans: plans.map(p => p.features.some(f => f.includes("prioritaire"))) },
-        { name: "Account manager dédié", plans: plans.map(p => p.features.some(f => f.includes("Account"))) },
-      ],
-    },
-  ];
+// Icons per activity
+const activityIcons: Record<ActivityType, any> = {
+  generaliste: Stethoscope,
+  specialiste: Stethoscope,
+  dentiste: Stethoscope,
+  kine: Stethoscope,
+  laboratory: FlaskConical,
+  pharmacy: Pill,
+  clinic: Building2,
 };
 
 /** Describe a promo in a human-readable banner line */
@@ -198,9 +66,9 @@ const BecomePartner = () => {
     firstName: "", lastName: "", email: "", phone: "", organization: "", specialty: "", city: "", message: "",
   });
 
-  const plans = plansByActivity[activity];
-  const comparison = getComparison(activity);
-  const currentActivity = activities.find(a => a.id === activity)!;
+  const plans = publicPlansByActivity[activity];
+  const currentActivity = matrixActivities.find(a => a.id === activity)!;
+  const ActivityIcon = activityIcons[activity];
 
   // ── Get active promos from admin store ──
   const activePromos = useMemo(() => {
@@ -218,7 +86,32 @@ const BecomePartner = () => {
     return activePromos.find(p => p.autoApply && p.newDoctorsOnly && (p.target === "all" || p.target === planKey));
   }, [activePromos, selectedPlan]);
 
-  const handleSelectPlan = (plan: PlanConfig) => {
+  // Get features for each plan from the shared matrix (respects admin config)
+  const getFeaturesForPlan = (plan: PublicPlanConfig): string[] => {
+    const tier = plan.planTier;
+    const specialty = formData.specialty || undefined;
+    return getEnabledFeatureLabels(activity, tier, specialty);
+  };
+
+  // Build comparison table from the matrix
+  const comparison = useMemo(() => {
+    if (plans.length < 2) return [];
+    const categories = [...new Set(featureCatalog.map(f => f.category))];
+    // Only show categories that have at least one enabled feature for this activity
+    return categories.map(cat => {
+      const catFeatures = featureCatalog.filter(f => f.category === cat);
+      const rows = catFeatures.map(f => ({
+        name: f.label,
+        plans: plans.map(p => {
+          const labels = getEnabledFeatureLabels(activity, p.planTier, formData.specialty || undefined);
+          return labels.includes(f.label);
+        }),
+      })).filter(row => row.plans.some(Boolean)); // only show features that are enabled for at least one plan
+      return { category: cat, features: rows };
+    }).filter(c => c.features.length > 0);
+  }, [activity, plans, formData.specialty]);
+
+  const handleSelectPlan = (plan: PublicPlanConfig) => {
     const price = billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
     setSelectedPlan(plan.name);
     setSelectedPlanPrice(price);
@@ -242,7 +135,6 @@ const BecomePartner = () => {
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, { name: string; size: string; uploaded: boolean }>>({});
 
   const handleFileSelect = (docLabel: string) => {
-    // Simulate file selection
     const fakeNames = ["diplome_medecine.pdf", "cin_recto_verso.pdf", "attestation_ordre.pdf", "licence_pharmacie.pdf", "autorisation.pdf", "registre_commerce.pdf"];
     const fakeSizes = ["1.2 Mo", "856 Ko", "2.1 Mo", "1.8 Mo", "945 Ko", "1.5 Mo"];
     const idx = Math.floor(Math.random() * fakeNames.length);
@@ -267,7 +159,6 @@ const BecomePartner = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Submit to shared store — appears in admin KYC
     const reg = submitRegistration({
       firstName: formData.firstName,
       lastName: formData.lastName,
@@ -291,8 +182,6 @@ const BecomePartner = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // requiredDocs already defined above
-
   return (
     <div className="min-h-screen bg-background">
       <SeoHelmet
@@ -301,7 +190,7 @@ const BecomePartner = () => {
       />
       <PublicHeader />
 
-      {/* Active promo banner — connected to admin promotions */}
+      {/* Active promo banner */}
       {activePromos.length > 0 && (
         <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
           <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center">
@@ -330,8 +219,6 @@ const BecomePartner = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-2">
             Choisissez l'offre adaptée à votre pratique. Sans engagement, résiliable à tout moment.
           </p>
-
-          {/* Stats */}
           <div className="flex items-center justify-center gap-6 mt-8 flex-wrap">
             {[
               { value: "5 000+", label: "Praticiens" },
@@ -379,16 +266,19 @@ const BecomePartner = () => {
             <div className="flex justify-center mb-10">
               <div className="rounded-2xl border bg-card p-6 shadow-card max-w-lg w-full">
                 <p className="text-center font-semibold text-foreground mb-4">Sélectionnez votre activité</p>
-                <Select value={activity} onValueChange={v => setActivity(v as ActivityType)}>
+                <Select value={activity} onValueChange={v => { setActivity(v as ActivityType); setFormData(prev => ({ ...prev, specialty: "" })); }}>
                   <SelectTrigger className="w-full h-12 text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {activities.map(a => (
-                      <SelectItem key={a.id} value={a.id}>
-                        <span className="flex items-center gap-2"><a.icon className="h-4 w-4" />{a.label}</span>
-                      </SelectItem>
-                    ))}
+                    {matrixActivities.map(a => {
+                      const Icon = activityIcons[a.id];
+                      return (
+                        <SelectItem key={a.id} value={a.id}>
+                          <span className="flex items-center gap-2"><Icon className="h-4 w-4" />{a.label}</span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
 
@@ -404,6 +294,9 @@ const BecomePartner = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      💡 Les fonctionnalités affichées sont adaptées à votre spécialité
+                    </p>
                   </div>
                 )}
               </div>
@@ -427,13 +320,13 @@ const BecomePartner = () => {
               </div>
             </div>
 
-            {/* Plan Cards */}
+            {/* Plan Cards — features from matrix */}
             <div className={`grid gap-6 mb-16 ${plans.length === 1 ? "max-w-md mx-auto" : plans.length === 2 ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
               {plans.map((plan, i) => {
                 const price = billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
-                // Check if there's a promo for this plan
                 const planKey = plan.name.toLowerCase().includes("pro") || plan.name.toLowerCase().includes("premium") ? "pro" : "basic";
                 const promo = activePromos.find(p => p.autoApply && p.newDoctorsOnly && (p.target === "all" || p.target === planKey));
+                const features = getFeaturesForPlan(plan);
 
                 return (
                   <div key={i} className={`rounded-2xl border p-6 shadow-card relative flex flex-col ${plan.highlighted ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20" : "bg-card"}`}>
@@ -442,7 +335,6 @@ const BecomePartner = () => {
                         Recommandé
                       </div>
                     )}
-                    {/* Promo badge */}
                     {promo && (
                       <div className="absolute -top-3 right-4 bg-accent text-accent-foreground text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
                         <Sparkles className="h-3 w-3" />{promoDescription(promo)}
@@ -463,7 +355,7 @@ const BecomePartner = () => {
                       {promo && (
                         <p className="text-xs text-accent font-medium mt-2 flex items-center gap-1">
                           <Gift className="h-3 w-3" />
-                          {promoDescription(promo)} — appliqué automatiquement à l'inscription
+                          {promoDescription(promo)} — appliqué automatiquement
                         </p>
                       )}
                     </div>
@@ -475,19 +367,21 @@ const BecomePartner = () => {
                       S'inscrire maintenant <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                     <div className="flex-1 space-y-2.5">
-                      {plan.features.map((f, j) => (
+                      {features.length > 0 ? features.map((f, j) => (
                         <div key={j} className="flex items-start gap-2">
                           <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
                           <span className="text-sm text-foreground">{f}</span>
                         </div>
-                      ))}
+                      )) : (
+                        <p className="text-sm text-muted-foreground italic">Aucune fonctionnalité configurée pour ce plan</p>
+                      )}
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Comparison Table */}
+            {/* Comparison Table — from matrix */}
             {comparison.length > 0 && (
               <div className="mb-16">
                 <h2 className="text-2xl font-bold text-foreground text-center mb-8">Comparatif détaillé</h2>
@@ -553,18 +447,39 @@ const BecomePartner = () => {
         {/* ── STEP 2: Registration Form ── */}
         {step === "register" && (
           <div id="partner-form" className="max-w-2xl mx-auto">
-            {/* Plan summary */}
-            <div className="rounded-xl border bg-primary/5 p-4 mb-6 flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Plan sélectionné</p>
-                <p className="font-bold text-foreground">{selectedPlan} — {selectedPlanPrice} DT/{billing === "yearly" ? "mois (annuel)" : "mois"}</p>
-                {applicablePromo && (
-                  <p className="text-xs text-accent flex items-center gap-1 mt-1">
-                    <Gift className="h-3 w-3" />{promoDescription(applicablePromo)} sera appliqué à votre compte
-                  </p>
-                )}
+            {/* Plan summary with features */}
+            <div className="rounded-xl border bg-primary/5 p-4 mb-6">
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Plan sélectionné</p>
+                  <p className="font-bold text-foreground">{selectedPlan} — {selectedPlanPrice} DT/{billing === "yearly" ? "mois (annuel)" : "mois"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{currentActivity.label}{formData.specialty ? ` — ${formData.specialty}` : ""}</p>
+                  {applicablePromo && (
+                    <p className="text-xs text-accent flex items-center gap-1 mt-1">
+                      <Gift className="h-3 w-3" />{promoDescription(applicablePromo)} sera appliqué à votre compte
+                    </p>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setStep("pricing")}>Changer de plan</Button>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setStep("pricing")}>Changer de plan</Button>
+              {/* Show selected plan features */}
+              {(() => {
+                const tier = planNameToTier(selectedPlan, activity);
+                const features = getEnabledFeatureLabels(activity, tier, formData.specialty || undefined);
+                return features.length > 0 ? (
+                  <div className="border-t pt-3 mt-2">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">Fonctionnalités incluses ({features.length})</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {features.slice(0, 12).map((f, i) => (
+                        <span key={i} className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">{f}</span>
+                      ))}
+                      {features.length > 12 && (
+                        <span className="text-[10px] text-muted-foreground">+{features.length - 12} autres</span>
+                      )}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             <div className="rounded-2xl border bg-card p-6 sm:p-8 shadow-elevated">
@@ -716,9 +631,9 @@ const BecomePartner = () => {
                 <div className="space-y-4">
                   {[
                     { done: true, label: "Formulaire d'inscription complété", desc: "Vos informations ont été enregistrées" },
-                    { done: false, label: "Envoi des documents justificatifs", desc: "Un email vous sera envoyé avec les instructions" },
+                    { done: allDocsUploaded, label: "Documents justificatifs soumis", desc: allDocsUploaded ? "Tous les documents ont été envoyés" : "Un email vous sera envoyé avec les instructions" },
                     { done: false, label: "Vérification KYC par notre équipe", desc: "Délai moyen : 24-48h ouvrables" },
-                    { done: false, label: "Activation de votre compte", desc: "Accès à votre espace professionnel" },
+                    { done: false, label: "Activation de votre compte", desc: `Accès à votre espace ${currentActivity.label}` },
                   ].map((s, i) => (
                     <div key={i} className="flex gap-3">
                       <div className="flex flex-col items-center">
@@ -736,6 +651,24 @@ const BecomePartner = () => {
                 </div>
               </div>
 
+              {/* Show what features will be enabled */}
+              {(() => {
+                const tier = planNameToTier(selectedPlan, activity);
+                const features = getEnabledFeatureLabels(activity, tier, formData.specialty || undefined);
+                return features.length > 0 ? (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 mb-6 text-left">
+                    <p className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
+                      <Shield className="h-4 w-4 text-primary" />Fonctionnalités de votre plan {selectedPlan}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {features.map((f, i) => (
+                        <span key={i} className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
               {applicablePromo && (
                 <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 mb-6 text-left">
                   <p className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -748,7 +681,7 @@ const BecomePartner = () => {
               )}
 
               <div className="flex items-center justify-center gap-3 flex-wrap">
-                <Button variant="outline" onClick={() => { setStep("pricing"); setFormData({ firstName: "", lastName: "", email: "", phone: "", organization: "", specialty: "", city: "", message: "" }); }}>
+                <Button variant="outline" onClick={() => { setStep("pricing"); setFormData({ firstName: "", lastName: "", email: "", phone: "", organization: "", specialty: "", city: "", message: "" }); setUploadedDocs({}); }}>
                   Nouvelle inscription
                 </Button>
                 <Link to="/">
