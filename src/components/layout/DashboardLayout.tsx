@@ -260,25 +260,32 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             </button>
             <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h1>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Link
-              to={role === "patient" ? "/dashboard/patient/notifications" : `/dashboard/${role}`}
-              className="relative"
-              onClick={() => {
-                if (role !== "patient") {
-                  toast({ title: "Notifications", description: "Centre de notifications bientôt disponible." });
-                }
-              }}
-            >
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center animate-scale-in">
-                    {unreadCount > 9 ? "9+" : unreadCount}
+           <div className="flex items-center gap-1.5 sm:gap-2">
+            {role === "patient" ? (
+              <Link to="/dashboard/patient/notifications" className="relative">
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center animate-scale-in">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            ) : (
+              <button className="relative" onClick={() => setNotifOpen(true)}>
+                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <span>
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center animate-scale-in">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
                   </span>
-                )}
-              </Button>
-            </Link>
+                </Button>
+              </button>
+            )}
             <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-medium shadow-sm">
               {userInitials}
             </div>
