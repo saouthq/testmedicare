@@ -276,7 +276,7 @@ const SecretaryBilling = () => {
                 <div><Label className="text-xs">Moyen de paiement</Label>
                   <select value={newPayment} onChange={e => setNewPayment(e.target.value)} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
                     <option value="—">Non encaissé</option>
-                    <option>Espèces</option><option>CNAM</option><option>Chèque</option><option>Virement</option><option>Carte</option>
+                    <option>Espèces</option><option>Assurance</option><option>Chèque</option><option>Virement</option><option>Carte</option>
                   </select>
                 </div>
                 <div className="flex items-end gap-3">

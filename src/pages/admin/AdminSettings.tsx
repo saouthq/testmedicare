@@ -32,6 +32,9 @@ const AdminSettings = () => {
     labDemands: true,
     prescriptionSend: true,
     patientMessaging: false,
+    textReviews: true,
+    medicinesDirectory: true,
+    patientChat: false,
   });
 
   // Security / OTP
@@ -96,6 +99,9 @@ const AdminSettings = () => {
     labDemands: { label: "Demandes labo", desc: "Workflow demandes d'analyses" },
     prescriptionSend: { label: "Envoi ordonnances", desc: "Patients peuvent envoyer aux pharmacies" },
     patientMessaging: { label: "Messagerie patients", desc: "Chat patient-médecin (bêta)" },
+    textReviews: { label: "Avis texte", desc: "Avis patients sur les médecins (texte uniquement, pas d'étoiles)" },
+    medicinesDirectory: { label: "Annuaire médicaments", desc: "Répertoire public des médicaments" },
+    patientChat: { label: "Chat patient", desc: "Chat en temps réel patient-secrétariat" },
   };
 
   return (
