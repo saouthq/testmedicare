@@ -6,6 +6,7 @@
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
+import FeatureGate from "@/components/shared/FeatureGate";
 import {
   UserPlus, Mail, Phone, Clock, Edit, Shield,
   CheckCircle2, PauseCircle, PlayCircle, Trash2,
