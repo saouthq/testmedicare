@@ -161,6 +161,8 @@ const roleLabels: Record<string, string> = {
   laboratory: "Laboratoire",
   secretary: "Secrétaire",
   admin: "Administrateur",
+  hospital: "Hôpital",
+  clinic: "Clinique",
 };
 
 const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {

@@ -25,7 +25,7 @@ const ClinicDashboard = () => {
   return (
     <DashboardLayout role="clinic" title="Tableau de bord – Clinique">
       <div className="space-y-6">
-        <StatsGrid stats={stats} />
+        <StatsGrid items={items} />
 
         {/* Today's timeline */}
         <div>

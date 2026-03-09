@@ -39,8 +39,8 @@ const HospitalDashboard = () => {
               </Card>
             )}
             {pendingAdmissions > 0 && (
-              <Card className="p-4 border-warning/30 bg-warning/5">
-                <div className="flex items-center gap-2 text-warning text-sm font-medium">
+              <Card className="p-4 border-orange-400/30 bg-orange-50 dark:bg-orange-950/20">
+                <div className="flex items-center gap-2 text-orange-600 text-sm font-medium">
                   <Activity className="h-4 w-4" /> {pendingAdmissions} admission(s) en attente
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Des patients attendent leur admission dans un service.</p>
