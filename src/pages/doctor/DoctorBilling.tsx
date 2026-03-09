@@ -71,6 +71,20 @@ const DoctorBilling = () => {
               </div>
             )}
 
+            {/* Active promo banner */}
+            {activePromo && (
+              <div className="rounded-xl border border-accent/30 bg-accent/5 p-5 flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <Gift className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Offre active : {activePromo.promoName}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Valable jusqu'au {new Date(activePromo.promoEndDate).toLocaleDateString("fr-TN", { day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                </div>
+              </div>
+            )}
             {/* Plans comparison */}
             <div className="grid gap-5 sm:grid-cols-2">
               {mockPlans.map(plan => (
