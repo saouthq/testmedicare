@@ -1,10 +1,15 @@
+/**
+ * Admin Payments — with motif-required refund
+ * TODO BACKEND: Replace with real API
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { Search, CreditCard, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { refundPayment } from "@/services/admin/adminPaymentsService";
+import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
+import MotifDialog from "@/components/admin/MotifDialog";
 
 const initialPayments = [
   { id: "pay-1", type: "subscription", amount: 129, currency: "DT", status: "paid", createdAt: "20 Fév 2026", payerName: "Dr. Ahmed Bouazizi" },
@@ -20,18 +25,18 @@ const statusColors: Record<string, string> = { paid: "bg-accent/10 text-accent",
 const AdminPayments = () => {
   const [search, setSearch] = useState("");
   const [payments, setPayments] = useState(initialPayments);
+  const [refundTarget, setRefundTarget] = useState<string | null>(null);
 
-  const filtered = payments.filter(p => {
-    if (search && !p.payerName.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  const filtered = payments.filter(p => !search || p.payerName.toLowerCase().includes(search.toLowerCase()));
 
-  const handleRefund = (id: string) => {
-    const p = payments.find(x => x.id === id);
+  const handleRefundConfirm = (motif: string) => {
+    if (!refundTarget) return;
+    const p = payments.find(x => x.id === refundTarget);
     if (!p) return;
-    refundPayment(id, p.payerName, p.amount);
-    setPayments(prev => prev.map(x => x.id === id ? { ...x, status: "refunded" } : x));
+    setPayments(prev => prev.map(x => x.id === refundTarget ? { ...x, status: "refunded" } : x));
+    appendLog("payment_refunded", "payment", refundTarget, `Remboursement ${p.amount} ${p.currency} à ${p.payerName} — Motif : ${motif}`);
     toast({ title: `${p.amount} ${p.currency} remboursé à ${p.payerName}` });
+    setRefundTarget(null);
   };
 
   return (
@@ -62,7 +67,7 @@ const AdminPayments = () => {
                   <td className="px-4 py-3"><span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[p.status]}`}>{statusLabels[p.status]}</span></td>
                   <td className="px-4 py-3 text-right">
                     {p.status === "paid" && (
-                      <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => handleRefund(p.id)}>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => setRefundTarget(p.id)}>
                         <RotateCcw className="h-3 w-3 mr-1" />Rembourser
                       </Button>
                     )}
@@ -73,6 +78,16 @@ const AdminPayments = () => {
           </table>
         </div>
       </div>
+
+      <MotifDialog
+        open={!!refundTarget}
+        onClose={() => setRefundTarget(null)}
+        onConfirm={handleRefundConfirm}
+        title="Rembourser le paiement"
+        description={payments.find(p => p.id === refundTarget)?.payerName || ""}
+        confirmLabel="Confirmer le remboursement"
+        destructive
+      />
     </DashboardLayout>
   );
 };

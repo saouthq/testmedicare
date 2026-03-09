@@ -1,32 +1,54 @@
+/**
+ * Admin Audit Logs — with motif display, filters, export
+ * TODO BACKEND: Replace localStorage with real audit API
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useEffect } from "react";
 import { Search, Clock, User, Download, Trash2, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getLogs, clearLogs, type AuditLogEntry } from "@/services/admin/adminAuditService";
+import { toast } from "@/hooks/use-toast";
 
 const AdminAuditLogs = () => {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("");
+  const [targetFilter, setTargetFilter] = useState("");
 
-  const refresh = () => setLogs(getLogs({ search, actionType: actionFilter || undefined }));
+  const refresh = () => setLogs(getLogs({ search, actionType: actionFilter || undefined, targetType: targetFilter || undefined }));
 
-  useEffect(() => { refresh(); }, [search, actionFilter]);
+  useEffect(() => { refresh(); }, [search, actionFilter, targetFilter]);
 
   const actionTypes = Array.from(new Set(getLogs().map(l => l.actionType)));
+  const targetTypes = Array.from(new Set(getLogs().map(l => l.targetType)));
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleString("fr-TN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
+  const handleExport = () => {
+    // TODO BACKEND: Real export endpoint
+    const csv = ["ID,Action,Cible,Résumé,Acteur,Date"]
+      .concat(logs.map(l => `${l.id},${l.actionType},${l.targetType},"${l.summary}",${l.actorAdminName},${l.createdAt}`))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audit_logs_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export CSV téléchargé" });
+  };
+
   return (
     <DashboardLayout role="admin" title="Audit Logs">
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <div className="flex gap-3 flex-1">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex gap-3 flex-1 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
             </div>
@@ -36,14 +58,21 @@ const AdminAuditLogs = () => {
                 {actionTypes.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             )}
+            {targetTypes.length > 0 && (
+              <select value={targetFilter} onChange={e => setTargetFilter(e.target.value)} className="rounded-lg border bg-card px-3 py-2 text-sm">
+                <option value="">Toutes cibles</option>
+                {targetTypes.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            )}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="text-xs" onClick={refresh}><RefreshCw className="h-3 w-3 mr-1" />Rafraîchir</Button>
+            <Button variant="outline" size="sm" className="text-xs" onClick={handleExport} disabled={logs.length === 0}><Download className="h-3 w-3 mr-1" />Exporter CSV</Button>
             <Button variant="outline" size="sm" className="text-xs text-destructive" onClick={() => { clearLogs(); refresh(); }}><Trash2 className="h-3 w-3 mr-1" />Vider</Button>
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">{logs.length} entrée(s) — persisté dans localStorage</p>
+        <p className="text-xs text-muted-foreground">{logs.length} entrée(s) — Les motifs sont inclus dans chaque log.</p>
 
         {logs.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
@@ -61,7 +90,7 @@ const AdminAuditLogs = () => {
                 </div>
                 <p className="text-sm text-foreground">{log.summary}</p>
                 <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><User className="h-3 w-3" />{log.actorAdminName}</span>
+                  <span className="flex items-center gap-1"><User className="h-3 w-3" />{log.actorAdminName} ({log.actorRole})</span>
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDate(log.createdAt)}</span>
                 </div>
               </div>

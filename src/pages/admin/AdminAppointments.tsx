@@ -1,10 +1,15 @@
+/**
+ * Admin RDV Supervision — search, stats, cancel override with motif
+ * TODO BACKEND: Replace mock data with real API
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, Calendar, XCircle } from "lucide-react";
+import { Search, Calendar, XCircle, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
+import MotifDialog from "@/components/admin/MotifDialog";
 
 const initialApts = [
   { id: 1, patientName: "Fatma Trabelsi", doctorName: "Dr. Bouazizi", date: "20 Fév 2026 14:30", type: "presentiel", status: "confirmed", city: "Tunis" },
@@ -21,6 +26,7 @@ const AdminAppointments = () => {
   const [search, setSearch] = useState("");
   const [apts, setApts] = useState(initialApts);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [motifAction, setMotifAction] = useState<{ id: number; type: "cancel" | "absent" } | null>(null);
 
   const filtered = apts.filter(a => {
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
@@ -28,22 +34,50 @@ const AdminAppointments = () => {
     return true;
   });
 
-  const handleCancel = (id: number) => {
-    setApts(prev => prev.map(a => a.id === id ? { ...a, status: "cancelled" } : a));
-    const apt = apts.find(a => a.id === id);
-    appendLog("appointment_cancelled", "appointment", String(id), `RDV annulé (admin override) — ${apt?.patientName} / ${apt?.doctorName}`);
-    toast({ title: "RDV annulé par l'admin" });
-  };
+  const absentCount = apts.filter(a => a.status === "absent").length;
+  const totalCount = apts.length;
+  const noShowRate = totalCount > 0 ? Math.round((absentCount / totalCount) * 100) : 0;
 
-  const handleAbsent = (id: number) => {
-    setApts(prev => prev.map(a => a.id === id ? { ...a, status: "absent" } : a));
-    appendLog("appointment_absent", "appointment", String(id), "Marqué absent par admin");
-    toast({ title: "Marqué absent" });
+  const handleMotifConfirm = (motif: string) => {
+    if (!motifAction) return;
+    const apt = apts.find(a => a.id === motifAction.id);
+    if (!apt) return;
+
+    if (motifAction.type === "cancel") {
+      setApts(prev => prev.map(a => a.id === motifAction.id ? { ...a, status: "cancelled" } : a));
+      appendLog("appointment_cancelled_override", "appointment", String(motifAction.id), `RDV annulé (admin override) — ${apt.patientName} / ${apt.doctorName} — Motif : ${motif}`);
+      toast({ title: "RDV annulé par l'admin" });
+    } else {
+      setApts(prev => prev.map(a => a.id === motifAction.id ? { ...a, status: "absent" } : a));
+      appendLog("appointment_absent_override", "appointment", String(motifAction.id), `Marqué absent (admin) — ${apt.patientName} — Motif : ${motif}`);
+      toast({ title: "Marqué absent" });
+    }
+    setMotifAction(null);
   };
 
   return (
-    <DashboardLayout role="admin" title="Rendez-vous">
+    <DashboardLayout role="admin" title="Supervision RDV">
       <div className="space-y-6">
+        {/* Stats */}
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg border bg-card p-3 text-center">
+            <p className="text-lg font-bold text-foreground">{totalCount}</p>
+            <p className="text-[11px] text-muted-foreground">Total RDV</p>
+          </div>
+          <div className="rounded-lg border bg-accent/5 p-3 text-center">
+            <p className="text-lg font-bold text-accent">{apts.filter(a => a.status === "confirmed").length}</p>
+            <p className="text-[11px] text-muted-foreground">Confirmés</p>
+          </div>
+          <div className="rounded-lg border bg-destructive/5 p-3 text-center">
+            <p className="text-lg font-bold text-destructive">{absentCount}</p>
+            <p className="text-[11px] text-muted-foreground">Absents</p>
+          </div>
+          <div className="rounded-lg border bg-warning/5 p-3 text-center">
+            <p className="text-lg font-bold text-warning">{noShowRate}%</p>
+            <p className="text-[11px] text-muted-foreground">Taux no-show</p>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -76,8 +110,8 @@ const AdminAppointments = () => {
                   <td className="px-4 py-3 text-right">
                     {(a.status === "confirmed" || a.status === "pending") && (
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => handleCancel(a.id)}>Annuler</Button>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => handleAbsent(a.id)}>Absent</Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => setMotifAction({ id: a.id, type: "cancel" })}>Annuler</Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => setMotifAction({ id: a.id, type: "absent" })}>Absent</Button>
                       </div>
                     )}
                   </td>
@@ -87,6 +121,18 @@ const AdminAppointments = () => {
           </table>
         </div>
       </div>
+
+      {motifAction && (
+        <MotifDialog
+          open={!!motifAction}
+          onClose={() => setMotifAction(null)}
+          onConfirm={handleMotifConfirm}
+          title={motifAction.type === "cancel" ? "Annuler le RDV (override admin)" : "Marquer absent (override admin)"}
+          description="Cette action sera enregistrée dans les audit logs."
+          confirmLabel={motifAction.type === "cancel" ? "Annuler le RDV" : "Marquer absent"}
+          destructive
+        />
+      )}
     </DashboardLayout>
   );
 };

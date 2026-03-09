@@ -1,5 +1,6 @@
 /**
  * Mock data — Admin domain
+ * TODO BACKEND: Replace with real API calls
  */
 import type { ChartDataPoint } from "@/types";
 
@@ -50,13 +51,13 @@ export const mockAdminUsers = [
   { id: 5, name: "Dr. Karim Bouzid", email: "karim@email.tn", phone: "+216 71 111 222", role: "doctor", status: "pending", subscription: "—", joined: "18 Fév 2026", lastLogin: "—", verified: false },
   { id: 6, name: "Dr. Nadia Hamdi", email: "nadia@email.tn", phone: "+216 71 333 444", role: "doctor", status: "pending", subscription: "—", joined: "20 Fév 2026", lastLogin: "—", verified: false },
   { id: 7, name: "Amine Ben Ali", email: "amine@email.tn", phone: "+216 22 345 678", role: "patient", status: "suspended", subscription: "Gratuit", joined: "Fév 2024", lastLogin: "10 Fév 2026", verified: true },
+  { id: 8, name: "Sonia Gharbi", email: "sonia@email.tn", phone: "+216 55 123 456", role: "secretary", status: "active", subscription: "—", joined: "Nov 2024", lastLogin: "20 Fév 2026", verified: true },
 ];
 
 export const mockAdminReports = [
-  { id: 1, type: "avis", reason: "Avis frauduleux sur le profil du Dr. Mejri", reporter: "Dr. Sonia Gharbi", target: "Patient anonyme", date: "19 Fév 2026", priority: "high", status: "pending" as string, details: "Plusieurs avis 1 étoile publiés en série depuis un compte créé récemment." },
-  { id: 2, type: "profil", reason: "Profil médecin non vérifié avec activité suspecte", reporter: "Système auto", target: "Dr. Fathi Mejri", date: "18 Fév 2026", priority: "high", status: "pending" as string, details: "Ce compte a été créé il y a 3 jours et a déjà publié 15 consultations." },
-  { id: 3, type: "comportement", reason: "Comportement inapproprié en téléconsultation", reporter: "Fatma Trabelsi", target: "Dr. Inconnu", date: "17 Fév 2026", priority: "medium", status: "pending" as string, details: "La patiente rapporte un comportement non professionnel durant une téléconsultation." },
-  { id: 4, type: "contenu", reason: "Photo de profil inappropriée", reporter: "Système auto", target: "Utilisateur #4521", date: "15 Fév 2026", priority: "low", status: "resolved" as string, details: "Photo de profil ne correspondant pas aux normes de la plateforme." },
+  { id: 1, type: "profil", reason: "Profil médecin non vérifié avec activité suspecte", reporter: "Système auto", target: "Dr. Fathi Mejri", date: "18 Fév 2026", priority: "high", status: "pending" as string, details: "Ce compte a été créé il y a 3 jours et a déjà publié 15 consultations." },
+  { id: 2, type: "comportement", reason: "Comportement inapproprié en téléconsultation", reporter: "Fatma Trabelsi", target: "Dr. Inconnu", date: "17 Fév 2026", priority: "medium", status: "pending" as string, details: "La patiente rapporte un comportement non professionnel durant une téléconsultation." },
+  { id: 3, type: "contenu", reason: "Photo de profil inappropriée", reporter: "Système auto", target: "Utilisateur #4521", date: "15 Fév 2026", priority: "low", status: "resolved" as string, details: "Photo de profil ne correspondant pas aux normes de la plateforme." },
 ];
 
 export const mockAdminSubscriptions = [
@@ -78,4 +79,40 @@ export const mockAdminLogs = [
   { id: 10, time: "19 Fév 18:30", user: "Patient inconnu", action: "Tentative d'accès", detail: "Accès refusé — Token expiré", level: "error" },
   { id: 11, time: "19 Fév 17:00", user: "Admin", action: "Export données", detail: "Export CSV des utilisateurs actifs", level: "info" },
   { id: 12, time: "19 Fév 15:30", user: "Dr. Hammami", action: "Suppression RDV", detail: "Annulation du RDV #4532", level: "warning" },
+];
+
+/** Guard pharmacies mock data */
+export const mockGuardPharmacies = [
+  { id: "ph-1", name: "Pharmacie El Manar", city: "Tunis", address: "12 Ave Habib Bourguiba", phone: "+216 71 555 666", isGuard: false },
+  { id: "ph-2", name: "Pharmacie El Amal", city: "Sousse", address: "45 Rue de la Liberté", phone: "+216 73 222 333", isGuard: true },
+  { id: "ph-3", name: "Pharmacie Centrale", city: "Tunis", address: "8 Rue Charles de Gaulle", phone: "+216 71 888 999", isGuard: false },
+  { id: "ph-4", name: "Pharmacie Ibn Sina", city: "Ariana", address: "22 Ave de la République", phone: "+216 71 444 555", isGuard: true },
+  { id: "ph-5", name: "Pharmacie Pasteur", city: "Sfax", address: "3 Rue Pasteur", phone: "+216 74 111 222", isGuard: false },
+  { id: "ph-6", name: "Pharmacie El Fath", city: "Sousse", address: "67 Ave Farhat Hached", phone: "+216 73 333 444", isGuard: false },
+];
+
+/** Support tickets mock */
+export const mockAdminTickets = [
+  { id: "tk-1", requester: "Fatma Trabelsi", requesterRole: "patient", subject: "Impossible d'annuler un RDV", category: "rdv", status: "open" as string, priority: "high" as string, createdAt: "20 Fév 2026", assignedTo: "", messages: 2 },
+  { id: "tk-2", requester: "Dr. Sonia Gharbi", requesterRole: "doctor", subject: "Problème de facturation abonnement Pro", category: "facturation", status: "open" as string, priority: "medium" as string, createdAt: "19 Fév 2026", assignedTo: "Support L1", messages: 4 },
+  { id: "tk-3", requester: "Pharmacie El Manar", requesterRole: "pharmacy", subject: "Bug affichage ordonnances", category: "technique", status: "closed" as string, priority: "low" as string, createdAt: "17 Fév 2026", assignedTo: "Support L2", messages: 6 },
+  { id: "tk-4", requester: "Ali Ben Salem", requesterRole: "patient", subject: "Demande suppression de compte", category: "compte", status: "open" as string, priority: "medium" as string, createdAt: "18 Fév 2026", assignedTo: "", messages: 1 },
+  { id: "tk-5", requester: "Labo BioSanté", requesterRole: "laboratory", subject: "Erreur upload résultats PDF", category: "technique", status: "open" as string, priority: "high" as string, createdAt: "20 Fév 2026", assignedTo: "", messages: 3 },
+];
+
+/** Support macros */
+export const mockSupportMacros = [
+  { id: "m-1", label: "RDV annulé", text: "Votre RDV a été annulé avec succès. Vous pouvez en reprendre un nouveau à tout moment." },
+  { id: "m-2", label: "Remboursement en cours", text: "Votre demande de remboursement est en cours de traitement. Comptez 5-7 jours ouvrables." },
+  { id: "m-3", label: "Problème résolu", text: "Le problème signalé a été résolu. N'hésitez pas à nous recontacter si le souci persiste." },
+  { id: "m-4", label: "Docs manquants", text: "Nous avons besoin de documents complémentaires pour traiter votre demande. Merci de les uploader dans votre espace." },
+];
+
+/** Top searched medicines */
+export const mockTopSearchedMeds = [
+  { name: "Doliprane 1000mg", searches: 1247 },
+  { name: "Augmentin 1g", searches: 892 },
+  { name: "Voltarène 75mg", searches: 654 },
+  { name: "Amoxicilline 500mg", searches: 521 },
+  { name: "Efferalgan 500mg", searches: 498 },
 ];
