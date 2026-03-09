@@ -34,7 +34,7 @@ interface NavSection {
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin";
+  role: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin" | "hospital" | "clinic";
   title: string;
 }
 
@@ -84,6 +84,21 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Cabinet", url: "/dashboard/secretary/office", icon: Building2 },
     { title: "Documents", url: "/dashboard/secretary/documents", icon: ScrollText },
     { title: "Messagerie", url: "/dashboard/secretary/messages", icon: MessageSquare },
+  ],
+  hospital: [
+    { title: "Tableau de bord", url: "/dashboard/hospital", icon: LayoutDashboard },
+    { title: "Services", url: "/dashboard/hospital/departments", icon: Building2 },
+    { title: "Patients", url: "/dashboard/hospital/patients", icon: Users },
+    { title: "Personnel", url: "/dashboard/hospital/staff", icon: Stethoscope },
+    { title: "Équipements", url: "/dashboard/hospital/equipment", icon: Activity },
+    { title: "Messagerie", url: "/dashboard/hospital/messages", icon: MessageSquare },
+  ],
+  clinic: [
+    { title: "Tableau de bord", url: "/dashboard/clinic", icon: LayoutDashboard },
+    { title: "Médecins", url: "/dashboard/clinic/doctors", icon: Stethoscope },
+    { title: "Rendez-vous", url: "/dashboard/clinic/appointments", icon: Calendar },
+    { title: "Salles", url: "/dashboard/clinic/rooms", icon: Building2 },
+    { title: "Messagerie", url: "/dashboard/clinic/messages", icon: MessageSquare },
   ],
 };
 
@@ -146,6 +161,8 @@ const roleLabels: Record<string, string> = {
   laboratory: "Laboratoire",
   secretary: "Secrétaire",
   admin: "Administrateur",
+  hospital: "Hôpital",
+  clinic: "Clinique",
 };
 
 const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {

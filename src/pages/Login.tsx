@@ -29,6 +29,10 @@ const Login = () => {
         role = "admin";
       } else if (email.includes("secr")) {
         role = "secretary";
+      } else if (email.includes("hopit") || email.includes("hospit")) {
+        role = "hospital";
+      } else if (email.includes("clini")) {
+        role = "clinic";
       }
       localStorage.setItem("userRole", role);
       navigate(`/dashboard/${role}`);
@@ -83,13 +87,15 @@ const Login = () => {
 
           <div className="mt-8">
             <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t" /></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Accès rapide (démo)</span></div></div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-3 gap-2">
               {[
                 { role: "patient", label: "Patient" },
                 { role: "doctor", label: "Médecin" },
                 { role: "pharmacy", label: "Pharmacie" },
                 { role: "secretary", label: "Secrétaire" },
                 { role: "laboratory", label: "Laboratoire" },
+                { role: "hospital", label: "Hôpital" },
+                { role: "clinic", label: "Clinique" },
                 { role: "admin", label: "Admin" },
               ].map(r => (
                 <Button key={r.role} variant="outline" className="w-full" size="sm"

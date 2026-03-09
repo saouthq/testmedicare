@@ -76,6 +76,21 @@ import SecretaryDocuments from "./pages/secretary/SecretaryDocuments";
 import SecretaryBilling from "./pages/secretary/SecretaryBilling";
 import SecretarySettings from "./pages/secretary/SecretarySettings";
 
+// Hospital
+import HospitalDashboard from "./pages/hospital/HospitalDashboard";
+import HospitalDepartments from "./pages/hospital/HospitalDepartments";
+import HospitalPatients from "./pages/hospital/HospitalPatients";
+import HospitalStaff from "./pages/hospital/HospitalStaff";
+import HospitalEquipment from "./pages/hospital/HospitalEquipment";
+import HospitalSettings from "./pages/hospital/HospitalSettings";
+
+// Clinic
+import ClinicDashboard from "./pages/clinic/ClinicDashboard";
+import ClinicDoctors from "./pages/clinic/ClinicDoctors";
+import ClinicAppointments from "./pages/clinic/ClinicAppointments";
+import ClinicRooms from "./pages/clinic/ClinicRooms";
+import ClinicSettings from "./pages/clinic/ClinicSettings";
+
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -209,6 +224,23 @@ const App = () => (
           <Route path="/dashboard/secretary/billing" element={<SecretaryBilling />} />
           <Route path="/dashboard/secretary/settings" element={<SecretarySettings />} />
           <Route path="/dashboard/secretary/messages" element={<Messages role="secretary" />} />
+
+          {/* Hospital */}
+          <Route path="/dashboard/hospital" element={<HospitalDashboard />} />
+          <Route path="/dashboard/hospital/departments" element={<HospitalDepartments />} />
+          <Route path="/dashboard/hospital/patients" element={<HospitalPatients />} />
+          <Route path="/dashboard/hospital/staff" element={<HospitalStaff />} />
+          <Route path="/dashboard/hospital/equipment" element={<HospitalEquipment />} />
+          <Route path="/dashboard/hospital/settings" element={<HospitalSettings />} />
+          <Route path="/dashboard/hospital/messages" element={<Messages role="hospital" />} />
+
+          {/* Clinic */}
+          <Route path="/dashboard/clinic" element={<ClinicDashboard />} />
+          <Route path="/dashboard/clinic/doctors" element={<ClinicDoctors />} />
+          <Route path="/dashboard/clinic/appointments" element={<ClinicAppointments />} />
+          <Route path="/dashboard/clinic/rooms" element={<ClinicRooms />} />
+          <Route path="/dashboard/clinic/settings" element={<ClinicSettings />} />
+          <Route path="/dashboard/clinic/messages" element={<Messages role="clinic" />} />
 
           {/* Admin — wrapped in AdminGuard */}
           <Route path="/dashboard/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
