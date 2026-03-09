@@ -18,19 +18,20 @@ const Login = () => {
     // Mock login - simulate redirect based on email
     setTimeout(() => {
       setLoading(false);
+      let role = "patient";
       if (email.includes("doctor") || email.includes("dr")) {
-        navigate("/dashboard/doctor");
+        role = "doctor";
       } else if (email.includes("pharma")) {
-        navigate("/dashboard/pharmacy");
+        role = "pharmacy";
       } else if (email.includes("labo")) {
-        navigate("/dashboard/laboratory");
+        role = "laboratory";
       } else if (email.includes("admin")) {
-        navigate("/dashboard/admin");
+        role = "admin";
       } else if (email.includes("secr")) {
-        navigate("/dashboard/secretary");
-      } else {
-        navigate("/dashboard/patient");
+        role = "secretary";
       }
+      localStorage.setItem("userRole", role);
+      navigate(`/dashboard/${role}`);
     }, 800);
   };
 
