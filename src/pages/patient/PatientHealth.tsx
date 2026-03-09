@@ -47,6 +47,19 @@ const PatientHealth = () => {
   const [aiInput, setAiInput] = useState("");
   const [aiIdx, setAiIdx] = useState(0);
 
+  // Cross-role: lab results
+  useEffect(() => { initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]); }, []);
+  const [labDemands] = useSharedLabDemands();
+  const transmittedLabResults = labDemands
+    .filter(d => d.status === "transmitted" && d.pdfs.length > 0)
+    .flatMap(d => d.pdfs.map(pdf => ({
+      name: pdf.name,
+      type: "Résultat labo",
+      size: pdf.size,
+      date: pdf.uploadedAt,
+      source: `Labo · ${d.examens.join(", ")}`,
+    })));
+
   // Editable lists
   const [habits, setHabits] = useState(initialHabits);
   const [antecedents, setAntecedents] = useState(initialAntecedents);
