@@ -24,6 +24,7 @@ interface AgendaAppointment {
   status: AppointmentStatus;
   phone: string;
   cnam: boolean;
+  assurance?: string;
   teleconsultation?: boolean;
   notes?: string;
   arrivedAt?: string;
