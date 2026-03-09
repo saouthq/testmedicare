@@ -75,7 +75,7 @@ export function bookAppointment(apt: Omit<PatientAppointment, "id">) {
   appointmentsStore.set(prev => [...prev, newApt]);
 
   pushNotification({
-    type: "appointment_booked" as any,
+    type: "appointment_booked",
     title: "Nouveau RDV confirmé",
     message: `RDV avec ${apt.doctor} le ${apt.date} à ${apt.time}.`,
     targetRole: "patient",
