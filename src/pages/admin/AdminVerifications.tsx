@@ -1,12 +1,13 @@
 /**
  * Admin Validations KYC — Enhanced with timeline, relance, notes internes, stats
+ * Connected to partnerRegistrationStore for new registrations from BecomePartner
  * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle, XCircle, FileText, Eye, Calendar, MapPin, Mail, Clock,
-  Send, RefreshCw, MessageSquare, AlertTriangle, Shield,
+  Send, RefreshCw, MessageSquare, AlertTriangle, Shield, Gift, CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,8 @@ import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { getRegistrations, updateRegistrationStatus, addRegistrationEvent } from "@/stores/partnerRegistrationStore";
+import type { PartnerRegistration } from "@/stores/partnerRegistrationStore";
 
 type Tab = "doctors" | "labs" | "pharmacies";
 
