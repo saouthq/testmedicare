@@ -8,6 +8,7 @@ import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusB
 import EmptyState from "@/components/shared/EmptyState";
 import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsultButton";
 import { toast } from "@/hooks/use-toast";
+import { downloadCalendarEvent, openGoogleMapsDirections } from "@/lib/calendarExport";
 
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
