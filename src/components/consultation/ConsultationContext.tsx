@@ -12,6 +12,7 @@ import {
   type RxFavorite,
 } from "@/data/mockData";
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
+import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
 
 // ── Context type ─────────────────────────────────────────────
@@ -99,7 +100,9 @@ interface Ctx {
   completion: CompletionState;
   nextAction: { label: string; onClick: () => void };
   lastSavedAt: Date | null;
-  templates: Array<{ key: string; label: string; apply: () => void }>;
+  templates: Array<{ key: string; label: string; isCustom?: boolean; apply: () => void }>;
+  saveAsTemplate: (label: string) => void;
+  deleteTemplate: (key: string) => void;
   pastConsults: typeof mockPastConsults;
   // Print
   rxPrintHtml: string; labsPrintHtml: string; reportPrintHtml: string;
@@ -305,16 +308,42 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     return { label: "Clôturer", onClick: () => setShowCloseModal(true) };
   }, [completion.notesOk, completion.rxOk]);
 
-  // Templates
-  const templates = useMemo(() => mockConsultationTemplates.map(t => ({
-    key: t.key, label: t.label,
+  // Templates — built-in + custom from localStorage
+  const CUSTOM_TPL_KEY = "medicare.consultation.custom_templates";
+  const [customTemplates, setCustomTemplates] = useState<ConsultationTemplate[]>(() => {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_TPL_KEY) || "[]"); } catch { return []; }
+  });
+
+  const allTemplateData = useMemo(() => [...mockConsultationTemplates, ...customTemplates], [customTemplates]);
+
+  const templates = useMemo(() => allTemplateData.map(t => ({
+    key: t.key, label: t.label, isCustom: !mockConsultationTemplates.some(m => m.key === t.key),
     apply: () => {
       setMotif(t.motif); setSymptoms(t.symptoms); setExamination(t.examination);
       setDiagnosis(t.diagnosis); setConclusion(t.conclusion);
       if (t.extraAnalyses) setAnalyses(prev => Array.from(new Set([...prev, ...t.extraAnalyses!])));
       setDockTab(t.defaultDockTab as DockTab);
     },
-  })), []);
+  })), [allTemplateData]);
+
+  /** Save current notes as a new custom template */
+  const saveAsTemplate = (label: string) => {
+    const newTpl: ConsultationTemplate = {
+      key: `custom-${Date.now()}`, label, motif, symptoms, examination, diagnosis, conclusion,
+      extraAnalyses: analyses.length > 0 ? analyses : undefined,
+      defaultDockTab: dockTab,
+    };
+    const updated = [...customTemplates, newTpl];
+    setCustomTemplates(updated);
+    try { localStorage.setItem(CUSTOM_TPL_KEY, JSON.stringify(updated)); } catch { /* no-op */ }
+  };
+
+  /** Delete a custom template */
+  const deleteTemplate = (key: string) => {
+    const updated = customTemplates.filter(t => t.key !== key);
+    setCustomTemplates(updated);
+    try { localStorage.setItem(CUSTOM_TPL_KEY, JSON.stringify(updated)); } catch { /* no-op */ }
+  };
 
   // Close
   const handleClose = () => {
@@ -434,7 +463,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     rdvDate, setRdvDate, rdvTime, setRdvTime, rdvLocation, setRdvLocation, rdvConfirmedAt,
     nextRdv, setNextRdv, consultAmount, setConsultAmount, handleClose,
     paletteOpen, setPaletteOpen, paletteQuery, setPaletteQuery, paletteIndex, setPaletteIndex, paletteInputRef, filteredPalette,
-    initials, bmi, completion, nextAction, lastSavedAt, templates, pastConsults: mockPastConsults,
+    initials, bmi, completion, nextAction, lastSavedAt, templates, saveAsTemplate, deleteTemplate, pastConsults: mockPastConsults,
     rxPrintHtml, labsPrintHtml, reportPrintHtml, certPrintHtml, slPrintHtml,
     doPrint: openPrintWindow,
   };
