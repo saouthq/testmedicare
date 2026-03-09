@@ -158,6 +158,7 @@ const DoctorSecretary = () => {
 
   return (
     <DashboardLayout role="doctor" title="Gestion des secrétaires">
+      <FeatureGate featureId="shared_secretary">
       <div className="max-w-4xl space-y-6">
         {/* Info banner */}
         <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
