@@ -15,6 +15,7 @@ import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState
 import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
 import { completeConsultation, startConsultation } from "@/stores/doctorStore";
+import { createLabDemand } from "@/stores/labStore";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
