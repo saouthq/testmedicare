@@ -8,7 +8,7 @@ import { createStore, useStore } from "./crossRoleStore";
 
 export interface CrossNotification {
   id: string;
-  type: "pharmacy_ready" | "care_sheet" | "lab_results" | "prescription_sent" | "appointment_absent" | "generic";
+  type: "pharmacy_ready" | "care_sheet" | "lab_results" | "prescription_sent" | "appointment_absent" | "appointment_booked" | "appointment_rescheduled" | "generic";
   title: string;
   message: string;
   targetRole: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin";
