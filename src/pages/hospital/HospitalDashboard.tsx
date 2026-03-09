@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { StatsGrid } from "@/components/shared/StatsGrid";
+import StatsGrid from "@/components/shared/StatsGrid";
 import { mockHospitalDepartments, mockHospitalPatients, mockHospitalStaff, mockHospitalEquipment } from "@/data/mocks/hospital";
 import { Building2, Users, Bed, AlertTriangle, Activity, HeartPulse, Stethoscope, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
