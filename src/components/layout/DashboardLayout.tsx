@@ -5,6 +5,7 @@ import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockD
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
+import AdminSpotlight from "@/components/admin/AdminSpotlight";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
