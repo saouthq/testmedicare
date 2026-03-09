@@ -151,6 +151,7 @@ const roleLabels: Record<string, string> = {
 const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const location = useLocation();
   const items = navItems[role];
+  const [moduleStates] = useAdminModules();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
