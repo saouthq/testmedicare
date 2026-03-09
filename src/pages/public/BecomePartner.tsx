@@ -291,15 +291,7 @@ const BecomePartner = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const requiredDocs = useMemo(() => {
-    if (["generaliste", "specialiste", "dentiste", "kine"].includes(activity))
-      return ["Diplôme de médecine / d'exercice", "CIN recto/verso", "Attestation d'inscription à l'Ordre"];
-    if (activity === "laboratory")
-      return ["Autorisation d'exercice", "Registre de commerce", "CIN du gérant"];
-    if (activity === "pharmacy")
-      return ["Licence de pharmacie", "Registre de commerce", "CIN du titulaire"];
-    return ["Autorisation sanitaire", "Registre de commerce", "Convention cadre"];
-  }, [activity]);
+  // requiredDocs already defined above
 
   return (
     <div className="min-h-screen bg-background">
