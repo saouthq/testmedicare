@@ -229,6 +229,34 @@ export const platformModules: PlatformModule[] = [
     sidebarUrls: [],
     routePrefixes: ["/doctor/"],
   },
+  // ── Établissements ──
+  {
+    id: "hospital",
+    label: "Espace Hôpital",
+    description: "Gestion hospitalière : services, patients, personnel, équipements",
+    category: "professional",
+    affectedRoles: ["hospital"],
+    sidebarUrls: [
+      "/dashboard/hospital", "/dashboard/hospital/departments",
+      "/dashboard/hospital/patients", "/dashboard/hospital/staff",
+      "/dashboard/hospital/equipment",
+    ],
+    routePrefixes: ["/dashboard/hospital"],
+    critical: true,
+  },
+  {
+    id: "clinic_mgmt",
+    label: "Espace Clinique",
+    description: "Gestion clinique : médecins, RDV, salles, planning",
+    category: "professional",
+    affectedRoles: ["clinic"],
+    sidebarUrls: [
+      "/dashboard/clinic", "/dashboard/clinic/doctors",
+      "/dashboard/clinic/appointments", "/dashboard/clinic/rooms",
+    ],
+    routePrefixes: ["/dashboard/clinic"],
+    critical: true,
+  },
 ];
 
 // ── Store ──

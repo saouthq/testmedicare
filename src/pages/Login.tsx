@@ -29,6 +29,10 @@ const Login = () => {
         role = "admin";
       } else if (email.includes("secr")) {
         role = "secretary";
+      } else if (email.includes("hopit") || email.includes("hospit")) {
+        role = "hospital";
+      } else if (email.includes("clini")) {
+        role = "clinic";
       }
       localStorage.setItem("userRole", role);
       navigate(`/dashboard/${role}`);
