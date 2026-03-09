@@ -97,6 +97,7 @@ import AdminCampaigns from "./pages/admin/AdminCampaigns";
 import AdminPromotions from "./pages/admin/AdminPromotions";
 import AdminIAM from "./pages/admin/AdminIAM";
 import AdminDisputes from "./pages/admin/AdminDisputes";
+import AdminFeatureMatrix from "./pages/admin/AdminFeatureMatrix";
 import AdminGuard from "./components/admin/AdminGuard";
 
 // Shared
