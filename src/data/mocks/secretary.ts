@@ -159,13 +159,13 @@ export const mockSecretaryBillingActTypes = [
 
 export const mockSecretaryDocuments = [
   { name: "Fiche patient - Amine Ben Ali", type: "PDF", size: "245 Ko", date: "20 Fév 2026", category: "Fiches patients" },
-  { name: "Bulletin de soins CNAM - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "CNAM" },
+  { name: "Bulletin de soins - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "Assurance" },
   { name: "Ordonnance ORD-2026-045", type: "PDF", size: "89 Ko", date: "20 Fév 2026", category: "Ordonnances" },
   { name: "Résultats analyses - Mohamed Sfar", type: "PDF", size: "1.2 Mo", date: "15 Fév 2026", category: "Analyses" },
   { name: "Facture Février 2026", type: "PDF", size: "56 Ko", date: "1 Fév 2026", category: "Comptabilité" },
   { name: "Certificat médical - Sami Ayari", type: "PDF", size: "34 Ko", date: "19 Fév 2026", category: "Certificats" },
-  { name: "Déclaration CNAM mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "CNAM" },
-  { name: "Convention CNAM - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "CNAM" },
+  { name: "Déclaration assurance mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "Assurance" },
+  { name: "Convention assurance - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "Assurance" },
   { name: "Radiographie thorax - Nadia Jemni", type: "DICOM", size: "8.5 Mo", date: "12 Fév 2026", category: "Imagerie" },
 ];
 
