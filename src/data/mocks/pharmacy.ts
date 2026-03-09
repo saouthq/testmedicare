@@ -32,7 +32,7 @@ export const mockPharmacyCategories = ["Tous", "Antibiotiques", "Antalgiques", "
 export const mockPharmacyPrescriptions: PharmacyPrescription[] = [
   {
     id: "ORD-2026-045", patient: "Amine Ben Ali", avatar: "AB", doctor: "Dr. Bouazizi",
-    date: "20 Fév 2026", assurance: "CNAM", numAssurance: "12345678",
+    date: "20 Fév 2026", assurance: "Assurance publique", numAssurance: "12345678",
     patientPhone: "+216 71 234 567", urgent: false, total: "28.5 DT", status: "received",
     items: [
       { name: "Metformine", dosage: "850mg", quantity: 60, availability: "available", price: "12 DT" },
