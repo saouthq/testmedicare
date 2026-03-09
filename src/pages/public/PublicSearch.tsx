@@ -339,6 +339,7 @@ const PublicSearch = () => {
           })}
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 };
