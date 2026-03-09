@@ -1,9 +1,10 @@
 /**
  * Laboratory Dashboard — KPIs + today's demands to process
  * Demand-driven model: lab receives demands from doctors only.
+ * Uses cross-role labStore for real-time data.
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FlaskConical, Clock, CheckCircle2, Send, Activity,
   Timer, Shield, Search, Eye, AlertCircle, FileText,
@@ -12,7 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { mockLabDemands, type LabDemand } from "@/data/mocks/lab";
+import { mockLabDemands } from "@/data/mocks/lab";
+import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
 
 const statusConfig: Record<string, { label: string; cls: string; icon: any }> = {
   received:       { label: "Reçue",          cls: "bg-warning/10 text-warning border-warning/30", icon: Inbox },
@@ -22,7 +24,12 @@ const statusConfig: Record<string, { label: string; cls: string; icon: any }> = 
 };
 
 const LaboratoryDashboard = () => {
-  const [demands] = useState<LabDemand[]>(mockLabDemands);
+  // Use cross-role store for real-time data
+  useEffect(() => {
+    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
+  }, []);
+
+  const [demands] = useSharedLabDemands();
   const [search, setSearch] = useState("");
 
   const received  = demands.filter(d => d.status === "received").length;
