@@ -92,6 +92,8 @@ import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminReferenceData from "./pages/admin/AdminReferenceData";
 import AdminNotificationTemplates from "./pages/admin/AdminNotificationTemplates";
 import AdminSupport from "./pages/admin/AdminSupport";
+import AdminGuardPharmacies from "./pages/admin/AdminGuardPharmacies";
+import AdminCampaigns from "./pages/admin/AdminCampaigns";
 import AdminGuard from "./components/admin/AdminGuard";
 
 // Shared
