@@ -391,7 +391,7 @@ const SecretaryDashboard = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-foreground text-sm">{a.patient}</p>
-                            {a.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                            {(a as any).assurance && (a as any).assurance !== "Sans assurance" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{(a as any).assurance}</span>}
                             {(a as any).teleconsultation && <Video className="h-3 w-3 text-primary" />}
                           </div>
                           <p className="text-xs text-muted-foreground">{a.type} · {a.doctor}</p>
