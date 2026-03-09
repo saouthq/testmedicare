@@ -2,7 +2,7 @@
  * ProfilePreview — Aperçu du profil tel que vu par les patients.
  * Mini version du profil public.
  */
-import { Calendar, Clock, Globe, MapPin, Phone, Star } from "lucide-react";
+import { Calendar, Clock, Globe, MapPin, Phone, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ProfileData {
