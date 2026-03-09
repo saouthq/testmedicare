@@ -35,6 +35,9 @@ const DoctorDashboard = () => {
   const [renewalRequests] = useRenewalRequests();
   const [profileCompletion] = useProfileCompletion();
 
+  const [sub] = useDoctorSubscription();
+  const isEssentiel = sub.plan === "essentiel";
+  const proPlan = plansByActivity[sub.activity]?.find(p => p.id === "pro");
   const completionPercent = getProfileCompletionPercent(profileCompletion);
   const pendingRenewals = renewalRequests.filter(r => r.status === "pending");
 
