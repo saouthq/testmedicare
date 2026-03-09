@@ -327,10 +327,10 @@ const NewPatientForm = ({ onAdd, onCancel }: { onAdd: (p: any) => void; onCancel
         <div><Label className="text-xs">Date de naissance</Label><Input type="date" value={form.dob} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} className="mt-1" /></div>
         <div><Label className="text-xs">Téléphone</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="mt-1" placeholder="+216 XX XXX XXX" /></div>
         <div><Label className="text-xs">Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="mt-1" placeholder="email@..." /></div>
-        <div><Label className="text-xs">N° Assuré</Label><Input value={form.cnamId} onChange={e => setForm(f => ({ ...f, cnamId: e.target.value }))} className="mt-1" placeholder="Optionnel" /></div>
+        <div><Label className="text-xs">N° Assuré</Label><Input value={form.numAssure} onChange={e => setForm(f => ({ ...f, numAssure: e.target.value }))} className="mt-1" placeholder="Optionnel" /></div>
         <div><Label className="text-xs">Assurance</Label>
           <select value={form.assurance} onChange={e => setForm(f => ({ ...f, assurance: e.target.value }))} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-            <option>CNAM</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option>
+            <option>Assurance publique</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option>
           </select>
         </div>
         <div><Label className="text-xs">Gouvernorat</Label>
