@@ -283,16 +283,22 @@ const AdminVerifications = () => {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[v.status]}`}>{statusLabels[v.status]}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
-                    <span>{v.specialty}</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{v.city}</span>
-                    <span>·</span>
-                    <span>{v.docs.length} doc(s)</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{v.submittedAt}</span>
-                    {v.events.filter(e => e.type === "relance").length > 0 && (
-                      <span className="text-warning flex items-center gap-1"><RefreshCw className="h-3 w-3" />{v.events.filter(e => e.type === "relance").length} relance(s)</span>
-                    )}
+                     <span>{v.specialty}</span>
+                     <span>·</span>
+                     <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{v.city}</span>
+                     <span>·</span>
+                     <span>{v.docs.length} doc(s)</span>
+                     <span>·</span>
+                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{v.submittedAt}</span>
+                     {(v as any)._plan && (
+                       <span className="flex items-center gap-1 text-primary"><CreditCard className="h-3 w-3" />{(v as any)._plan} — {(v as any)._planPrice} DT</span>
+                     )}
+                     {(v as any)._promoApplied && (
+                       <span className="flex items-center gap-1 text-accent"><Gift className="h-3 w-3" />{(v as any)._promoApplied}</span>
+                     )}
+                     {v.events.filter(e => e.type === "relance").length > 0 && (
+                       <span className="text-warning flex items-center gap-1"><RefreshCw className="h-3 w-3" />{v.events.filter(e => e.type === "relance").length} relance(s)</span>
+                     )}
                   </p>
                 </div>
                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => { e.stopPropagation(); setDrawerItem(v); }}>
