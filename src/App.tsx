@@ -117,6 +117,7 @@ const App = () => (
           <Route path="/pharmacy/:slug" element={<PharmacyDetail />} />
           <Route path="/medicaments" element={<MedicinesDirectory />} />
           <Route path="/medicament/:slug" element={<MedicineDetail />} />
+          <Route path="/find-appointments" element={<FindAppointments />} />
 
           {/* Legacy redirects */}
           <Route path="/dashboard/patient/search" element={<Navigate to="/search" replace />} />
