@@ -28,6 +28,7 @@ const PatientSettings = () => {
   ];
 
   const handleSave = () => {
+    updatePatientProfile({ insurance, insuranceNumber });
     toast({ title: "Paramètres enregistrés", description: "Vos modifications ont été sauvegardées." });
   };
 
