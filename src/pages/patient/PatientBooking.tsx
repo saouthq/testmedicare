@@ -10,6 +10,7 @@ import {
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { mockDoctorProfile } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { downloadCalendarEvent } from "@/lib/calendarExport";
 
 const doctor = {
   id: "1",
@@ -121,7 +122,7 @@ const PatientBooking = () => {
                 </ul>
               </div>
               <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-                <Button variant="outline" className="flex items-center gap-2" onClick={() => toast({ title: "Calendrier", description: "Fonctionnalité bientôt disponible." })}><CalendarPlus className="h-4 w-4" />Ajouter au calendrier</Button>
+                <Button variant="outline" className="flex items-center gap-2" onClick={() => { downloadCalendarEvent({ title: `RDV ${doctor.name}`, startDate: new Date(), location: selectedLieuData?.address || "" }); toast({ title: "Calendrier", description: "Fichier .ics téléchargé." }); }}><CalendarPlus className="h-4 w-4" />Ajouter au calendrier</Button>
                 <Link to="/dashboard/patient/appointments"><Button variant="outline">Voir mes RDV</Button></Link>
                 <Link to="/dashboard/patient"><Button className="gradient-primary text-primary-foreground">Retour au tableau de bord</Button></Link>
               </div>

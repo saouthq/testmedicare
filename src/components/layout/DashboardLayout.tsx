@@ -1,9 +1,10 @@
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
+import NotificationCenter from "@/components/shared/NotificationCenter";
 import {
   Stethoscope,
   ShieldCheck,
@@ -34,7 +35,6 @@ import {
   Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface NavItem {
@@ -131,6 +131,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const expanded = pinned || hovered || sidebarOpen;
 
@@ -258,25 +259,32 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             </button>
             <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h1>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Link
-              to={role === "patient" ? "/dashboard/patient/notifications" : `/dashboard/${role}`}
-              className="relative"
-              onClick={() => {
-                if (role !== "patient") {
-                  toast({ title: "Notifications", description: "Centre de notifications bientôt disponible." });
-                }
-              }}
-            >
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center animate-scale-in">
-                    {unreadCount > 9 ? "9+" : unreadCount}
+           <div className="flex items-center gap-1.5 sm:gap-2">
+            {role === "patient" ? (
+              <Link to="/dashboard/patient/notifications" className="relative">
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center animate-scale-in">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            ) : (
+              <button className="relative" onClick={() => setNotifOpen(true)}>
+                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <span>
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center animate-scale-in">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
                   </span>
-                )}
-              </Button>
-            </Link>
+                </Button>
+              </button>
+            )}
             <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-medium shadow-sm">
               {userInitials}
             </div>
@@ -286,6 +294,9 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
         {/* Page content — responsive padding */}
         <main className="flex-1 p-4 sm:p-6 pb-safe">{children}</main>
       </div>
+
+      {/* Notification Center drawer for non-patient roles */}
+      <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} role={role} />
     </div>
   );
 };

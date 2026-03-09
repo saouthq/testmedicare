@@ -8,6 +8,7 @@ import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusB
 import EmptyState from "@/components/shared/EmptyState";
 import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsultButton";
 import { toast } from "@/hooks/use-toast";
+import { downloadCalendarEvent, openGoogleMapsDirections } from "@/lib/calendarExport";
 
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
@@ -344,7 +345,7 @@ const PatientAppointments = () => {
                 {currentApt.address && (
                   <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
                     <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button onClick={() => toast({ title: "Itinéraire", description: "Ouverture de Google Maps bientôt disponible." })} className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
+                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button onClick={() => openGoogleMapsDirections(currentApt.address!)} className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
                   </div>
                 )}
 
@@ -393,7 +394,7 @@ const PatientAppointments = () => {
                     <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
                     {currentApt.canModify && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReschedule(currentApt.id); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprogrammer</Button>}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => toast({ title: "Calendrier", description: "Fonctionnalité bientôt disponible — ajout au calendrier Google/Apple." })}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => { downloadCalendarEvent({ title: `RDV ${currentApt.doctor}`, startDate: new Date(currentApt.date + " " + currentApt.time), location: currentApt.address || "" }); toast({ title: "Calendrier", description: "Fichier .ics téléchargé." }); }}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
                   {currentApt.canCancel && (
                     showCancelConfirm === currentApt.id ? (
                       <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
