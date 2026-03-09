@@ -43,6 +43,10 @@ const DoctorBilling = () => {
           <button onClick={() => setTab("teleconsult")} className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${tab === "teleconsult" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
             Téléconsultations
           </button>
+          <button onClick={() => setTab("cabinet")} className={`rounded-md px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === "cabinet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            <Building2 className="h-3.5 w-3.5" />Cabinet
+            {sharedInvoices.length > 0 && <span className="text-[10px] bg-primary-foreground/20 rounded-full px-1.5">{sharedInvoices.length}</span>}
+          </button>
         </div>
 
         {/* ═══ SUBSCRIPTION TAB ═══ */}
