@@ -50,10 +50,10 @@ const quickInvoiceActs = [
 ];
 
 const recentPatients = [
-  { name: "Amine Ben Ali", avatar: "AB", phone: "+216 71 234 567", cnam: true, nextRdv: "28 Fév 14:30", balance: 0 },
-  { name: "Fatma Trabelsi", avatar: "FT", phone: "+216 22 345 678", cnam: true, nextRdv: "25 Fév 10:00", balance: 60 },
-  { name: "Mohamed Sfar", avatar: "MS", phone: "+216 55 456 789", cnam: false, nextRdv: null, balance: 0 },
-  { name: "Nadia Jemni", avatar: "NJ", phone: "+216 98 567 890", cnam: true, nextRdv: "3 Mar 09:00", balance: 25 },
+  { name: "Amine Ben Ali", avatar: "AB", phone: "+216 71 234 567", assurance: "CNAM", nextRdv: "28 Fév 14:30", balance: 0 },
+  { name: "Fatma Trabelsi", avatar: "FT", phone: "+216 22 345 678", assurance: "CNAM", nextRdv: "25 Fév 10:00", balance: 60 },
+  { name: "Mohamed Sfar", avatar: "MS", phone: "+216 55 456 789", assurance: "Sans assurance", nextRdv: null, balance: 0 },
+  { name: "Nadia Jemni", avatar: "NJ", phone: "+216 98 567 890", assurance: "CNAM", nextRdv: "3 Mar 09:00", balance: 25 },
 ];
 
 const SecretaryDashboard = () => {
@@ -307,7 +307,7 @@ const SecretaryDashboard = () => {
                                 <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${sConfig.className}`}>
                                   <SIcon className="h-3 w-3" />{sConfig.label}
                                 </span>
-                                {w.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                                {w.assurance && w.assurance !== "Sans assurance" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{w.assurance}</span>}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">{w.doctor} · {w.motif} · RDV {w.appointment}</p>
                               <div className="flex items-center gap-1 mt-1">
@@ -391,7 +391,7 @@ const SecretaryDashboard = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-foreground text-sm">{a.patient}</p>
-                            {a.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                            {(a as any).assurance && (a as any).assurance !== "Sans assurance" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{(a as any).assurance}</span>}
                             {(a as any).teleconsultation && <Video className="h-3 w-3 text-primary" />}
                           </div>
                           <p className="text-xs text-muted-foreground">{a.type} · {a.doctor}</p>
@@ -554,7 +554,7 @@ const SecretaryDashboard = () => {
                       <div className="flex items-center gap-2">
                         <label className="flex items-center gap-1.5 text-xs">
                           <input type="checkbox" checked={invoiceCnam} onChange={e => setInvoiceCnam(e.target.checked)} className="rounded border-input" />
-                          <Shield className="h-3 w-3 text-primary" />CNAM
+                          <Shield className="h-3 w-3 text-primary" />Assuré
                         </label>
                       </div>
                       <span className="text-sm font-bold text-foreground">Total : {invoiceTotal} DT</span>
@@ -577,7 +577,7 @@ const SecretaryDashboard = () => {
               </div>
               <div className="divide-y">
                 {[
-                  { patient: "Amine Ben Ali", amount: 35, method: "CNAM", time: "08:45", status: "paid" },
+                  { patient: "Amine Ben Ali", amount: 35, method: "Assurance", time: "08:45", status: "paid" },
                   { patient: "Karim Mansour", amount: 35, method: "Espèces", time: "09:15", status: "paid" },
                   { patient: "Leila Chahed", amount: 60, method: "Carte", time: "09:30", status: "paid" },
                 ].map((t, i) => (
@@ -624,7 +624,7 @@ const SecretaryDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-foreground">{p.name}</p>
-                        {p.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                        {p.assurance && p.assurance !== "Sans assurance" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{p.assurance}</span>}
                         {p.balance > 0 && <span className="text-[9px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-medium">{p.balance} DT dû</span>}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -720,11 +720,11 @@ const SecretaryDashboard = () => {
                 <div><Label className="text-xs">Date de naissance</Label><Input type="date" className="mt-1" /></div>
                 <div><Label className="text-xs">Téléphone</Label><Input className="mt-1" placeholder="+216 XX XXX XXX" /></div>
                 <div><Label className="text-xs">Email</Label><Input type="email" className="mt-1" placeholder="email@..." /></div>
-                <div><Label className="text-xs">N° CNAM</Label><Input className="mt-1" placeholder="XXXXXXXX" /></div>
+                <div><Label className="text-xs">N° Assuré</Label><Input className="mt-1" placeholder="XXXXXXXX (optionnel)" /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="text-xs">Assurance</Label>
-                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"><option>CNAM</option><option>CNRPS</option><option>Privée</option><option>Sans</option></select>
+                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"><option>CNAM</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option></select>
                 </div>
                 <div><Label className="text-xs">Médecin</Label>
                   <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"><option>Dr. Bouazizi</option><option>Dr. Gharbi</option><option>Dr. Hammami</option></select>

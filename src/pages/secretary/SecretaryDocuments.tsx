@@ -224,10 +224,10 @@ const SecretaryDocuments = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            d.category === "CNAM" ? "bg-primary/10" : d.category === "Analyses" ? "bg-accent/10" : "bg-muted"
+                            d.category === "Assurance" ? "bg-primary/10" : d.category === "Analyses" ? "bg-accent/10" : "bg-muted"
                           }`}>
                             <IconComponent className={`h-4 w-4 ${
-                              d.category === "CNAM" ? "text-primary" : d.category === "Analyses" ? "text-accent" : "text-muted-foreground"
+                              d.category === "Assurance" ? "text-primary" : d.category === "Analyses" ? "text-accent" : "text-muted-foreground"
                             }`} />
                           </div>
                           <div>
@@ -238,7 +238,7 @@ const SecretaryDocuments = () => {
                       </td>
                       <td className="p-4 hidden sm:table-cell">
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          d.category === "CNAM" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
+                          d.category === "Assurance" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
                         }`}>{d.category}</span>
                       </td>
                       <td className="p-4 hidden md:table-cell">

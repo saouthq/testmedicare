@@ -8,9 +8,9 @@ import {
 import { Button } from "@/components/ui/button";
 
 const doctors = [
-  { name: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", status: "available", patients: 12, phone: "+216 71 234 567", conventionCNAM: true },
-  { name: "Dr. Sonia Gharbi", specialty: "Cardiologue", status: "in_consultation", patients: 8, phone: "+216 71 234 568", conventionCNAM: true },
-  { name: "Dr. Khaled Hammami", specialty: "Dermatologue", status: "absent", patients: 0, phone: "+216 71 234 569", conventionCNAM: true },
+  { name: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", status: "available", patients: 12, phone: "+216 71 234 567", conventionAssurance: true },
+  { name: "Dr. Sonia Gharbi", specialty: "Cardiologue", status: "in_consultation", patients: 8, phone: "+216 71 234 568", conventionAssurance: true },
+  { name: "Dr. Khaled Hammami", specialty: "Dermatologue", status: "absent", patients: 0, phone: "+216 71 234 569", conventionAssurance: true },
 ];
 
 const officeInfo = {
@@ -20,7 +20,7 @@ const officeInfo = {
   fax: "+216 71 234 568",
   email: "contact@cabinet-elmanar.tn",
   openingHours: "Lun-Ven: 8h-18h / Sam: 8h-13h",
-  conventionCNAM: true,
+  conventionAssurance: true,
   registreCommerce: "B12345678",
 };
 
@@ -58,9 +58,9 @@ const SecretaryOffice = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-bold text-foreground">{officeInfo.name}</h2>
-                  {officeInfo.conventionCNAM && (
+                  {officeInfo.conventionAssurance && (
                     <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                      <Shield className="h-3 w-3" />Conventionné CNAM
+                      <Shield className="h-3 w-3" />Conventionné Assurance
                     </span>
                   )}
                 </div>
@@ -118,7 +118,7 @@ const SecretaryOffice = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-foreground text-sm">{d.name}</p>
-                        {d.conventionCNAM && <Shield className="h-3 w-3 text-primary" />}
+                        {d.conventionAssurance && <Shield className="h-3 w-3 text-primary" />}
                       </div>
                       <p className="text-xs text-muted-foreground">{d.specialty} · {d.phone}</p>
                     </div>
@@ -170,7 +170,7 @@ const SecretaryOffice = () => {
               <p className="text-xl font-bold text-foreground mt-1">8 450 DT</p>
             </div>
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-center">
-              <p className="text-xs text-primary font-medium">Part CNAM</p>
+              <p className="text-xs text-primary font-medium">Part Assurance</p>
               <p className="text-xl font-bold text-foreground mt-1">5 915 DT</p>
             </div>
             <div className="rounded-lg bg-muted/50 p-4 text-center">

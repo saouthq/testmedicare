@@ -24,6 +24,7 @@ interface AgendaAppointment {
   status: AppointmentStatus;
   phone: string;
   cnam: boolean;
+  assurance?: string;
   teleconsultation?: boolean;
   notes?: string;
   arrivedAt?: string;
@@ -135,7 +136,7 @@ const SecretaryAgenda = () => {
             <div className="flex items-center gap-2">
               <p className={`font-semibold text-sm ${apt.status === "cancelled" ? "line-through text-muted-foreground" : "text-foreground"}`}>{apt.patient}</p>
               {apt.teleconsultation && <Video className="h-3.5 w-3.5 text-primary shrink-0" />}
-              {apt.cnam && <Shield className="h-3 w-3 text-primary/60 shrink-0" />}
+              {apt.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">Assuré</span>}
             </div>
             <div className="flex items-center gap-2 mt-0.5">
               <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${typeColors[apt.type] || "bg-muted text-muted-foreground"}`}>{apt.type}</span>
@@ -346,7 +347,7 @@ const SecretaryAgenda = () => {
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-primary" />
                       <div>
-                        <p className="text-xs font-semibold text-primary">Assuré CNAM</p>
+                        <p className="text-xs font-semibold text-primary">Assuré</p>
                         <p className="text-[10px] text-muted-foreground">Prise en charge conventionnelle</p>
                       </div>
                     </div>

@@ -10,24 +10,24 @@ export const mockSecretaryTeam = [
 ];
 
 export const mockSecretaryWaitingRoom = [
-  { id: 1, patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", motif: "Suivi diabète", status: "waiting" as string, avatar: "AB", cnam: true, waitMin: 15 },
-  { id: 2, patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", motif: "Bilan cardiaque", status: "waiting" as string, avatar: "FT", cnam: true, waitMin: 10 },
-  { id: 3, patient: "Mohamed Sfar", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Bouazizi", motif: "Contrôle annuel", status: "waiting" as string, avatar: "MS", cnam: false, waitMin: 5 },
+  { id: 1, patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", motif: "Suivi diabète", status: "waiting" as string, avatar: "AB", assurance: "CNAM", waitMin: 15 },
+  { id: 2, patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", motif: "Bilan cardiaque", status: "waiting" as string, avatar: "FT", assurance: "CNAM", waitMin: 10 },
+  { id: 3, patient: "Mohamed Sfar", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Bouazizi", motif: "Contrôle annuel", status: "waiting" as string, avatar: "MS", assurance: "Sans assurance", waitMin: 5 },
 ];
 
 export const mockSecretaryAppointments = [
-  { id: 1, time: "08:30", patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Consultation", status: "done" as string, avatar: "KM", amount: "35 DT", cnam: true },
-  { id: 2, time: "09:00", patient: "Leila Chahed", doctor: "Dr. Gharbi", type: "Suivi", status: "done" as string, avatar: "LC", amount: "45 DT", cnam: true },
-  { id: 3, time: "09:30", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", status: "in_progress" as string, avatar: "AB", amount: "35 DT", cnam: true },
-  { id: 4, time: "09:45", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", status: "waiting" as string, avatar: "FT", amount: "45 DT", cnam: true },
-  { id: 5, time: "10:00", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", type: "Contrôle", status: "upcoming" as string, avatar: "MS", amount: "35 DT", cnam: false },
-  { id: 6, time: "10:30", patient: "Nadia Jemni", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "NJ", amount: "40 DT", cnam: true },
-  { id: 7, time: "11:00", patient: "Sami Ayari", doctor: "Dr. Bouazizi", type: "Première visite", status: "upcoming" as string, avatar: "SA", amount: "50 DT", cnam: true },
-  { id: 8, time: "14:00", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", type: "Téléconsultation", status: "upcoming" as string, avatar: "YB", teleconsultation: true, amount: "35 DT", cnam: false },
-  { id: 9, time: "14:30", patient: "Salma Dridi", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "SD", amount: "40 DT", cnam: true },
-  { id: 10, time: "15:00", patient: "Hana Kammoun", doctor: "Dr. Bouazizi", type: "Suivi", status: "upcoming" as string, avatar: "HK", amount: "35 DT", cnam: true },
-  { id: 11, time: "15:30", patient: "Bilel Nasri", doctor: "Dr. Gharbi", type: "Consultation", status: "upcoming" as string, avatar: "BN", amount: "45 DT", cnam: true },
-  { id: 12, time: "16:00", patient: "Olfa Ben Salah", doctor: "Dr. Hammami", type: "Suivi", status: "upcoming" as string, avatar: "OB", amount: "40 DT", cnam: false },
+  { id: 1, time: "08:30", patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Consultation", status: "done" as string, avatar: "KM", amount: "35 DT", assurance: "CNAM" },
+  { id: 2, time: "09:00", patient: "Leila Chahed", doctor: "Dr. Gharbi", type: "Suivi", status: "done" as string, avatar: "LC", amount: "45 DT", assurance: "CNRPS" },
+  { id: 3, time: "09:30", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", status: "in_progress" as string, avatar: "AB", amount: "35 DT", assurance: "CNAM" },
+  { id: 4, time: "09:45", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", status: "waiting" as string, avatar: "FT", amount: "45 DT", assurance: "CNAM" },
+  { id: 5, time: "10:00", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", type: "Contrôle", status: "upcoming" as string, avatar: "MS", amount: "35 DT", assurance: "Sans assurance" },
+  { id: 6, time: "10:30", patient: "Nadia Jemni", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "NJ", amount: "40 DT", assurance: "CNAM" },
+  { id: 7, time: "11:00", patient: "Sami Ayari", doctor: "Dr. Bouazizi", type: "Première visite", status: "upcoming" as string, avatar: "SA", amount: "50 DT", assurance: "CNAM" },
+  { id: 8, time: "14:00", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", type: "Téléconsultation", status: "upcoming" as string, avatar: "YB", teleconsultation: true, amount: "35 DT", assurance: "Sans assurance" },
+  { id: 9, time: "14:30", patient: "Salma Dridi", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "SD", amount: "40 DT", assurance: "Maghrebia" },
+  { id: 10, time: "15:00", patient: "Hana Kammoun", doctor: "Dr. Bouazizi", type: "Suivi", status: "upcoming" as string, avatar: "HK", amount: "35 DT", assurance: "CNAM" },
+  { id: 11, time: "15:30", patient: "Bilel Nasri", doctor: "Dr. Gharbi", type: "Consultation", status: "upcoming" as string, avatar: "BN", amount: "45 DT", assurance: "STAR" },
+  { id: 12, time: "16:00", patient: "Olfa Ben Salah", doctor: "Dr. Hammami", type: "Suivi", status: "upcoming" as string, avatar: "OB", amount: "40 DT", assurance: "Sans assurance" },
 ];
 
 export const mockSecretaryCalls = [
@@ -44,9 +44,9 @@ export const mockSecretaryDoctors = [
 ];
 
 export const mockSecretaryOfficeDoctors = [
-  { name: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", status: "available", patients: 12, phone: "+216 71 234 567", conventionCNAM: true },
-  { name: "Dr. Sonia Gharbi", specialty: "Cardiologue", status: "in_consultation", patients: 8, phone: "+216 71 234 568", conventionCNAM: true },
-  { name: "Dr. Khaled Hammami", specialty: "Dermatologue", status: "absent", patients: 0, phone: "+216 71 234 569", conventionCNAM: true },
+  { name: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", status: "available", patients: 12, phone: "+216 71 234 567", conventionAssurance: true },
+  { name: "Dr. Sonia Gharbi", specialty: "Cardiologue", status: "in_consultation", patients: 8, phone: "+216 71 234 568", conventionAssurance: true },
+  { name: "Dr. Khaled Hammami", specialty: "Dermatologue", status: "absent", patients: 0, phone: "+216 71 234 569", conventionAssurance: true },
 ];
 
 export const mockOfficeInfo = {
@@ -56,7 +56,7 @@ export const mockOfficeInfo = {
   fax: "+216 71 234 568",
   email: "contact@cabinet-elmanar.tn",
   openingHours: "Lun-Ven: 8h-18h / Sam: 8h-13h",
-  conventionCNAM: true,
+  conventionAssurance: true,
   registreCommerce: "B12345678",
 };
 
@@ -135,14 +135,14 @@ export const mockSecretaryPatientsWithHistory = [
 ];
 
 export const mockSecretaryBillingInvoices = [
-  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "CNAM", status: "paid", avatar: "AB", cnam: true },
-  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", cnam: true },
-  { id: "FAC-2026-085", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", date: "19 Fév", amount: 35, type: "Consultation G", payment: "Espèces", status: "paid", avatar: "MS", cnam: false },
-  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", cnam: true },
-  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", cnam: true },
-  { id: "FAC-2026-082", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Téléconsultation", payment: "Virement", status: "paid", avatar: "YB", cnam: false },
-  { id: "FAC-2026-080", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "15 Fév", amount: 60, type: "Suivi", payment: "—", status: "overdue", avatar: "RM", cnam: true },
-  { id: "FAC-2026-078", patient: "Salma Dridi", doctor: "Dr. Bouazizi", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "SD", cnam: true },
+  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "Assurance", status: "paid", avatar: "AB", assurance: "CNAM" },
+  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", assurance: "CNAM" },
+  { id: "FAC-2026-085", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", date: "19 Fév", amount: 35, type: "Consultation G", payment: "Espèces", status: "paid", avatar: "MS", assurance: "Sans assurance" },
+  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", assurance: "CNAM" },
+  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", assurance: "CNAM" },
+  { id: "FAC-2026-082", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Téléconsultation", payment: "Virement", status: "paid", avatar: "YB", assurance: "Sans assurance" },
+  { id: "FAC-2026-080", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "15 Fév", amount: 60, type: "Suivi", payment: "—", status: "overdue", avatar: "RM", assurance: "CNRPS" },
+  { id: "FAC-2026-078", patient: "Salma Dridi", doctor: "Dr. Bouazizi", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "SD", assurance: "Maghrebia" },
 ];
 
 /** Billing act types reference data */
@@ -159,30 +159,39 @@ export const mockSecretaryBillingActTypes = [
 
 export const mockSecretaryDocuments = [
   { name: "Fiche patient - Amine Ben Ali", type: "PDF", size: "245 Ko", date: "20 Fév 2026", category: "Fiches patients" },
-  { name: "Bulletin de soins CNAM - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "CNAM" },
+  { name: "Bulletin de soins - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "Assurance" },
   { name: "Ordonnance ORD-2026-045", type: "PDF", size: "89 Ko", date: "20 Fév 2026", category: "Ordonnances" },
   { name: "Résultats analyses - Mohamed Sfar", type: "PDF", size: "1.2 Mo", date: "15 Fév 2026", category: "Analyses" },
   { name: "Facture Février 2026", type: "PDF", size: "56 Ko", date: "1 Fév 2026", category: "Comptabilité" },
   { name: "Certificat médical - Sami Ayari", type: "PDF", size: "34 Ko", date: "19 Fév 2026", category: "Certificats" },
-  { name: "Déclaration CNAM mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "CNAM" },
-  { name: "Convention CNAM - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "CNAM" },
+  { name: "Déclaration assurance mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "Assurance" },
+  { name: "Convention assurance - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "Assurance" },
   { name: "Radiographie thorax - Nadia Jemni", type: "DICOM", size: "8.5 Mo", date: "12 Fév 2026", category: "Imagerie" },
 ];
 
 /** Full document data with id, iconKey, status, patient — used by SecretaryDocuments page */
 export const mockSecretaryDocumentsFull = [
   { id: 1, name: "Fiche patient - Amine Ben Ali", type: "PDF", size: "245 Ko", date: "20 Fév 2026", category: "Fiches patients", iconKey: "FileText", patient: "Amine Ben Ali", status: "validated" as const },
-  { id: 2, name: "Bulletin de soins CNAM - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "CNAM", iconKey: "Shield", patient: "Fatma Trabelsi", status: "validated" as const },
+  { id: 2, name: "Bulletin de soins - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "Assurance", iconKey: "Shield", patient: "Fatma Trabelsi", status: "validated" as const },
   { id: 3, name: "Ordonnance ORD-2026-045", type: "PDF", size: "89 Ko", date: "20 Fév 2026", category: "Ordonnances", iconKey: "FileText", patient: "Amine Ben Ali", status: "validated" as const },
   { id: 4, name: "Résultats analyses - Mohamed Sfar", type: "PDF", size: "1.2 Mo", date: "15 Fév 2026", category: "Analyses", iconKey: "File", patient: "Mohamed Sfar", status: "pending" as const },
   { id: 5, name: "Facture Février 2026", type: "PDF", size: "56 Ko", date: "1 Fév 2026", category: "Comptabilité", iconKey: "FileText", status: "validated" as const },
   { id: 6, name: "Certificat médical - Sami Ayari", type: "PDF", size: "34 Ko", date: "19 Fév 2026", category: "Certificats", iconKey: "FileText", patient: "Sami Ayari", status: "draft" as const },
-  { id: 7, name: "Déclaration CNAM mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "CNAM", iconKey: "Shield", status: "validated" as const },
-  { id: 8, name: "Convention CNAM - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "CNAM", iconKey: "Shield", status: "validated" as const },
+  { id: 7, name: "Déclaration assurance mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "Assurance", iconKey: "Shield", status: "validated" as const },
+  { id: 8, name: "Convention assurance - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "Assurance", iconKey: "Shield", status: "validated" as const },
   { id: 9, name: "Radiographie thorax - Nadia Jemni", type: "DICOM", size: "8.5 Mo", date: "12 Fév 2026", category: "Imagerie", iconKey: "Image", patient: "Nadia Jemni", status: "validated" as const },
 ];
 
-export const mockDocumentCategories = ["Tous", "Fiches patients", "Ordonnances", "CNAM", "Analyses", "Certificats", "Comptabilité", "Imagerie"];
+export const mockDocumentCategories = ["Tous", "Fiches patients", "Ordonnances", "Assurance", "Analyses", "Certificats", "Comptabilité", "Imagerie"];
+
+/** Secretary message templates */
+export const mockSecretaryTemplates = [
+  { id: "tpl-confirm", name: "RDV confirmé", message: "Bonjour {patient}, votre RDV avec {doctor} est confirmé le {date} à {time}. Cabinet Médical El Manar.", category: "confirmation" },
+  { id: "tpl-rappel", name: "Rappel RDV", message: "Rappel : vous avez un RDV demain {date} à {time} avec {doctor}. Merci de vous présenter 10 min avant. Cabinet Médical El Manar.", category: "rappel" },
+  { id: "tpl-retard", name: "Retard médecin", message: "Bonjour {patient}, nous vous informons que {doctor} a un léger retard. Votre consultation est estimée à {time}. Merci de votre compréhension.", category: "info" },
+  { id: "tpl-pieces", name: "Demande de pièces", message: "Bonjour {patient}, merci de nous envoyer les documents suivants avant votre prochain RDV : carte d'identité, carte d'assurance. Cabinet Médical El Manar.", category: "admin" },
+  { id: "tpl-annulation", name: "RDV annulé", message: "Bonjour {patient}, votre RDV du {date} à {time} avec {doctor} a été annulé. Merci de nous recontacter pour reprogrammer.", category: "annulation" },
+];
 
 // ─── Secretary Agenda ────────────────────────────────────────
 

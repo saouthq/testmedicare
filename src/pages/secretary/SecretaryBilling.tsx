@@ -11,13 +11,14 @@ import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/da
 
 interface Invoice {
   id: string; patient: string; doctor: string; date: string; amount: number;
-  type: string; payment: string; status: string; avatar: string; cnam: boolean;
+  type: string; payment: string; status: string; avatar: string; assurance: string;
+  cnam?: boolean; // legacy compat
 }
 
 const actTypes = mockSecretaryBillingActTypes;
 
 const paymentMethods = [
-  { method: "CNAM", count: 45, icon: Shield },
+  { method: "Assurance", count: 45, icon: Shield },
   { method: "Espèces", count: 28, icon: Banknote },
   { method: "Chèque", count: 15, icon: Receipt },
   { method: "Virement", count: 12, icon: CreditCard },
@@ -65,7 +66,7 @@ const SecretaryBilling = () => {
     setInvoices(prev => [{
       id: newId, patient: newPatient, doctor: newDoctor, date: "20 Fév",
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
-      status, avatar, cnam: newCnam,
+      status, avatar, assurance: newCnam ? "CNAM" : "Sans assurance",
     }, ...prev]);
     setShowNew(false);
     setNewPatient(""); setNewActs([{ type: actTypes[0].label, price: actTypes[0].price }]); setNewPayment("—");
@@ -150,7 +151,7 @@ const SecretaryBilling = () => {
                       <td className="p-3">
                         <div className="flex items-center gap-2">
                           <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">{inv.avatar}</div>
-                          <div><span className="text-xs font-medium text-foreground">{inv.patient}</span>{inv.cnam && <p className="text-[9px] text-primary font-medium">CNAM</p>}</div>
+                          <div><span className="text-xs font-medium text-foreground">{inv.patient}</span>{inv.assurance && inv.assurance !== "Sans assurance" && <p className="text-[9px] text-primary font-medium">{inv.assurance}</p>}</div>
                         </div>
                       </td>
                       <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{inv.doctor}</td>
@@ -195,10 +196,10 @@ const SecretaryBilling = () => {
                     <div className="rounded-lg bg-muted/50 p-2.5"><p className="text-[10px] text-muted-foreground">Montant</p><p className="text-xs font-bold text-foreground">{selectedInv.amount} DT</p></div>
                     <div className="rounded-lg bg-muted/50 p-2.5"><p className="text-[10px] text-muted-foreground">Paiement</p><p className="text-xs font-semibold text-foreground">{selectedInv.payment}</p></div>
                   </div>
-                  {selectedInv.cnam && (
+                  {selectedInv.assurance && selectedInv.assurance !== "Sans assurance" && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-primary" />
-                      <p className="text-xs font-semibold text-primary">Assuré CNAM</p>
+                      <p className="text-xs font-semibold text-primary">Assuré — {selectedInv.assurance}</p>
                     </div>
                   )}
                   <div className="space-y-1.5 pt-2">
@@ -282,7 +283,7 @@ const SecretaryBilling = () => {
                 <div className="flex items-end gap-3">
                   <label className="flex items-center gap-1.5 text-xs mb-2">
                     <input type="checkbox" checked={newCnam} onChange={e => setNewCnam(e.target.checked)} className="rounded border-input" />
-                    <Shield className="h-3 w-3 text-primary" />CNAM
+                    <Shield className="h-3 w-3 text-primary" />Assuré
                   </label>
                 </div>
               </div>
