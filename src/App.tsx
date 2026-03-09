@@ -105,8 +105,14 @@ import AdminGuard from "./components/admin/AdminGuard";
 import Messages from "./pages/messaging/Messages";
 import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
 import SimulationPanel from "./components/shared/SimulationPanel";
+import { RouteModuleGate } from "./components/shared/ModuleGate";
 
 const queryClient = new QueryClient();
+
+/** Wrap a page element with RouteModuleGate for automatic module checking */
+const Gated = ({ children, role }: { children: React.ReactNode; role?: string }) => (
+  <RouteModuleGate role={role}>{children}</RouteModuleGate>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
