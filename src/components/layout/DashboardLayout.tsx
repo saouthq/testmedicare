@@ -149,6 +149,20 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const [pinned, setPinned] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+
+  // Global Cmd+K shortcut for admin spotlight
+  useEffect(() => {
+    if (role !== "admin") return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSpotlightOpen(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [role]);
 
   const expanded = pinned || hovered || sidebarOpen;
 
