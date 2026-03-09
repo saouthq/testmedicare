@@ -113,6 +113,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
     { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
     { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
+    { title: "Paramètres", url: "/dashboard/admin/settings", icon: ClipboardList },
   ],
 };
 
