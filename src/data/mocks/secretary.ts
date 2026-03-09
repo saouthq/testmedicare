@@ -172,17 +172,26 @@ export const mockSecretaryDocuments = [
 /** Full document data with id, iconKey, status, patient — used by SecretaryDocuments page */
 export const mockSecretaryDocumentsFull = [
   { id: 1, name: "Fiche patient - Amine Ben Ali", type: "PDF", size: "245 Ko", date: "20 Fév 2026", category: "Fiches patients", iconKey: "FileText", patient: "Amine Ben Ali", status: "validated" as const },
-  { id: 2, name: "Bulletin de soins CNAM - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "CNAM", iconKey: "Shield", patient: "Fatma Trabelsi", status: "validated" as const },
+  { id: 2, name: "Bulletin de soins - Fatma Trabelsi", type: "PDF", size: "120 Ko", date: "18 Fév 2026", category: "Assurance", iconKey: "Shield", patient: "Fatma Trabelsi", status: "validated" as const },
   { id: 3, name: "Ordonnance ORD-2026-045", type: "PDF", size: "89 Ko", date: "20 Fév 2026", category: "Ordonnances", iconKey: "FileText", patient: "Amine Ben Ali", status: "validated" as const },
   { id: 4, name: "Résultats analyses - Mohamed Sfar", type: "PDF", size: "1.2 Mo", date: "15 Fév 2026", category: "Analyses", iconKey: "File", patient: "Mohamed Sfar", status: "pending" as const },
   { id: 5, name: "Facture Février 2026", type: "PDF", size: "56 Ko", date: "1 Fév 2026", category: "Comptabilité", iconKey: "FileText", status: "validated" as const },
   { id: 6, name: "Certificat médical - Sami Ayari", type: "PDF", size: "34 Ko", date: "19 Fév 2026", category: "Certificats", iconKey: "FileText", patient: "Sami Ayari", status: "draft" as const },
-  { id: 7, name: "Déclaration CNAM mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "CNAM", iconKey: "Shield", status: "validated" as const },
-  { id: 8, name: "Convention CNAM - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "CNAM", iconKey: "Shield", status: "validated" as const },
+  { id: 7, name: "Déclaration assurance mensuelle", type: "PDF", size: "180 Ko", date: "1 Fév 2026", category: "Assurance", iconKey: "Shield", status: "validated" as const },
+  { id: 8, name: "Convention assurance - Dr. Bouazizi", type: "PDF", size: "450 Ko", date: "1 Jan 2026", category: "Assurance", iconKey: "Shield", status: "validated" as const },
   { id: 9, name: "Radiographie thorax - Nadia Jemni", type: "DICOM", size: "8.5 Mo", date: "12 Fév 2026", category: "Imagerie", iconKey: "Image", patient: "Nadia Jemni", status: "validated" as const },
 ];
 
-export const mockDocumentCategories = ["Tous", "Fiches patients", "Ordonnances", "CNAM", "Analyses", "Certificats", "Comptabilité", "Imagerie"];
+export const mockDocumentCategories = ["Tous", "Fiches patients", "Ordonnances", "Assurance", "Analyses", "Certificats", "Comptabilité", "Imagerie"];
+
+/** Secretary message templates */
+export const mockSecretaryTemplates = [
+  { id: "tpl-confirm", name: "RDV confirmé", message: "Bonjour {patient}, votre RDV avec {doctor} est confirmé le {date} à {time}. Cabinet Médical El Manar.", category: "confirmation" },
+  { id: "tpl-rappel", name: "Rappel RDV", message: "Rappel : vous avez un RDV demain {date} à {time} avec {doctor}. Merci de vous présenter 10 min avant. Cabinet Médical El Manar.", category: "rappel" },
+  { id: "tpl-retard", name: "Retard médecin", message: "Bonjour {patient}, nous vous informons que {doctor} a un léger retard. Votre consultation est estimée à {time}. Merci de votre compréhension.", category: "info" },
+  { id: "tpl-pieces", name: "Demande de pièces", message: "Bonjour {patient}, merci de nous envoyer les documents suivants avant votre prochain RDV : carte d'identité, carte d'assurance. Cabinet Médical El Manar.", category: "admin" },
+  { id: "tpl-annulation", name: "RDV annulé", message: "Bonjour {patient}, votre RDV du {date} à {time} avec {doctor} a été annulé. Merci de nous recontacter pour reprogrammer.", category: "annulation" },
+];
 
 // ─── Secretary Agenda ────────────────────────────────────────
 
