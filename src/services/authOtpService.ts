@@ -5,10 +5,10 @@
 
 const MOCK_OTP_CODE = "123456";
 
-export const sendOtp = async (phone: string): Promise<{ success: boolean }> => {
+export const sendOtp = async (phone: string): Promise<{ success: boolean; message: string }> => {
   // TODO BACKEND: POST /api/auth/otp/send
   console.log(`[Mock] OTP envoyé au ${phone} — Code: ${MOCK_OTP_CODE}`);
-  return { success: true };
+  return { success: true, message: `Code envoyé (test: ${MOCK_OTP_CODE})` };
 };
 
 export const verifyOtp = async (phone: string, code: string): Promise<{ success: boolean; patientId?: string }> => {
