@@ -63,13 +63,22 @@ const SecretaryBilling = () => {
     const newId = `FAC-2026-${String(88 + invoices.length).padStart(3, "0")}`;
     const avatar = newPatient.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
     const status = newPayment !== "—" ? "paid" : "pending";
-    setInvoices(prev => [{
+    const newInv = {
       id: newId, patient: newPatient, doctor: newDoctor, date: "20 Fév",
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
       status, avatar, assurance: newCnam ? "Assurance publique" : "Sans assurance",
-    }, ...prev]);
+    };
+    setInvoices(prev => [newInv, ...prev]);
+    // Sync to cross-role billing store → doctor sees it
+    createInvoice({
+      patient: newPatient, avatar, doctor: newDoctor, date: "20 Fév 2026",
+      amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
+      status: status as "paid" | "pending" | "overdue", assurance: newCnam ? "Assurance publique" : "Sans assurance",
+      createdBy: "secretary",
+    });
     setShowNew(false);
     setNewPatient(""); setNewActs([{ type: actTypes[0].label, price: actTypes[0].price }]); setNewPayment("—");
+    toast({ title: "Facture créée", description: `${newId} · ${newPatient} · ${total} DT — visible côté médecin.` });
   };
 
   const handleMarkPaid = (inv: Invoice) => {
