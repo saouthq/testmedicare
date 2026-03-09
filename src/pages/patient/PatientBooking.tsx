@@ -16,7 +16,7 @@ const doctor = {
   specialty: mockDoctorProfile.specialty,
   address: mockDoctorProfile.address,
   avatar: mockDoctorProfile.initials,
-  cnam: true,
+  acceptsInsurance: true,
   teleconsultation: mockDoctorProfile.teleconsultation,
   cancellationPolicy: "Annulation gratuite jusqu'à 24h avant le RDV",
   autoConfirm: true,
