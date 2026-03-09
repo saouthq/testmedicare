@@ -1,12 +1,14 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical, FlaskConical } from "lucide-react";
 import AddItemModal from "@/components/patient-health/AddItemModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
+import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
+import { mockLabDemands } from "@/data/mocks/lab";
 
 type HealthSection = "menu" | "documents" | "antecedents" | "treatments" | "allergies" | "habits" | "family" | "surgeries" | "vaccinations" | "measures" | "ai";
 
@@ -44,6 +46,19 @@ const PatientHealth = () => {
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>(aiInitial);
   const [aiInput, setAiInput] = useState("");
   const [aiIdx, setAiIdx] = useState(0);
+
+  // Cross-role: lab results
+  useEffect(() => { initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]); }, []);
+  const [labDemands] = useSharedLabDemands();
+  const transmittedLabResults = labDemands
+    .filter(d => d.status === "transmitted" && d.pdfs.length > 0)
+    .flatMap(d => d.pdfs.map(pdf => ({
+      name: pdf.name,
+      type: "Résultat labo",
+      size: pdf.size,
+      date: pdf.uploadedAt,
+      source: `Labo · ${d.examens.join(", ")}`,
+    })));
 
   // Editable lists
   const [habits, setHabits] = useState(initialHabits);
@@ -200,6 +215,26 @@ const PatientHealth = () => {
             {showUpload && (
               <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 text-center mb-3">
                 <Upload className="h-6 w-6 text-primary mx-auto mb-2" /><p className="font-medium text-foreground text-sm">Glissez vos fichiers ici</p><p className="text-xs text-muted-foreground mt-1">PDF, images (max 10 Mo)</p>
+              </div>
+            )}
+            {/* Lab results from cross-role store */}
+            {transmittedLabResults.length > 0 && (
+              <div className="mb-3">
+                <h4 className="text-xs font-semibold text-primary flex items-center gap-1.5 mb-2">
+                  <FlaskConical className="h-3.5 w-3.5" />Résultats d'analyses ({transmittedLabResults.length})
+                </h4>
+                <div className="rounded-xl border border-primary/20 bg-primary/5 overflow-hidden divide-y divide-primary/10">
+                  {transmittedLabResults.map((r, i) => (
+                    <div key={`lab-${i}`} className="flex items-center gap-3 p-3 hover:bg-primary/10 transition-colors">
+                      <div className="p-2 rounded-lg bg-primary/10"><FlaskConical className="h-4 w-4 text-primary" /></div>
+                      <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground truncate">{r.name}</p><p className="text-[11px] text-muted-foreground">{r.source} · {r.date}</p></div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">

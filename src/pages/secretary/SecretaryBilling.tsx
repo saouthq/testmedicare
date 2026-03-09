@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,8 @@ import {
   AlertCircle, CreditCard, ArrowUpRight, Eye, Printer, Send, Receipt, Shield, X, Save, Trash2
 } from "lucide-react";
 import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/data/mockData";
+import { useSharedBilling, initBillingStoreIfEmpty, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
+import { toast } from "@/hooks/use-toast";
 
 interface Invoice {
   id: string; patient: string; doctor: string; date: string; amount: number;
@@ -62,20 +64,32 @@ const SecretaryBilling = () => {
     const newId = `FAC-2026-${String(88 + invoices.length).padStart(3, "0")}`;
     const avatar = newPatient.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
     const status = newPayment !== "—" ? "paid" : "pending";
-    setInvoices(prev => [{
+    const newInv = {
       id: newId, patient: newPatient, doctor: newDoctor, date: "20 Fév",
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
       status, avatar, assurance: newCnam ? "Assurance publique" : "Sans assurance",
-    }, ...prev]);
+    };
+    setInvoices(prev => [newInv, ...prev]);
+    // Sync to cross-role billing store → doctor sees it
+    createInvoice({
+      patient: newPatient, avatar, doctor: newDoctor, date: "20 Fév 2026",
+      amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
+      status: status as "paid" | "pending" | "overdue", assurance: newCnam ? "Assurance publique" : "Sans assurance",
+      createdBy: "secretary",
+    });
     setShowNew(false);
     setNewPatient(""); setNewActs([{ type: actTypes[0].label, price: actTypes[0].price }]); setNewPayment("—");
+    toast({ title: "Facture créée", description: `${newId} · ${newPatient} · ${total} DT — visible côté médecin.` });
   };
 
   const handleMarkPaid = (inv: Invoice) => {
     // TODO BACKEND: PATCH /api/invoices/{id} { status: "paid", payment }
     setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, status: "paid", payment: payMethod } : i));
+    // Sync to cross-role billing store
+    markInvoicePaid(inv.id, payMethod);
     setShowPayModal(null);
     setSelectedInv(null);
+    toast({ title: "Facture encaissée", description: `${inv.id} · ${inv.amount} DT en ${payMethod}` });
   };
 
   const stats = [
