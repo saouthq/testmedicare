@@ -22,6 +22,8 @@ const DoctorBilling = () => {
   const [detailTx, setDetailTx] = useState<string | null>(null);
   const [showChangeCard, setShowChangeCard] = useState(false);
   const activePromo = getMyActivePromo(1);
+  const [sharedInvoices] = useSharedBilling();
+  const cabinetStats = getBillingStats(sharedInvoices);
 
   const filteredTx = mockTeleconsultTransactions.filter(tx =>
     !search || tx.patient.toLowerCase().includes(search.toLowerCase()) || tx.ref.toLowerCase().includes(search.toLowerCase())
