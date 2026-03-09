@@ -13,7 +13,6 @@ interface ProfileData {
   address: string;
   phone: string;
   languages: string[];
-  rating: number;
   reviewCount: number;
   consultationDuration: string;
   priceConsultation: string;

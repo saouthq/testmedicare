@@ -4,7 +4,7 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import JsonLd from "@/components/seo/JsonLd";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Star, Navigation, Building2 } from "lucide-react";
+import { MapPin, Phone, CheckCircle, Navigation, Building2 } from "lucide-react";
 import { mockClinics } from "@/data/mocks/establishments";
 
 const ClinicDetail = () => {
