@@ -1,17 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Shield, Smartphone } from "lucide-react";
 
 const SecurityTab = () => {
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+
   const handleChangePassword = () => {
     // TODO BACKEND: POST /api/auth/change-password
     toast({ title: "Mot de passe modifié", description: "Votre mot de passe a été changé avec succès." });
   };
 
-  const handleEnable2FA = () => {
-    // TODO BACKEND: POST /api/auth/enable-2fa
-    toast({ title: "2FA", description: "Fonctionnalité à venir." });
+  const handleToggle2FA = () => {
+    // TODO BACKEND: POST /api/auth/toggle-2fa
+    setTwoFAEnabled(!twoFAEnabled);
+    toast({
+      title: !twoFAEnabled ? "2FA activée" : "2FA désactivée",
+      description: !twoFAEnabled
+        ? "La double authentification par SMS est maintenant active."
+        : "La double authentification a été désactivée.",
+    });
   };
 
   return (
@@ -26,9 +37,22 @@ const SecurityTab = () => {
         </div>
       </div>
       <div className="rounded-xl border bg-card p-6 shadow-card">
-        <h3 className="font-semibold text-foreground mb-4">Double authentification</h3>
-        <p className="text-sm text-muted-foreground mb-4">Ajoutez une couche de sécurité supplémentaire à votre compte.</p>
-        <Button variant="outline" onClick={handleEnable2FA}>Activer la 2FA</Button>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Smartphone className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Double authentification (2FA)</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {twoFAEnabled
+                  ? "Activée — un code SMS sera envoyé à chaque connexion."
+                  : "Ajoutez une couche de sécurité supplémentaire via SMS."}
+              </p>
+            </div>
+          </div>
+          <Switch checked={twoFAEnabled} onCheckedChange={handleToggle2FA} />
+        </div>
       </div>
     </div>
   );
