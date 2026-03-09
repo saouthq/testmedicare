@@ -11,7 +11,7 @@ import { CloseModal, HistoryDrawer, CommandPalette, ClosedView } from "@/compone
 
 /**
  * DoctorConsultationDetail — Page principale
- * Layout normal : scroll de page global, top bar sticky, 3 colonnes fluides.
+ * Layout : scroll global, top bar sticky, ActionDock sticky sur desktop pour éviter de scroller.
  */
 const DoctorConsultationDetail = () => {
   return (
@@ -83,17 +83,22 @@ function ConsultationInner() {
         </div>
       </div>
 
-      {/* 3-column grid — scroll de page normal */}
-      <div className={`grid gap-3 pb-6 ${
+      {/* 3-column grid — ActionDock sticky à droite sur desktop */}
+      <div className={`grid gap-3 pb-6 items-start ${
         ctx.leftCollapsed
           ? "lg:grid-cols-[minmax(0,1fr)_360px]"
           : "lg:grid-cols-[280px_minmax(0,1fr)_360px]"
       }`}>
         {!ctx.leftCollapsed && (
-          <PatientSidebar />
+          <div className="lg:sticky lg:top-[88px] lg:self-start">
+            <PatientSidebar />
+          </div>
         )}
         <ConsultationNotes />
-        <ActionDock />
+        {/* ActionDock — sticky sur desktop pour rester visible sans scroller */}
+        <div className="lg:sticky lg:top-[88px] lg:self-start lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:scrollbar-thin">
+          <ActionDock />
+        </div>
       </div>
     </DashboardLayout>
   );

@@ -6,33 +6,10 @@ import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
 import {
-  Stethoscope,
-  ShieldCheck,
-  CreditCard,
-  Flag,
-  BarChart3,
-  LayoutDashboard,
-  Calendar,
-  Users,
-  Search,
-  FileText,
-  Settings,
-  LogOut,
-  Bell,
-  Pill,
-  FlaskConical,
-  ClipboardList,
-  Clock,
-  UserCircle,
-  Building2,
-  Menu,
-  X,
-  Activity,
-  ScrollText,
-  MessageSquare,
-  Plug,
-  Banknote,
-  Bot,
+  Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
+  Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
+  FlaskConical, ClipboardList, Clock, UserCircle, Building2, Menu, X,
+  Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -41,6 +18,12 @@ interface NavItem {
   title: string;
   url: string;
   icon: any;
+}
+
+/** Admin sidebar sections for better organization */
+interface NavSection {
+  label: string;
+  items: NavItem[];
 }
 
 interface DashboardLayoutProps {
@@ -95,27 +78,57 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Documents", url: "/dashboard/secretary/documents", icon: ScrollText },
     { title: "Messagerie", url: "/dashboard/secretary/messages", icon: MessageSquare },
   ],
-  admin: [
-    { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
-    { title: "Gestion Admin", url: "/dashboard/admin/iam", icon: ShieldCheck },
-    { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
-    { title: "Organisations", url: "/dashboard/admin/organizations", icon: Building2 },
-    { title: "Validations KYC", url: "/dashboard/admin/verifications", icon: ShieldCheck },
-    { title: "Supervision RDV", url: "/dashboard/admin/appointments", icon: Calendar },
-    { title: "Pharmacies garde", url: "/dashboard/admin/guard-pharmacies", icon: Pill },
-    { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
-    { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
-    { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
-    { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
-    { title: "Promotions", url: "/dashboard/admin/promotions", icon: CreditCard },
-    { title: "Paiements", url: "/dashboard/admin/payments", icon: CreditCard },
-    { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
-    { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
-    { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
-    { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
-    { title: "Paramètres", url: "/dashboard/admin/settings", icon: ClipboardList },
-  ],
 };
+
+/**
+ * Admin nav grouped by sections for clarity and scalability
+ */
+const adminSections: NavSection[] = [
+  {
+    label: "Vue d'ensemble",
+    items: [
+      { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
+      { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Gouvernance",
+    items: [
+      { title: "Gestion Admin", url: "/dashboard/admin/iam", icon: ShieldCheck },
+      { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
+      { title: "Organisations", url: "/dashboard/admin/organizations", icon: Building2 },
+      { title: "Validations KYC", url: "/dashboard/admin/verifications", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "Opérations",
+    items: [
+      { title: "Supervision RDV", url: "/dashboard/admin/appointments", icon: Calendar },
+      { title: "Litiges", url: "/dashboard/admin/disputes", icon: Gavel },
+      { title: "Pharmacies garde", url: "/dashboard/admin/guard-pharmacies", icon: Pill },
+      { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
+      { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
+      { title: "Paiements", url: "/dashboard/admin/payments", icon: Banknote },
+      { title: "Promotions", url: "/dashboard/admin/promotions", icon: CreditCard },
+    ],
+  },
+  {
+    label: "Système",
+    items: [
+      { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
+      { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
+      { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
+      { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
+      { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
+    ],
+  },
+];
 
 const roleLabels: Record<string, string> = {
   patient: "Patient",
@@ -148,6 +161,71 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     if (role === "patient") return mockPatients[0]?.avatar || "AB";
     return role.slice(0, 2).toUpperCase();
   }, [role]);
+
+  /** Render admin sidebar with grouped sections */
+  const renderAdminNav = () => (
+    <>
+      {adminSections.map((section) => (
+        <div key={section.label} className="mb-1">
+          {/* Section label — visible only when expanded */}
+          <div className={`px-3 pt-3 pb-1 transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 h-0 overflow-hidden pt-1 pb-0"}`}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              {section.label}
+            </p>
+          </div>
+          {!expanded && <div className="h-px bg-border mx-2 my-1" />}
+          {section.items.map((item) => {
+            const isActive = location.pathname === item.url;
+            return (
+              <Link
+                key={item.url}
+                to={item.url}
+                onClick={() => setSidebarOpen(false)}
+                title={!expanded ? item.title : undefined}
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors whitespace-nowrap active-scale mx-1 ${
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
+                  {item.title}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </>
+  );
+
+  /** Render standard sidebar nav */
+  const renderStandardNav = () => (
+    <>
+      {(items || []).map((item) => {
+        const isActive = location.pathname === item.url;
+        return (
+          <Link
+            key={item.url}
+            to={item.url}
+            onClick={() => setSidebarOpen(false)}
+            title={!expanded ? item.title : undefined}
+            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors whitespace-nowrap active-scale ${
+              isActive
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <item.icon className="h-4 w-4 shrink-0" />
+            <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
+              {item.title}
+            </span>
+          </Link>
+        );
+      })}
+    </>
+  );
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -206,39 +284,21 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
           {/* Nav */}
           <nav className="flex-1 min-h-0 px-1.5 py-1.5 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-thin">
-            {items.map((item) => {
-              const isActive = location.pathname === item.url;
-              return (
-                <Link
-                  key={item.url}
-                  to={item.url}
-                  onClick={() => setSidebarOpen(false)}
-                  title={!expanded ? item.title : undefined}
-                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors whitespace-nowrap active-scale ${
-                    isActive
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
-                    {item.title}
-                  </span>
-                </Link>
-              );
-            })}
+            {role === "admin" ? renderAdminNav() : renderStandardNav()}
           </nav>
 
-          {/* Footer */}
+          {/* Footer — hide settings link for admin (already in nav) */}
           <div className="border-t px-1.5 py-2 space-y-0.5 shrink-0 flex-shrink-0">
-            <Link
-              to={`/dashboard/${role}/settings`}
-              title={!expanded ? "Paramètres" : undefined}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap active-scale"
-            >
-              <Settings className="h-4 w-4 shrink-0" />
-              <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Paramètres</span>
-            </Link>
+            {role !== "admin" && (
+              <Link
+                to={`/dashboard/${role}/settings`}
+                title={!expanded ? "Paramètres" : undefined}
+                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap active-scale"
+              >
+                <Settings className="h-4 w-4 shrink-0" />
+                <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Paramètres</span>
+              </Link>
+            )}
             <Link
               to="/login"
               title={!expanded ? "Déconnexion" : undefined}
@@ -253,7 +313,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar — glass effect */}
+        {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card/80 glass-header px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <button className="lg:hidden text-muted-foreground active-scale p-1" onClick={() => setSidebarOpen(true)}>
@@ -293,11 +353,11 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           </div>
         </header>
 
-        {/* Page content — responsive padding */}
+        {/* Page content */}
         <main className="flex-1 p-4 sm:p-6 pb-safe">{children}</main>
       </div>
 
-      {/* Notification Center drawer for non-patient roles */}
+      {/* Notification Center drawer */}
       <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} role={role} />
     </div>
   );
