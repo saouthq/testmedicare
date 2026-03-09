@@ -34,7 +34,7 @@ interface NavSection {
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin";
+  role: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin" | "hospital" | "clinic";
   title: string;
 }
 
