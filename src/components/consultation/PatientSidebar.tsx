@@ -10,16 +10,15 @@ export function PatientSidebar() {
   const ctx = useConsultation();
 
   return (
-    <aside className="space-y-4 lg:sticky lg:top-[160px] lg:self-start">
+    <aside className="space-y-3">
       {/* Patient card */}
       <div className="rounded-xl border bg-card p-4 shadow-card">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold">
+          <div className="h-11 w-11 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
             {ctx.initials}
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-muted-foreground">Patient</p>
-            <p className="font-semibold text-foreground truncate">{ctx.patient.name}</p>
+            <p className="font-semibold text-foreground truncate text-sm">{ctx.patient.name}</p>
             <p className="text-xs text-muted-foreground">{ctx.patient.age} ans · {ctx.patient.gender}</p>
           </div>
         </div>
@@ -34,11 +33,11 @@ export function PatientSidebar() {
           </div>
         </div>
         <div className="mt-3 flex gap-2">
-          <Button variant="outline" size="sm" className="text-xs flex-1" onClick={() => ctx.setHistoryOpen(true)}>
+          <Button variant="outline" size="sm" className="text-xs flex-1 h-8" onClick={() => ctx.setHistoryOpen(true)}>
             <History className="h-3.5 w-3.5 mr-1" /> Historique
           </Button>
           <Link to="/dashboard/doctor/patients/1" className="flex-1">
-            <Button variant="outline" size="sm" className="text-xs w-full">
+            <Button variant="outline" size="sm" className="text-xs w-full h-8">
               <FileText className="h-3.5 w-3.5 mr-1" /> Dossier
             </Button>
           </Link>
@@ -51,22 +50,21 @@ export function PatientSidebar() {
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" /> Antécédents
           </h3>
-          <span className="text-[11px] text-muted-foreground">Saisie libre</span>
         </div>
-        <div className="mt-3 space-y-3">
+        <div className="mt-3 space-y-2">
           {[
-            { label: "Médicaux", value: ctx.antMed, set: ctx.setAntMed, ph: "Ex: diabète T2, HTA, asthme…" },
-            { label: "Chirurgicaux", value: ctx.antSurg, set: ctx.setAntSurg, ph: "Ex: appendicectomie 2015…" },
-            { label: "Traumatiques", value: ctx.antTrauma, set: ctx.setAntTrauma, ph: "Ex: fracture poignet 2022…" },
-            { label: "Familiaux", value: ctx.antFamily, set: ctx.setAntFamily, ph: "Ex: diabète, cardiopathie…" },
+            { label: "Médicaux", value: ctx.antMed, set: ctx.setAntMed, ph: "diabète T2, HTA…" },
+            { label: "Chirurgicaux", value: ctx.antSurg, set: ctx.setAntSurg, ph: "appendicectomie…" },
+            { label: "Traumatiques", value: ctx.antTrauma, set: ctx.setAntTrauma, ph: "fracture…" },
+            { label: "Familiaux", value: ctx.antFamily, set: ctx.setAntFamily, ph: "diabète…" },
           ].map(f => (
             <div key={f.label}>
               <Label className="text-[11px] text-muted-foreground">{f.label}</Label>
               <textarea
                 value={f.value} onChange={e => f.set(e.target.value)}
                 onInput={e => autoGrowCompact(e.currentTarget)}
-                rows={2} placeholder={f.ph}
-                className="mt-1 w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm min-h-[56px] max-h-[120px]"
+                rows={1} placeholder={f.ph}
+                className="mt-0.5 w-full resize-none rounded-lg border bg-background px-2.5 py-1.5 text-xs min-h-[32px] max-h-[80px]"
               />
             </div>
           ))}
@@ -86,16 +84,16 @@ export function PatientSidebar() {
             {ctx.completion.vitalsOk ? "OK" : "À compléter"}
           </span>
         </div>
-        <div className="mt-3 flex items-start justify-between gap-2">
+        <div className="mt-2 flex items-start justify-between gap-2">
           <p className="text-[11px] text-muted-foreground leading-4">
-            TA {ctx.vitals.systolic}/{ctx.vitals.diastolic} · FC {ctx.vitals.heartRate} · T° {ctx.vitals.temperature} · SpO2 {ctx.vitals.oxygenSat}% · Poids {ctx.vitals.weight}kg
+            TA {ctx.vitals.systolic}/{ctx.vitals.diastolic} · FC {ctx.vitals.heartRate} · T° {ctx.vitals.temperature} · SpO2 {ctx.vitals.oxygenSat}% · {ctx.vitals.weight}kg
           </p>
-          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => ctx.setVitalsOpen(!ctx.vitalsOpen)}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs shrink-0" onClick={() => ctx.setVitalsOpen(!ctx.vitalsOpen)}>
             {ctx.vitalsOpen ? "Réduire" : "Modifier"}
           </Button>
         </div>
         {ctx.vitalsOpen && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-2 gap-2">
             {[
               { icon: Gauge, label: "Tension", color: "text-destructive", type: "bp" },
               { icon: Heart, label: "FC (bpm)", color: "text-primary", key: "heartRate" },
@@ -109,12 +107,12 @@ export function PatientSidebar() {
                 </div>
                 {v.type === "bp" ? (
                   <div className="flex items-center gap-1">
-                    <Input value={ctx.vitals.systolic} onChange={e => ctx.setVitals(vt => ({ ...vt, systolic: e.target.value }))} className="text-center h-8 text-xs font-semibold" />
+                    <Input value={ctx.vitals.systolic} onChange={e => ctx.setVitals(vt => ({ ...vt, systolic: e.target.value }))} className="text-center h-7 text-xs font-semibold" />
                     <span className="text-muted-foreground font-bold">/</span>
-                    <Input value={ctx.vitals.diastolic} onChange={e => ctx.setVitals(vt => ({ ...vt, diastolic: e.target.value }))} className="text-center h-8 text-xs font-semibold" />
+                    <Input value={ctx.vitals.diastolic} onChange={e => ctx.setVitals(vt => ({ ...vt, diastolic: e.target.value }))} className="text-center h-7 text-xs font-semibold" />
                   </div>
                 ) : (
-                  <Input value={ctx.vitals[v.key as keyof typeof ctx.vitals]} onChange={e => ctx.setVitals(vt => ({ ...vt, [v.key!]: e.target.value }))} className="h-8 text-xs font-semibold" />
+                  <Input value={ctx.vitals[v.key as keyof typeof ctx.vitals]} onChange={e => ctx.setVitals(vt => ({ ...vt, [v.key!]: e.target.value }))} className="h-7 text-xs font-semibold" />
                 )}
               </div>
             ))}
@@ -123,7 +121,7 @@ export function PatientSidebar() {
                 <Scale className="h-3 w-3 text-accent" />
                 <Label className="text-[10px] text-muted-foreground">Poids (kg)</Label>
               </div>
-              <Input value={ctx.vitals.weight} onChange={e => ctx.setVitals(vt => ({ ...vt, weight: e.target.value }))} className="h-8 text-xs font-semibold" />
+              <Input value={ctx.vitals.weight} onChange={e => ctx.setVitals(vt => ({ ...vt, weight: e.target.value }))} className="h-7 text-xs font-semibold" />
             </div>
           </div>
         )}
