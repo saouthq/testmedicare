@@ -65,7 +65,7 @@ const SecretaryBilling = () => {
     setInvoices(prev => [{
       id: newId, patient: newPatient, doctor: newDoctor, date: "20 Fév",
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
-      status, avatar, assurance: newCnam ? "CNAM" : "Sans assurance",
+      status, avatar, assurance: newCnam ? "Assurance publique" : "Sans assurance",
     }, ...prev]);
     setShowNew(false);
     setNewPatient(""); setNewActs([{ type: actTypes[0].label, price: actTypes[0].price }]); setNewPayment("—");
@@ -312,7 +312,7 @@ const SecretaryBilling = () => {
             <div className="space-y-3 mb-5">
               <Label className="text-xs">Moyen de paiement</Label>
               <div className="grid grid-cols-2 gap-2">
-                {["Espèces", "CNAM", "Chèque", "Virement", "Carte"].map(m => (
+                {["Espèces", "Assurance", "Chèque", "Virement", "Carte"].map(m => (
                   <button key={m} onClick={() => setPayMethod(m)}
                     className={`rounded-lg border p-3 text-xs font-medium transition-all text-center ${payMethod === m ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground hover:border-primary/50"}`}>
                     {m}

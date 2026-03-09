@@ -16,8 +16,8 @@ export const languages = ["Français", "Arabe", "Anglais", "Allemand", "Italien"
 // Note: Remplace CNAM par système "Assurance" générique
 
 export const mockAssurances = [
-  { id: "cnam", name: "CNAM", type: "public" },
-  { id: "cnrps", name: "CNRPS", type: "public" },
+  { id: "publique", name: "Assurance publique", type: "public" },
+  { id: "cnrps", name: "CNRPS (retraités)", type: "public" },
   { id: "cnss", name: "CNSS", type: "public" },
   { id: "maghrebia", name: "Assurances Maghrebia", type: "private" },
   { id: "star", name: "STAR Assurances", type: "private" },

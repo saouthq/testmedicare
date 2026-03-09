@@ -171,7 +171,7 @@ const SecretaryPatients = () => {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground">Téléphone</p><p className="text-xs font-medium text-foreground">{selectedPatient.phone}</p></div>
                         <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground">Email</p><p className="text-xs font-medium text-foreground truncate">{selectedPatient.email}</p></div>
-                        <div className="rounded-lg bg-primary/5 border border-primary/20 p-3"><p className="text-[10px] text-primary font-medium flex items-center gap-1"><Shield className="h-3 w-3" />Assurance</p><p className="text-xs font-semibold text-foreground">{selectedPatient.assurance}</p>{selectedPatient.cnamId !== "—" && <p className="text-[10px] text-muted-foreground mt-0.5">N° Assuré: {selectedPatient.cnamId}</p>}</div>
+                        <div className="rounded-lg bg-primary/5 border border-primary/20 p-3"><p className="text-[10px] text-primary font-medium flex items-center gap-1"><Shield className="h-3 w-3" />Assurance</p><p className="text-xs font-semibold text-foreground">{selectedPatient.assurance}</p>{selectedPatient.numAssure !== "—" && <p className="text-[10px] text-muted-foreground mt-0.5">N° Assuré: {selectedPatient.numAssure}</p>}</div>
                         <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground">Médecin</p><p className="text-xs font-medium text-foreground">{selectedPatient.doctor}</p></div>
                       </div>
                       <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground">Notes</p><p className="text-xs text-foreground mt-1">{selectedPatient.notes}</p></div>
@@ -192,10 +192,10 @@ const SecretaryPatients = () => {
                         <div><Label className="text-[10px]">Email</Label><Input value={editForm.email} onChange={e => setEditForm(f => f ? { ...f, email: e.target.value } : f)} className="mt-0.5 h-8 text-xs" /></div>
                         <div><Label className="text-[10px]">Assurance</Label>
                           <select value={editForm.assurance} onChange={e => setEditForm(f => f ? { ...f, assurance: e.target.value } : f)} className="mt-0.5 w-full h-8 rounded-md border bg-background px-2 text-xs">
-                            <option>CNAM</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option>
+                            <option>Assurance publique</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option>
                           </select>
                         </div>
-                        <div><Label className="text-[10px]">N° Assuré</Label><Input value={editForm.cnamId} onChange={e => setEditForm(f => f ? { ...f, cnamId: e.target.value } : f)} className="mt-0.5 h-8 text-xs" placeholder="Optionnel" /></div>
+                        <div><Label className="text-[10px]">N° Assuré</Label><Input value={editForm.numAssure} onChange={e => setEditForm(f => f ? { ...f, numAssure: e.target.value } : f)} className="mt-0.5 h-8 text-xs" placeholder="Optionnel" /></div>
                         <div><Label className="text-[10px]">Médecin</Label>
                           <select value={editForm.doctor} onChange={e => setEditForm(f => f ? { ...f, doctor: e.target.value } : f)} className="mt-0.5 w-full h-8 rounded-md border bg-background px-2 text-xs">
                             <option>Dr. Bouazizi</option><option>Dr. Gharbi</option><option>Dr. Hammami</option>
@@ -304,7 +304,7 @@ const SecretaryPatients = () => {
 };
 
 const NewPatientForm = ({ onAdd, onCancel }: { onAdd: (p: any) => void; onCancel: () => void }) => {
-  const [form, setForm] = useState({ name: "", firstName: "", phone: "", email: "", dob: "", cnamId: "", assurance: "CNAM", doctor: "Dr. Bouazizi", gouvernorat: "Tunis", notes: "" });
+  const [form, setForm] = useState({ name: "", firstName: "", phone: "", email: "", dob: "", numAssure: "", assurance: "Assurance publique", doctor: "Dr. Bouazizi", gouvernorat: "Tunis", notes: "" });
 
   const handleSubmit = () => {
     if (!form.firstName || !form.name) return;
@@ -312,7 +312,7 @@ const NewPatientForm = ({ onAdd, onCancel }: { onAdd: (p: any) => void; onCancel
       name: `${form.firstName} ${form.name}`,
       avatar: `${form.firstName[0]}${form.name[0]}`.toUpperCase(),
       phone: form.phone, email: form.email, dob: form.dob,
-      cnamId: form.cnamId || "—", assurance: form.assurance,
+      numAssure: form.numAssure || "—", assurance: form.assurance,
       doctor: form.doctor, gouvernorat: form.gouvernorat,
       nextAppointment: null, lastVisit: null,
       balance: 0, notes: form.notes,
@@ -327,10 +327,10 @@ const NewPatientForm = ({ onAdd, onCancel }: { onAdd: (p: any) => void; onCancel
         <div><Label className="text-xs">Date de naissance</Label><Input type="date" value={form.dob} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} className="mt-1" /></div>
         <div><Label className="text-xs">Téléphone</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="mt-1" placeholder="+216 XX XXX XXX" /></div>
         <div><Label className="text-xs">Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="mt-1" placeholder="email@..." /></div>
-        <div><Label className="text-xs">N° Assuré</Label><Input value={form.cnamId} onChange={e => setForm(f => ({ ...f, cnamId: e.target.value }))} className="mt-1" placeholder="Optionnel" /></div>
+        <div><Label className="text-xs">N° Assuré</Label><Input value={form.numAssure} onChange={e => setForm(f => ({ ...f, numAssure: e.target.value }))} className="mt-1" placeholder="Optionnel" /></div>
         <div><Label className="text-xs">Assurance</Label>
           <select value={form.assurance} onChange={e => setForm(f => ({ ...f, assurance: e.target.value }))} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-            <option>CNAM</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option>
+            <option>Assurance publique</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option>
           </select>
         </div>
         <div><Label className="text-xs">Gouvernorat</Label>

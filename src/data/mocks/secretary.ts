@@ -10,22 +10,22 @@ export const mockSecretaryTeam = [
 ];
 
 export const mockSecretaryWaitingRoom = [
-  { id: 1, patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", motif: "Suivi diabète", status: "waiting" as string, avatar: "AB", assurance: "CNAM", waitMin: 15 },
-  { id: 2, patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", motif: "Bilan cardiaque", status: "waiting" as string, avatar: "FT", assurance: "CNAM", waitMin: 10 },
+  { id: 1, patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", motif: "Suivi diabète", status: "waiting" as string, avatar: "AB", assurance: "Maghrebia", waitMin: 15 },
+  { id: 2, patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", motif: "Bilan cardiaque", status: "waiting" as string, avatar: "FT", assurance: "Assurance publique", waitMin: 10 },
   { id: 3, patient: "Mohamed Sfar", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Bouazizi", motif: "Contrôle annuel", status: "waiting" as string, avatar: "MS", assurance: "Sans assurance", waitMin: 5 },
 ];
 
 export const mockSecretaryAppointments = [
-  { id: 1, time: "08:30", patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Consultation", status: "done" as string, avatar: "KM", amount: "35 DT", assurance: "CNAM" },
-  { id: 2, time: "09:00", patient: "Leila Chahed", doctor: "Dr. Gharbi", type: "Suivi", status: "done" as string, avatar: "LC", amount: "45 DT", assurance: "CNRPS" },
-  { id: 3, time: "09:30", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", status: "in_progress" as string, avatar: "AB", amount: "35 DT", assurance: "CNAM" },
-  { id: 4, time: "09:45", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", status: "waiting" as string, avatar: "FT", amount: "45 DT", assurance: "CNAM" },
+  { id: 1, time: "08:30", patient: "Karim Mansour", doctor: "Dr. Bouazizi", type: "Consultation", status: "done" as string, avatar: "KM", amount: "35 DT", assurance: "Assurance publique" },
+  { id: 2, time: "09:00", patient: "Leila Chahed", doctor: "Dr. Gharbi", type: "Suivi", status: "done" as string, avatar: "LC", amount: "45 DT", assurance: "Assurance publique" },
+  { id: 3, time: "09:30", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", type: "Consultation", status: "in_progress" as string, avatar: "AB", amount: "35 DT", assurance: "Maghrebia" },
+  { id: 4, time: "09:45", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", type: "Suivi", status: "waiting" as string, avatar: "FT", amount: "45 DT", assurance: "Assurance publique" },
   { id: 5, time: "10:00", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", type: "Contrôle", status: "upcoming" as string, avatar: "MS", amount: "35 DT", assurance: "Sans assurance" },
-  { id: 6, time: "10:30", patient: "Nadia Jemni", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "NJ", amount: "40 DT", assurance: "CNAM" },
-  { id: 7, time: "11:00", patient: "Sami Ayari", doctor: "Dr. Bouazizi", type: "Première visite", status: "upcoming" as string, avatar: "SA", amount: "50 DT", assurance: "CNAM" },
+  { id: 6, time: "10:30", patient: "Nadia Jemni", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "NJ", amount: "40 DT", assurance: "Assurance publique" },
+  { id: 7, time: "11:00", patient: "Sami Ayari", doctor: "Dr. Bouazizi", type: "Première visite", status: "upcoming" as string, avatar: "SA", amount: "50 DT", assurance: "Assurance publique" },
   { id: 8, time: "14:00", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", type: "Téléconsultation", status: "upcoming" as string, avatar: "YB", teleconsultation: true, amount: "35 DT", assurance: "Sans assurance" },
   { id: 9, time: "14:30", patient: "Salma Dridi", doctor: "Dr. Hammami", type: "Consultation", status: "upcoming" as string, avatar: "SD", amount: "40 DT", assurance: "Maghrebia" },
-  { id: 10, time: "15:00", patient: "Hana Kammoun", doctor: "Dr. Bouazizi", type: "Suivi", status: "upcoming" as string, avatar: "HK", amount: "35 DT", assurance: "CNAM" },
+  { id: 10, time: "15:00", patient: "Hana Kammoun", doctor: "Dr. Bouazizi", type: "Suivi", status: "upcoming" as string, avatar: "HK", amount: "35 DT", assurance: "Assurance publique" },
   { id: 11, time: "15:30", patient: "Bilel Nasri", doctor: "Dr. Gharbi", type: "Consultation", status: "upcoming" as string, avatar: "BN", amount: "45 DT", assurance: "STAR" },
   { id: 12, time: "16:00", patient: "Olfa Ben Salah", doctor: "Dr. Hammami", type: "Suivi", status: "upcoming" as string, avatar: "OB", amount: "40 DT", assurance: "Sans assurance" },
 ];
@@ -75,11 +75,11 @@ export const mockOfficeEquipment = [
 ];
 
 export const mockSecretaryPatients = [
-  { name: "Amine Ben Ali", phone: "+216 71 234 567", email: "amine@email.tn", lastVisit: "20 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: "28 Fév 14:30", cnamId: "12345678", assurance: "CNAM", dob: "15/03/1991", avatar: "AB", balance: 0, notes: "Suivi diabète régulier", gouvernorat: "Tunis" },
-  { name: "Fatma Trabelsi", phone: "+216 22 345 678", email: "fatma@email.tn", lastVisit: "18 Fév 2026", doctor: "Dr. Gharbi", nextAppointment: "25 Fév 10:00", cnamId: "23456789", assurance: "CNAM", dob: "12/07/1970", avatar: "FT", balance: 60, notes: "Hypertension — suivi cardio", gouvernorat: "Ariana" },
-  { name: "Mohamed Sfar", phone: "+216 55 456 789", email: "med@email.tn", lastVisit: "15 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null as string | null, cnamId: "—", assurance: "Privée", dob: "05/01/1998", avatar: "MS", balance: 0, notes: "Suivi post-opératoire", gouvernorat: "Ben Arous" },
-  { name: "Nadia Jemni", phone: "+216 98 567 890", email: "nadia@email.tn", lastVisit: "10 Fév 2026", doctor: "Dr. Hammami", nextAppointment: "3 Mar 09:00", cnamId: "34567890", assurance: "CNAM", dob: "18/11/1959", avatar: "NJ", balance: 25, notes: "Arthrose — anti-inflammatoires", gouvernorat: "Manouba" },
-  { name: "Sami Ayari", phone: "+216 29 678 901", email: "sami@email.tn", lastVisit: "8 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null as string | null, cnamId: "45678901", assurance: "CNAM", dob: "22/06/1984", avatar: "SA", balance: 0, notes: "Asthme léger", gouvernorat: "Tunis" },
+  { name: "Amine Ben Ali", phone: "+216 71 234 567", email: "amine@email.tn", lastVisit: "20 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: "28 Fév 14:30", numAssure: "12345678", assurance: "Maghrebia", dob: "15/03/1991", avatar: "AB", balance: 0, notes: "Suivi diabète régulier", gouvernorat: "Tunis" },
+  { name: "Fatma Trabelsi", phone: "+216 22 345 678", email: "fatma@email.tn", lastVisit: "18 Fév 2026", doctor: "Dr. Gharbi", nextAppointment: "25 Fév 10:00", numAssure: "23456789", assurance: "Assurance publique", dob: "12/07/1970", avatar: "FT", balance: 60, notes: "Hypertension — suivi cardio", gouvernorat: "Ariana" },
+  { name: "Mohamed Sfar", phone: "+216 55 456 789", email: "med@email.tn", lastVisit: "15 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null as string | null, numAssure: "—", assurance: "STAR", dob: "05/01/1998", avatar: "MS", balance: 0, notes: "Suivi post-opératoire", gouvernorat: "Ben Arous" },
+  { name: "Nadia Jemni", phone: "+216 98 567 890", email: "nadia@email.tn", lastVisit: "10 Fév 2026", doctor: "Dr. Hammami", nextAppointment: "3 Mar 09:00", numAssure: "34567890", assurance: "Assurance publique", dob: "18/11/1959", avatar: "NJ", balance: 25, notes: "Arthrose — anti-inflammatoires", gouvernorat: "Manouba" },
+  { name: "Sami Ayari", phone: "+216 29 678 901", email: "sami@email.tn", lastVisit: "8 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null as string | null, numAssure: "45678901", assurance: "Assurance publique", dob: "22/06/1984", avatar: "SA", balance: 0, notes: "Asthme léger", gouvernorat: "Tunis" },
 ];
 
 /** Full patient data with id and history — used by SecretaryPatients page */
@@ -87,7 +87,7 @@ export const mockSecretaryPatientsWithHistory = [
   {
     id: 1, name: "Amine Ben Ali", phone: "+216 71 234 567", email: "amine@email.tn",
     lastVisit: "20 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: "28 Fév 14:30",
-    cnamId: "12345678", assurance: "CNAM", dob: "15/03/1991", avatar: "AB",
+    numAssure: "12345678", assurance: "Maghrebia", dob: "15/03/1991", avatar: "AB",
     balance: 0, notes: "Suivi diabète régulier", gouvernorat: "Tunis",
     history: [
       { date: "20 Fév 2026", type: "Consultation", doctor: "Dr. Bouazizi", motif: "Suivi diabète", amount: "35 DT", paid: true },
@@ -98,7 +98,7 @@ export const mockSecretaryPatientsWithHistory = [
   {
     id: 2, name: "Fatma Trabelsi", phone: "+216 22 345 678", email: "fatma@email.tn",
     lastVisit: "18 Fév 2026", doctor: "Dr. Gharbi", nextAppointment: "25 Fév 10:00",
-    cnamId: "23456789", assurance: "CNAM", dob: "12/07/1970", avatar: "FT",
+    numAssure: "23456789", assurance: "Assurance publique", dob: "12/07/1970", avatar: "FT",
     balance: 60, notes: "Hypertension — suivi cardio", gouvernorat: "Ariana",
     history: [
       { date: "18 Fév 2026", type: "Suivi", doctor: "Dr. Gharbi", motif: "Tension artérielle", amount: "50 DT", paid: false },
@@ -108,7 +108,7 @@ export const mockSecretaryPatientsWithHistory = [
   {
     id: 3, name: "Mohamed Sfar", phone: "+216 55 456 789", email: "med@email.tn",
     lastVisit: "15 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null as string | null,
-    cnamId: "—", assurance: "Privée", dob: "05/01/1998", avatar: "MS",
+    numAssure: "—", assurance: "STAR", dob: "05/01/1998", avatar: "MS",
     balance: 0, notes: "Suivi post-opératoire", gouvernorat: "Ben Arous",
     history: [
       { date: "15 Fév 2026", type: "Contrôle", doctor: "Dr. Bouazizi", motif: "Post-opératoire", amount: "35 DT", paid: true },
@@ -117,7 +117,7 @@ export const mockSecretaryPatientsWithHistory = [
   {
     id: 4, name: "Nadia Jemni", phone: "+216 98 567 890", email: "nadia@email.tn",
     lastVisit: "10 Fév 2026", doctor: "Dr. Hammami", nextAppointment: "3 Mar 09:00",
-    cnamId: "34567890", assurance: "CNAM", dob: "18/11/1959", avatar: "NJ",
+    numAssure: "34567890", assurance: "Assurance publique", dob: "18/11/1959", avatar: "NJ",
     balance: 25, notes: "Arthrose — anti-inflammatoires", gouvernorat: "Manouba",
     history: [
       { date: "10 Fév 2026", type: "Consultation", doctor: "Dr. Hammami", motif: "Douleurs articulaires", amount: "45 DT", paid: false },
@@ -126,7 +126,7 @@ export const mockSecretaryPatientsWithHistory = [
   {
     id: 5, name: "Sami Ayari", phone: "+216 29 678 901", email: "sami@email.tn",
     lastVisit: "8 Fév 2026", doctor: "Dr. Bouazizi", nextAppointment: null as string | null,
-    cnamId: "45678901", assurance: "CNAM", dob: "22/06/1984", avatar: "SA",
+    numAssure: "45678901", assurance: "Assurance publique", dob: "22/06/1984", avatar: "SA",
     balance: 0, notes: "Asthme léger", gouvernorat: "Tunis",
     history: [
       { date: "8 Fév 2026", type: "Consultation", doctor: "Dr. Bouazizi", motif: "Renouvellement traitement", amount: "35 DT", paid: true },
@@ -135,11 +135,11 @@ export const mockSecretaryPatientsWithHistory = [
 ];
 
 export const mockSecretaryBillingInvoices = [
-  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "Assurance", status: "paid", avatar: "AB", assurance: "CNAM" },
-  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", assurance: "CNAM" },
+  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "Assurance", status: "paid", avatar: "AB", assurance: "Assurance publique" },
+  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", assurance: "Assurance publique" },
   { id: "FAC-2026-085", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", date: "19 Fév", amount: 35, type: "Consultation G", payment: "Espèces", status: "paid", avatar: "MS", assurance: "Sans assurance" },
-  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", assurance: "CNAM" },
-  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", assurance: "CNAM" },
+  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", assurance: "Assurance publique" },
+  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", assurance: "Assurance publique" },
   { id: "FAC-2026-082", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Téléconsultation", payment: "Virement", status: "paid", avatar: "YB", assurance: "Sans assurance" },
   { id: "FAC-2026-080", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "15 Fév", amount: 60, type: "Suivi", payment: "—", status: "overdue", avatar: "RM", assurance: "CNRPS" },
   { id: "FAC-2026-078", patient: "Salma Dridi", doctor: "Dr. Bouazizi", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "SD", assurance: "Maghrebia" },

@@ -25,7 +25,7 @@ const Register = () => {
             <div><span className="text-2xl font-bold">Medicare</span><p className="text-primary-foreground/70 text-xs">Tunisie 🇹🇳</p></div>
           </div>
           <h2 className="text-3xl font-bold">Rejoignez Medicare</h2>
-          <p className="mt-4 text-primary-foreground/80">Créez votre compte et accédez à l'ensemble des services de la plateforme. Prise en charge CNAM incluse.</p>
+          <p className="mt-4 text-primary-foreground/80">Créez votre compte et accédez à l'ensemble des services de la plateforme.</p>
         </div>
       </div>
 
@@ -59,7 +59,7 @@ const Register = () => {
             <div><Label htmlFor="email">Email</Label><Input id="email" type="email" placeholder="votre@email.tn" className="mt-1.5" /></div>
             <div><Label htmlFor="phone">Téléphone</Label><Input id="phone" type="tel" placeholder="+216 XX XXX XXX" className="mt-1.5" /></div>
             {selectedRole === "patient" && (
-              <div><Label htmlFor="cnam">N° Assuré CNAM (optionnel)</Label><Input id="cnam" placeholder="XXXXXXXX" className="mt-1.5" /></div>
+              <div><Label htmlFor="assurance-num">N° Assuré (optionnel)</Label><Input id="assurance-num" placeholder="XXXXXXXX" className="mt-1.5" /></div>
             )}
             <div><Label htmlFor="gouvernorat">Gouvernorat</Label>
               <select id="gouvernorat" className="mt-1.5 w-full rounded-lg border bg-background px-3 py-2 text-sm">

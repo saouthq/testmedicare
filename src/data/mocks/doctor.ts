@@ -96,11 +96,11 @@ export const mockFaqItems = [
 
 export const mockTodaySchedule: DoctorScheduleItem[] = [
   { time: "08:30", patient: "Amine Ben Ali", type: "Consultation", duration: "30 min", status: "done", motif: "Suivi diabète", avatar: "AB", assurance: "Maghrebia", phone: "+216 55 123 456" },
-  { time: "09:00", patient: "Fatma Trabelsi", type: "Suivi", duration: "20 min", status: "done", motif: "Contrôle tension", avatar: "FT", assurance: "CNAM", phone: "+216 55 234 567" },
+  { time: "09:00", patient: "Fatma Trabelsi", type: "Suivi", duration: "20 min", status: "done", motif: "Contrôle tension", avatar: "FT", assurance: "Assurance publique", phone: "+216 55 234 567" },
   { time: "09:30", patient: "Mohamed Sfar", type: "Première visite", duration: "45 min", status: "current", motif: "Bilan initial", avatar: "MS", assurance: "", phone: "+216 55 345 678" },
-  { time: "10:15", patient: "Nadia Jemni", type: "Contrôle", duration: "20 min", status: "upcoming", motif: "Douleurs articulaires", avatar: "NJ", assurance: "CNAM", phone: "+216 55 456 789" },
-  { time: "10:45", patient: "Sami Ayari", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Renouvellement ordonnance", avatar: "SA", assurance: "CNAM" },
-  { time: "14:00", patient: "Rania Meddeb", type: "Suivi", duration: "20 min", status: "upcoming", motif: "Suivi cholestérol", avatar: "RM", assurance: "CNRPS" },
+  { time: "10:15", patient: "Nadia Jemni", type: "Contrôle", duration: "20 min", status: "upcoming", motif: "Douleurs articulaires", avatar: "NJ", assurance: "Assurance publique", phone: "+216 55 456 789" },
+  { time: "10:45", patient: "Sami Ayari", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Renouvellement ordonnance", avatar: "SA", assurance: "Assurance publique" },
+  { time: "14:00", patient: "Rania Meddeb", type: "Suivi", duration: "20 min", status: "upcoming", motif: "Suivi cholestérol", avatar: "RM", assurance: "Assurance publique" },
   { time: "14:30", patient: "Youssef Belhadj", type: "Téléconsultation", duration: "20 min", status: "upcoming", motif: "Résultats analyses", avatar: "YB", teleconsultation: true, assurance: "" },
   { time: "15:00", patient: "Salma Dridi", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Certificat médical", avatar: "SD", assurance: "STAR" },
 ];
@@ -119,10 +119,10 @@ export const mockUrgentAlerts: (UrgentAlert & { link?: string })[] = [
 
 export const mockDoctorConsultations: DoctorConsultation[] = [
   { id: 1, patient: "Amine Ben Ali", date: "20 Fév 2026", time: "09:30", motif: "Suivi diabète", notes: "Glycémie stable, renouvellement traitement", prescriptions: 1, assurance: "Maghrebia", amount: "35 DT", avatar: "AB", status: "completed" },
-  { id: 2, patient: "Fatma Trabelsi", date: "20 Fév 2026", time: "09:00", motif: "Contrôle tension", notes: "TA 14/8, ajustement posologie", prescriptions: 1, assurance: "CNAM", amount: "35 DT", avatar: "FT", status: "completed" },
+  { id: 2, patient: "Fatma Trabelsi", date: "20 Fév 2026", time: "09:00", motif: "Contrôle tension", notes: "TA 14/8, ajustement posologie", prescriptions: 1, assurance: "Assurance publique", amount: "35 DT", avatar: "FT", status: "completed" },
   { id: 3, patient: "Mohamed Sfar", date: "18 Fév 2026", time: "14:00", motif: "Suivi post-opératoire", notes: "Cicatrisation normale, retrait fils J+15", prescriptions: 0, assurance: "", amount: "50 DT", avatar: "MS", status: "completed" },
-  { id: 4, patient: "Nadia Jemni", date: "17 Fév 2026", time: "10:30", motif: "Douleurs articulaires", notes: "Prescription anti-inflammatoires", prescriptions: 2, assurance: "CNAM", amount: "35 DT", avatar: "NJ", status: "completed" },
-  { id: 5, patient: "Sami Ayari", date: "15 Fév 2026", time: "11:00", motif: "Renouvellement ordonnance", notes: "Ventoline + Seretide renouvelés pour 3 mois", prescriptions: 1, assurance: "CNAM", amount: "35 DT", avatar: "SA", status: "completed" },
+  { id: 4, patient: "Nadia Jemni", date: "17 Fév 2026", time: "10:30", motif: "Douleurs articulaires", notes: "Prescription anti-inflammatoires", prescriptions: 2, assurance: "Assurance publique", amount: "35 DT", avatar: "NJ", status: "completed" },
+  { id: 5, patient: "Sami Ayari", date: "15 Fév 2026", time: "11:00", motif: "Renouvellement ordonnance", notes: "Ventoline + Seretide renouvelés pour 3 mois", prescriptions: 1, assurance: "Assurance publique", amount: "35 DT", avatar: "SA", status: "completed" },
 ];
 
 export const mockConsultationPatient = {
@@ -158,8 +158,8 @@ export const mockPatientAnalyses: AnalysisResult[] = [
 
 export const mockDoctorPrescriptions: Prescription[] = [
   { id: "ORD-2026-045", doctor: "Dr. Bouazizi", patient: "Amine Ben Ali", date: "20 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], status: "active", total: "45 DT", assurance: "Maghrebia", pharmacy: null, sent: true },
-  { id: "ORD-2026-044", doctor: "Dr. Bouazizi", patient: "Fatma Trabelsi", date: "20 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], status: "active", total: "28 DT", assurance: "CNAM", pharmacy: null, sent: true },
-  { id: "ORD-2026-043", doctor: "Dr. Bouazizi", patient: "Nadia Jemni", date: "17 Fév 2026", items: ["Ibuprofène 400mg - 3x/jour pendant 7 jours", "Tramadol 50mg - si douleur intense"], status: "active", total: "35 DT", assurance: "CNAM", pharmacy: null, sent: false },
+  { id: "ORD-2026-044", doctor: "Dr. Bouazizi", patient: "Fatma Trabelsi", date: "20 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], status: "active", total: "28 DT", assurance: "Assurance publique", pharmacy: null, sent: true },
+  { id: "ORD-2026-043", doctor: "Dr. Bouazizi", patient: "Nadia Jemni", date: "17 Fév 2026", items: ["Ibuprofène 400mg - 3x/jour pendant 7 jours", "Tramadol 50mg - si douleur intense"], status: "active", total: "35 DT", assurance: "Assurance publique", pharmacy: null, sent: false },
 ];
 
 // ─── Doctor Stats ────────────────────────────────────────────
