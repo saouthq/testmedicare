@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
 import { toast } from "@/hooks/use-toast";
+import { downloadCalendarEvent } from "@/lib/calendarExport";
 
 import { 
   mockPatientAppointments as upcomingAppointments, 
