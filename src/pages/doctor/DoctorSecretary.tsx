@@ -318,6 +318,7 @@ const DoctorSecretary = () => {
         variant={confirmAction.variant}
         confirmLabel={confirmAction.confirmLabel}
       />
+      </FeatureGate>
     </DashboardLayout>
   );
 };
