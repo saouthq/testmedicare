@@ -20,14 +20,14 @@ const SearchDoctors = () => {
   const [dayRange, setDayRange] = useState<3 | 7>(3);
   const [filterTeleconsult, setFilterTeleconsult] = useState(false);
   const [filterToday, setFilterToday] = useState(false);
-  const [filterCnam, setFilterCnam] = useState(false);
+  const [filterInsurance, setFilterInsurance] = useState(false);
   const isMobile = useIsMobile();
 
   const filtered = doctors.filter(d => {
     if (selectedSpecialty !== "Tous" && d.specialty !== selectedSpecialty) return false;
     if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase()) && !d.specialty.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (filterTeleconsult && !d.teleconsultation) return false;
-    if (filterCnam && !d.cnam) return false;
+    if (filterInsurance && !d.acceptsInsurance) return false;
     if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     return true;
   });
