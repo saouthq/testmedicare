@@ -232,7 +232,7 @@ const DoctorPublicProfile = () => {
                     <div className="text-center">
                       <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-primary mx-auto mb-1" />
                       <p className="text-xs text-muted-foreground">{doctorData.address}</p>
-                      <Button variant="link" size="sm" className="text-xs mt-1">Voir sur la carte</Button>
+                      <Button variant="link" size="sm" className="text-xs mt-1" onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(doctorData.address)}`, "_blank")}>Voir sur la carte</Button>
                     </div>
                   </div>
                 </AccordionSection>

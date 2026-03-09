@@ -293,7 +293,7 @@ const PatientAppointments = () => {
                     <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
                     <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><UserX className="h-3 w-3" />Absence non justifiée</p>
                   </div>
-                  <Link to={`/booking/${a.id}`}><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre RDV</Button></Link>
+                  <Link to="/booking/1"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre RDV</Button></Link>
                 </div>
               </div>
             ))}
@@ -313,7 +313,7 @@ const PatientAppointments = () => {
                     <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
                     <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{a.reason}</p>
                   </div>
-                  <Link to={`/booking/${a.id}`}><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre</Button></Link>
+                  <Link to="/booking/1"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre</Button></Link>
                 </div>
               </div>
             ))}
@@ -344,7 +344,7 @@ const PatientAppointments = () => {
                 {currentApt.address && (
                   <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
                     <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
+                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button onClick={() => toast({ title: "Itinéraire", description: "Ouverture de Google Maps bientôt disponible." })} className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
                   </div>
                 )}
 
@@ -393,7 +393,7 @@ const PatientAppointments = () => {
                     <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
                     {currentApt.canModify && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReschedule(currentApt.id); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprogrammer</Button>}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full text-xs"><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => toast({ title: "Calendrier", description: "Fonctionnalité bientôt disponible — ajout au calendrier Google/Apple." })}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
                   {currentApt.canCancel && (
                     showCancelConfirm === currentApt.id ? (
                       <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
@@ -439,7 +439,7 @@ const PatientAppointments = () => {
                   {reviewSent.has(currentPast.id) && (
                     <p className="text-xs text-accent flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Avis envoyé</p>
                   )}
-                  <Link to={`/booking/${currentPast.id}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
+                  <Link to="/booking/1"><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
                 </div>
               </div>
             )}

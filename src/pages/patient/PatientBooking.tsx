@@ -9,6 +9,7 @@ import {
 "lucide-react";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { mockDoctorProfile } from "@/data/mockData";
+import { toast } from "@/hooks/use-toast";
 
 const doctor = {
   id: "1",
@@ -113,14 +114,14 @@ const PatientBooking = () => {
               <div className="mt-6 rounded-xl bg-muted/50 p-4 max-w-md mx-auto text-left space-y-2 text-sm">
                 <p className="font-medium text-foreground">📍 Préparez votre RDV :</p>
                 <ul className="space-y-1.5 text-muted-foreground text-xs">
-                  <li>• Apportez votre carte CNAM et votre pièce d'identité</li>
+                  <li>• Apportez votre carte d'assurance et votre pièce d'identité</li>
                   <li>• Préparez vos ordonnances / résultats récents</li>
                   <li>• Arrivez 10 minutes à l'avance</li>
                   {selectedLieuData?.type === "teleconsultation" && <li>• Vérifiez votre connexion internet et caméra</li>}
                 </ul>
               </div>
               <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-                <Button variant="outline" className="flex items-center gap-2"><CalendarPlus className="h-4 w-4" />Ajouter au calendrier</Button>
+                <Button variant="outline" className="flex items-center gap-2" onClick={() => toast({ title: "Calendrier", description: "Fonctionnalité bientôt disponible." })}><CalendarPlus className="h-4 w-4" />Ajouter au calendrier</Button>
                 <Link to="/dashboard/patient/appointments"><Button variant="outline">Voir mes RDV</Button></Link>
                 <Link to="/dashboard/patient"><Button className="gradient-primary text-primary-foreground">Retour au tableau de bord</Button></Link>
               </div>
@@ -382,7 +383,7 @@ const PatientBooking = () => {
                 <Shield className="h-5 w-5 text-primary shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground">Tarif</p>
-                  <p className="text-sm font-medium text-foreground">{selectedMotifData?.price || "—"} DT · Prise en charge CNAM</p>
+                  <p className="text-sm font-medium text-foreground">{selectedMotifData?.price || "—"} DT · Prise en charge Assurance</p>
                 </div>
               </div>
             </div>
@@ -411,7 +412,7 @@ const PatientBooking = () => {
 
             {/* Important info */}
             <div className="mt-5 rounded-xl border border-warning/30 bg-warning/5 p-4">
-              <p className="text-sm text-foreground"><strong>Important :</strong> Merci de vous présenter 10 minutes avant l'heure de votre rendez-vous avec votre carte CNAM et votre carte d'identité.</p>
+              <p className="text-sm text-foreground"><strong>Important :</strong> Merci de vous présenter 10 minutes avant l'heure de votre rendez-vous avec votre carte d'assurance et votre carte d'identité.</p>
               <p className="text-xs text-muted-foreground mt-2">📋 {doctor.cancellationPolicy}</p>
               {doctor.autoConfirm && <p className="text-xs text-accent mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Ce médecin confirme automatiquement les RDV</p>}
             </div>

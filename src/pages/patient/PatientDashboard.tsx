@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
+import { toast } from "@/hooks/use-toast";
 
 import { 
   mockPatientAppointments as upcomingAppointments, 
@@ -152,7 +153,7 @@ const PatientDashboard = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Groupe sanguin</span><span className="font-medium text-foreground bg-primary/10 px-2 py-0.5 rounded text-xs">{healthSummary.bloodType}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Médecin traitant</span><span className="font-medium text-foreground text-xs">{healthSummary.treatingDoctor}</span></div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />CNAM</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />{healthSummary.insurance}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Allergies</span><span className="flex items-center gap-1 text-destructive text-xs font-medium"><AlertTriangle className="h-3 w-3" />{healthSummary.allergies.join(", ")}</span></div>
               </div>
               <div className="pt-3 mt-3 border-t">
@@ -221,9 +222,9 @@ const PatientDashboard = () => {
                 {currentApt.type === "teleconsultation" && <Link to="/dashboard/patient/teleconsultation" className="block"><Button className="w-full gradient-primary text-primary-foreground"><Video className="h-4 w-4 mr-2" />Rejoindre la téléconsultation</Button></Link>}
                 <div className="grid grid-cols-2 gap-2">
                   <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
-                  {currentApt.canModify && <Link to={`/booking/${currentApt.id}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button></Link>}
+                  {currentApt.canModify && <Link to={`/booking/1`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button></Link>}
                 </div>
-                <Button variant="outline" size="sm" className="w-full text-xs"><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => toast({ title: "Calendrier", description: "Fonctionnalité bientôt disponible — ajout au calendrier Google/Apple." })}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
                 {currentApt.canCancel && (
                   showCancelConfirm === currentApt.id ? (
                     <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
