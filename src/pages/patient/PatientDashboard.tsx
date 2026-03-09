@@ -7,28 +7,24 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent } from "@/lib/calendarExport";
-
-import { 
-  mockPatientAppointments as upcomingAppointments, 
-  mockRecentPrescriptions as recentPrescriptions, 
-  mockFavoriteDoctors as favoriteDoctors, 
-  mockHealthSummary as healthSummary 
-} from "@/data/mockData";
+import { usePatientAppointments, usePatientProfile, cancelAppointment, getDashboardStats } from "@/stores/patientStore";
+import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors } from "@/data/mockData";
 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
-  const [appointments, setAppointments] = useState(upcomingAppointments);
+  const [appointments, setAppointments] = usePatientAppointments();
+  const [profile] = usePatientProfile();
 
+  const stats = useMemo(() => getDashboardStats(), [appointments, profile]);
   const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
 
   const handleCancel = (id: number) => {
-    setAppointments(prev => prev.filter(a => a.id !== id));
+    cancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);
   };
@@ -40,9 +36,9 @@ const PatientDashboard = () => {
         <div className="relative overflow-hidden rounded-2xl gradient-primary p-5 sm:p-6 text-primary-foreground">
           <div className="relative z-10">
             <p className="text-primary-foreground/80 text-sm">Bonjour,</p>
-            <h2 className="text-xl sm:text-2xl font-bold mt-1">Amine Ben Ali</h2>
+            <h2 className="text-xl sm:text-2xl font-bold mt-1">{stats.patientName}</h2>
             <p className="text-primary-foreground/80 mt-1 text-sm">
-              <span className="font-semibold text-primary-foreground">1 RDV aujourd'hui</span> · <span className="font-semibold text-primary-foreground">2 résultats</span> en attente
+              <span className="font-semibold text-primary-foreground">{stats.todayCount > 0 ? `${stats.todayCount} RDV aujourd'hui` : "Aucun RDV aujourd'hui"}</span> · <span className="font-semibold text-primary-foreground">{stats.pendingResults} résultat(s)</span> en attente
             </p>
             <Link to="/search" className="block mt-4">
               <div className="flex items-center gap-2 bg-primary-foreground/15 hover:bg-primary-foreground/25 rounded-xl px-4 py-3 transition-colors backdrop-blur-sm border border-primary-foreground/10">
@@ -54,13 +50,13 @@ const PatientDashboard = () => {
           <div className="absolute top-0 right-0 w-48 h-48 bg-primary-foreground/5 rounded-full -translate-y-1/2 translate-x-1/4" />
         </div>
 
-        {/* Quick stats */}
+        {/* Quick stats — dynamic from store */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Prochain RDV", value: "Aujourd'hui 14h30", icon: Calendar, color: "bg-primary/10 text-primary" },
-            { label: "RDV à venir", value: String(appointments.length), icon: Clock, color: "bg-accent/10 text-accent" },
-            { label: "Ordonnances", value: "2 actives", icon: FileText, color: "bg-warning/10 text-warning" },
-            { label: "Résultats", value: "2 nouveaux", icon: Activity, color: "bg-destructive/10 text-destructive" },
+            { label: "Prochain RDV", value: stats.nextApt, icon: Calendar, color: "bg-primary/10 text-primary" },
+            { label: "RDV à venir", value: String(stats.upcomingCount), icon: Clock, color: "bg-accent/10 text-accent" },
+            { label: "Ordonnances", value: `${stats.activePrescriptions} active(s)`, icon: FileText, color: "bg-warning/10 text-warning" },
+            { label: "Résultats", value: `${stats.pendingResults} nouveau(x)`, icon: Activity, color: "bg-destructive/10 text-destructive" },
           ].map((s, i) => (
             <div key={i} className="rounded-xl border bg-card p-3 shadow-card hover:shadow-card-hover transition-all cursor-pointer">
               <div className="flex items-center gap-2.5">
@@ -77,14 +73,19 @@ const PatientDashboard = () => {
         <div className="grid gap-5 lg:grid-cols-3">
           {/* Main col */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Upcoming appointments – compact clickable cards → opens DRAWER */}
+            {/* Upcoming appointments */}
             <div className="rounded-xl border bg-card shadow-card">
               <div className="flex items-center justify-between border-b px-4 py-3">
                 <h2 className="font-semibold text-foreground text-sm flex items-center gap-2"><Calendar className="h-4 w-4 text-primary" />Prochains rendez-vous</h2>
                 <Link to="/dashboard/patient/appointments" className="text-xs text-primary hover:underline flex items-center gap-1">Voir tout <ChevronRight className="h-3.5 w-3.5" /></Link>
               </div>
               <div className="divide-y">
-                {appointments.map(a => (
+                {appointments.length === 0 && (
+                  <div className="p-6 text-center text-muted-foreground text-sm">
+                    Aucun rendez-vous à venir. <Link to="/search" className="text-primary hover:underline">Prendre un RDV</Link>
+                  </div>
+                )}
+                {appointments.slice(0, 3).map(a => (
                   <button key={a.id} onClick={() => setDrawerApt(a.id)} className="w-full text-left p-3 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-xs shrink-0">{a.avatar}</div>
@@ -148,14 +149,14 @@ const PatientDashboard = () => {
               </div>
             </div>
 
-            {/* Health card */}
+            {/* Health card — dynamic from profile */}
             <div className="rounded-xl border bg-card shadow-card p-4">
               <h3 className="font-semibold text-foreground text-sm mb-3 flex items-center gap-2"><Heart className="h-4 w-4 text-primary" />Mon profil santé</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Groupe sanguin</span><span className="font-medium text-foreground bg-primary/10 px-2 py-0.5 rounded text-xs">{healthSummary.bloodType}</span></div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Médecin traitant</span><span className="font-medium text-foreground text-xs">{healthSummary.treatingDoctor}</span></div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />{healthSummary.insurance}</span></div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Allergies</span><span className="flex items-center gap-1 text-destructive text-xs font-medium"><AlertTriangle className="h-3 w-3" />{healthSummary.allergies.join(", ")}</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Groupe sanguin</span><span className="font-medium text-foreground bg-primary/10 px-2 py-0.5 rounded text-xs">{stats.healthSummary.bloodType}</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Médecin traitant</span><span className="font-medium text-foreground text-xs">{stats.healthSummary.treatingDoctor}</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />{stats.healthSummary.insurance}</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Allergies</span><span className="flex items-center gap-1 text-destructive text-xs font-medium"><AlertTriangle className="h-3 w-3" />{stats.healthSummary.allergies.join(", ") || "Aucune"}</span></div>
               </div>
               <div className="pt-3 mt-3 border-t">
                 <Link to="/dashboard/patient/health"><Button variant="outline" size="sm" className="w-full text-xs">Voir mon dossier <ArrowRight className="h-3 w-3 ml-1" /></Button></Link>
@@ -206,7 +207,7 @@ const PatientDashboard = () => {
                   <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p></div>
                 </div>
               )}
-              {currentApt.documents.length > 0 && (
+              {currentApt.documents && currentApt.documents.length > 0 && (
                 <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
                   <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div><p className="text-xs font-medium text-foreground">Documents à apporter</p><ul className="text-xs text-muted-foreground mt-1 space-y-0.5">{currentApt.documents.map(d => <li key={d}>• {d}</li>)}</ul></div>
