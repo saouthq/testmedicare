@@ -356,6 +356,29 @@ const AdminVerifications = () => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground"><Calendar className="h-4 w-4" />Soumis le {drawerItem.submittedAt}</div>
                   </div>
 
+                  {/* Plan & promo info (for registrations from BecomePartner) */}
+                  {(drawerItem as any)._plan && (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+                      <h4 className="text-sm font-semibold text-foreground flex items-center gap-1">
+                        <CreditCard className="h-4 w-4 text-primary" />Abonnement demandé
+                      </h4>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Plan</span>
+                        <span className="text-sm font-semibold text-foreground">{(drawerItem as any)._plan}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Prix</span>
+                        <span className="text-sm font-semibold text-foreground">{(drawerItem as any)._planPrice} DT/{(drawerItem as any)._billing === "yearly" ? "mois (annuel)" : "mois"}</span>
+                      </div>
+                      {(drawerItem as any)._promoApplied && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Promo</span>
+                          <span className="text-sm font-medium text-accent flex items-center gap-1"><Gift className="h-3.5 w-3.5" />{(drawerItem as any)._promoApplied}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Documents */}
                   <div>
                     <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1">
