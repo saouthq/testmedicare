@@ -1,9 +1,10 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star } from "lucide-react";
+import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockSubscriptionInfo, mockPlans, mockSubscriptionInvoices, mockTeleconsultTransactions, InvoiceStatus } from "@/data/mockData";
+import { getMyActivePromo } from "@/services/admin/adminPromotionsService";
 
 type BillingTab = "subscription" | "teleconsult";
 
