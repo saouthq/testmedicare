@@ -9,7 +9,8 @@ import AdminSpotlight from "@/components/admin/AdminSpotlight";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
 import { getEnabledFeatures } from "@/stores/featureMatrixStore";
-import { Lock } from "lucide-react";
+import { useAdminModules, isSidebarUrlEnabled, getDisabledModuleForRoute } from "@/stores/adminModulesStore";
+import { Lock, Power } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
@@ -128,6 +129,7 @@ const adminSections: NavSection[] = [
   {
     label: "Système",
     items: [
+      { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
       { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
       { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
@@ -149,6 +151,7 @@ const roleLabels: Record<string, string> = {
 const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const location = useLocation();
   const items = navItems[role];
+  const [moduleStates] = useAdminModules();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
@@ -232,7 +235,9 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     <>
       {(items || []).map((item) => {
         const isActive = location.pathname === item.url;
-        // Feature gating for doctor
+        // Admin module gating — hide sidebar items for disabled modules
+        if (role !== "admin" && !isSidebarUrlEnabled(item.url)) return null;
+        // Feature gating for doctor subscription
         const requiredFeature = role === "doctor" ? sidebarFeatureMap[item.url] : undefined;
         const isLocked = requiredFeature ? !doctorEnabledIds.has(requiredFeature) : false;
         const isBlurred = requiredFeature ? blurredFeatures.has(requiredFeature) : false;
@@ -422,8 +427,26 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 pb-safe">{children}</main>
+        {/* Page content — with admin module gating */}
+        <main className="flex-1 p-4 sm:p-6 pb-safe">
+          {role !== "admin" && getDisabledModuleForRoute(location.pathname) ? (
+            <div className="flex items-center justify-center min-h-[60vh] px-4">
+              <div className="text-center max-w-md">
+                <div className="h-20 w-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
+                  <Power className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">Module désactivé</h2>
+                <p className="text-muted-foreground mb-1">
+                  Le module <span className="font-semibold text-foreground">« {getDisabledModuleForRoute(location.pathname)?.label} »</span> est temporairement désactivé par l'administrateur.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 mb-6">{getDisabledModuleForRoute(location.pathname)?.description}</p>
+                <Link to={`/dashboard/${role}`}>
+                  <Button variant="outline" size="sm">Retour au tableau de bord</Button>
+                </Link>
+              </div>
+            </div>
+          ) : children}
+        </main>
       </div>
 
       {/* Notification Center drawer */}

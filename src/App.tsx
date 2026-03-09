@@ -98,14 +98,21 @@ import AdminPromotions from "./pages/admin/AdminPromotions";
 import AdminIAM from "./pages/admin/AdminIAM";
 import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminFeatureMatrix from "./pages/admin/AdminFeatureMatrix";
+import AdminModules from "./pages/admin/AdminModules";
 import AdminGuard from "./components/admin/AdminGuard";
 
 // Shared
 import Messages from "./pages/messaging/Messages";
 import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
 import SimulationPanel from "./components/shared/SimulationPanel";
+import { RouteModuleGate } from "./components/shared/ModuleGate";
 
 const queryClient = new QueryClient();
+
+/** Wrap a page element with RouteModuleGate for automatic module checking */
+const Gated = ({ children, role }: { children: React.ReactNode; role?: string }) => (
+  <RouteModuleGate role={role}>{children}</RouteModuleGate>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -223,6 +230,7 @@ const App = () => (
           <Route path="/dashboard/admin/iam" element={<AdminGuard><AdminIAM /></AdminGuard>} />
           <Route path="/dashboard/admin/disputes" element={<AdminGuard><AdminDisputes /></AdminGuard>} />
           <Route path="/dashboard/admin/feature-matrix" element={<AdminGuard><AdminFeatureMatrix /></AdminGuard>} />
+          <Route path="/dashboard/admin/modules" element={<AdminGuard><AdminModules /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 
