@@ -132,6 +132,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const expanded = pinned || hovered || sidebarOpen;
 
