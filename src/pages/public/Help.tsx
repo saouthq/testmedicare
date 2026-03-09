@@ -276,6 +276,7 @@ const Help = () => {
           </div>
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 };
