@@ -347,7 +347,7 @@ const SecretaryAgenda = () => {
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-primary" />
                       <div>
-                        <p className="text-xs font-semibold text-primary">Assuré CNAM</p>
+                        <p className="text-xs font-semibold text-primary">Assuré</p>
                         <p className="text-[10px] text-muted-foreground">Prise en charge conventionnelle</p>
                       </div>
                     </div>

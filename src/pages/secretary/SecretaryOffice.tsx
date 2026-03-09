@@ -170,7 +170,7 @@ const SecretaryOffice = () => {
               <p className="text-xl font-bold text-foreground mt-1">8 450 DT</p>
             </div>
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-center">
-              <p className="text-xs text-primary font-medium">Part CNAM</p>
+              <p className="text-xs text-primary font-medium">Part Assurance</p>
               <p className="text-xl font-bold text-foreground mt-1">5 915 DT</p>
             </div>
             <div className="rounded-lg bg-muted/50 p-4 text-center">
