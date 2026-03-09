@@ -10,3 +10,4 @@ export * from "./pharmacy";
 export * from "./admin";
 export * from "./medicines";
 export * from "./establishments";
+export * from "./promotions";

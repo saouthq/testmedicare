@@ -94,6 +94,7 @@ import AdminNotificationTemplates from "./pages/admin/AdminNotificationTemplates
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminGuardPharmacies from "./pages/admin/AdminGuardPharmacies";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import AdminPromotions from "./pages/admin/AdminPromotions";
 import AdminGuard from "./components/admin/AdminGuard";
 
 // Shared
@@ -215,6 +216,7 @@ const App = () => (
           <Route path="/dashboard/admin/support" element={<AdminGuard><AdminSupport /></AdminGuard>} />
           <Route path="/dashboard/admin/guard-pharmacies" element={<AdminGuard><AdminGuardPharmacies /></AdminGuard>} />
           <Route path="/dashboard/admin/campaigns" element={<AdminGuard><AdminCampaigns /></AdminGuard>} />
+          <Route path="/dashboard/admin/promotions" element={<AdminGuard><AdminPromotions /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 

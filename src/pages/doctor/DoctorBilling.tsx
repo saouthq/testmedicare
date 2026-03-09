@@ -1,9 +1,10 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star } from "lucide-react";
+import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockSubscriptionInfo, mockPlans, mockSubscriptionInvoices, mockTeleconsultTransactions, InvoiceStatus } from "@/data/mockData";
+import { getMyActivePromo } from "@/services/admin/adminPromotionsService";
 
 type BillingTab = "subscription" | "teleconsult";
 
@@ -19,6 +20,7 @@ const DoctorBilling = () => {
   const [search, setSearch] = useState("");
   const [detailTx, setDetailTx] = useState<string | null>(null);
   const [showChangeCard, setShowChangeCard] = useState(false);
+  const activePromo = getMyActivePromo(1);
 
   const filteredTx = mockTeleconsultTransactions.filter(tx =>
     !search || tx.patient.toLowerCase().includes(search.toLowerCase()) || tx.ref.toLowerCase().includes(search.toLowerCase())
@@ -69,6 +71,20 @@ const DoctorBilling = () => {
               </div>
             )}
 
+            {/* Active promo banner */}
+            {activePromo && (
+              <div className="rounded-xl border border-accent/30 bg-accent/5 p-5 flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <Gift className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Offre active : {activePromo.promoName}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Valable jusqu'au {new Date(activePromo.promoEndDate).toLocaleDateString("fr-TN", { day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                </div>
+              </div>
+            )}
             {/* Plans comparison */}
             <div className="grid gap-5 sm:grid-cols-2">
               {mockPlans.map(plan => (

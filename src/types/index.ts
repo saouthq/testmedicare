@@ -7,3 +7,4 @@ export * from "./prescription";
 export * from "./consultation";
 export * from "./document";
 export * from "./common";
+export * from "./promotion";
