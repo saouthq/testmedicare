@@ -295,6 +295,9 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
         {/* Page content — responsive padding */}
         <main className="flex-1 p-4 sm:p-6 pb-safe">{children}</main>
       </div>
+
+      {/* Notification Center drawer for non-patient roles */}
+      <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} role={role} />
     </div>
   );
 };
