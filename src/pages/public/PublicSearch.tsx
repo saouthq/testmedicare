@@ -47,8 +47,8 @@ const PublicSearch = () => {
     if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase()) && !d.specialty.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (cityQuery && !d.address.toLowerCase().includes(cityQuery.toLowerCase())) return false;
     if (filterTeleconsult && !d.teleconsultation) return false;
-    // Note: "cnam" property now represents "accepte assurance" 
-    if (filterAssurance && !d.cnam) return false;
+    if (filterAssurance && !d.acceptsInsurance) return false;
+    if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     return true;
   });
