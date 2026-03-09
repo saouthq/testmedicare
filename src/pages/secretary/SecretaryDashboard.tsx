@@ -17,6 +17,7 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import ActionPalette, { type ActionItem } from "@/components/shared/ActionPalette";
 import SecretaryTeleconsultPanel from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
 import { markPatientAbsent } from "@/stores/appointmentsStore";
+import { updateWaitingStatus, startConsultation, completeConsultation } from "@/stores/doctorStore";
 
 type DashTab = "overview" | "billing" | "patients";
 
