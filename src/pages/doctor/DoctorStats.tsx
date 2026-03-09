@@ -83,6 +83,7 @@ const DoctorStats = () => {
 
   return (
     <DashboardLayout role="doctor" title="Statistiques">
+      <FeatureGate featureId="stats_advanced">
       <div className="space-y-6">
         {/* Period selector + export */}
         <div className="flex items-center justify-between flex-wrap gap-3">
