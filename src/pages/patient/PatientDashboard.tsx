@@ -51,8 +51,15 @@ const PatientDashboard = () => {
     setDrawerApt(null);
   };
 
-  // Prescription renewal mock
+  // Prescription renewal — writes to doctor's renewal store
   const handleRenewal = (prescId: string) => {
+    const prescription = recentPrescriptions.find(p => p.id === prescId);
+    requestRenewal({
+      patientName: `${profile.firstName} ${profile.lastName}`,
+      patientAvatar: `${profile.firstName[0]}${profile.lastName[0]}`,
+      prescriptionId: prescId,
+      items: prescription ? [prescription.id] : [prescId],
+    });
     toast({ title: "Demande envoyée", description: "Votre demande de renouvellement a été envoyée au médecin." });
   };
 
