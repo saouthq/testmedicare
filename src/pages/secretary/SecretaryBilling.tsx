@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/data/mockData";
 import { useSharedBilling, initBillingStoreIfEmpty, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
+import { toast } from "@/hooks/use-toast";
 
 interface Invoice {
   id: string; patient: string; doctor: string; date: string; amount: number;
