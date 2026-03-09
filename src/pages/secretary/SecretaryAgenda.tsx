@@ -63,6 +63,49 @@ const SecretaryAgenda = () => {
   const [showNewRdv, setShowNewRdv] = useState(false);
   const [search, setSearch] = useState("");
 
+  // New RDV form state
+  const [newRdvPatient, setNewRdvPatient] = useState("");
+  const [newRdvDate, setNewRdvDate] = useState("");
+  const [newRdvTime, setNewRdvTime] = useState("10:00");
+  const [newRdvDoctor, setNewRdvDoctor] = useState("Dr. Bouazizi");
+  const [newRdvMotif, setNewRdvMotif] = useState("Consultation");
+  const [newRdvNotes, setNewRdvNotes] = useState("");
+  const [newRdvPhone, setNewRdvPhone] = useState("");
+
+  const handleCreateRdv = () => {
+    if (!newRdvPatient.trim()) {
+      toast({ title: "Patient requis", variant: "destructive" });
+      return;
+    }
+    const id = Date.now();
+    const avatar = newRdvPatient.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    const [h, m] = newRdvTime.split(":").map(Number);
+    const endTime = `${String(h).padStart(2, "0")}:${String(m + 30).padStart(2, "0")}`;
+
+    // Add to local agenda
+    const newApt: AgendaAppointment = {
+      id, time: newRdvTime, endTime, patient: newRdvPatient, avatar,
+      doctor: newRdvDoctor, type: newRdvMotif, motif: newRdvMotif,
+      status: "upcoming", phone: newRdvPhone || "+216 XX XXX XXX",
+      assurance: "—", notes: newRdvNotes,
+    };
+    setAppointments(prev => [...prev, newApt].sort((a, b) => a.time.localeCompare(b.time)));
+
+    // Sync to doctor waiting room store
+    const entry: WaitingEntry = {
+      id, patient: newRdvPatient, avatar, time: newRdvTime,
+      motif: newRdvMotif, type: newRdvMotif, duration: "30 min",
+      status: "scheduled", phone: newRdvPhone,
+    };
+    waitingRoomStore.set(prev => [...prev, entry]);
+
+    // Reset form
+    setShowNewRdv(false);
+    setNewRdvPatient(""); setNewRdvDate(""); setNewRdvTime("10:00");
+    setNewRdvDoctor("Dr. Bouazizi"); setNewRdvMotif("Consultation"); setNewRdvNotes(""); setNewRdvPhone("");
+    toast({ title: "RDV créé", description: `${newRdvPatient} · ${newRdvTime} avec ${newRdvDoctor}. Visible dans l'agenda médecin.` });
+  };
+
   const filtered = appointments.filter(a => {
     if (selectedDoctor !== "Tous" && a.doctor !== selectedDoctor) return false;
     if (search && !a.patient.toLowerCase().includes(search.toLowerCase())) return false;
