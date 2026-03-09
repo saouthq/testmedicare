@@ -15,7 +15,10 @@ export interface Patient {
   bloodType: string;
   ssn: string;
   mutuelle: string;
-  cnamId: string;
+  /** ID de l'assurance (référence au référentiel) */
+  insurance?: string;
+  /** Numéro d'assuré (optionnel) */
+  insuranceNumber?: string;
   treatingDoctor: string;
   registeredSince: string;
   allergies: { name: string; severity: string; reaction?: string }[];
@@ -43,7 +46,9 @@ export interface PatientAppointment {
   canModify: boolean;
   canCancel: boolean;
   avatar: string;
-  cnam: boolean;
+  /** @deprecated use hasInsurance instead */
+  cnam?: boolean;
+  hasInsurance?: boolean;
   cancellationPolicy: string;
   documents: string[];
   instructions: string;
@@ -51,6 +56,16 @@ export interface PatientAppointment {
   scheduledAt?: string;
   /** ID de session partagée pour le store téléconsultation */
   sessionId?: string;
+  /** Règles du cabinet */
+  cabinetRules?: {
+    cancellationHours: number;
+    maxReschedules: number;
+    latePolicy: string;
+  };
+  /** Paiement requis pour téléconsultation */
+  requiresPayment?: boolean;
+  paymentStatus?: "pending" | "paid" | "failed";
+  amount?: number;
 }
 
 export interface PastAppointment {
@@ -63,6 +78,8 @@ export interface PastAppointment {
   motif: string;
   hasPrescription: boolean;
   hasReport: boolean;
+  /** Feuille de soins disponible */
+  hasCareSheet?: boolean;
   avatar: string;
   amount: string;
 }

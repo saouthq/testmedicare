@@ -7,20 +7,20 @@ import type { Prescription, Notification, ChatMessage, ChatContact } from "@/typ
 // ─── Patients ────────────────────────────────────────────────
 
 export const mockPatients: Patient[] = [
-  { id: 1, name: "Amine Ben Ali", age: 34, gender: "Homme", dob: "15/03/1991", phone: "+216 22 345 678", email: "amine@email.tn", address: "El Manar, Tunis", avatar: "AB", bloodType: "A+", ssn: "1 91 03 75 012 035 42", mutuelle: "Assurances Maghrebia", cnamId: "12345678", treatingDoctor: "Dr. Ahmed Bouazizi", registeredSince: "Jan 2022", allergies: [{ name: "Pénicilline", severity: "Sévère", reaction: "Réaction cutanée sévère" }], conditions: ["Diabète type 2"], chronicConditions: ["Diabète type 2"], lastVisit: "10 Fév 2026", nextAppointment: "20 Fév 14:30", isNew: false, lastVitals: { ta: "13/8", glycemia: "1.05" }, gouvernorat: "Tunis", balance: 0, notes: "Suivi diabète régulier" },
-  { id: 2, name: "Fatma Trabelsi", age: 56, gender: "Femme", dob: "12/07/1970", phone: "+216 55 987 654", email: "fatma@email.tn", address: "Ariana", avatar: "FT", bloodType: "O+", ssn: "2 70 07 75 023 045 53", mutuelle: "CNAM", cnamId: "23456789", treatingDoctor: "Dr. Sonia Gharbi", registeredSince: "Mar 2021", allergies: [], conditions: ["Hypertension", "Cholestérol"], chronicConditions: ["Hypertension", "Cholestérol"], lastVisit: "8 Fév 2026", nextAppointment: "23 Fév 10:00", isNew: false, lastVitals: { ta: "14/8", glycemia: "0.95" }, gouvernorat: "Ariana", balance: 60, notes: "Hypertension — suivi cardio" },
-  { id: 3, name: "Mohamed Sfar", age: 28, gender: "Homme", dob: "05/01/1998", phone: "+216 55 456 789", email: "med@email.tn", address: "Ben Arous", avatar: "MS", bloodType: "B+", ssn: "1 98 01 75 034 056 64", mutuelle: "Privée", cnamId: "—", treatingDoctor: "Dr. Ahmed Bouazizi", registeredSince: "Sep 2024", allergies: [{ name: "Aspirine", severity: "Modéré", reaction: "Troubles gastriques" }], conditions: [], chronicConditions: [], lastVisit: "5 Fév 2026", nextAppointment: "25 Fév 09:30", isNew: false, lastVitals: { ta: "11/7", glycemia: "0.88" }, gouvernorat: "Ben Arous", balance: 0, notes: "Suivi post-opératoire" },
-  { id: 4, name: "Nadia Jemni", age: 67, gender: "Femme", dob: "18/11/1959", phone: "+216 98 567 890", email: "nadia@email.tn", address: "Manouba", avatar: "NJ", bloodType: "A-", ssn: "2 59 11 75 045 067 75", mutuelle: "CNAM", cnamId: "34567890", treatingDoctor: "Dr. Khaled Hammami", registeredSince: "Jun 2020", allergies: [], conditions: ["Arthrose", "HTA"], chronicConditions: ["Arthrose", "HTA"], lastVisit: "1 Fév 2026", nextAppointment: null, isNew: false, lastVitals: { ta: "15/9", glycemia: "1.10" }, gouvernorat: "Manouba", balance: 25, notes: "Arthrose — anti-inflammatoires" },
-  { id: 5, name: "Sami Ayari", age: 42, gender: "Homme", dob: "22/06/1984", phone: "+216 29 678 901", email: "sami@email.tn", address: "Tunis", avatar: "SA", bloodType: "AB+", ssn: "1 84 06 75 056 078 86", mutuelle: "CNAM", cnamId: "45678901", treatingDoctor: "Dr. Ahmed Bouazizi", registeredSince: "Nov 2022", allergies: [{ name: "Acariens", severity: "Modéré", reaction: "Rhinite allergique" }], conditions: ["Asthme"], chronicConditions: ["Asthme"], lastVisit: "28 Jan 2026", nextAppointment: null, isNew: false, lastVitals: { ta: "12/7", glycemia: "0.92" }, gouvernorat: "Tunis", balance: 0, notes: "Asthme léger" },
-  { id: 6, name: "Rania Meddeb", age: 51, gender: "Femme", dob: "03/04/1975", phone: "+216 52 789 012", email: "rania@email.tn", address: "Lac", avatar: "RM", bloodType: "O-", ssn: "2 75 04 75 067 089 97", mutuelle: "CNAM", cnamId: "56789012", treatingDoctor: "Dr. Sonia Gharbi", registeredSince: "Fév 2026", allergies: [], conditions: [], chronicConditions: [], lastVisit: null, nextAppointment: "28 Fév 14:00", isNew: true, lastVitals: { ta: "—", glycemia: "—" }, gouvernorat: "Tunis", balance: 0, notes: "Nouveau patient" },
+  { id: 1, name: "Amine Ben Ali", age: 34, gender: "Homme", dob: "15/03/1991", phone: "+216 22 345 678", email: "amine@email.tn", address: "El Manar, Tunis", avatar: "AB", bloodType: "A+", ssn: "1 91 03 75 012 035 42", mutuelle: "Assurances Maghrebia", insurance: "maghrebia", insuranceNumber: "MAG-2024-001234", treatingDoctor: "Dr. Ahmed Bouazizi", registeredSince: "Jan 2022", allergies: [{ name: "Pénicilline", severity: "Sévère", reaction: "Réaction cutanée sévère" }], conditions: ["Diabète type 2"], chronicConditions: ["Diabète type 2"], lastVisit: "10 Fév 2026", nextAppointment: "20 Fév 14:30", isNew: false, lastVitals: { ta: "13/8", glycemia: "1.05" }, gouvernorat: "Tunis", balance: 0, notes: "Suivi diabète régulier" },
+  { id: 2, name: "Fatma Trabelsi", age: 56, gender: "Femme", dob: "12/07/1970", phone: "+216 55 987 654", email: "fatma@email.tn", address: "Ariana", avatar: "FT", bloodType: "O+", ssn: "2 70 07 75 023 045 53", mutuelle: "CNAM", insurance: "cnam", insuranceNumber: "23456789", treatingDoctor: "Dr. Sonia Gharbi", registeredSince: "Mar 2021", allergies: [], conditions: ["Hypertension", "Cholestérol"], chronicConditions: ["Hypertension", "Cholestérol"], lastVisit: "8 Fév 2026", nextAppointment: "23 Fév 10:00", isNew: false, lastVitals: { ta: "14/8", glycemia: "0.95" }, gouvernorat: "Ariana", balance: 60, notes: "Hypertension — suivi cardio" },
+  { id: 3, name: "Mohamed Sfar", age: 28, gender: "Homme", dob: "05/01/1998", phone: "+216 55 456 789", email: "med@email.tn", address: "Ben Arous", avatar: "MS", bloodType: "B+", ssn: "1 98 01 75 034 056 64", mutuelle: "Privée", insurance: "star", insuranceNumber: "STAR-2025-5678", treatingDoctor: "Dr. Ahmed Bouazizi", registeredSince: "Sep 2024", allergies: [{ name: "Aspirine", severity: "Modéré", reaction: "Troubles gastriques" }], conditions: [], chronicConditions: [], lastVisit: "5 Fév 2026", nextAppointment: "25 Fév 09:30", isNew: false, lastVitals: { ta: "11/7", glycemia: "0.88" }, gouvernorat: "Ben Arous", balance: 0, notes: "Suivi post-opératoire" },
+  { id: 4, name: "Nadia Jemni", age: 67, gender: "Femme", dob: "18/11/1959", phone: "+216 98 567 890", email: "nadia@email.tn", address: "Manouba", avatar: "NJ", bloodType: "A-", ssn: "2 59 11 75 045 067 75", mutuelle: "CNAM", insurance: "cnam", insuranceNumber: "34567890", treatingDoctor: "Dr. Khaled Hammami", registeredSince: "Jun 2020", allergies: [], conditions: ["Arthrose", "HTA"], chronicConditions: ["Arthrose", "HTA"], lastVisit: "1 Fév 2026", nextAppointment: null, isNew: false, lastVitals: { ta: "15/9", glycemia: "1.10" }, gouvernorat: "Manouba", balance: 25, notes: "Arthrose — anti-inflammatoires" },
+  { id: 5, name: "Sami Ayari", age: 42, gender: "Homme", dob: "22/06/1984", phone: "+216 29 678 901", email: "sami@email.tn", address: "Tunis", avatar: "SA", bloodType: "AB+", ssn: "1 84 06 75 056 078 86", mutuelle: "CNAM", insurance: "cnam", insuranceNumber: "45678901", treatingDoctor: "Dr. Ahmed Bouazizi", registeredSince: "Nov 2022", allergies: [{ name: "Acariens", severity: "Modéré", reaction: "Rhinite allergique" }], conditions: ["Asthme"], chronicConditions: ["Asthme"], lastVisit: "28 Jan 2026", nextAppointment: null, isNew: false, lastVitals: { ta: "12/7", glycemia: "0.92" }, gouvernorat: "Tunis", balance: 0, notes: "Asthme léger" },
+  { id: 6, name: "Rania Meddeb", age: 51, gender: "Femme", dob: "03/04/1975", phone: "+216 52 789 012", email: "rania@email.tn", address: "Lac", avatar: "RM", bloodType: "O-", ssn: "2 75 04 75 067 089 97", mutuelle: "Sans assurance", insurance: "none", insuranceNumber: "", treatingDoctor: "Dr. Sonia Gharbi", registeredSince: "Fév 2026", allergies: [], conditions: [], chronicConditions: [], lastVisit: null, nextAppointment: "28 Fév 14:00", isNew: true, lastVitals: { ta: "—", glycemia: "—" }, gouvernorat: "Tunis", balance: 0, notes: "Nouveau patient" },
 ];
 
 // ─── Favorite Doctors ────────────────────────────────────────
 
 export const mockFavoriteDoctors = [
-  { name: "Dr. Bouazizi", specialty: "Généraliste", avatar: "AB", id: 1 },
-  { name: "Dr. Gharbi", specialty: "Cardiologue", avatar: "SG", id: 2 },
-  { name: "Dr. Hammami", specialty: "Dermatologue", avatar: "KH", id: 3 },
+  { name: "Dr. Bouazizi", specialty: "Généraliste", avatar: "AB", id: 1, acceptsMessages: true },
+  { name: "Dr. Gharbi", specialty: "Cardiologue", avatar: "SG", id: 2, acceptsMessages: false },
+  { name: "Dr. Hammami", specialty: "Dermatologue", avatar: "KH", id: 3, acceptsMessages: true },
 ];
 
 // ─── Patient Health Summary ──────────────────────────────────
@@ -28,8 +28,9 @@ export const mockFavoriteDoctors = [
 export const mockHealthSummary = {
   bloodType: "A+",
   treatingDoctor: "Dr. Ahmed Bouazizi",
-  cnam: true,
-  cnamId: "12345678",
+  hasInsurance: true,
+  insurance: "Assurances Maghrebia",
+  insuranceNumber: "MAG-2024-001234",
   allergies: ["Pénicilline"],
   vaccinations: 2,
 };
@@ -42,25 +43,26 @@ function demoScheduledAt(minutesFromNow: number): string {
 }
 
 export const mockPatientAppointments: PatientAppointment[] = [
-  { id: 1, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "Aujourd'hui", time: "14:30", type: "cabinet", address: "15 Av. de la Liberté, El Manar", avatar: "AB", status: "confirmed", motif: "Suivi diabète", canModify: true, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Carte CNAM", "Pièce d'identité"], instructions: "Arrivez 10 min en avance." },
-  { id: 2, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "23 Fév", time: "10:00", type: "cabinet", address: "32 Rue Charles de Gaulle, Ariana", avatar: "SG", status: "confirmed", motif: "Bilan cardiaque", canModify: true, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 48h avant", documents: ["Carte CNAM"], instructions: "Venez à jeun." },
-  { id: 3, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "28 Fév", time: "16:15", type: "teleconsultation", address: "", avatar: "KH", status: "pending", motif: "Consultation dermatologie", canModify: false, canCancel: true, cnam: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: [], instructions: "Préparez votre caméra.", scheduledAt: demoScheduledAt(10), sessionId: "teleconsult-1" },
+  { id: 1, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "Aujourd'hui", time: "14:30", type: "cabinet", address: "15 Av. de la Liberté, El Manar", avatar: "AB", status: "confirmed", motif: "Suivi diabète", canModify: true, canCancel: true, hasInsurance: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Carte d'assurance", "Pièce d'identité"], instructions: "Arrivez 10 min en avance.", cabinetRules: { cancellationHours: 24, maxReschedules: 2, latePolicy: "15 min max" } },
+  { id: 2, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "23 Fév", time: "10:00", type: "cabinet", address: "32 Rue Charles de Gaulle, Ariana", avatar: "SG", status: "confirmed", motif: "Bilan cardiaque", canModify: true, canCancel: true, hasInsurance: true, cancellationPolicy: "Annulation gratuite jusqu'à 48h avant", documents: ["Carte d'assurance"], instructions: "Venez à jeun.", cabinetRules: { cancellationHours: 48, maxReschedules: 1, latePolicy: "10 min max" } },
+  { id: 3, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "28 Fév", time: "16:15", type: "teleconsultation", address: "", avatar: "KH", status: "pending", motif: "Consultation dermatologie", canModify: false, canCancel: true, hasInsurance: true, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: [], instructions: "Préparez votre caméra.", scheduledAt: demoScheduledAt(10), sessionId: "teleconsult-1", cabinetRules: { cancellationHours: 24, maxReschedules: 2, latePolicy: "Consultation annulée après 10 min" }, requiresPayment: true, paymentStatus: "pending", amount: 45 },
 ];
 
 export const mockPatientAppointmentsFull: PatientAppointment[] = [
   ...mockPatientAppointments,
-  { id: 4, doctor: "Dr. Leila Chebbi", specialty: "Ophtalmologue", date: "5 Mar 2026", time: "11:00", type: "cabinet", address: "12 Rue de Carthage, Sousse", avatar: "LC", status: "confirmed", motif: "Contrôle annuel vue", canModify: true, canCancel: true, cnam: false, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Pièce d'identité"], instructions: "" },
+  { id: 4, doctor: "Dr. Leila Chebbi", specialty: "Ophtalmologue", date: "5 Mar 2026", time: "11:00", type: "cabinet", address: "12 Rue de Carthage, Sousse", avatar: "LC", status: "confirmed", motif: "Contrôle annuel vue", canModify: true, canCancel: true, hasInsurance: false, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Pièce d'identité"], instructions: "", cabinetRules: { cancellationHours: 24, maxReschedules: 2, latePolicy: "15 min max" } },
 ];
 
 export const mockPastAppointments: PastAppointment[] = [
-  { id: 5, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "10 Fév 2026", time: "09:00", status: "completed", motif: "Suivi diabète", hasPrescription: true, hasReport: true, avatar: "AB", amount: "35 DT" },
-  { id: 6, doctor: "Dr. Nabil Karray", specialty: "Pédiatre", date: "3 Fév 2026", time: "14:00", status: "completed", motif: "Consultation enfant", hasPrescription: false, hasReport: true, avatar: "NK", amount: "40 DT" },
-  { id: 7, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "15 Jan 2026", time: "10:30", status: "no-show", motif: "Bilan cardiaque", hasPrescription: false, hasReport: false, avatar: "SG", amount: "60 DT" },
+  { id: 5, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "10 Fév 2026", time: "09:00", status: "completed", motif: "Suivi diabète", hasPrescription: true, hasReport: true, hasCareSheet: true, avatar: "AB", amount: "35 DT" },
+  { id: 6, doctor: "Dr. Nabil Karray", specialty: "Pédiatre", date: "3 Fév 2026", time: "14:00", status: "completed", motif: "Consultation enfant", hasPrescription: false, hasReport: true, hasCareSheet: false, avatar: "NK", amount: "40 DT" },
+  { id: 7, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "15 Jan 2026", time: "10:30", status: "no-show", motif: "Bilan cardiaque", hasPrescription: false, hasReport: false, hasCareSheet: false, avatar: "SG", amount: "60 DT" },
+  { id: 8, doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "5 Jan 2026", time: "11:00", status: "no-show", motif: "Renouvellement ordonnance", hasPrescription: false, hasReport: false, hasCareSheet: false, avatar: "AB", amount: "35 DT" },
 ];
 
 export const mockCancelledAppointments: CancelledAppointment[] = [
-  { id: 8, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "8 Fév 2026", time: "15:00", reason: "Indisponibilité du praticien", avatar: "SG" },
-  { id: 9, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "20 Jan 2026", time: "11:30", reason: "Annulation par le patient", avatar: "KH" },
+  { id: 9, doctor: "Dr. Sonia Gharbi", specialty: "Cardiologue", date: "8 Fév 2026", time: "15:00", reason: "Indisponibilité du praticien", avatar: "SG" },
+  { id: 10, doctor: "Dr. Khaled Hammami", specialty: "Dermatologue", date: "20 Jan 2026", time: "11:30", reason: "Annulation par le patient", avatar: "KH" },
 ];
 
 // ─── Patient Recent Prescriptions ────────────────────────────
@@ -70,9 +72,45 @@ export const mockRecentPrescriptions = [
   { id: "ORD-042", doctor: "Dr. Gharbi", date: "3 Fév", items: 1, status: "active" },
 ];
 
-export const mockPatientPrescriptions: Prescription[] = [
-  { id: "ORD-2026-045", doctor: "Dr. Bouazizi", date: "10 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], status: "active", total: "45 DT", cnam: true, pharmacy: null },
-  { id: "ORD-2026-042", doctor: "Dr. Gharbi", date: "3 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], status: "active", total: "28 DT", cnam: true, pharmacy: "Pharmacie El Amal" },
+export interface PharmacyResponse {
+  pharmacyId: string;
+  pharmacyName: string;
+  status: "pending" | "preparing" | "ready" | "unavailable";
+  respondedAt?: string;
+  pickupTime?: string;
+  alternatives?: { medication: string; alternative: string }[];
+}
+
+export interface PrescriptionWithPharmacies extends Prescription {
+  sentToPharmacies?: PharmacyResponse[];
+}
+
+export const mockPatientPrescriptions: PrescriptionWithPharmacies[] = [
+  { 
+    id: "ORD-2026-045", 
+    doctor: "Dr. Bouazizi", 
+    date: "10 Fév 2026", 
+    items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], 
+    status: "active", 
+    total: "45 DT", 
+    cnam: true, 
+    pharmacy: null,
+    sentToPharmacies: [
+      { pharmacyId: "ph1", pharmacyName: "Pharmacie El Amal", status: "ready", respondedAt: "10 Fév 14:30", pickupTime: "Avant 18h" },
+      { pharmacyId: "ph2", pharmacyName: "Pharmacie Pasteur", status: "preparing", respondedAt: "10 Fév 15:00" },
+    ]
+  },
+  { 
+    id: "ORD-2026-042", 
+    doctor: "Dr. Gharbi", 
+    date: "3 Fév 2026", 
+    items: ["Amlodipine 10mg - 1x/jour"], 
+    status: "active", 
+    total: "28 DT", 
+    cnam: true, 
+    pharmacy: "Pharmacie El Amal",
+    sentToPharmacies: []
+  },
   { id: "ORD-2025-038", doctor: "Dr. Hammami", date: "15 Déc 2025", items: ["Crème dermocorticoïde", "Lotion hydratante"], status: "expired", total: "35 DT", cnam: true, pharmacy: "Pharmacie Pasteur" },
   { id: "ORD-2025-032", doctor: "Dr. Bouazizi", date: "20 Nov 2025", items: ["Oméprazole 20mg", "Gaviscon"], status: "expired", total: "22 DT", cnam: false, pharmacy: "Pharmacie Pasteur" },
 ];
@@ -83,15 +121,16 @@ export const mockNotifications: Notification[] = [
   { id: "1", type: "appointment", title: "Rappel de RDV", message: "Votre rendez-vous avec Dr. Bouazizi est demain à 14h30 au cabinet El Manar.", time: "Il y a 1h", read: false },
   { id: "2", type: "result", title: "Résultats disponibles", message: "Les résultats de votre bilan sanguin sont prêts. Consultez-les dans votre dossier médical.", time: "Il y a 3h", read: false },
   { id: "3", type: "message", title: "Nouveau message", message: "Dr. Gharbi vous a envoyé un message concernant votre dernière consultation.", time: "Il y a 5h", read: false },
-  { id: "4", type: "prescription", title: "Ordonnance renouvelée", message: "Votre ordonnance ORD-2026-045 a été renouvelée par Dr. Bouazizi.", time: "Hier", read: true },
-  { id: "5", type: "reminder", title: "Rappel CNAM", message: "Pensez à renouveler votre carte CNAM avant le 31 mars 2026.", time: "Hier", read: true },
+  { id: "4", type: "prescription", title: "Ordonnance prête à retirer", message: "Votre ordonnance ORD-2026-045 est prête à retirer chez Pharmacie El Amal.", time: "Il y a 6h", read: false },
+  { id: "5", type: "system", title: "Feuille de soins disponible", message: "La feuille de soins de votre consultation du 10 Fév est disponible au téléchargement.", time: "Hier", read: true },
   { id: "6", type: "appointment", title: "RDV confirmé", message: "Votre rendez-vous du 23 Fév avec Dr. Gharbi (Cardiologue) est confirmé.", time: "Il y a 2 jours", read: true },
-  { id: "7", type: "system", title: "Mise à jour du profil", message: "Pensez à compléter votre numéro d'assuré CNAM dans votre profil.", time: "Il y a 3 jours", read: true },
+  { id: "7", type: "system", title: "Mise à jour du profil", message: "Pensez à compléter vos informations d'assurance dans votre profil.", time: "Il y a 3 jours", read: true },
 ];
 
 // ─── Health Data ─────────────────────────────────────────────
 
 export const mockHealthDocuments: HealthDocument[] = [
+  { name: "Feuille de soins - 10 Fév 2026", type: "Feuille de soins", date: "10 Fév 2026", source: "Dr. Ahmed Bouazizi", size: "85 Ko" },
   { name: "Résultats analyses - Glycémie", type: "Analyse", date: "15 Fév 2026", source: "Labo BioSanté", size: "245 Ko" },
   { name: "Ordonnance Dr. Bouazizi", type: "Ordonnance", date: "10 Fév 2026", source: "Dr. Ahmed Bouazizi", size: "120 Ko" },
   { name: "Radio thoracique", type: "Imagerie", date: "5 Jan 2026", source: "Centre Imagerie Tunis", size: "2.1 Mo" },
@@ -159,12 +198,12 @@ export const mockPatientAiResponses = [
 
 // ─── Messaging ───────────────────────────────────────────────
 
-export const mockMessagingContacts: ChatContact[] = [
-  { id: "1", name: "Dr. Ahmed Bouazizi", role: "Médecin généraliste", avatar: "AB", lastMessage: "Vos résultats sont bons, on se revoit dans 3 mois.", time: "10:30", unread: 1, online: true },
-  { id: "2", name: "Dr. Sonia Gharbi", role: "Cardiologue", avatar: "SG", lastMessage: "N'oubliez pas votre bilan la semaine prochaine.", time: "Hier", unread: 0, online: false },
-  { id: "3", name: "Pharmacie El Manar", role: "Pharmacie", avatar: "PE", lastMessage: "Votre ordonnance est prête à retirer.", time: "Hier", unread: 2, online: true },
-  { id: "4", name: "Labo BioAnalyse Tunis", role: "Laboratoire", avatar: "LB", lastMessage: "Vos résultats d'analyses sont disponibles.", time: "18 Fév", unread: 0, online: false },
-  { id: "5", name: "Dr. Khaled Hammami", role: "Dermatologue", avatar: "KH", lastMessage: "Comment évolue votre traitement ?", time: "15 Fév", unread: 0, online: false },
+export const mockMessagingContacts: (ChatContact & { acceptsMessages?: boolean })[] = [
+  { id: "1", name: "Dr. Ahmed Bouazizi", role: "Médecin généraliste", avatar: "AB", lastMessage: "Vos résultats sont bons, on se revoit dans 3 mois.", time: "10:30", unread: 1, online: true, acceptsMessages: true },
+  { id: "2", name: "Dr. Sonia Gharbi", role: "Cardiologue", avatar: "SG", lastMessage: "N'oubliez pas votre bilan la semaine prochaine.", time: "Hier", unread: 0, online: false, acceptsMessages: false },
+  { id: "3", name: "Pharmacie El Manar", role: "Pharmacie", avatar: "PE", lastMessage: "Votre ordonnance est prête à retirer.", time: "Hier", unread: 2, online: true, acceptsMessages: true },
+  { id: "4", name: "Labo BioAnalyse Tunis", role: "Laboratoire", avatar: "LB", lastMessage: "Vos résultats d'analyses sont disponibles.", time: "18 Fév", unread: 0, online: false, acceptsMessages: true },
+  { id: "5", name: "Dr. Khaled Hammami", role: "Dermatologue", avatar: "KH", lastMessage: "Comment évolue votre traitement ?", time: "15 Fév", unread: 0, online: false, acceptsMessages: true },
 ];
 
 export const mockConversationMessages: Record<string, ChatMessage[]> = {
@@ -187,4 +226,31 @@ export const mockPartnerPharmacies: PartnerPharmacy[] = [
   { id: "ph4", name: "Pharmacie Ibn Sina", address: "20 Av. de la République, Bardo", distance: "2.1 km", phone: "+216 71 567 890", openNow: true, rating: 4.3 },
   { id: "ph5", name: "Pharmacie Centrale", address: "1 Place de la Victoire, Tunis", distance: "3.0 km", phone: "+216 71 678 901", openNow: true, rating: 4.6 },
   { id: "ph6", name: "Pharmacie de Nuit Tunis", address: "8 Rue de Hollande, Tunis", distance: "2.5 km", phone: "+216 71 789 012", openNow: true, rating: 4.2 },
+];
+
+// ─── Patient Consents ────────────────────────────────────────
+
+export const mockPatientConsents = {
+  shareWithPharmacy: true,
+  shareLabResults: true,
+  shareMedicalRecord: false,
+  receivePromotions: false,
+};
+
+// ─── Guest RDV Store (for OTP flow) ─────────────────────────
+
+export interface GuestAppointment {
+  id: string;
+  phone: string;
+  doctor: string;
+  specialty: string;
+  date: string;
+  time: string;
+  motif: string;
+  status: "confirmed" | "pending";
+  createdAt: string;
+}
+
+export const mockGuestAppointments: GuestAppointment[] = [
+  { id: "guest-1", phone: "+216 55 123 456", doctor: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", date: "25 Fév 2026", time: "10:00", motif: "Consultation générale", status: "confirmed", createdAt: "2026-02-20" },
 ];
