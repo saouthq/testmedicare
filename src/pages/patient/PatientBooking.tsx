@@ -10,6 +10,7 @@ import {
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { mockDoctorProfile } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { downloadCalendarEvent } from "@/lib/calendarExport";
 
 const doctor = {
   id: "1",
