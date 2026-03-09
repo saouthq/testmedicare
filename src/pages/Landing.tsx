@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import PublicHeader from "@/components/public/PublicHeader";
+import PublicFooter from "@/components/public/PublicFooter";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -278,50 +279,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t bg-card py-10">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-8 sm:grid-cols-4 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center"><Stethoscope className="h-4 w-4 text-primary-foreground" /></div>
-                <span className="font-bold text-foreground">Medicare</span>
-              </div>
-              <p className="text-xs text-muted-foreground">La plateforme médicale complète pour la Tunisie.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground text-sm mb-3">Annuaires</h4>
-              <div className="space-y-1.5">
-                <Link to="/search" className="block text-xs text-muted-foreground hover:text-foreground">Médecins</Link>
-                <Link to="/clinics" className="block text-xs text-muted-foreground hover:text-foreground">Cliniques</Link>
-                <Link to="/hospitals" className="block text-xs text-muted-foreground hover:text-foreground">Hôpitaux</Link>
-                <Link to="/pharmacies" className="block text-xs text-muted-foreground hover:text-foreground">Pharmacies</Link>
-                <Link to="/medicaments" className="block text-xs text-muted-foreground hover:text-foreground">Médicaments</Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground text-sm mb-3">Aide</h4>
-              <div className="space-y-1.5">
-                <Link to="/how-it-works" className="block text-xs text-muted-foreground hover:text-foreground">Comment ça marche</Link>
-                <Link to="/help" className="block text-xs text-muted-foreground hover:text-foreground">FAQ</Link>
-                <Link to="/my-appointments" className="block text-xs text-muted-foreground hover:text-foreground">Retrouver mes RDV</Link>
-                <Link to="/become-partner" className="block text-xs text-muted-foreground hover:text-foreground">Devenir partenaire</Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground text-sm mb-3">Légal</h4>
-              <div className="space-y-1.5">
-                <Link to="/legal/cgu" className="block text-xs text-muted-foreground hover:text-foreground">CGU</Link>
-                <Link to="/legal/privacy" className="block text-xs text-muted-foreground hover:text-foreground">Confidentialité</Link>
-                <Link to="/legal/cookies" className="block text-xs text-muted-foreground hover:text-foreground">Cookies</Link>
-              </div>
-            </div>
-          </div>
-          <div className="border-t pt-6 text-center">
-            <p className="text-xs text-muted-foreground">© 2026 Medicare Tunisie. Tous droits réservés.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 };

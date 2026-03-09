@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PublicHeader from "@/components/public/PublicHeader";
+import PublicFooter from "@/components/public/PublicFooter";
 import DirectoryCard from "@/components/public/DirectoryCard";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
@@ -45,6 +46,7 @@ const HospitalsDirectory = () => {
           ))}
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 };
