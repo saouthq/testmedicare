@@ -25,7 +25,7 @@ const Register = () => {
             <div><span className="text-2xl font-bold">Medicare</span><p className="text-primary-foreground/70 text-xs">Tunisie 🇹🇳</p></div>
           </div>
           <h2 className="text-3xl font-bold">Rejoignez Medicare</h2>
-          <p className="mt-4 text-primary-foreground/80">Créez votre compte et accédez à l'ensemble des services de la plateforme. Prise en charge CNAM incluse.</p>
+          <p className="mt-4 text-primary-foreground/80">Créez votre compte et accédez à l'ensemble des services de la plateforme.</p>
         </div>
       </div>
 
