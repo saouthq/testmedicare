@@ -46,8 +46,8 @@ const Login = () => {
             </div>
           </div>
           <h2 className="text-3xl font-bold">Bienvenue sur votre plateforme de santé</h2>
-          <p className="mt-4 text-primary-foreground/80">Gérez vos rendez-vous, consultez vos résultats et communiquez avec vos professionnels de santé en toute sécurité. Praticiens conventionnés CNAM.</p>
-          <div className="mt-6 flex items-center gap-2 text-primary-foreground/70 text-sm"><Shield className="h-4 w-4" />Données hébergées en Tunisie · Conforme CNAM</div>
+          <p className="mt-4 text-primary-foreground/80">Gérez vos rendez-vous, consultez vos résultats et communiquez avec vos professionnels de santé en toute sécurité. Toutes assurances acceptées.</p>
+          <div className="mt-6 flex items-center gap-2 text-primary-foreground/70 text-sm"><Shield className="h-4 w-4" />Données hébergées en Tunisie · Conforme réglementation</div>
         </div>
       </div>
 

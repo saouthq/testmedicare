@@ -199,7 +199,7 @@ const DoctorDashboard = () => {
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-foreground text-sm truncate">{s.patient}</p>
                     {s.teleconsultation && <Video className="h-3.5 w-3.5 text-primary shrink-0" />}
-                    {s.cnam && <Shield className="h-3 w-3 text-primary shrink-0" />}
+                    {s.cnam && <Shield className="h-3 w-3 text-primary shrink-0" title="Assuré" />}
                   </div>
                   <p className="text-xs text-muted-foreground">{s.motif} · {s.type}</p>
                 </div>
