@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
+import FeatureGate from "@/components/shared/FeatureGate";
 import { TrendingUp, Users, Calendar, Banknote, Clock, Activity, Download, ChevronDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
@@ -82,6 +83,7 @@ const DoctorStats = () => {
 
   return (
     <DashboardLayout role="doctor" title="Statistiques">
+      <FeatureGate featureId="stats_advanced">
       <div className="space-y-6">
         {/* Period selector + export */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -212,6 +214,7 @@ const DoctorStats = () => {
           </div>
         </div>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 };

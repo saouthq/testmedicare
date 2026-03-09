@@ -4,6 +4,7 @@ import { Send, Bot, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockAiInitialMessages, mockAiResponses, ChatMessage } from "@/data/mockData";
+import FeatureGate from "@/components/shared/FeatureGate";
 
 const DoctorAIAssistant = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(mockAiInitialMessages);
@@ -25,6 +26,7 @@ const DoctorAIAssistant = () => {
 
   return (
     <DashboardLayout role="doctor" title="Assistant IA">
+      <FeatureGate featureId="ai_assistant">
       <div className="rounded-xl border bg-card shadow-card overflow-hidden flex flex-col" style={{ height: "calc(100vh - 180px)" }}>
         {/* Disclaimer banner */}
         <div className="bg-warning/5 border-b border-warning/20 px-4 py-3">
@@ -77,6 +79,7 @@ const DoctorAIAssistant = () => {
           </div>
         </div>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 };

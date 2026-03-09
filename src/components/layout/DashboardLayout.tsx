@@ -6,6 +6,10 @@ import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
 import AdminSpotlight from "@/components/admin/AdminSpotlight";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
+import { getEnabledFeatures } from "@/stores/featureMatrixStore";
+import { Lock } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
@@ -217,27 +221,51 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     </>
   );
 
-  /** Render standard sidebar nav */
+  /** Render standard sidebar nav — with feature gating for doctor */
+  const [doctorSub] = useDoctorSubscription();
+  const doctorEnabledIds = useMemo(() => {
+    if (role !== "doctor") return new Set<string>();
+    return new Set(getEnabledFeatures(doctorSub.activity, doctorSub.plan, doctorSub.specialty).map(f => f.id));
+  }, [role, doctorSub]);
+
   const renderStandardNav = () => (
     <>
       {(items || []).map((item) => {
         const isActive = location.pathname === item.url;
+        // Feature gating for doctor
+        const requiredFeature = role === "doctor" ? sidebarFeatureMap[item.url] : undefined;
+        const isLocked = requiredFeature ? !doctorEnabledIds.has(requiredFeature) : false;
+        const isBlurred = requiredFeature ? blurredFeatures.has(requiredFeature) : false;
+
+        // Hidden features (not blurred) - don't show in sidebar
+        if (isLocked && !isBlurred) return null;
+
         return (
           <Link
             key={item.url}
-            to={item.url}
-            onClick={() => setSidebarOpen(false)}
+            to={isLocked ? "#" : item.url}
+            onClick={(e) => {
+              if (isLocked) {
+                e.preventDefault();
+                toast({ title: "Fonctionnalité Pro", description: "Passez au plan supérieur pour débloquer cette fonctionnalité." });
+                return;
+              }
+              setSidebarOpen(false);
+            }}
             title={!expanded ? item.title : undefined}
             className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors whitespace-nowrap active-scale ${
-              isActive
-                ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              isLocked
+                ? "text-muted-foreground/50 cursor-not-allowed"
+                : isActive
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
-            <item.icon className="h-4 w-4 shrink-0" />
+            <item.icon className={`h-4 w-4 shrink-0 ${isLocked ? "opacity-40" : ""}`} />
             <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
               {item.title}
             </span>
+            {isLocked && expanded && <Lock className="h-3 w-3 text-muted-foreground/50 ml-auto shrink-0" />}
           </Link>
         );
       })}
