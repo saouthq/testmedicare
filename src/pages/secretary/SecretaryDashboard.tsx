@@ -554,7 +554,7 @@ const SecretaryDashboard = () => {
                       <div className="flex items-center gap-2">
                         <label className="flex items-center gap-1.5 text-xs">
                           <input type="checkbox" checked={invoiceCnam} onChange={e => setInvoiceCnam(e.target.checked)} className="rounded border-input" />
-                          <Shield className="h-3 w-3 text-primary" />CNAM
+                          <Shield className="h-3 w-3 text-primary" />Assuré
                         </label>
                       </div>
                       <span className="text-sm font-bold text-foreground">Total : {invoiceTotal} DT</span>
