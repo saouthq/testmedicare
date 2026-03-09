@@ -463,7 +463,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     rdvDate, setRdvDate, rdvTime, setRdvTime, rdvLocation, setRdvLocation, rdvConfirmedAt,
     nextRdv, setNextRdv, consultAmount, setConsultAmount, handleClose,
     paletteOpen, setPaletteOpen, paletteQuery, setPaletteQuery, paletteIndex, setPaletteIndex, paletteInputRef, filteredPalette,
-    initials, bmi, completion, nextAction, lastSavedAt, templates, pastConsults: mockPastConsults,
+    initials, bmi, completion, nextAction, lastSavedAt, templates, saveAsTemplate, deleteTemplate, pastConsults: mockPastConsults,
     rxPrintHtml, labsPrintHtml, reportPrintHtml, certPrintHtml, slPrintHtml,
     doPrint: openPrintWindow,
   };
