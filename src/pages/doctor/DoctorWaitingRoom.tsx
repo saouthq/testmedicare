@@ -355,12 +355,12 @@ const DoctorWaitingRoom = () => {
       {/* Absent Confirmation */}
       <ConfirmDialog
         open={absentConfirm.open}
-        onClose={() => setAbsentConfirm({ open: false, id: null })}
+        onCancel={() => setAbsentConfirm({ open: false, id: null })}
         onConfirm={confirmAbsent}
         title="Marquer comme Absent"
         description="Ce patient sera marqué comme absent (no-show). Cette action est enregistrée dans l'historique."
         confirmLabel="Confirmer Absent"
-        variant="destructive"
+        variant="danger"
       />
     </DashboardLayout>
   );
