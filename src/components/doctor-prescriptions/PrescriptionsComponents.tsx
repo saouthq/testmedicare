@@ -138,7 +138,7 @@ function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void 
                 {rx.status === "active" ? "Active" : "Expirée"}
               </Badge>
               {rx.sent && <Badge variant="outline" className="text-[11px]">Envoyée</Badge>}
-              {rx.cnam && <Badge variant="outline" className="text-[11px]">CNAM</Badge>}
+              {rx.cnam && <Badge variant="outline" className="text-[11px]">Assuré</Badge>}
             </div>
             <div className="text-xs text-muted-foreground truncate">{rx.id} • {rx.date}</div>
             <div className="text-xs text-muted-foreground truncate mt-0.5">{rx.items.join(" • ")}</div>
