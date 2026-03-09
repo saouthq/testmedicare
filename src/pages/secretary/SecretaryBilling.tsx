@@ -84,8 +84,11 @@ const SecretaryBilling = () => {
   const handleMarkPaid = (inv: Invoice) => {
     // TODO BACKEND: PATCH /api/invoices/{id} { status: "paid", payment }
     setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, status: "paid", payment: payMethod } : i));
+    // Sync to cross-role billing store
+    markInvoicePaid(inv.id, payMethod);
     setShowPayModal(null);
     setSelectedInv(null);
+    toast({ title: "Facture encaissée", description: `${inv.id} · ${inv.amount} DT en ${payMethod}` });
   };
 
   const stats = [
