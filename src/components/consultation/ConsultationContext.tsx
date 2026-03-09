@@ -350,6 +350,8 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
   const handleClose = () => {
     setClosed(true); setShowCloseModal(false);
     try { localStorage.removeItem(patientKey); } catch { /* no-op */ }
+    // Sync with doctor store — mark patient completed in waiting room
+    completeConsultation(patient.name);
   };
 
   // Print HTML
