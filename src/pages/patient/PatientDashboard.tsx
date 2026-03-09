@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
+import { toast } from "@/hooks/use-toast";
 
 import { 
   mockPatientAppointments as upcomingAppointments, 
