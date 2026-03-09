@@ -61,7 +61,7 @@ export const mockPharmacyPrescriptions: PharmacyPrescription[] = [
   },
   {
     id: "ORD-2026-042", patient: "Nadia Jemni", avatar: "NJ", doctor: "Dr. Bouazizi",
-    date: "18 Fév 2026", assurance: "CNAM", numAssurance: "11223344",
+    date: "18 Fév 2026", assurance: "Assurance publique", numAssurance: "11223344",
     patientPhone: "+216 98 567 890", urgent: false, total: "18 DT", status: "delivered",
     pickupTime: "10:00",
     items: [
