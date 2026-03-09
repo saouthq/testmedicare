@@ -7,14 +7,16 @@ import { User, Bell, Shield, Save, Globe, Trash2, Eye, FileCheck, CheckCircle2 }
 import { useIsMobile } from "@/hooks/use-mobile";
 import { mockAssurances, mockPatientConsents } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { usePatientProfile, updatePatientProfile } from "@/stores/patientStore";
 
 type Tab = "profile" | "notifications" | "security" | "privacy" | "consents";
 
 const PatientSettings = () => {
   const [tab, setTab] = useState<Tab>("profile");
   const isMobile = useIsMobile();
-  const [insurance, setInsurance] = useState("maghrebia");
-  const [insuranceNumber, setInsuranceNumber] = useState("MAG-2024-001234");
+  const [profile] = usePatientProfile();
+  const [insurance, setInsurance] = useState(profile.insurance);
+  const [insuranceNumber, setInsuranceNumber] = useState(profile.insuranceNumber);
   const [consents, setConsents] = useState(mockPatientConsents);
 
   const tabs = [
@@ -26,6 +28,7 @@ const PatientSettings = () => {
   ];
 
   const handleSave = () => {
+    updatePatientProfile({ insurance, insuranceNumber });
     toast({ title: "Paramètres enregistrés", description: "Vos modifications ont été sauvegardées." });
   };
 
@@ -56,10 +59,10 @@ const PatientSettings = () => {
             <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">
               <h3 className="font-semibold text-foreground mb-4">Informations personnelles</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label>Prénom</Label><Input defaultValue="Amine" className="mt-1" /></div>
-                <div><Label>Nom</Label><Input defaultValue="Ben Ali" className="mt-1" /></div>
-                <div><Label>Email</Label><Input defaultValue="amine@email.tn" className="mt-1" /></div>
-                <div><Label>Téléphone</Label><Input defaultValue="+216 22 345 678" className="mt-1" /></div>
+                <div><Label>Prénom</Label><Input defaultValue={profile.firstName} onChange={e => updatePatientProfile({ firstName: e.target.value })} className="mt-1" /></div>
+                <div><Label>Nom</Label><Input defaultValue={profile.lastName} onChange={e => updatePatientProfile({ lastName: e.target.value })} className="mt-1" /></div>
+                <div><Label>Email</Label><Input defaultValue={profile.email} className="mt-1" /></div>
+                <div><Label>Téléphone</Label><Input defaultValue={profile.phone} className="mt-1" /></div>
                 <div><Label>Date de naissance</Label><Input type="date" defaultValue="1991-03-15" className="mt-1" /></div>
                 <div><Label>Gouvernorat</Label>
                   <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
