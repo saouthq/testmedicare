@@ -238,7 +238,7 @@ const SecretaryDocuments = () => {
                       </td>
                       <td className="p-4 hidden sm:table-cell">
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          d.category === "CNAM" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
+                          d.category === "Assurance" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
                         }`}>{d.category}</span>
                       </td>
                       <td className="p-4 hidden md:table-cell">

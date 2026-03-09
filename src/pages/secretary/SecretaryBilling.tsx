@@ -196,10 +196,10 @@ const SecretaryBilling = () => {
                     <div className="rounded-lg bg-muted/50 p-2.5"><p className="text-[10px] text-muted-foreground">Montant</p><p className="text-xs font-bold text-foreground">{selectedInv.amount} DT</p></div>
                     <div className="rounded-lg bg-muted/50 p-2.5"><p className="text-[10px] text-muted-foreground">Paiement</p><p className="text-xs font-semibold text-foreground">{selectedInv.payment}</p></div>
                   </div>
-                  {selectedInv.cnam && (
+                  {selectedInv.assurance && selectedInv.assurance !== "Sans assurance" && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-primary" />
-                      <p className="text-xs font-semibold text-primary">Assuré</p>
+                      <p className="text-xs font-semibold text-primary">Assuré — {selectedInv.assurance}</p>
                     </div>
                   )}
                   <div className="space-y-1.5 pt-2">
