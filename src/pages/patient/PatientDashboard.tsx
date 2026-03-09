@@ -152,7 +152,7 @@ const PatientDashboard = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Groupe sanguin</span><span className="font-medium text-foreground bg-primary/10 px-2 py-0.5 rounded text-xs">{healthSummary.bloodType}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Médecin traitant</span><span className="font-medium text-foreground text-xs">{healthSummary.treatingDoctor}</span></div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />CNAM</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />{healthSummary.insurance}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Allergies</span><span className="flex items-center gap-1 text-destructive text-xs font-medium"><AlertTriangle className="h-3 w-3" />{healthSummary.allergies.join(", ")}</span></div>
               </div>
               <div className="pt-3 mt-3 border-t">
