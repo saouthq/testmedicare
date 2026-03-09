@@ -7,7 +7,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
 import { mockSecretaryAgendaDoctors, mockSecretaryAgendaAppointments } from "@/data/mockData";
+import { waitingRoomStore } from "@/stores/doctorStore";
+import type { WaitingEntry } from "@/stores/doctorStore";
 
 type ViewMode = "timeline" | "list";
 type AppointmentStatus = "done" | "in_progress" | "in_waiting" | "confirmed" | "upcoming" | "cancelled" | "no_show";
