@@ -2,6 +2,7 @@
  * DoctorSubscription — Subscription management page synced with doctorSubscriptionStore.
  * Uses featureMatrixStore for dynamic plan data. Allows upgrade/downgrade with mock payment.
  */
+import React from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { CheckCircle, Crown, Zap, CreditCard, Calendar, X, Shield, Eye, ArrowRight, Star, Gift, ChevronDown, ChevronUp } from "lucide-react";
