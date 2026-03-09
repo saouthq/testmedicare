@@ -307,7 +307,7 @@ const SecretaryDashboard = () => {
                                 <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${sConfig.className}`}>
                                   <SIcon className="h-3 w-3" />{sConfig.label}
                                 </span>
-                                {w.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                                {w.assurance && w.assurance !== "Sans assurance" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{w.assurance}</span>}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">{w.doctor} · {w.motif} · RDV {w.appointment}</p>
                               <div className="flex items-center gap-1 mt-1">
