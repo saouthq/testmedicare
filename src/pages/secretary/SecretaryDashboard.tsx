@@ -724,7 +724,7 @@ const SecretaryDashboard = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="text-xs">Assurance</Label>
-                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"><option>CNAM</option><option>CNRPS</option><option>Privée</option><option>Sans</option></select>
+                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"><option>CNAM</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option></select>
                 </div>
                 <div><Label className="text-xs">Médecin</Label>
                   <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"><option>Dr. Bouazizi</option><option>Dr. Gharbi</option><option>Dr. Hammami</option></select>
