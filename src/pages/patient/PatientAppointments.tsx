@@ -137,8 +137,8 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: any; onClose: () => void;
 const PatientAppointments = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("upcoming");
-  const [appointments, setAppointments] = useState(initialAppointments);
-  const [cancelledList, setCancelledList] = useState(mockCancelledAppointments);
+  const [appointments, setAppointments] = usePatientAppointments();
+  const [cancelledList, setCancelledList] = usePatientCancelled();
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
   const [showReviewModal, setShowReviewModal] = useState<number | null>(null);
@@ -154,17 +154,13 @@ const PatientAppointments = () => {
   const completedAppointments = initialPastAppointments.filter(a => a.status !== "no-show");
 
   const handleCancel = (id: number) => {
-    const apt = appointments.find(a => a.id === id);
-    if (apt) {
-      setCancelledList(prev => [{ id: apt.id, doctor: apt.doctor, specialty: apt.specialty, date: apt.date, time: apt.time, reason: "Annulation par le patient", avatar: apt.avatar }, ...prev]);
-      setAppointments(prev => prev.filter(a => a.id !== id));
-    }
+    cancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);
   };
 
   const handleReschedule = (id: number, day: string, slot: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, date: `${day} Fév 2026`, time: slot } : a));
+    rescheduleAppointment(id, `${day} Fév 2026`, slot);
     setShowReschedule(null);
     setDrawerApt(null);
     toast({ title: "RDV reprogrammé", description: `Nouveau créneau : ${day} Fév 2026 à ${slot}.` });
