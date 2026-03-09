@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search, Shield, Clock, Users, Stethoscope, Pill, FlaskConical, ChevronRight, Building2,
-  Video, MapPin, Star, Hospital, Moon, CheckCircle, Lock, Heart,
+  Video, MapPin, Hospital, Moon, CheckCircle, Lock, Heart,
 } from "lucide-react";
 import { mockClinics, mockHospitals, mockPublicPharmacies } from "@/data/mocks/establishments";
 import { mockTopMedicines } from "@/data/mocks/medicines";
@@ -20,12 +20,18 @@ const Landing = () => {
   const [activeTab, setActiveTab] = useState<SearchTab>("doctors");
   const [searchQuery, setSearchQuery] = useState("");
   const [cityQuery, setCityQuery] = useState("");
+  const [deGarde, setDeGarde] = useState(false);
 
   const handleSearch = () => {
-    if (activeTab === "doctors") navigate(`/search?q=${searchQuery}`);
+    const params = new URLSearchParams();
+    if (activeTab === "doctors") {
+      if (searchQuery) params.set("q", searchQuery);
+      if (cityQuery) params.set("city", cityQuery);
+      navigate(`/search?${params.toString()}`);
+    }
     else if (activeTab === "clinics") navigate(`/clinics`);
     else if (activeTab === "hospitals") navigate(`/hospitals`);
-    else if (activeTab === "pharmacies") navigate(`/pharmacies`);
+    else if (activeTab === "pharmacies") navigate(deGarde ? `/pharmacies?garde=true` : `/pharmacies`);
     else if (activeTab === "medicines") navigate(`/medicaments`);
   };
 
@@ -39,7 +45,10 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SeoHelmet title="Medicare Tunisie — Prenez rendez-vous avec un médecin en ligne" description="La plateforme médicale complète en Tunisie. Trouvez un médecin, une clinique, un hôpital ou une pharmacie. Prenez RDV en ligne 24h/24." />
+      <SeoHelmet 
+        title="Medicare Tunisie — Prenez rendez-vous avec un médecin en ligne" 
+        description="La plateforme médicale complète en Tunisie. Trouvez un médecin, une clinique, un hôpital ou une pharmacie. Prenez RDV en ligne 24h/24." 
+      />
       <PublicHeader />
 
       {/* Hero */}
@@ -51,7 +60,7 @@ const Landing = () => {
               Votre santé en Tunisie,{" "}<span className="text-primary">simplifiée</span>
             </h1>
             <p className="mt-4 text-base text-muted-foreground animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Trouvez un médecin, une clinique, un hôpital ou une pharmacie. Prenez RDV en ligne 24h/24, praticiens CNAM, paiement en Dinars.
+              Trouvez un médecin, une clinique, un hôpital ou une pharmacie. Prenez RDV en ligne 24h/24, praticiens conventionnés, paiement en Dinars.
             </p>
           </div>
 
@@ -88,8 +97,9 @@ const Landing = () => {
                 {activeTab === "pharmacies" && (
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Input placeholder="Ville..." className="flex-1" />
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <input type="checkbox" className="rounded" /><Moon className="h-3.5 w-3.5" />De garde
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 cursor-pointer">
+                      <input type="checkbox" checked={deGarde} onChange={e => setDeGarde(e.target.checked)} className="rounded" />
+                      <Moon className="h-3.5 w-3.5" />De garde
                     </label>
                   </div>
                 )}
@@ -102,6 +112,25 @@ const Landing = () => {
               </div>
             </div>
           </div>
+
+          {/* Quick CTAs */}
+          <div className="flex flex-wrap justify-center gap-3 mt-6">
+            <Link to="/search">
+              <Button variant="outline" size="sm" className="text-xs">
+                <Stethoscope className="h-3.5 w-3.5 mr-1" />Trouver un médecin
+              </Button>
+            </Link>
+            <Link to="/pharmacies?garde=true">
+              <Button variant="outline" size="sm" className="text-xs">
+                <Moon className="h-3.5 w-3.5 mr-1" />Pharmacies de garde
+              </Button>
+            </Link>
+            <Link to="/my-appointments">
+              <Button variant="outline" size="sm" className="text-xs">
+                <Search className="h-3.5 w-3.5 mr-1" />Retrouver mes RDV
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -111,7 +140,7 @@ const Landing = () => {
           <h2 className="text-center text-sm font-medium text-muted-foreground mb-4">Spécialités populaires</h2>
           <div className="flex flex-wrap items-center justify-center gap-2">
             {specialties.map(s => (
-              <Link key={s} to="/search" className="rounded-full border bg-background px-4 py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary hover:shadow-card">{s}</Link>
+              <Link key={s} to={`/search?specialty=${encodeURIComponent(s)}`} className="rounded-full border bg-background px-4 py-2 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary hover:shadow-card">{s}</Link>
             ))}
           </div>
         </div>
@@ -129,7 +158,6 @@ const Landing = () => {
                   <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{c.name}</h3>
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{c.city}</p>
-                <div className="flex items-center gap-1 mt-1"><Star className="h-3 w-3 text-warning fill-warning" /><span className="text-xs font-medium">{c.rating}</span></div>
               </Link>
             ))}
           </div>
@@ -153,7 +181,7 @@ const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-foreground">Pharmacies de garde</h2>
-            <Link to="/pharmacies" className="text-sm text-primary hover:underline flex items-center gap-1">Voir toutes <ChevronRight className="h-3 w-3" /></Link>
+            <Link to="/pharmacies?garde=true" className="text-sm text-primary hover:underline flex items-center gap-1">Voir toutes <ChevronRight className="h-3 w-3" /></Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {mockPublicPharmacies.filter(p => p.deGarde).slice(0, 3).map(p => (
@@ -161,7 +189,7 @@ const Landing = () => {
                 <div className="flex items-center gap-2 mb-1">
                   <Pill className="h-4 w-4 text-accent" />
                   <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">{p.name}</h3>
-                  <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full">De garde</span>
+                  <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">🌙 De garde</span>
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{p.city} · {p.horaires}</p>
               </Link>
@@ -190,7 +218,10 @@ const Landing = () => {
       {/* How it works */}
       <section id="how-it-works" className="border-t bg-card py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-foreground text-center mb-10">Comment ça marche ?</h2>
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-2xl font-bold text-foreground">Comment ça marche ?</h2>
+            <Link to="/how-it-works" className="text-sm text-primary hover:underline">En savoir plus</Link>
+          </div>
           <div className="grid gap-8 sm:grid-cols-3 max-w-3xl mx-auto">
             {[
               { step: "1", icon: Search, title: "Recherchez", desc: "Trouvez un praticien par spécialité, ville ou nom." },
@@ -243,7 +274,7 @@ const Landing = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold text-foreground mb-3">Vous êtes professionnel de santé ?</h2>
           <p className="text-muted-foreground mb-6 max-w-lg mx-auto">Rejoignez Medicare pour gérer votre agenda, vos patients et booster votre visibilité en ligne.</p>
-          <Link to="/register"><Button size="lg" className="gradient-primary text-primary-foreground shadow-primary-glow">Devenir partenaire <ChevronRight className="ml-1 h-4 w-4" /></Button></Link>
+          <Link to="/become-partner"><Button size="lg" className="gradient-primary text-primary-foreground shadow-primary-glow">Devenir partenaire <ChevronRight className="ml-1 h-4 w-4" /></Button></Link>
         </div>
       </section>
 
@@ -269,20 +300,20 @@ const Landing = () => {
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground text-sm mb-3">Espaces</h4>
+              <h4 className="font-semibold text-foreground text-sm mb-3">Aide</h4>
               <div className="space-y-1.5">
-                <Link to="/dashboard/patient" className="block text-xs text-muted-foreground hover:text-foreground">Patient</Link>
-                <Link to="/dashboard/doctor" className="block text-xs text-muted-foreground hover:text-foreground">Médecin</Link>
-                <Link to="/dashboard/pharmacy" className="block text-xs text-muted-foreground hover:text-foreground">Pharmacie</Link>
-                <Link to="/dashboard/laboratory" className="block text-xs text-muted-foreground hover:text-foreground">Laboratoire</Link>
-                <Link to="/dashboard/secretary" className="block text-xs text-muted-foreground hover:text-foreground">Secrétariat</Link>
+                <Link to="/how-it-works" className="block text-xs text-muted-foreground hover:text-foreground">Comment ça marche</Link>
+                <Link to="/help" className="block text-xs text-muted-foreground hover:text-foreground">FAQ</Link>
+                <Link to="/my-appointments" className="block text-xs text-muted-foreground hover:text-foreground">Retrouver mes RDV</Link>
+                <Link to="/become-partner" className="block text-xs text-muted-foreground hover:text-foreground">Devenir partenaire</Link>
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground text-sm mb-3">Aide</h4>
+              <h4 className="font-semibold text-foreground text-sm mb-3">Légal</h4>
               <div className="space-y-1.5">
-                <a href="#how-it-works" className="block text-xs text-muted-foreground hover:text-foreground">Comment ça marche</a>
-                <Link to="/register" className="block text-xs text-muted-foreground hover:text-foreground">Devenir partenaire</Link>
+                <Link to="/legal/cgu" className="block text-xs text-muted-foreground hover:text-foreground">CGU</Link>
+                <Link to="/legal/privacy" className="block text-xs text-muted-foreground hover:text-foreground">Confidentialité</Link>
+                <Link to="/legal/cookies" className="block text-xs text-muted-foreground hover:text-foreground">Cookies</Link>
               </div>
             </div>
           </div>
