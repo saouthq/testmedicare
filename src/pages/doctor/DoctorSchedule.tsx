@@ -47,14 +47,33 @@ const DoctorSchedule = () => {
 
   const handleAction = (action: string) => {
     if (!selectedAppKey) return;
+    const apt = appointments[selectedAppKey];
     if (action === "confirm") {
       setAppointments(prev => ({ ...prev, [selectedAppKey]: { ...prev[selectedAppKey], status: "confirmed", color: "primary" } }));
     } else if (action === "cancel" || action === "no-show") {
       const updated = { ...appointments };
       delete updated[selectedAppKey];
       setAppointments(updated);
+      // Sync to waiting room
+      if (apt) {
+        const entry = waitingRoomStore.read().find(e => e.patient === apt.patient);
+        if (entry) updateWaitingStatus(entry.id, action === "no-show" ? "absent" : "completed");
+      }
+      toast({ title: action === "no-show" ? "Patient absent" : "RDV annulé", description: apt?.patient });
     } else if (action === "arrived") {
       setAppointments(prev => ({ ...prev, [selectedAppKey]: { ...prev[selectedAppKey], status: "arrived", color: "accent" } }));
+      // Sync to waiting room: mark as arrived
+      if (apt) {
+        const entry = waitingRoomStore.read().find(e => e.patient === apt.patient);
+        if (entry) updateWaitingStatus(entry.id, "arrived");
+      }
+      toast({ title: "Patient arrivé", description: apt?.patient });
+    } else if (action === "start") {
+      setAppointments(prev => ({ ...prev, [selectedAppKey]: { ...prev[selectedAppKey], status: "in_progress", color: "accent" } }));
+      if (apt) {
+        const entry = waitingRoomStore.read().find(e => e.patient === apt.patient);
+        if (entry) updateWaitingStatus(entry.id, "in_consultation");
+      }
     }
     setModal(null);
     setSelectedAppKey(null);
