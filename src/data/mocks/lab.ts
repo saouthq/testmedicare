@@ -21,7 +21,7 @@ export interface LabDemand {
   patient: string;
   patientDob: string;
   avatar: string;
-  assurance: string;        // "CNAM", "CNRPS", "Maghrebia", "Sans assurance"…
+  assurance: string;        // "Assurance publique", "Maghrebia", "Sans assurance"…
   numAssurance?: string;
   prescriber: string;       // doctor name
   examens: string[];        // list of requested exams
