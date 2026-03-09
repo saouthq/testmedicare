@@ -15,6 +15,8 @@ export interface Patient {
   bloodType: string;
   ssn: string;
   mutuelle: string;
+  /** @deprecated use insurance instead */
+  cnamId?: string;
   /** ID de l'assurance (référence au référentiel) */
   insurance?: string;
   /** Numéro d'assuré (optionnel) */
