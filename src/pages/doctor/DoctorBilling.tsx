@@ -1,12 +1,13 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift } from "lucide-react";
+import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockSubscriptionInfo, mockPlans, mockSubscriptionInvoices, mockTeleconsultTransactions, InvoiceStatus } from "@/data/mockData";
 import { getMyActivePromo } from "@/services/admin/adminPromotionsService";
+import { useSharedBilling, markInvoicePaid, getBillingStats, type SharedInvoice } from "@/stores/billingStore";
 
-type BillingTab = "subscription" | "teleconsult";
+type BillingTab = "subscription" | "teleconsult" | "cabinet";
 
 const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: any }> = {
   paid: { label: "Payé", color: "bg-accent/10 text-accent border-accent/20", icon: CheckCircle2 },
