@@ -1,18 +1,6 @@
-/** import DashboardLayout from "@/components/layout/DashboardLayout";
-import { ConsultationsProvider } from "@/components/doctor-consultations/ConsultationsContext";
-import {
-  ConsultationsToolbar,
-  ConsultationsStats,
-  ConsultationsList,
-  ConsultationsActionsPalette,
-  ConsultationsCloseSheet,
-  ConsultationsRescheduleSheet,
-} from "@/components/doctor-consultations/ConsultationsComponents";
 /**
  * DoctorConsultations — Page "Consultations"
- * Toute la logique est dans ConsultationsContext.
- * Ce fichier ne fait que composer les sous-composants.
- * ANCIEN CODE FAUDRA SUPPRIMER LES COMPONENTS INUTILISÉ 
+ * V4 design — FIX workflow (anti click-through, scroll OK, palette actions).
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useEffect, useMemo, useRef, useState } from "react";
