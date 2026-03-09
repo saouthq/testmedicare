@@ -39,6 +39,22 @@ const DoctorDashboard = () => {
   return (
     <DashboardLayout role="doctor" title="Tableau de bord">
       <div className="space-y-6">
+        {/* Quick actions — mobile cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[
+            { label: "Planning", icon: Calendar, to: "/dashboard/doctor/schedule", color: "text-primary" },
+            { label: "Salle d'attente", icon: Clock, to: "/dashboard/doctor/waiting-room", color: "text-warning" },
+            { label: "Consultation", icon: Play, to: currentRdv ? `/dashboard/doctor/consultation/new?patient=${getPatientId(currentRdv.patient)}` : "/dashboard/doctor/consultations", color: "text-accent" },
+            { label: "Mes patients", icon: Search, to: "/dashboard/doctor/patients", color: "text-primary" },
+            { label: "Ordonnances", icon: FileText, to: "/dashboard/doctor/prescriptions", color: "text-primary" },
+          ].map(action => (
+            <Link key={action.label} to={action.to} className="rounded-xl border bg-card p-4 hover:shadow-card transition-all text-center">
+              <action.icon className={`h-6 w-6 mx-auto ${action.color}`} />
+              <p className="text-xs font-medium text-foreground mt-2">{action.label}</p>
+            </Link>
+          ))}
+        </div>
+
         {/* Hero — compact overview */}
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 relative overflow-hidden rounded-2xl gradient-primary p-5 text-primary-foreground">
@@ -46,15 +62,12 @@ const DoctorDashboard = () => {
               <p className="text-primary-foreground/70 text-sm">Bonjour,</p>
               <h2 className="text-xl font-bold mt-0.5">{mockDoctorProfile.name}</h2>
               <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} consultations · Prochain : <span className="font-semibold">{nextRdv?.time || "—"}</span></p>
-              <div className="flex gap-3 mt-3">
+              <div className="flex gap-3 mt-3 flex-wrap">
                 <Link to={`/dashboard/doctor/consultation/new?patient=${currentRdv ? getPatientId(currentRdv.patient) : 1}`}>
                    <Button size="sm" variant="secondary" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0"><Play className="h-4 w-4 mr-1.5" />Démarrer consultation</Button>
                 </Link>
-                <Link to="/dashboard/doctor/schedule">
-                  <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20">Planning complet</Button>
-                </Link>
-                <Link to="/dashboard/doctor/settings">
-                  <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20">Compléter mon profil</Button>
+                <Link to="/dashboard/doctor/waiting-room">
+                  <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20"><Clock className="h-4 w-4 mr-1.5" />Salle d'attente</Button>
                 </Link>
               </div>
             </div>
