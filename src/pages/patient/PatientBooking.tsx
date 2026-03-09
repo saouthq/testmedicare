@@ -113,7 +113,7 @@ const PatientBooking = () => {
               <div className="mt-6 rounded-xl bg-muted/50 p-4 max-w-md mx-auto text-left space-y-2 text-sm">
                 <p className="font-medium text-foreground">📍 Préparez votre RDV :</p>
                 <ul className="space-y-1.5 text-muted-foreground text-xs">
-                  <li>• Apportez votre carte CNAM et votre pièce d'identité</li>
+                  <li>• Apportez votre carte d'assurance et votre pièce d'identité</li>
                   <li>• Préparez vos ordonnances / résultats récents</li>
                   <li>• Arrivez 10 minutes à l'avance</li>
                   {selectedLieuData?.type === "teleconsultation" && <li>• Vérifiez votre connexion internet et caméra</li>}
