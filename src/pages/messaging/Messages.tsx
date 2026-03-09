@@ -7,7 +7,7 @@ import { mockMessagingContacts, mockConversationMessages, mockSecretaryCabinetCo
 
 type MessagingTab = "messages" | "cabinet";
 
-const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" }) => {
+const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "hospital" | "clinic" }) => {
   const hasCabinetChat = role === "secretary";
 
   const [tab, setTab] = useState<MessagingTab>("messages");
