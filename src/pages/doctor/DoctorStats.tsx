@@ -214,6 +214,7 @@ const DoctorStats = () => {
           </div>
         </div>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 };
