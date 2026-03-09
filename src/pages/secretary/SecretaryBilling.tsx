@@ -18,7 +18,7 @@ interface Invoice {
 const actTypes = mockSecretaryBillingActTypes;
 
 const paymentMethods = [
-  { method: "CNAM", count: 45, icon: Shield },
+  { method: "Assurance", count: 45, icon: Shield },
   { method: "Espèces", count: 28, icon: Banknote },
   { method: "Chèque", count: 15, icon: Receipt },
   { method: "Virement", count: 12, icon: CreditCard },
