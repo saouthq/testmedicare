@@ -3,7 +3,8 @@ import {
   Calendar, Clock, FileText, Activity, ChevronRight, MapPin, 
   Video, Heart, Pill, Star, AlertTriangle,
   ArrowRight, Plus, CheckCircle2, Stethoscope, Shield, Search,
-  X, Navigation, MessageSquare, RefreshCw, CalendarPlus, UserX
+  X, Navigation, MessageSquare, RefreshCw, CalendarPlus, UserX,
+  Bell, Upload, TrendingUp, Syringe, Eye,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,16 +13,36 @@ import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusB
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent } from "@/lib/calendarExport";
 import { usePatientAppointments, usePatientProfile, cancelAppointment, getDashboardStats } from "@/stores/patientStore";
-import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors } from "@/data/mockData";
+import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors, mockHealthDocuments, mockVaccinations, mockTreatments } from "@/data/mockData";
+import { useNotifications } from "@/stores/notificationsStore";
 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
   const [appointments, setAppointments] = usePatientAppointments();
   const [profile] = usePatientProfile();
+  const { notifications: crossNotifs } = useNotifications("patient");
 
   const stats = useMemo(() => getDashboardStats(), [appointments, profile]);
   const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
+  const unreadNotifs = crossNotifs.filter(n => !n.read).length;
+
+  // Health completion score
+  const healthCompletion = useMemo(() => {
+    let total = 8, done = 0;
+    if (profile.bloodType) done++;
+    if (profile.treatingDoctor) done++;
+    if (profile.insurance && profile.insurance !== "none") done++;
+    if (profile.allergies.length > 0) done++;
+    if (mockVaccinations.length > 0) done++;
+    if (mockTreatments.length > 0) done++;
+    if (mockHealthDocuments.length > 0) done++;
+    if (profile.dob) done++;
+    return Math.round((done / total) * 100);
+  }, [profile]);
+
+  // Upcoming vaccination reminder
+  const nextVaccination = mockVaccinations.find(v => v.nextDate);
 
   const handleCancel = (id: number) => {
     cancelAppointment(id);
@@ -29,10 +50,15 @@ const PatientDashboard = () => {
     setDrawerApt(null);
   };
 
+  // Prescription renewal mock
+  const handleRenewal = (prescId: string) => {
+    toast({ title: "Demande envoyée", description: "Votre demande de renouvellement a été envoyée au médecin." });
+  };
+
   return (
     <DashboardLayout role="patient" title="Tableau de bord">
       <div className="space-y-5">
-        {/* Welcome banner with search bar */}
+        {/* Welcome banner */}
         <div className="relative overflow-hidden rounded-2xl gradient-primary p-5 sm:p-6 text-primary-foreground">
           <div className="relative z-10">
             <p className="text-primary-foreground/80 text-sm">Bonjour,</p>
@@ -50,25 +76,44 @@ const PatientDashboard = () => {
           <div className="absolute top-0 right-0 w-48 h-48 bg-primary-foreground/5 rounded-full -translate-y-1/2 translate-x-1/4" />
         </div>
 
-        {/* Quick stats — dynamic from store */}
+        {/* Quick stats */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Prochain RDV", value: stats.nextApt, icon: Calendar, color: "bg-primary/10 text-primary" },
-            { label: "RDV à venir", value: String(stats.upcomingCount), icon: Clock, color: "bg-accent/10 text-accent" },
-            { label: "Ordonnances", value: `${stats.activePrescriptions} active(s)`, icon: FileText, color: "bg-warning/10 text-warning" },
-            { label: "Résultats", value: `${stats.pendingResults} nouveau(x)`, icon: Activity, color: "bg-destructive/10 text-destructive" },
+            { label: "Prochain RDV", value: stats.nextApt, icon: Calendar, color: "bg-primary/10 text-primary", to: "/dashboard/patient/appointments" },
+            { label: "RDV à venir", value: String(stats.upcomingCount), icon: Clock, color: "bg-accent/10 text-accent", to: "/dashboard/patient/appointments" },
+            { label: "Ordonnances", value: `${stats.activePrescriptions} active(s)`, icon: FileText, color: "bg-warning/10 text-warning", to: "/dashboard/patient/prescriptions" },
+            { label: "Résultats", value: `${stats.pendingResults} nouveau(x)`, icon: Activity, color: "bg-destructive/10 text-destructive", to: "/dashboard/patient/health" },
           ].map((s, i) => (
-            <div key={i} className="rounded-xl border bg-card p-3 shadow-card hover:shadow-card-hover transition-all cursor-pointer">
+            <Link key={i} to={s.to} className="rounded-xl border bg-card p-3 shadow-card hover:shadow-card-hover transition-all cursor-pointer group">
               <div className="flex items-center gap-2.5">
-                <div className={`h-8 w-8 rounded-lg ${s.color} flex items-center justify-center`}><s.icon className="h-4 w-4" /></div>
+                <div className={`h-8 w-8 rounded-lg ${s.color} flex items-center justify-center group-hover:scale-110 transition-transform`}><s.icon className="h-4 w-4" /></div>
                 <div>
                   <p className="text-[11px] text-muted-foreground">{s.label}</p>
                   <p className="text-xs font-bold text-foreground">{s.value}</p>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
+
+        {/* Health profile completion */}
+        {healthCompletion < 100 && (
+          <Link to="/dashboard/patient/health" className="block">
+            <div className="rounded-xl border bg-card shadow-card p-4 hover:shadow-card-hover transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Complétez votre profil santé</span>
+                </div>
+                <span className="text-xs font-bold text-primary">{healthCompletion}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${healthCompletion}%` }} />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Un profil complet permet à vos médecins de mieux vous soigner.</p>
+            </div>
+          </Link>
+        )}
 
         <div className="grid gap-5 lg:grid-cols-3">
           {/* Main col */}
@@ -107,7 +152,7 @@ const PatientDashboard = () => {
               </div>
             </div>
 
-            {/* Recent prescriptions */}
+            {/* Recent prescriptions with renewal */}
             <div className="rounded-xl border bg-card shadow-card">
               <div className="flex items-center justify-between border-b px-4 py-3">
                 <h2 className="font-semibold text-foreground text-sm flex items-center gap-2"><Pill className="h-4 w-4 text-warning" />Ordonnances récentes</h2>
@@ -115,16 +160,47 @@ const PatientDashboard = () => {
               </div>
               <div className="divide-y">
                 {recentPrescriptions.map(p => (
-                  <Link key={p.id} to="/dashboard/patient/prescriptions" className="flex items-center justify-between p-3 hover:bg-muted/30 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center"><FileText className="h-4 w-4 text-accent" /></div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{p.id}</p>
-                        <p className="text-[11px] text-muted-foreground">{p.doctor} · {p.date}</p>
+                  <div key={p.id} className="p-3 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <Link to="/dashboard/patient/prescriptions" className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center"><FileText className="h-4 w-4 text-accent" /></div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{p.id}</p>
+                          <p className="text-[11px] text-muted-foreground">{p.doctor} · {p.date}</p>
+                        </div>
+                      </Link>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button variant="ghost" size="sm" className="h-7 text-[11px] text-primary" onClick={() => handleRenewal(p.id)}>
+                          <RefreshCw className="h-3 w-3 mr-1" />Renouveler
+                        </Button>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent documents */}
+            <div className="rounded-xl border bg-card shadow-card">
+              <div className="flex items-center justify-between border-b px-4 py-3">
+                <h2 className="font-semibold text-foreground text-sm flex items-center gap-2"><Upload className="h-4 w-4 text-accent" />Documents récents</h2>
+                <Link to="/dashboard/patient/health" className="text-xs text-primary hover:underline flex items-center gap-1">Voir tout <ChevronRight className="h-3.5 w-3.5" /></Link>
+              </div>
+              <div className="divide-y">
+                {mockHealthDocuments.slice(0, 3).map((d, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
+                    <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : "bg-muted"}`}>
+                      <FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{d.source} · {d.date}</p>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => toast({ title: "Aperçu", description: d.name })}>
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -132,6 +208,41 @@ const PatientDashboard = () => {
 
           {/* Right sidebar */}
           <div className="space-y-5">
+            {/* Notifications preview */}
+            {unreadNotifs > 0 && (
+              <Link to="/dashboard/patient/notifications" className="block">
+                <div className="rounded-xl border bg-card shadow-card p-4 hover:shadow-card-hover transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center relative">
+                      <Bell className="h-5 w-5 text-primary-foreground" />
+                      <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{unreadNotifs}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{unreadNotifs} notification{unreadNotifs > 1 ? "s" : ""}</p>
+                      <p className="text-[11px] text-muted-foreground">Non lue{unreadNotifs > 1 ? "s" : ""}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* Vaccination reminder */}
+            {nextVaccination && (
+              <div className="rounded-xl border border-warning/30 bg-warning/5 shadow-card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-warning/10 flex items-center justify-center shrink-0"><Syringe className="h-4 w-4 text-warning" /></div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Rappel vaccination</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{nextVaccination.name} — Prochaine dose : {nextVaccination.nextDate}</p>
+                    <Link to="/dashboard/patient/health">
+                      <Button variant="outline" size="sm" className="mt-2 h-7 text-[11px]">Voir mes vaccins</Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Favorite doctors */}
             <div className="rounded-xl border bg-card shadow-card p-4">
               <h3 className="font-semibold text-foreground text-sm mb-3 flex items-center gap-2"><Star className="h-4 w-4 text-warning" />Mes soignants favoris</h3>
@@ -147,9 +258,10 @@ const PatientDashboard = () => {
                   </Link>
                 ))}
               </div>
+              <Link to="/search"><Button variant="ghost" size="sm" className="w-full mt-2 text-xs text-primary"><Plus className="h-3 w-3 mr-1" />Trouver un praticien</Button></Link>
             </div>
 
-            {/* Health card — dynamic from profile */}
+            {/* Health card */}
             <div className="rounded-xl border bg-card shadow-card p-4">
               <h3 className="font-semibold text-foreground text-sm mb-3 flex items-center gap-2"><Heart className="h-4 w-4 text-primary" />Mon profil santé</h3>
               <div className="space-y-2 text-sm">
@@ -157,6 +269,7 @@ const PatientDashboard = () => {
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Médecin traitant</span><span className="font-medium text-foreground text-xs">{stats.healthSummary.treatingDoctor}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />{stats.healthSummary.insurance}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Allergies</span><span className="flex items-center gap-1 text-destructive text-xs font-medium"><AlertTriangle className="h-3 w-3" />{stats.healthSummary.allergies.join(", ") || "Aucune"}</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Traitements</span><span className="text-xs font-medium text-foreground">{mockTreatments.length} en cours</span></div>
               </div>
               <div className="pt-3 mt-3 border-t">
                 <Link to="/dashboard/patient/health"><Button variant="outline" size="sm" className="w-full text-xs">Voir mon dossier <ArrowRight className="h-3 w-3 ml-1" /></Button></Link>
@@ -170,7 +283,7 @@ const PatientDashboard = () => {
                 {[
                   { label: "Trouver un praticien", icon: Stethoscope, to: "/search", color: "bg-primary/10 text-primary" },
                   { label: "Prendre RDV", icon: Calendar, to: "/search", color: "bg-accent/10 text-accent" },
-                  { label: "Ordonnances", icon: FileText, to: "/dashboard/patient/prescriptions", color: "bg-warning/10 text-warning" },
+                  { label: "Renouveler ordo.", icon: RefreshCw, to: "/dashboard/patient/prescriptions", color: "bg-warning/10 text-warning" },
                   { label: "Mon espace santé", icon: Heart, to: "/dashboard/patient/health", color: "bg-primary/10 text-primary" },
                 ].map((a, i) => (
                   <Link key={i} to={a.to} className="flex flex-col items-center gap-1.5 rounded-xl border p-3 hover:bg-muted/50 hover:border-primary/30 transition-all text-center group">
@@ -184,7 +297,7 @@ const PatientDashboard = () => {
         </div>
       </div>
 
-      {/* ── RDV detail drawer (bottom sheet) ── */}
+      {/* ── RDV detail drawer ── */}
       {currentApt && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => { setDrawerApt(null); setShowCancelConfirm(null); }}>
           <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-slide-up sm:animate-fade-in max-h-[85vh] overflow-y-auto scrollbar-thin" onClick={e => e.stopPropagation()}>
