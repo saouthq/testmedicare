@@ -293,7 +293,7 @@ const PatientAppointments = () => {
                     <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
                     <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><UserX className="h-3 w-3" />Absence non justifiée</p>
                   </div>
-                  <Link to="/booking/1"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre RDV</Button></Link>
+                  <Link to="/search"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre RDV</Button></Link>
                 </div>
               </div>
             ))}
@@ -313,7 +313,7 @@ const PatientAppointments = () => {
                     <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
                     <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{a.reason}</p>
                   </div>
-                  <Link to="/booking/1"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre</Button></Link>
+                  <Link to="/search"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre</Button></Link>
                 </div>
               </div>
             ))}
@@ -439,7 +439,7 @@ const PatientAppointments = () => {
                   {reviewSent.has(currentPast.id) && (
                     <p className="text-xs text-accent flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Avis envoyé</p>
                   )}
-                  <Link to="/booking/1"><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
+                  <Link to="/search"><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
                 </div>
               </div>
             )}

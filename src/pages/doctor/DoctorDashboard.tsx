@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts, mockDoctorProfile, mockPatients } from "@/data/mockData";
+import { toast } from "@/hooks/use-toast";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 
@@ -225,9 +226,9 @@ const DoctorDashboard = () => {
                             <div className="absolute right-0 top-8 z-50 w-48 rounded-lg border bg-card shadow-elevated p-1 animate-fade-in">
                               <Link to={`/dashboard/doctor/patients/${getPatientId(s.patient)}`} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><FileText className="h-3.5 w-3.5 text-primary" />Ouvrir dossier</Link>
                               <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(s.patient)}`} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><Play className="h-3.5 w-3.5 text-accent" />Démarrer consultation</Link>
-                              <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><MessageSquare className="h-3.5 w-3.5 text-primary" />Message patient</button>
-                              <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><RefreshCw className="h-3.5 w-3.5 text-warning" />Reprogrammer</button>
-                              <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-destructive" onClick={() => setActionMenuOpen(null)}><X className="h-3.5 w-3.5" />Annuler</button>
+                              <Link to="/dashboard/doctor/messages" className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => setActionMenuOpen(null)}><MessageSquare className="h-3.5 w-3.5 text-primary" />Message patient</Link>
+                              <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground" onClick={() => { setActionMenuOpen(null); toast({ title: "Reprogrammer", description: "Fonctionnalité à connecter au backend." }); }}><RefreshCw className="h-3.5 w-3.5 text-warning" />Reprogrammer</button>
+                              <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-destructive" onClick={() => { setActionMenuOpen(null); toast({ title: "Annulation", description: "Fonctionnalité à connecter au backend." }); }}><X className="h-3.5 w-3.5" />Annuler</button>
                             </div>
                           </>
                         )}

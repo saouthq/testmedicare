@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, MapPin, Phone, Clock, CreditCard, Shield, Calendar,
@@ -18,6 +18,7 @@ import {
 
 const DoctorPublicProfile = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
@@ -313,7 +314,7 @@ const DoctorPublicProfile = () => {
       {/* Sticky bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-card/95 backdrop-blur-md p-3 sm:p-4">
         <div className="max-w-3xl mx-auto">
-          <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-12 text-sm font-semibold" onClick={() => navigate("/booking/1")}>
+          <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-12 text-sm font-semibold" onClick={() => navigate(`/booking/${id || "1"}`)}>
             <Calendar className="h-4 w-4 mr-2" />Prendre rendez-vous
           </Button>
           <p className="text-[10px] text-muted-foreground text-center mt-1">Prise en charge Assurance · Annulation gratuite 24h avant</p>
