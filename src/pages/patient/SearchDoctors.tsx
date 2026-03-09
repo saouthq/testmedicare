@@ -60,11 +60,11 @@ const SearchDoctors = () => {
             <Button variant={filterToday ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterToday ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterToday(!filterToday)}>
               <Clock className="h-3 w-3 mr-1" />Dispo aujourd'hui
             </Button>
-            <Button variant={filterCnam ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterCnam ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterCnam(!filterCnam)}>
-              <Shield className="h-3 w-3 mr-1" />CNAM
+            <Button variant={filterInsurance ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterInsurance ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterInsurance(!filterInsurance)}>
+              <Shield className="h-3 w-3 mr-1" />Assurance
             </Button>
-            {(filterTeleconsult || filterToday || filterCnam) && (
-              <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => { setFilterTeleconsult(false); setFilterToday(false); setFilterCnam(false); }}>
+            {(filterTeleconsult || filterToday || filterInsurance) && (
+              <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => { setFilterTeleconsult(false); setFilterToday(false); setFilterInsurance(false); }}>
                 Réinitialiser
               </Button>
             )}
