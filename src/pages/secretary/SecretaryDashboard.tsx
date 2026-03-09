@@ -158,7 +158,9 @@ const SecretaryDashboard = () => {
       onConfirm: () => {
         // TODO BACKEND: PATCH /api/appointments/{id}/no-show
         setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "absent" as WaitingStatus } : w));
-        toast({ title: "Patient marqué absent", description: `${p?.patient} — RDV non honoré.` });
+        // Write to cross-role store → patient sees "absent" in their RDV list
+        markPatientAbsent(id, p?.patient || "", "Dr. Ahmed Bouazizi");
+        toast({ title: "Patient marqué absent", description: `${p?.patient} — RDV non honoré. Notification envoyée au patient.` });
         setConfirmAction(prev => ({ ...prev, open: false }));
       },
     });
