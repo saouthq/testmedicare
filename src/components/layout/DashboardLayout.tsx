@@ -235,7 +235,9 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     <>
       {(items || []).map((item) => {
         const isActive = location.pathname === item.url;
-        // Feature gating for doctor
+        // Admin module gating — hide sidebar items for disabled modules
+        if (role !== "admin" && !isSidebarUrlEnabled(item.url)) return null;
+        // Feature gating for doctor subscription
         const requiredFeature = role === "doctor" ? sidebarFeatureMap[item.url] : undefined;
         const isLocked = requiredFeature ? !doctorEnabledIds.has(requiredFeature) : false;
         const isBlurred = requiredFeature ? blurredFeatures.has(requiredFeature) : false;
