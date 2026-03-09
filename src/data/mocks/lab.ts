@@ -45,7 +45,7 @@ export const mockLabStats = [
 export const mockLabDemands: LabDemand[] = [
   {
     id: "DEM-001", patient: "Amine Ben Ali", patientDob: "12/03/1992", avatar: "AB",
-    assurance: "CNAM", numAssurance: "12345678",
+    assurance: "Assurance publique", numAssurance: "12345678",
     prescriber: "Dr. Bouazizi", examens: ["Bilan sanguin complet", "HbA1c"],
     status: "in_progress", date: "20 Fév 2026", priority: "normal", amount: "120 DT",
     pdfs: [], notes: "Prélèvement effectué à 8h30",
