@@ -720,7 +720,7 @@ const SecretaryDashboard = () => {
                 <div><Label className="text-xs">Date de naissance</Label><Input type="date" className="mt-1" /></div>
                 <div><Label className="text-xs">Téléphone</Label><Input className="mt-1" placeholder="+216 XX XXX XXX" /></div>
                 <div><Label className="text-xs">Email</Label><Input type="email" className="mt-1" placeholder="email@..." /></div>
-                <div><Label className="text-xs">N° CNAM</Label><Input className="mt-1" placeholder="XXXXXXXX" /></div>
+                <div><Label className="text-xs">N° Assuré</Label><Input className="mt-1" placeholder="XXXXXXXX (optionnel)" /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="text-xs">Assurance</Label>
