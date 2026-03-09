@@ -427,8 +427,26 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 pb-safe">{children}</main>
+        {/* Page content — with admin module gating */}
+        <main className="flex-1 p-4 sm:p-6 pb-safe">
+          {role !== "admin" && getDisabledModuleForRoute(location.pathname) ? (
+            <div className="flex items-center justify-center min-h-[60vh] px-4">
+              <div className="text-center max-w-md">
+                <div className="h-20 w-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
+                  <Power className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">Module désactivé</h2>
+                <p className="text-muted-foreground mb-1">
+                  Le module <span className="font-semibold text-foreground">« {getDisabledModuleForRoute(location.pathname)?.label} »</span> est temporairement désactivé par l'administrateur.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 mb-6">{getDisabledModuleForRoute(location.pathname)?.description}</p>
+                <Link to={`/dashboard/${role}`}>
+                  <Button variant="outline" size="sm">Retour au tableau de bord</Button>
+                </Link>
+              </div>
+            </div>
+          ) : children}
+        </main>
       </div>
 
       {/* Notification Center drawer */}
