@@ -282,7 +282,7 @@ const DoctorWaitingRoom = () => {
         onConfirm={confirmAbsent}
         title="Marquer comme absent"
         description="Confirmez-vous que ce patient ne s'est pas présenté ? Cette action sera enregistrée dans son dossier."
-        variant="destructive"
+        variant="danger"
       />
     </DashboardLayout>
   );
