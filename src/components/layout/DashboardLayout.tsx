@@ -111,9 +111,10 @@ const adminSections: NavSection[] = [
     ],
   },
   {
-    label: "Finance",
+    label: "Finance & Offres",
     items: [
       { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
+      { title: "Matrice fonctionnalités", url: "/dashboard/admin/feature-matrix", icon: Activity },
       { title: "Paiements", url: "/dashboard/admin/payments", icon: Banknote },
       { title: "Promotions", url: "/dashboard/admin/promotions", icon: CreditCard },
     ],
