@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Building2, Calendar, Gavel, Pill,
   MessageSquare, Flag, CreditCard, Banknote, Bell, ClipboardList, ScrollText,
   Settings, BarChart3, Activity, Search, UserPlus, Ban, RefreshCw, Eye,
-  FileText, Zap, Server, Gift, Mail, Download,
+  FileText, Zap, Server, Gift, Mail, Download, Power,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { appendLog } from "@/services/admin/adminAuditService";
