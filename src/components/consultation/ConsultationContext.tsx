@@ -302,7 +302,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
       if (labsSendToLab && analyses.length > 0) {
         createLabDemand({
           patient: patient.name,
-          patientDob: patient.dob || "",
+          patientDob: "",
           avatar: initials,
           prescriber: "Dr. Bouazizi",
           examens: [...analyses],
