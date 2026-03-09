@@ -283,7 +283,7 @@ const SecretaryBilling = () => {
                 <div className="flex items-end gap-3">
                   <label className="flex items-center gap-1.5 text-xs mb-2">
                     <input type="checkbox" checked={newCnam} onChange={e => setNewCnam(e.target.checked)} className="rounded border-input" />
-                    <Shield className="h-3 w-3 text-primary" />CNAM
+                    <Shield className="h-3 w-3 text-primary" />Assuré
                   </label>
                 </div>
               </div>
