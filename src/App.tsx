@@ -76,6 +76,21 @@ import SecretaryDocuments from "./pages/secretary/SecretaryDocuments";
 import SecretaryBilling from "./pages/secretary/SecretaryBilling";
 import SecretarySettings from "./pages/secretary/SecretarySettings";
 
+// Hospital
+import HospitalDashboard from "./pages/hospital/HospitalDashboard";
+import HospitalDepartments from "./pages/hospital/HospitalDepartments";
+import HospitalPatients from "./pages/hospital/HospitalPatients";
+import HospitalStaff from "./pages/hospital/HospitalStaff";
+import HospitalEquipment from "./pages/hospital/HospitalEquipment";
+import HospitalSettings from "./pages/hospital/HospitalSettings";
+
+// Clinic
+import ClinicDashboard from "./pages/clinic/ClinicDashboard";
+import ClinicDoctors from "./pages/clinic/ClinicDoctors";
+import ClinicAppointments from "./pages/clinic/ClinicAppointments";
+import ClinicRooms from "./pages/clinic/ClinicRooms";
+import ClinicSettings from "./pages/clinic/ClinicSettings";
+
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
