@@ -13,7 +13,7 @@ export type { Doctor, DoctorScheduleItem, WaitingRoomEntry, UrgentAlert, DoctorC
 export type { Patient, PatientAppointment, PastAppointment, CancelledAppointment, HealthDocument, Antecedent, Treatment, Allergy, Habit, FamilyHistory, Surgery, Vaccination, HealthMeasure, PartnerPharmacy } from "@/types";
 export type { Prescription, RxFavorite, ConsultationPrescriptionItem } from "@/types";
 export type { PastConsult, ConsultationTemplate } from "@/types";
-export type { PharmacyPrescriptionItem, PharmacyPrescription } from "@/types";
+export type { LabPanel, PharmacyPrescriptionItem, PharmacyPrescription, PharmacyPrescriptionStatus, PharmacyItemAvailability } from "@/types";
 export type { LabDemand, LabDemandStatus, LabPdf } from "@/data/mocks/lab";
 
 // Re-export all mock data
