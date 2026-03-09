@@ -129,6 +129,7 @@ const adminSections: NavSection[] = [
   {
     label: "Système",
     items: [
+      { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
       { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
       { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
