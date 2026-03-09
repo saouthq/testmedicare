@@ -128,10 +128,14 @@ const App = () => (
           <Route path="/medicaments" element={<MedicinesDirectory />} />
           <Route path="/medicament/:slug" element={<MedicineDetail />} />
           <Route path="/find-appointments" element={<Navigate to="/my-appointments" replace />} />
+          <Route path="/retrieve-appointments" element={<Navigate to="/my-appointments" replace />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/help" element={<Help />} />
           <Route path="/become-partner" element={<BecomePartner />} />
           <Route path="/legal/:page" element={<Legal />} />
+          <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
+          <Route path="/terms" element={<Navigate to="/legal/cgu" replace />} />
+          <Route path="/cookies" element={<Navigate to="/legal/cookies" replace />} />
 
           {/* Legacy redirects */}
           <Route path="/dashboard/patient/search" element={<Navigate to="/search" replace />} />

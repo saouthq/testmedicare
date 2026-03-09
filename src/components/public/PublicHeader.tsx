@@ -1,6 +1,10 @@
+/**
+ * PublicHeader — Navigation publique Medicare.tn
+ * Liens : Accueil, Rechercher, Annuaire (dropdown), Médicaments, Comment ça marche, Aide, Devenir partenaire, Retrouver mes RDV, Connexion
+ */
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, ChevronDown, Menu, X } from "lucide-react";
+import { Stethoscope, ChevronDown, Menu, X, Calendar } from "lucide-react";
 import { useState } from "react";
 
 const PublicHeader = () => {
@@ -19,7 +23,7 @@ const PublicHeader = () => {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden lg:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-5">
           <Link to="/search" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Rechercher</Link>
           <div className="relative" onMouseEnter={() => setAnnuaireOpen(true)} onMouseLeave={() => setAnnuaireOpen(false)}>
             <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -35,7 +39,11 @@ const PublicHeader = () => {
             )}
           </div>
           <Link to="/medicaments" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Médicaments</Link>
-          <a href="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Comment ça marche</a>
+          <Link to="/how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Comment ça marche</Link>
+          <Link to="/help" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Aide</Link>
+          <Link to="/my-appointments" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5" />Mes RDV
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
@@ -49,15 +57,20 @@ const PublicHeader = () => {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="lg:hidden border-t bg-card p-4 space-y-2">
-          <Link to="/search" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted">Rechercher un médecin</Link>
-          <Link to="/clinics" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted">Cliniques</Link>
-          <Link to="/hospitals" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted">Hôpitaux</Link>
-          <Link to="/pharmacies" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted">Pharmacies</Link>
-          <Link to="/medicaments" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted">Médicaments</Link>
+        <div className="lg:hidden border-t bg-card p-4 space-y-1 animate-slide-up">
+          <Link to="/search" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Rechercher un médecin</Link>
+          <Link to="/clinics" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Cliniques</Link>
+          <Link to="/hospitals" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Hôpitaux</Link>
+          <Link to="/pharmacies" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Pharmacies</Link>
+          <Link to="/medicaments" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Médicaments</Link>
+          <div className="border-t my-1" />
+          <Link to="/how-it-works" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Comment ça marche</Link>
+          <Link to="/help" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Aide / FAQ</Link>
+          <Link to="/become-partner" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted active-scale">Devenir partenaire</Link>
+          <Link to="/my-appointments" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-primary font-medium hover:bg-primary/5 active-scale">📅 Retrouver mes RDV</Link>
           <div className="pt-2 border-t flex gap-2">
-            <Link to="/login" className="flex-1"><Button variant="outline" className="w-full" size="sm">Connexion</Button></Link>
-            <Link to="/register" className="flex-1"><Button className="w-full gradient-primary text-primary-foreground" size="sm">S'inscrire</Button></Link>
+            <Link to="/login" className="flex-1" onClick={() => setMobileOpen(false)}><Button variant="outline" className="w-full" size="sm">Connexion</Button></Link>
+            <Link to="/register" className="flex-1" onClick={() => setMobileOpen(false)}><Button className="w-full gradient-primary text-primary-foreground" size="sm">S'inscrire</Button></Link>
           </div>
         </div>
       )}

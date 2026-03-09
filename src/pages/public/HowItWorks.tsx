@@ -48,7 +48,7 @@ const HowItWorks = () => {
     {
       icon: Shield,
       title: "Prise en charge assurance",
-      description: "Trouvez des praticiens conventionnés CNAM et autres assurances.",
+      description: "Trouvez des praticiens conventionnés et pris en charge par les assurances.",
     },
     {
       icon: Clock,
