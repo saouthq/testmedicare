@@ -12,6 +12,7 @@ import {
   type RxFavorite,
 } from "@/data/mockData";
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
+import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
 
 // ── Context type ─────────────────────────────────────────────
