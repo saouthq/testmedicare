@@ -7,6 +7,7 @@ import { User, Bell, Shield, Save, Globe, Trash2, Eye, FileCheck, CheckCircle2 }
 import { useIsMobile } from "@/hooks/use-mobile";
 import { mockAssurances, mockPatientConsents } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { usePatientProfile, updatePatientProfile } from "@/stores/patientStore";
 
 type Tab = "profile" | "notifications" | "security" | "privacy" | "consents";
 
