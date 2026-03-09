@@ -99,7 +99,27 @@ const PatientBooking = () => {
   };
 
   const handleConfirm = () => {
+    // Write to shared store — appears in Dashboard & Appointments
+    bookAppointment({
+      doctor: doctor.name,
+      specialty: doctor.specialty,
+      date: `${selectedDay} Fév 2026`,
+      time: selectedSlot,
+      type: selectedLieuData?.type === "teleconsultation" ? "teleconsultation" : "cabinet",
+      address: selectedLieuData?.address || "",
+      avatar: doctor.avatar,
+      status: doctor.autoConfirm ? "confirmed" : "pending",
+      motif: selectedMotif,
+      canModify: true,
+      canCancel: true,
+      hasInsurance: doctor.acceptsInsurance,
+      cancellationPolicy: doctor.cancellationPolicy,
+      documents: [],
+      instructions: "",
+      doctorId: Number(doctorId) || 1,
+    });
     setFinalState("done");
+    toast({ title: "RDV confirmé", description: `${doctor.name} — ${selectedDay} Fév à ${selectedSlot}` });
   };
 
   // Final states (done, conflict, waitlist)
