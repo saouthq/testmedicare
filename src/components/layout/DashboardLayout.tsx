@@ -398,6 +398,11 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
       {/* Notification Center drawer */}
       <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} role={role} />
+
+      {/* Admin Spotlight */}
+      {role === "admin" && (
+        <AdminSpotlight open={spotlightOpen} onClose={() => setSpotlightOpen(false)} />
+      )}
     </div>
   );
 };
