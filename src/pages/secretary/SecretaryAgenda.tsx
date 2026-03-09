@@ -342,7 +342,7 @@ const SecretaryAgenda = () => {
                     </div>
                   </div>
 
-                  {selectedApt.cnam && (
+                  {selectedApt.assurance && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-primary" />
                       <div>
