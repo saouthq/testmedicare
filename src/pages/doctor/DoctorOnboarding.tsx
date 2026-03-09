@@ -28,7 +28,7 @@ const DoctorOnboarding = () => {
   const [autoConfirm, setAutoConfirm] = useState(true);
   const [cancellationDelay, setCancellationDelay] = useState("24");
   const [bufferTime, setBufferTime] = useState("5");
-  const [cnam, setCnam] = useState(true);
+  const [acceptsInsurance, setAcceptsInsurance] = useState(true);
 
   const currentIndex = steps.findIndex(s => s.key === step);
 
