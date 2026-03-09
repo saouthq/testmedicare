@@ -46,6 +46,7 @@ const navItems: Record<string, NavItem[]> = {
   doctor: [
     { title: "Tableau de bord", url: "/dashboard/doctor", icon: LayoutDashboard },
     { title: "Planning", url: "/dashboard/doctor/schedule", icon: Calendar },
+    { title: "Salle d'attente", url: "/dashboard/doctor/waiting-room", icon: Clock },
     { title: "Mes patients", url: "/dashboard/doctor/patients", icon: Users },
     { title: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
     { title: "Ordonnances", url: "/dashboard/doctor/prescriptions", icon: FileText },
