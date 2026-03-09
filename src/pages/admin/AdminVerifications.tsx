@@ -107,10 +107,58 @@ const eventColors: Record<string, string> = { submitted: "text-primary", note: "
 
 const AdminVerifications = () => {
   const [tab, setTab] = useState<Tab>("doctors");
-  const [verifications, setVerifications] = useState(initialVerifications);
+
+  // Merge hardcoded verifications with registrations from partner store
+  const buildVerifications = (): Verification[] => {
+    const base = [...initialVerifications];
+    const registrations = getRegistrations();
+
+    // Convert registrations to Verification format
+    registrations.forEach(reg => {
+      const entityType = reg.type === "lab" ? "lab" : reg.type === "pharmacy" ? "pharmacy" : reg.type === "clinic" ? "pharmacy" : "doctor";
+      const entityName = reg.type === "doctor"
+        ? `Dr. ${reg.firstName} ${reg.lastName}`
+        : reg.organization || `${reg.firstName} ${reg.lastName}`;
+
+      // Don't add duplicates (check by id)
+      if (base.some(v => v.id === reg.id)) return;
+
+      base.unshift({
+        id: reg.id,
+        entityType,
+        entityName,
+        specialty: reg.specialty || reg.activity,
+        city: reg.city,
+        email: reg.email,
+        phone: reg.phone,
+        submittedAt: new Date(reg.submittedAt).toLocaleDateString("fr-TN", { day: "2-digit", month: "short", year: "numeric" }),
+        status: reg.status,
+        docs: reg.docs,
+        events: reg.events as VerifEvent[],
+        // Extra fields for display
+        _plan: reg.plan,
+        _planPrice: reg.planPrice,
+        _billing: reg.billing,
+        _promoApplied: reg.promoApplied,
+        _registrationId: reg.id,
+      } as Verification & Record<string, any>);
+    });
+
+    return base;
+  };
+
+  const [verifications, setVerifications] = useState(buildVerifications);
   const [motifAction, setMotifAction] = useState<{ id: string; type: "approve" | "reject" } | null>(null);
   const [drawerItem, setDrawerItem] = useState<Verification | null>(null);
   const [adminNote, setAdminNote] = useState("");
+
+  // Refresh from store periodically (for cross-tab sync)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVerifications(buildVerifications());
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filtered = verifications.filter(v => v.entityType === tabMap[tab]);
 
