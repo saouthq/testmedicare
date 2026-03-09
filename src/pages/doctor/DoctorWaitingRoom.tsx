@@ -278,7 +278,7 @@ const DoctorWaitingRoom = () => {
       {/* Absent Confirm */}
       <ConfirmDialog
         open={absentConfirm.open}
-        onClose={() => setAbsentConfirm({ open: false, id: null })}
+        onCancel={() => setAbsentConfirm({ open: false, id: null })}
         onConfirm={confirmAbsent}
         title="Marquer comme absent"
         description="Confirmez-vous que ce patient ne s'est pas présenté ? Cette action sera enregistrée dans son dossier."
