@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
+import FeatureGate from "@/components/shared/FeatureGate";
 import { TrendingUp, Users, Calendar, Banknote, Clock, Activity, Download, ChevronDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
