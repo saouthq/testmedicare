@@ -1,52 +1,72 @@
 /**
  * Admin Dashboard — Operational overview with actionable widgets
+ * Includes: KPIs, validations, tickets, litiges, garde, meds, revenue, logs
  * TODO BACKEND: Replace mock data with real API calls
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Users, ShieldCheck, MessageSquare, ScrollText, Pill, Clock,
-  ArrowUpRight, ArrowRight, AlertTriangle, TrendingUp, BarChart3
+  ArrowUpRight, ArrowRight, AlertTriangle, TrendingUp, BarChart3,
+  Gavel, CreditCard, Building2, Calendar, Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   mockAdminStats, mockAdminRevenue, mockAdminPendingApprovals,
-  mockAdminRecentActivity, mockTopSearchedMeds, mockGuardPharmacies, mockAdminTickets
+  mockAdminRecentActivity, mockTopSearchedMeds, mockGuardPharmacies, mockAdminTickets,
+  mockAdminUsers, mockAdminReports,
 } from "@/data/mockData";
 import { getLogs } from "@/services/admin/adminAuditService";
 
+/** KPI cards with specific icons + links */
+const kpiConfig = [
+  { icon: Users, label: "Utilisateurs", link: "/dashboard/admin/users" },
+  { icon: Gavel, label: "Litiges ouverts", link: "/dashboard/admin/disputes" },
+  { icon: ShieldCheck, label: "Validations", link: "/dashboard/admin/verifications" },
+  { icon: CreditCard, label: "Revenus", link: "/dashboard/admin/payments" },
+];
+
 const AdminDashboard = () => {
-  const [recentLogs, setRecentLogs] = useState(getLogs().slice(0, 5));
+  const recentLogs = useMemo(() => getLogs().slice(0, 5), []);
   const pendingValidations = mockAdminPendingApprovals.length;
   const openTickets = mockAdminTickets.filter(t => t.status === "open").length;
   const guardToday = mockGuardPharmacies.filter(p => p.isGuard).length;
+  const openReports = mockAdminReports.filter(r => r.status === "pending").length;
+
+  // Dynamic KPI values
+  const kpiValues = [
+    { value: mockAdminUsers.length.toLocaleString(), change: "+12%", color: "text-primary" },
+    { value: "3", change: "À traiter", color: "text-destructive" },
+    { value: String(pendingValidations), change: "En attente", color: "text-warning" },
+    { value: "48,750 DT", change: "+15%", color: "text-accent" },
+  ];
 
   return (
     <DashboardLayout role="admin" title="Administration">
       <div className="space-y-6">
-        {/* KPI Stats */}
+        {/* KPI Stats — each links to its page */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {mockAdminStats.map((s, i) => (
-            <Link key={i} to="/dashboard/admin/users" className="rounded-xl border bg-card p-5 shadow-card hover:shadow-md transition-all group cursor-pointer">
+          {kpiConfig.map((kpi, i) => (
+            <Link key={i} to={kpi.link} className="rounded-xl border bg-card p-5 shadow-card hover:shadow-md transition-all group cursor-pointer">
               <div className="flex items-center justify-between">
-                <Users className={`h-5 w-5 ${s.color}`} />
-                <span className="text-xs font-medium text-accent flex items-center gap-0.5">{s.change}<ArrowUpRight className="h-3 w-3" /></span>
+                <kpi.icon className={`h-5 w-5 ${kpiValues[i].color}`} />
+                <span className="text-xs font-medium text-accent flex items-center gap-0.5">{kpiValues[i].change}<ArrowUpRight className="h-3 w-3" /></span>
               </div>
-              <p className="mt-3 text-2xl font-bold text-foreground">{s.value}</p>
-              <p className="text-xs text-muted-foreground mt-1 group-hover:text-primary transition-colors">{s.label}</p>
+              <p className="mt-3 text-2xl font-bold text-foreground">{kpiValues[i].value}</p>
+              <p className="text-xs text-muted-foreground mt-1 group-hover:text-primary transition-colors">{kpi.label}</p>
             </Link>
           ))}
         </div>
 
-        {/* Action widgets row */}
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        {/* Action widgets row — 4 cols */}
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           {/* Pending validations */}
           <div className="rounded-xl border bg-card p-5 shadow-card">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                <ShieldCheck className="h-4 w-4 text-warning" />Validations en attente
+                <ShieldCheck className="h-4 w-4 text-warning" />Validations
               </h3>
               <span className="text-xs font-bold bg-warning/10 text-warning px-2 py-0.5 rounded-full">{pendingValidations}</span>
             </div>
@@ -63,7 +83,7 @@ const AdminDashboard = () => {
             </div>
             <Link to="/dashboard/admin/verifications">
               <Button size="sm" className="w-full gradient-primary text-primary-foreground text-xs">
-                <ArrowRight className="h-3 w-3 mr-1" />Traiter maintenant
+                <ArrowRight className="h-3 w-3 mr-1" />Traiter
               </Button>
             </Link>
           </div>
@@ -72,9 +92,9 @@ const AdminDashboard = () => {
           <div className="rounded-xl border bg-card p-5 shadow-card">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                <MessageSquare className="h-4 w-4 text-primary" />Tickets support
+                <MessageSquare className="h-4 w-4 text-primary" />Tickets
               </h3>
-              <span className="text-xs font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">{openTickets} ouverts</span>
+              <span className="text-xs font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">{openTickets}</span>
             </div>
             <div className="space-y-2 mb-3">
               {mockAdminTickets.filter(t => t.status === "open").slice(0, 3).map(t => (
@@ -91,39 +111,67 @@ const AdminDashboard = () => {
             </div>
             <Link to="/dashboard/admin/support">
               <Button size="sm" variant="outline" className="w-full text-xs">
-                <ArrowRight className="h-3 w-3 mr-1" />Voir tous les tickets
+                <ArrowRight className="h-3 w-3 mr-1" />Voir les tickets
               </Button>
             </Link>
           </div>
 
-          {/* Quick info */}
+          {/* Litiges */}
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                <Gavel className="h-4 w-4 text-destructive" />Litiges
+              </h3>
+              <span className="text-xs font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">3 ouverts</span>
+            </div>
+            <div className="space-y-2 mb-3">
+              {[
+                { subject: "Consultation annulée sans remboursement", patient: "Fatma T.", priority: "high" },
+                { subject: "Retard 45min", patient: "Ali B.S.", priority: "medium" },
+                { subject: "Erreur prescription", patient: "Sarra M.", priority: "high" },
+              ].map((d, i) => (
+                <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                  <div>
+                    <p className="font-medium text-foreground text-xs truncate max-w-[140px]">{d.subject}</p>
+                    <p className="text-[10px] text-muted-foreground">{d.patient}</p>
+                  </div>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${d.priority === "high" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
+                    {d.priority === "high" ? "Urgent" : "Moyen"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <Link to="/dashboard/admin/disputes">
+              <Button size="sm" variant="outline" className="w-full text-xs text-destructive border-destructive/30">
+                <ArrowRight className="h-3 w-3 mr-1" />Gérer les litiges
+              </Button>
+            </Link>
+          </div>
+
+          {/* Quick info stack */}
           <div className="space-y-4">
-            {/* Guard pharmacies today */}
             <div className="rounded-xl border bg-card p-4 shadow-card">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                  <Pill className="h-4 w-4 text-accent" />Pharmacies de garde
+                  <Pill className="h-4 w-4 text-accent" />Garde
                 </h3>
-                <span className="text-xs font-bold text-accent">{guardToday} aujourd'hui</span>
+                <span className="text-xs font-bold text-accent">{guardToday}</span>
               </div>
               <div className="space-y-1">
-                {mockGuardPharmacies.filter(p => p.isGuard).map(p => (
-                  <p key={p.id} className="text-xs text-muted-foreground">{p.name} — {p.city}</p>
+                {mockGuardPharmacies.filter(p => p.isGuard).slice(0, 2).map(p => (
+                  <p key={p.id} className="text-xs text-muted-foreground truncate">{p.name} — {p.city}</p>
                 ))}
               </div>
               <Link to="/dashboard/admin/guard-pharmacies" className="text-xs text-primary hover:underline mt-2 inline-block">Gérer →</Link>
             </div>
-            {/* Top meds */}
             <div className="rounded-xl border bg-card p-4 shadow-card">
-              <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm mb-2">
-                <TrendingUp className="h-4 w-4 text-primary" />Top recherches médicaments
-              </h3>
-              {mockTopSearchedMeds.slice(0, 3).map((m, i) => (
-                <div key={i} className="flex items-center justify-between text-xs py-1">
-                  <span className="text-muted-foreground">{i + 1}. {m.name}</span>
-                  <span className="font-medium text-foreground">{m.searches}</span>
-                </div>
-              ))}
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                  <Flag className="h-4 w-4 text-warning" />Signalements
+                </h3>
+                <span className="text-xs font-bold text-warning">{openReports}</span>
+              </div>
+              <Link to="/dashboard/admin/moderation" className="text-xs text-primary hover:underline">Modérer →</Link>
             </div>
           </div>
         </div>
@@ -153,7 +201,6 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Recent audit logs */}
           <div className="rounded-xl border bg-card p-6 shadow-card">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><ScrollText className="h-4 w-4 text-accent" />Logs récents</h3>
@@ -177,17 +224,31 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Recent activity feed */}
-        <div className="rounded-xl border bg-card p-6 shadow-card">
-          <h3 className="font-semibold text-foreground mb-4">Activité récente</h3>
-          <div className="space-y-3">
-            {mockAdminRecentActivity.map((a, i) => (
-              <div key={i} className="flex items-center gap-3 text-sm py-2 border-b last:border-0">
-                <div className={`h-2 w-2 rounded-full shrink-0 ${a.status === "success" ? "bg-accent" : a.status === "warning" ? "bg-warning" : "bg-primary"}`} />
-                <span className="flex-1 text-foreground text-xs">{a.desc}</span>
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap">{a.time}</span>
+        {/* Top meds + Activity */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-xl border bg-card p-6 shadow-card">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+              <TrendingUp className="h-4 w-4 text-primary" />Top recherches médicaments
+            </h3>
+            {mockTopSearchedMeds.slice(0, 5).map((m, i) => (
+              <div key={i} className="flex items-center justify-between text-xs py-2 border-b last:border-0">
+                <span className="text-muted-foreground">{i + 1}. {m.name}</span>
+                <span className="font-medium text-foreground">{m.searches}</span>
               </div>
             ))}
+          </div>
+
+          <div className="rounded-xl border bg-card p-6 shadow-card">
+            <h3 className="font-semibold text-foreground mb-4">Activité récente</h3>
+            <div className="space-y-3">
+              {mockAdminRecentActivity.map((a, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm py-2 border-b last:border-0">
+                  <div className={`h-2 w-2 rounded-full shrink-0 ${a.status === "success" ? "bg-accent" : a.status === "warning" ? "bg-warning" : "bg-primary"}`} />
+                  <span className="flex-1 text-foreground text-xs">{a.desc}</span>
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">{a.time}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
