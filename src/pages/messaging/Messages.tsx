@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, Send, Paperclip, MoreVertical, Phone, Video, ChevronLeft, Building2, Users } from "lucide-react";
+import { Search, Send, Paperclip, Phone, Video, ChevronLeft, Building2, Users, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockMessagingContacts, mockConversationMessages, mockSecretaryCabinetContacts, mockSecretaryCabinetMessages, ChatMessage, ChatContact } from "@/data/mockData";
@@ -20,9 +20,12 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
   });
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
-  const contacts: ChatContact[] = tab === "cabinet" ? mockSecretaryCabinetContacts : mockMessagingContacts;
+  const contacts: (ChatContact & { acceptsMessages?: boolean })[] = tab === "cabinet" ? mockSecretaryCabinetContacts : mockMessagingContacts;
   const contact = contacts.find(c => c.id === selectedContact);
   const currentMessages = selectedContact ? (messages[selectedContact] || []) : [];
+
+  // Check if doctor accepts messages (patient role only)
+  const canSendMessage = role !== "patient" || !contact || (contact as any).acceptsMessages !== false;
 
   const handleTabChange = (newTab: MessagingTab) => {
     setTab(newTab);
@@ -32,7 +35,7 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
   };
 
   const sendMessage = () => {
-    if (!newMessage.trim() || !selectedContact) return;
+    if (!newMessage.trim() || !selectedContact || !canSendMessage) return;
     const msg: ChatMessage = { id: Date.now().toString(), sender: "me", text: newMessage, time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) };
     setMessages(prev => ({ ...prev, [selectedContact]: [...(prev[selectedContact] || []), msg] }));
     setNewMessage("");
@@ -74,8 +77,15 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
                     {c.online && <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent border-2 border-card" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between"><p className="text-sm font-medium text-foreground truncate">{c.name}</p><span className="text-xs text-muted-foreground shrink-0">{c.time}</span></div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                      <span className="text-xs text-muted-foreground shrink-0">{c.time}</span>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{c.lastMessage}</p>
+                    {/* Show indicator if doctor doesn't accept messages */}
+                    {role === "patient" && (c as any).acceptsMessages === false && (
+                      <p className="text-[10px] text-warning flex items-center gap-0.5 mt-0.5"><AlertCircle className="h-3 w-3" />Lecture seule</p>
+                    )}
                   </div>
                   {c.unread > 0 && <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center shrink-0">{c.unread}</span>}
                 </button>
@@ -93,7 +103,10 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
                       <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-medium ${tab === "cabinet" ? "bg-accent/10 text-accent" : "gradient-primary text-primary-foreground"}`}>{contact.avatar}</div>
                       {contact.online && <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-accent border-2 border-card" />}
                     </div>
-                    <div><p className="text-sm font-medium text-foreground">{contact.name}</p><p className="text-xs text-muted-foreground">{contact.online ? "En ligne" : "Hors ligne"}</p></div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{contact.name}</p>
+                      <p className="text-xs text-muted-foreground">{contact.online ? "En ligne" : "Hors ligne"}</p>
+                    </div>
                   </div>
                   {tab === "messages" && (
                     <div className="flex gap-1">
@@ -114,11 +127,20 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
                   ))}
                 </div>
                 <div className="border-t p-3">
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0"><Paperclip className="h-4 w-4 text-muted-foreground" /></Button>
-                    <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} className="flex-1" />
-                    <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendMessage} disabled={!newMessage.trim()}><Send className="h-4 w-4" /></Button>
-                  </div>
+                  {canSendMessage ? (
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0"><Paperclip className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} className="flex-1" />
+                      <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendMessage} disabled={!newMessage.trim()}><Send className="h-4 w-4" /></Button>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg bg-warning/10 border border-warning/20 p-3">
+                      <p className="text-sm text-warning font-medium flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />Ce praticien n'accepte pas les messages
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Vous pouvez uniquement consulter l'historique des conversations.</p>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
