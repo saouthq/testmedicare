@@ -2,7 +2,7 @@
  * ProfilePreview — Aperçu du profil tel que vu par les patients.
  * Mini version du profil public.
  */
-import { Calendar, Clock, Globe, MapPin, Phone, Star } from "lucide-react";
+import { Calendar, Clock, Globe, MapPin, Phone, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ProfileData {
@@ -13,7 +13,6 @@ interface ProfileData {
   address: string;
   phone: string;
   languages: string[];
-  rating: number;
   reviewCount: number;
   consultationDuration: string;
   priceConsultation: string;
@@ -38,9 +37,8 @@ export default function ProfilePreview({ data }: Props) {
             <h2 className="text-lg font-bold">{data.name}</h2>
             <p className="text-primary-foreground/80 text-sm">{data.specialty}</p>
             <div className="flex items-center gap-1 mt-1">
-              <Star className="h-3.5 w-3.5 fill-current" />
-              <span className="text-sm font-medium">{data.rating}</span>
-              <span className="text-primary-foreground/60 text-xs">({data.reviewCount} avis)</span>
+              <CheckCircle className="h-3.5 w-3.5 fill-current" />
+              <span className="text-sm font-medium">{data.reviewCount} avis vérifiés</span>
             </div>
           </div>
         </div>

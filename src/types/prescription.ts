@@ -10,7 +10,8 @@ export interface Prescription {
   items: string[];
   status: "active" | "expired";
   total: string;
-  cnam: boolean;
+  /** Patient insurance name or empty string */
+  assurance: string;
   pharmacy: string | null;
   sent?: boolean;
 }

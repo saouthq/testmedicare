@@ -4,7 +4,7 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import JsonLd from "@/components/seo/JsonLd";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Star, Navigation, Building2 } from "lucide-react";
+import { MapPin, Phone, CheckCircle, Navigation, Building2 } from "lucide-react";
 import { mockClinics } from "@/data/mocks/establishments";
 
 const ClinicDetail = () => {
@@ -31,7 +31,7 @@ const ClinicDetail = () => {
               <h1 className="text-xl font-bold text-foreground">{clinic.name}</h1>
               <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin className="h-3.5 w-3.5" />{clinic.address}</p>
               <p className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5"><Phone className="h-3.5 w-3.5" />{clinic.phone}</p>
-              <div className="flex items-center gap-1 mt-1"><Star className="h-3.5 w-3.5 text-warning fill-warning" /><span className="text-sm font-medium">{clinic.rating}/5</span></div>
+              <div className="flex items-center gap-1 mt-1"><CheckCircle className="h-3.5 w-3.5 text-accent" /><span className="text-sm font-medium">{clinic.services.length} services</span></div>
             </div>
           </div>
           <p className="mt-4 text-sm text-foreground leading-relaxed">{clinic.description}</p>

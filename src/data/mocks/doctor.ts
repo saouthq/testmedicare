@@ -10,12 +10,12 @@ import type { LabPanel } from "@/types";
 // ─── Doctors (Search / Public) ───────────────────────────────
 
 export const mockDoctors: Doctor[] = [
-  { id: 1, name: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", address: "15 Av. de la Liberté, El Manar, 2092 Tunis", distance: "0.8 km", phone: "+216 71 234 567", rating: 4.8, reviews: 234, nextSlot: "Aujourd'hui 14:30", avatar: "AB", price: 35, languages: ["Français", "Arabe"], teleconsultation: true, cnam: true, availAM: [true, true, false, true, false, true, false], availPM: [true, false, false, true, true, false, false] },
-  { id: 2, name: "Dr. Sonia Gharbi", specialty: "Cardiologue", address: "32 Rue Charles de Gaulle, 2080 Ariana", distance: "2.3 km", phone: "+216 71 234 568", rating: 4.9, reviews: 187, nextSlot: "Demain 09:00", avatar: "SG", price: 60, languages: ["Français", "Arabe"], teleconsultation: false, cnam: true, availAM: [false, true, true, false, false, false, false], availPM: [false, false, false, false, true, false, false] },
-  { id: 3, name: "Dr. Khaled Hammami", specialty: "Dermatologue", address: "8 Boulevard Bab Bnet, 1006 Tunis", distance: "1.5 km", phone: "+216 71 234 569", rating: 4.7, reviews: 156, nextSlot: "23 Fév 10:30", avatar: "KH", price: 50, languages: ["Français", "Arabe", "Anglais"], teleconsultation: true, cnam: true, availAM: [false, false, false, true, false, true, false], availPM: [false, false, false, false, true, false, false] },
-  { id: 4, name: "Dr. Leila Chebbi", specialty: "Ophtalmologue", address: "45 Av. Habib Bourguiba, 4000 Sousse", distance: "3.1 km", phone: "+216 73 456 789", rating: 4.6, reviews: 98, nextSlot: "24 Fév 11:00", avatar: "LC", price: 45, languages: ["Français", "Arabe"], teleconsultation: true, cnam: false, availAM: [false, false, false, false, false, false, false], availPM: [false, false, false, false, false, false, false] },
-  { id: 5, name: "Dr. Nabil Karray", specialty: "Pédiatre", address: "22 Rue de Marseille, 1002 Tunis", distance: "1.2 km", phone: "+216 71 567 890", rating: 4.9, reviews: 312, nextSlot: "Aujourd'hui 16:00", avatar: "NK", price: 40, languages: ["Français", "Arabe", "Anglais"], teleconsultation: true, cnam: true, availAM: [false, false, true, false, false, true, false], availPM: [true, false, false, true, false, false, false] },
-  { id: 6, name: "Dr. Ines Mansour", specialty: "Gynécologue", address: "10 Rue du Lac Constance, Les Berges du Lac", distance: "4.0 km", phone: "+216 71 678 901", rating: 4.8, reviews: 421, nextSlot: "25 Fév 09:30", avatar: "IM", price: 70, languages: ["Français", "Arabe"], teleconsultation: true, cnam: true, availAM: [false, false, false, false, false, false, false], availPM: [false, false, false, false, false, false, false] },
+  { id: 1, name: "Dr. Ahmed Bouazizi", specialty: "Médecin généraliste", address: "15 Av. de la Liberté, El Manar, 2092 Tunis", distance: "0.8 km", phone: "+216 71 234 567", reviewCount: 234, nextSlot: "Aujourd'hui 14:30", avatar: "AB", price: 35, languages: ["Français", "Arabe"], teleconsultation: true, acceptsInsurance: true, availAM: [true, true, false, true, false, true, false], availPM: [true, false, false, true, true, false, false] },
+  { id: 2, name: "Dr. Sonia Gharbi", specialty: "Cardiologue", address: "32 Rue Charles de Gaulle, 2080 Ariana", distance: "2.3 km", phone: "+216 71 234 568", reviewCount: 187, nextSlot: "Demain 09:00", avatar: "SG", price: 60, languages: ["Français", "Arabe"], teleconsultation: false, acceptsInsurance: true, availAM: [false, true, true, false, false, false, false], availPM: [false, false, false, false, true, false, false] },
+  { id: 3, name: "Dr. Khaled Hammami", specialty: "Dermatologue", address: "8 Boulevard Bab Bnet, 1006 Tunis", distance: "1.5 km", phone: "+216 71 234 569", reviewCount: 156, nextSlot: "23 Fév 10:30", avatar: "KH", price: 50, languages: ["Français", "Arabe", "Anglais"], teleconsultation: true, acceptsInsurance: true, availAM: [false, false, false, true, false, true, false], availPM: [false, false, false, false, true, false, false] },
+  { id: 4, name: "Dr. Leila Chebbi", specialty: "Ophtalmologue", address: "45 Av. Habib Bourguiba, 4000 Sousse", distance: "3.1 km", phone: "+216 73 456 789", reviewCount: 98, nextSlot: "24 Fév 11:00", avatar: "LC", price: 45, languages: ["Français", "Arabe"], teleconsultation: true, acceptsInsurance: false, availAM: [false, false, false, false, false, false, false], availPM: [false, false, false, false, false, false, false] },
+  { id: 5, name: "Dr. Nabil Karray", specialty: "Pédiatre", address: "22 Rue de Marseille, 1002 Tunis", distance: "1.2 km", phone: "+216 71 567 890", reviewCount: 312, nextSlot: "Aujourd'hui 16:00", avatar: "NK", price: 40, languages: ["Français", "Arabe", "Anglais"], teleconsultation: true, acceptsInsurance: true, availAM: [false, false, true, false, false, true, false], availPM: [true, false, false, true, false, false, false] },
+  { id: 6, name: "Dr. Ines Mansour", specialty: "Gynécologue", address: "10 Rue du Lac Constance, Les Berges du Lac", distance: "4.0 km", phone: "+216 71 678 901", reviewCount: 421, nextSlot: "25 Fév 09:30", avatar: "IM", price: 70, languages: ["Français", "Arabe"], teleconsultation: true, acceptsInsurance: true, availAM: [false, false, false, false, false, false, false], availPM: [false, false, false, false, false, false, false] },
 ];
 
 // ─── Doctor Public Profile ───────────────────────────────────
@@ -95,14 +95,14 @@ export const mockFaqItems = [
 // ─── Doctor Dashboard ────────────────────────────────────────
 
 export const mockTodaySchedule: DoctorScheduleItem[] = [
-  { time: "08:30", patient: "Amine Ben Ali", type: "Consultation", duration: "30 min", status: "done", motif: "Suivi diabète", avatar: "AB", cnam: true, phone: "+216 55 123 456" },
-  { time: "09:00", patient: "Fatma Trabelsi", type: "Suivi", duration: "20 min", status: "done", motif: "Contrôle tension", avatar: "FT", cnam: true, phone: "+216 55 234 567" },
-  { time: "09:30", patient: "Mohamed Sfar", type: "Première visite", duration: "45 min", status: "current", motif: "Bilan initial", avatar: "MS", cnam: false, phone: "+216 55 345 678" },
-  { time: "10:15", patient: "Nadia Jemni", type: "Contrôle", duration: "20 min", status: "upcoming", motif: "Douleurs articulaires", avatar: "NJ", cnam: true, phone: "+216 55 456 789" },
-  { time: "10:45", patient: "Sami Ayari", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Renouvellement ordonnance", avatar: "SA", cnam: true },
-  { time: "14:00", patient: "Rania Meddeb", type: "Suivi", duration: "20 min", status: "upcoming", motif: "Suivi cholestérol", avatar: "RM", cnam: true },
-  { time: "14:30", patient: "Youssef Belhadj", type: "Téléconsultation", duration: "20 min", status: "upcoming", motif: "Résultats analyses", avatar: "YB", teleconsultation: true, cnam: false },
-  { time: "15:00", patient: "Salma Dridi", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Certificat médical", avatar: "SD", cnam: true },
+  { time: "08:30", patient: "Amine Ben Ali", type: "Consultation", duration: "30 min", status: "done", motif: "Suivi diabète", avatar: "AB", assurance: "Maghrebia", phone: "+216 55 123 456" },
+  { time: "09:00", patient: "Fatma Trabelsi", type: "Suivi", duration: "20 min", status: "done", motif: "Contrôle tension", avatar: "FT", assurance: "CNAM", phone: "+216 55 234 567" },
+  { time: "09:30", patient: "Mohamed Sfar", type: "Première visite", duration: "45 min", status: "current", motif: "Bilan initial", avatar: "MS", assurance: "", phone: "+216 55 345 678" },
+  { time: "10:15", patient: "Nadia Jemni", type: "Contrôle", duration: "20 min", status: "upcoming", motif: "Douleurs articulaires", avatar: "NJ", assurance: "CNAM", phone: "+216 55 456 789" },
+  { time: "10:45", patient: "Sami Ayari", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Renouvellement ordonnance", avatar: "SA", assurance: "CNAM" },
+  { time: "14:00", patient: "Rania Meddeb", type: "Suivi", duration: "20 min", status: "upcoming", motif: "Suivi cholestérol", avatar: "RM", assurance: "CNRPS" },
+  { time: "14:30", patient: "Youssef Belhadj", type: "Téléconsultation", duration: "20 min", status: "upcoming", motif: "Résultats analyses", avatar: "YB", teleconsultation: true, assurance: "" },
+  { time: "15:00", patient: "Salma Dridi", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Certificat médical", avatar: "SD", assurance: "STAR" },
 ];
 
 export const mockWaitingRoom: WaitingRoomEntry[] = [
@@ -118,11 +118,11 @@ export const mockUrgentAlerts: (UrgentAlert & { link?: string })[] = [
 // ─── Doctor Consultations ────────────────────────────────────
 
 export const mockDoctorConsultations: DoctorConsultation[] = [
-  { id: 1, patient: "Amine Ben Ali", date: "20 Fév 2026", time: "09:30", motif: "Suivi diabète", notes: "Glycémie stable, renouvellement traitement", prescriptions: 1, cnam: true, amount: "35 DT", avatar: "AB", status: "completed" },
-  { id: 2, patient: "Fatma Trabelsi", date: "20 Fév 2026", time: "09:00", motif: "Contrôle tension", notes: "TA 14/8, ajustement posologie", prescriptions: 1, cnam: true, amount: "35 DT", avatar: "FT", status: "completed" },
-  { id: 3, patient: "Mohamed Sfar", date: "18 Fév 2026", time: "14:00", motif: "Suivi post-opératoire", notes: "Cicatrisation normale, retrait fils J+15", prescriptions: 0, cnam: false, amount: "50 DT", avatar: "MS", status: "completed" },
-  { id: 4, patient: "Nadia Jemni", date: "17 Fév 2026", time: "10:30", motif: "Douleurs articulaires", notes: "Prescription anti-inflammatoires", prescriptions: 2, cnam: true, amount: "35 DT", avatar: "NJ", status: "completed" },
-  { id: 5, patient: "Sami Ayari", date: "15 Fév 2026", time: "11:00", motif: "Renouvellement ordonnance", notes: "Ventoline + Seretide renouvelés pour 3 mois", prescriptions: 1, cnam: true, amount: "35 DT", avatar: "SA", status: "completed" },
+  { id: 1, patient: "Amine Ben Ali", date: "20 Fév 2026", time: "09:30", motif: "Suivi diabète", notes: "Glycémie stable, renouvellement traitement", prescriptions: 1, assurance: "Maghrebia", amount: "35 DT", avatar: "AB", status: "completed" },
+  { id: 2, patient: "Fatma Trabelsi", date: "20 Fév 2026", time: "09:00", motif: "Contrôle tension", notes: "TA 14/8, ajustement posologie", prescriptions: 1, assurance: "CNAM", amount: "35 DT", avatar: "FT", status: "completed" },
+  { id: 3, patient: "Mohamed Sfar", date: "18 Fév 2026", time: "14:00", motif: "Suivi post-opératoire", notes: "Cicatrisation normale, retrait fils J+15", prescriptions: 0, assurance: "", amount: "50 DT", avatar: "MS", status: "completed" },
+  { id: 4, patient: "Nadia Jemni", date: "17 Fév 2026", time: "10:30", motif: "Douleurs articulaires", notes: "Prescription anti-inflammatoires", prescriptions: 2, assurance: "CNAM", amount: "35 DT", avatar: "NJ", status: "completed" },
+  { id: 5, patient: "Sami Ayari", date: "15 Fév 2026", time: "11:00", motif: "Renouvellement ordonnance", notes: "Ventoline + Seretide renouvelés pour 3 mois", prescriptions: 1, assurance: "CNAM", amount: "35 DT", avatar: "SA", status: "completed" },
 ];
 
 export const mockConsultationPatient = {
@@ -157,9 +157,9 @@ export const mockPatientAnalyses: AnalysisResult[] = [
 // ─── Doctor Prescriptions ────────────────────────────────────
 
 export const mockDoctorPrescriptions: Prescription[] = [
-  { id: "ORD-2026-045", doctor: "Dr. Bouazizi", patient: "Amine Ben Ali", date: "20 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], status: "active", total: "45 DT", cnam: true, pharmacy: null, sent: true },
-  { id: "ORD-2026-044", doctor: "Dr. Bouazizi", patient: "Fatma Trabelsi", date: "20 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], status: "active", total: "28 DT", cnam: true, pharmacy: null, sent: true },
-  { id: "ORD-2026-043", doctor: "Dr. Bouazizi", patient: "Nadia Jemni", date: "17 Fév 2026", items: ["Ibuprofène 400mg - 3x/jour pendant 7 jours", "Tramadol 50mg - si douleur intense"], status: "active", total: "35 DT", cnam: true, pharmacy: null, sent: false },
+  { id: "ORD-2026-045", doctor: "Dr. Bouazizi", patient: "Amine Ben Ali", date: "20 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], status: "active", total: "45 DT", assurance: "Maghrebia", pharmacy: null, sent: true },
+  { id: "ORD-2026-044", doctor: "Dr. Bouazizi", patient: "Fatma Trabelsi", date: "20 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], status: "active", total: "28 DT", assurance: "CNAM", pharmacy: null, sent: true },
+  { id: "ORD-2026-043", doctor: "Dr. Bouazizi", patient: "Nadia Jemni", date: "17 Fév 2026", items: ["Ibuprofène 400mg - 3x/jour pendant 7 jours", "Tramadol 50mg - si douleur intense"], status: "active", total: "35 DT", assurance: "CNAM", pharmacy: null, sent: false },
 ];
 
 // ─── Doctor Stats ────────────────────────────────────────────

@@ -16,7 +16,7 @@ const doctor = {
   specialty: mockDoctorProfile.specialty,
   address: mockDoctorProfile.address,
   avatar: mockDoctorProfile.initials,
-  cnam: true,
+  acceptsInsurance: true,
   teleconsultation: mockDoctorProfile.teleconsultation,
   cancellationPolicy: "Annulation gratuite jusqu'à 24h avant le RDV",
   autoConfirm: true,
@@ -171,7 +171,7 @@ const PatientBooking = () => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-foreground">{doctor.name}</h2>
-                {doctor.cnam && <span className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />CNAM</span>}
+                {doctor.acceptsInsurance && <span className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />Assurance</span>}
               </div>
               <p className="text-primary font-medium text-xs">{doctor.specialty}</p>
               <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5"><MapPin className="h-3 w-3" />{doctor.address}</span>

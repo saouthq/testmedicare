@@ -12,7 +12,6 @@ import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/da
 interface Invoice {
   id: string; patient: string; doctor: string; date: string; amount: number;
   type: string; payment: string; status: string; avatar: string; assurance: string;
-  cnam?: boolean; // legacy compat
 }
 
 const actTypes = mockSecretaryBillingActTypes;

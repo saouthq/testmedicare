@@ -225,7 +225,7 @@ const PatientAppointments = () => {
                         <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{a.date} à {a.time}</span>
                         <span>·</span>
                         <span className="flex items-center gap-0.5">{a.type === "teleconsultation" ? <><Video className="h-3 w-3 text-primary" />Téléconsult</> : <><MapPin className="h-3 w-3" /><span className="truncate max-w-[120px] sm:max-w-none">{a.address}</span></>}</span>
-                        {(a.hasInsurance || a.cnam) && <span className="flex items-center gap-0.5 text-accent"><Shield className="h-3 w-3" />Assuré</span>}
+                        {a.hasInsurance && <span className="flex items-center gap-0.5 text-accent"><Shield className="h-3 w-3" />Assuré</span>}
                       </div>
                       {/* Bouton rejoindre inline pour les téléconsultations */}
                       {a.type === "teleconsultation" && a.scheduledAt && (

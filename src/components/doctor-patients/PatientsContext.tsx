@@ -218,7 +218,7 @@ export function PatientsProvider({ children }: { children: ReactNode }) {
       chronicConditions: newForm.conditions ? newForm.conditions.split(",").map((s) => s.trim()).filter(Boolean) : [],
       allergies: newForm.allergies ? newForm.allergies.split(",").map((s) => s.trim()).filter(Boolean).map((name) => ({ name, severity: "Modéré" })) : [],
       isNew: true, lastVisit: null, nextAppointment: null, lastVitals: { ta: "—", glycemia: "—" },
-      bloodType: newForm.bloodType, cnamId: newForm.cnamId,
+      bloodType: newForm.bloodType, insurance: newForm.cnamId || "",
     };
     setPatients((prev) => [newP, ...prev]);
     setSelectedPatientId(newP.id);

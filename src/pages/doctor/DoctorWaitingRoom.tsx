@@ -69,7 +69,7 @@ const DoctorWaitingRoom = () => {
       status: s.status === "done" ? "completed" : s.status === "current" ? "in_consultation" : "scheduled",
       arrivedAt: s.status === "done" ? s.time : s.status === "current" ? s.time : undefined,
       phone: s.phone,
-      assurance: s.cnam,
+      assurance: s.assurance ? true : false,
       teleconsultation: s.teleconsultation,
       internalNote: "",
       tags: [],

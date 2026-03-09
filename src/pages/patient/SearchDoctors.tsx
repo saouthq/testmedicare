@@ -20,14 +20,14 @@ const SearchDoctors = () => {
   const [dayRange, setDayRange] = useState<3 | 7>(3);
   const [filterTeleconsult, setFilterTeleconsult] = useState(false);
   const [filterToday, setFilterToday] = useState(false);
-  const [filterCnam, setFilterCnam] = useState(false);
+  const [filterInsurance, setFilterInsurance] = useState(false);
   const isMobile = useIsMobile();
 
   const filtered = doctors.filter(d => {
     if (selectedSpecialty !== "Tous" && d.specialty !== selectedSpecialty) return false;
     if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase()) && !d.specialty.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (filterTeleconsult && !d.teleconsultation) return false;
-    if (filterCnam && !d.cnam) return false;
+    if (filterInsurance && !d.acceptsInsurance) return false;
     if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     return true;
   });
@@ -60,11 +60,11 @@ const SearchDoctors = () => {
             <Button variant={filterToday ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterToday ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterToday(!filterToday)}>
               <Clock className="h-3 w-3 mr-1" />Dispo aujourd'hui
             </Button>
-            <Button variant={filterCnam ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterCnam ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterCnam(!filterCnam)}>
-              <Shield className="h-3 w-3 mr-1" />CNAM
+            <Button variant={filterInsurance ? "default" : "outline"} size="sm" className={`text-xs h-8 ${filterInsurance ? "gradient-primary text-primary-foreground" : ""}`} onClick={() => setFilterInsurance(!filterInsurance)}>
+              <Shield className="h-3 w-3 mr-1" />Assurance
             </Button>
-            {(filterTeleconsult || filterToday || filterCnam) && (
-              <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => { setFilterTeleconsult(false); setFilterToday(false); setFilterCnam(false); }}>
+            {(filterTeleconsult || filterToday || filterInsurance) && (
+              <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => { setFilterTeleconsult(false); setFilterToday(false); setFilterInsurance(false); }}>
                 Réinitialiser
               </Button>
             )}
@@ -145,10 +145,10 @@ const SearchDoctors = () => {
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <div className="flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3 text-primary" />
-                          <span className="text-xs font-medium text-foreground">{d.reviews} avis</span>
+                          <span className="text-xs font-medium text-foreground">{d.reviewCount} avis</span>
                         </div>
                         <span className="text-[11px] text-muted-foreground">{d.price} DT</span>
-                        {d.cnam && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Shield className="h-2.5 w-2.5" />CNAM</span>}
+                        {d.acceptsInsurance && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Shield className="h-2.5 w-2.5" />Assurance</span>}
                         {d.teleconsultation && <span className="flex items-center gap-0.5 text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded-full"><Video className="h-2.5 w-2.5" />Vidéo</span>}
                       </div>
                     </div>
