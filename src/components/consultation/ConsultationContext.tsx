@@ -307,16 +307,42 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     return { label: "Clôturer", onClick: () => setShowCloseModal(true) };
   }, [completion.notesOk, completion.rxOk]);
 
-  // Templates
-  const templates = useMemo(() => mockConsultationTemplates.map(t => ({
-    key: t.key, label: t.label,
+  // Templates — built-in + custom from localStorage
+  const CUSTOM_TPL_KEY = "medicare.consultation.custom_templates";
+  const [customTemplates, setCustomTemplates] = useState<ConsultationTemplate[]>(() => {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_TPL_KEY) || "[]"); } catch { return []; }
+  });
+
+  const allTemplateData = useMemo(() => [...mockConsultationTemplates, ...customTemplates], [customTemplates]);
+
+  const templates = useMemo(() => allTemplateData.map(t => ({
+    key: t.key, label: t.label, isCustom: !mockConsultationTemplates.some(m => m.key === t.key),
     apply: () => {
       setMotif(t.motif); setSymptoms(t.symptoms); setExamination(t.examination);
       setDiagnosis(t.diagnosis); setConclusion(t.conclusion);
       if (t.extraAnalyses) setAnalyses(prev => Array.from(new Set([...prev, ...t.extraAnalyses!])));
       setDockTab(t.defaultDockTab as DockTab);
     },
-  })), []);
+  })), [allTemplateData]);
+
+  /** Save current notes as a new custom template */
+  const saveAsTemplate = (label: string) => {
+    const newTpl: ConsultationTemplate = {
+      key: `custom-${Date.now()}`, label, motif, symptoms, examination, diagnosis, conclusion,
+      extraAnalyses: analyses.length > 0 ? analyses : undefined,
+      defaultDockTab: dockTab,
+    };
+    const updated = [...customTemplates, newTpl];
+    setCustomTemplates(updated);
+    try { localStorage.setItem(CUSTOM_TPL_KEY, JSON.stringify(updated)); } catch { /* no-op */ }
+  };
+
+  /** Delete a custom template */
+  const deleteTemplate = (key: string) => {
+    const updated = customTemplates.filter(t => t.key !== key);
+    setCustomTemplates(updated);
+    try { localStorage.setItem(CUSTOM_TPL_KEY, JSON.stringify(updated)); } catch { /* no-op */ }
+  };
 
   // Close
   const handleClose = () => {
