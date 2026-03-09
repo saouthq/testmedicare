@@ -46,8 +46,6 @@ export interface PatientAppointment {
   canModify: boolean;
   canCancel: boolean;
   avatar: string;
-  /** @deprecated use hasInsurance instead */
-  cnam?: boolean;
   hasInsurance?: boolean;
   cancellationPolicy: string;
   documents: string[];

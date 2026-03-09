@@ -10,12 +10,13 @@ export interface Doctor {
   address: string;
   distance?: string;
   phone: string;
-  rating: number;
-  reviews: number;
+  /** Number of text reviews (no star ratings) */
+  reviewCount: number;
   price: number;
   languages: string[];
   teleconsultation: boolean;
-  cnam: boolean;
+  /** Accepts insurance — references the assurance referential */
+  acceptsInsurance: boolean;
   nextSlot: string;
   availAM: boolean[];
   availPM: boolean[];
@@ -29,7 +30,8 @@ export interface DoctorScheduleItem {
   status: "done" | "current" | "upcoming";
   motif: string;
   avatar: string;
-  cnam: boolean;
+  /** Patient insurance name or empty */
+  assurance: string;
   phone?: string;
   teleconsultation?: boolean;
 }
@@ -57,7 +59,8 @@ export interface DoctorConsultation {
   motif: string;
   notes: string;
   prescriptions: number;
-  cnam: boolean;
+  /** Patient insurance name or empty */
+  assurance: string;
   amount: string;
   avatar: string;
   status: string;
