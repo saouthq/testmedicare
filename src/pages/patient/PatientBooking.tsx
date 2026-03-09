@@ -382,7 +382,7 @@ const PatientBooking = () => {
                 <Shield className="h-5 w-5 text-primary shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground">Tarif</p>
-                  <p className="text-sm font-medium text-foreground">{selectedMotifData?.price || "—"} DT · Prise en charge CNAM</p>
+                  <p className="text-sm font-medium text-foreground">{selectedMotifData?.price || "—"} DT · Prise en charge Assurance</p>
                 </div>
               </div>
             </div>
