@@ -13,10 +13,9 @@ import { downloadCalendarEvent, openGoogleMapsDirections } from "@/lib/calendarE
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
 import { 
-  mockPatientAppointmentsFull as initialAppointments, 
   mockPastAppointments as initialPastAppointments,
-  mockCancelledAppointments 
 } from "@/data/mockData";
+import { usePatientAppointments, usePatientCancelled, cancelAppointment, rescheduleAppointment } from "@/stores/patientStore";
 
 // ─── Reschedule Modal ────────────────────────────────────────
 const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () => void; onConfirm: (day: string, slot: string) => void }) => {
