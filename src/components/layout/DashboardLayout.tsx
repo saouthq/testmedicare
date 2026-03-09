@@ -1,9 +1,10 @@
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
+import NotificationCenter from "@/components/shared/NotificationCenter";
 import {
   Stethoscope,
   ShieldCheck,
