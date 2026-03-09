@@ -66,7 +66,7 @@ const SecretaryBilling = () => {
     setInvoices(prev => [{
       id: newId, patient: newPatient, doctor: newDoctor, date: "20 Fév",
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
-      status, avatar, cnam: newCnam,
+      status, avatar, assurance: newCnam ? "CNAM" : "Sans assurance",
     }, ...prev]);
     setShowNew(false);
     setNewPatient(""); setNewActs([{ type: actTypes[0].label, price: actTypes[0].price }]); setNewPayment("—");
