@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Calendar, Clock, FileSignature, FileText, History, PenLine, Pill, PanelsRightBottom,
@@ -14,6 +14,7 @@ import {
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
 import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
+import { completeConsultation, startConsultation } from "@/stores/doctorStore";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
@@ -349,6 +350,8 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
   const handleClose = () => {
     setClosed(true); setShowCloseModal(false);
     try { localStorage.removeItem(patientKey); } catch { /* no-op */ }
+    // Sync with doctor store — mark patient completed in waiting room
+    completeConsultation(patient.name);
   };
 
   // Print HTML
@@ -395,6 +398,11 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     const q = paletteQuery.trim().toLowerCase();
     return (q ? paletteActions.filter(a => `${a.label} ${a.hint || ""}`.toLowerCase().includes(q)) : paletteActions).slice(0, 8);
   }, [paletteActions, paletteQuery]);
+
+  // Mark patient as in_consultation in waiting room on mount
+  useEffect(() => {
+    startConsultation(patient.name);
+  }, [patient.name]);
 
   // Keyboard
   useEffect(() => {
