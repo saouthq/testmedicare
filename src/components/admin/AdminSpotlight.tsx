@@ -54,6 +54,7 @@ const AdminSpotlight = ({ open, onClose }: AdminSpotlightProps) => {
       { id: "nav-refs", label: "Référentiels", hint: "Spécialités, villes, assurances", icon: <ClipboardList className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/reference-data") },
       { id: "nav-audit", label: "Audit logs", hint: "Journal d'activité", icon: <ScrollText className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/audit-logs") },
       { id: "nav-settings", label: "Paramètres système", hint: "Feature flags, maintenance", icon: <Settings className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/settings") },
+      { id: "nav-modules", label: "Modules plateforme", hint: "Activer/désactiver des modules globaux", icon: <Power className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/modules") },
 
       // ── Actions rapides ──
       { id: "act-approve-kyc", label: "Aller aux validations KYC en attente", hint: "Voir les dossiers à traiter", icon: <ShieldCheck className="h-4 w-4" />, group: "Actions rapides", onRun: () => go("/dashboard/admin/verifications") },
