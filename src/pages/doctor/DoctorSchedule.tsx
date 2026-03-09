@@ -9,6 +9,8 @@ import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import { mockScheduleDays, mockScheduleHours, mockScheduleAppointments, mockRecurDays, mockPatients } from "@/data/mockData";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
+import { updateWaitingStatus, waitingRoomStore, type WaitingEntry } from "@/stores/doctorStore";
+import { toast } from "@/hooks/use-toast";
 
 const getPatientId = (name: string) => {
   const p = mockPatients.find(p => p.name === name);
