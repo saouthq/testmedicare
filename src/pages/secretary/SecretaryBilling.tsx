@@ -151,7 +151,7 @@ const SecretaryBilling = () => {
                       <td className="p-3">
                         <div className="flex items-center gap-2">
                           <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">{inv.avatar}</div>
-                          <div><span className="text-xs font-medium text-foreground">{inv.patient}</span>{inv.cnam && <p className="text-[9px] text-primary font-medium">CNAM</p>}</div>
+                          <div><span className="text-xs font-medium text-foreground">{inv.patient}</span>{inv.assurance && inv.assurance !== "Sans assurance" && <p className="text-[9px] text-primary font-medium">{inv.assurance}</p>}</div>
                         </div>
                       </td>
                       <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{inv.doctor}</td>
