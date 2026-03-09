@@ -59,10 +59,10 @@ const PatientSettings = () => {
             <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-card">
               <h3 className="font-semibold text-foreground mb-4">Informations personnelles</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label>Prénom</Label><Input defaultValue="Amine" className="mt-1" /></div>
-                <div><Label>Nom</Label><Input defaultValue="Ben Ali" className="mt-1" /></div>
-                <div><Label>Email</Label><Input defaultValue="amine@email.tn" className="mt-1" /></div>
-                <div><Label>Téléphone</Label><Input defaultValue="+216 22 345 678" className="mt-1" /></div>
+                <div><Label>Prénom</Label><Input defaultValue={profile.firstName} onChange={e => updatePatientProfile({ firstName: e.target.value })} className="mt-1" /></div>
+                <div><Label>Nom</Label><Input defaultValue={profile.lastName} onChange={e => updatePatientProfile({ lastName: e.target.value })} className="mt-1" /></div>
+                <div><Label>Email</Label><Input defaultValue={profile.email} className="mt-1" /></div>
+                <div><Label>Téléphone</Label><Input defaultValue={profile.phone} className="mt-1" /></div>
                 <div><Label>Date de naissance</Label><Input type="date" defaultValue="1991-03-15" className="mt-1" /></div>
                 <div><Label>Gouvernorat</Label>
                   <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
