@@ -1,61 +1,97 @@
+/**
+ * Laboratory Inbox — Main demand processing page
+ * Demands created by doctors only. Lab changes status + uploads PDF results.
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FlaskConical, Search, Plus, Clock, CheckCircle2, AlertCircle, Activity, Shield, User, Eye, Banknote, X, Save, Send, Beaker } from "lucide-react";
+import {
+  FlaskConical, Search, Clock, CheckCircle2, AlertCircle, Activity,
+  Shield, Eye, Send, Inbox, Upload, FileText, Download, Trash2, X,
+  User, Calendar, Stethoscope, Lock
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { mockLabAnalysesDetail, mockLabAnalysisTypes, type LabAnalysis } from "@/data/mockData";
+import { mockLabDemands, type LabDemand, type LabDemandStatus, type LabPdf } from "@/data/mocks/lab";
+import { toast } from "sonner";
 
-const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
-  waiting: { label: "Attente prélèvement", class: "bg-warning/10 text-warning", icon: AlertCircle },
-  in_progress: { label: "En cours", class: "bg-primary/10 text-primary", icon: Clock },
-  ready: { label: "Résultat prêt", class: "bg-accent/10 text-accent", icon: CheckCircle2 },
-  sent: { label: "Envoyé", class: "bg-muted text-muted-foreground", icon: CheckCircle2 },
+const statusConfig: Record<string, { label: string; cls: string; icon: any }> = {
+  received:       { label: "Reçue",          cls: "bg-warning/10 text-warning", icon: Inbox },
+  in_progress:    { label: "En cours",       cls: "bg-primary/10 text-primary", icon: Activity },
+  results_ready:  { label: "Résultat prêt",  cls: "bg-accent/10 text-accent",   icon: CheckCircle2 },
+  transmitted:    { label: "Transmis",        cls: "bg-muted text-muted-foreground", icon: Send },
 };
 
 const LaboratoryAnalyses = () => {
-  const [analyses, setAnalyses] = useState<LabAnalysis[]>(mockLabAnalysesDetail);
+  const [demands, setDemands] = useState<LabDemand[]>(mockLabDemands);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [showNew, setShowNew] = useState(false);
-  const [newAnalysis, setNewAnalysis] = useState({ patient: "", type: mockLabAnalysisTypes[0], doctor: "", amount: "", cnam: true, priority: "normal" });
+  const [selected, setSelected] = useState<LabDemand | null>(null);
+  const [confirmTransmit, setConfirmTransmit] = useState(false);
 
-  const filtered = analyses.filter(a => {
-    if (filter !== "all" && a.status !== filter) return false;
-    if (search && !a.patient.toLowerCase().includes(search.toLowerCase()) && !a.id.toLowerCase().includes(search.toLowerCase())) return false;
+  const filtered = demands.filter(d => {
+    if (filter !== "all" && d.status !== filter) return false;
+    if (search && !d.patient.toLowerCase().includes(search.toLowerCase()) && !d.id.toLowerCase().includes(search.toLowerCase()) && !d.prescriber.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
+  }).sort((a, b) => {
+    if (a.priority === "urgent" && b.priority !== "urgent") return -1;
+    if (b.priority === "urgent" && a.priority !== "urgent") return 1;
+    const order = { received: 0, in_progress: 1, results_ready: 2, transmitted: 3 };
+    return order[a.status] - order[b.status];
   });
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    setAnalyses(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+  /* ── Status transitions ── */
+  const handleSetStatus = (id: string, status: LabDemandStatus) => {
+    // TODO BACKEND: PATCH /api/lab/demands/{id} { status }
+    setDemands(prev => prev.map(d => d.id === id ? { ...d, status } : d));
+    if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null);
+    const labels: Record<string, string> = { in_progress: "En cours", results_ready: "Résultat prêt", transmitted: "Transmis" };
+    toast.success(`Demande ${id} → ${labels[status]}`);
   };
 
-  const handleAdd = () => {
-    if (!newAnalysis.patient || !newAnalysis.type) return;
-    const maxNum = Math.max(...analyses.map(a => parseInt(a.id.split("-")[1])), 0);
-    setAnalyses(prev => [...prev, {
-      id: `ANA-${String(maxNum + 1).padStart(3, "0")}`,
-      patient: newAnalysis.patient, type: newAnalysis.type, doctor: newAnalysis.doctor,
-      date: "20 Fév 2026", status: "waiting", amount: newAnalysis.amount || "40 DT",
-      cnam: newAnalysis.cnam, avatar: newAnalysis.patient.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
-      priority: newAnalysis.priority,
-    }]);
-    setShowNew(false);
-    setNewAnalysis({ patient: "", type: mockLabAnalysisTypes[0], doctor: "", amount: "", cnam: true, priority: "normal" });
+  /* ── Mock PDF upload ── */
+  const handleUploadPdf = (id: string) => {
+    // TODO BACKEND: POST /api/lab/demands/{id}/pdfs (multipart)
+    const newPdf: LabPdf = {
+      id: `PDF-${Date.now()}`,
+      name: `Resultat_${id}_${Date.now().toString(36)}.pdf`,
+      size: `${Math.floor(Math.random() * 400 + 100)} Ko`,
+      uploadedAt: "20 Fév 2026",
+    };
+    setDemands(prev => prev.map(d => d.id === id ? { ...d, pdfs: [...d.pdfs, newPdf] } : d));
+    if (selected?.id === id) setSelected(prev => prev ? { ...prev, pdfs: [...prev.pdfs, newPdf] } : null);
+    toast.success("PDF ajouté");
   };
+
+  /* ── Delete PDF ── */
+  const handleDeletePdf = (demandId: string, pdfId: string) => {
+    // TODO BACKEND: DELETE /api/lab/demands/{demandId}/pdfs/{pdfId}
+    setDemands(prev => prev.map(d => d.id === demandId ? { ...d, pdfs: d.pdfs.filter(p => p.id !== pdfId) } : d));
+    if (selected?.id === demandId) setSelected(prev => prev ? { ...prev, pdfs: prev.pdfs.filter(p => p.id !== pdfId) } : null);
+    toast.success("PDF supprimé");
+  };
+
+  /* ── Transmit with confirmation ── */
+  const handleTransmit = () => {
+    if (!selected) return;
+    handleSetStatus(selected.id, "transmitted");
+    setConfirmTransmit(false);
+  };
+
+  const isLocked = selected?.status === "transmitted";
 
   return (
-    <DashboardLayout role="laboratory" title="Analyses">
-      <div className="space-y-6">
+    <DashboardLayout role="laboratory" title="Demandes d'analyses">
+      <div className="space-y-5">
+        {/* ── Filters ── */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex gap-0.5 rounded-lg border bg-card p-0.5">
               {[
                 { key: "all", label: "Toutes" },
-                { key: "waiting", label: `Attente (${analyses.filter(a => a.status === "waiting").length})` },
+                { key: "received", label: `Reçues (${demands.filter(d => d.status === "received").length})` },
                 { key: "in_progress", label: "En cours" },
-                { key: "ready", label: "Prêtes" },
-                { key: "sent", label: "Envoyées" },
+                { key: "results_ready", label: "Prêtes" },
+                { key: "transmitted", label: "Transmises" },
               ].map(f => (
                 <button key={f.key} onClick={() => setFilter(f.key)}
                   className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
@@ -65,89 +101,230 @@ const LaboratoryAnalyses = () => {
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Rechercher..." className="pl-9 h-9 w-48 text-xs" value={search} onChange={e => setSearch(e.target.value)} />
+              <Input placeholder="Patient, ID, médecin..." className="pl-9 h-9 w-52 text-xs" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
           </div>
-          <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm" onClick={() => setShowNew(!showNew)}>
-            <Plus className="h-4 w-4 mr-2" />Nouvelle analyse
-          </Button>
+          <p className="text-xs text-muted-foreground">{filtered.length} demande(s)</p>
         </div>
 
-        {showNew && (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
-            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Beaker className="h-4 w-4 text-primary" />Enregistrer une nouvelle analyse</h4>
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-              <div><Label className="text-xs">Patient</Label><Input value={newAnalysis.patient} onChange={e => setNewAnalysis(p => ({ ...p, patient: e.target.value }))} className="mt-1 h-9" placeholder="Nom du patient" /></div>
-              <div><Label className="text-xs">Type d'analyse</Label>
-                <select value={newAnalysis.type} onChange={e => setNewAnalysis(p => ({ ...p, type: e.target.value }))} className="mt-1 w-full h-9 rounded-md border bg-background px-3 text-sm">
-                  {mockLabAnalysisTypes.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div><Label className="text-xs">Médecin prescripteur</Label><Input value={newAnalysis.doctor} onChange={e => setNewAnalysis(p => ({ ...p, doctor: e.target.value }))} className="mt-1 h-9" placeholder="Dr. ..." /></div>
-              <div><Label className="text-xs">Montant</Label><Input value={newAnalysis.amount} onChange={e => setNewAnalysis(p => ({ ...p, amount: e.target.value }))} className="mt-1 h-9" placeholder="Ex: 45 DT" /></div>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-1.5 text-xs"><input type="checkbox" checked={newAnalysis.cnam} onChange={e => setNewAnalysis(p => ({ ...p, cnam: e.target.checked }))} className="rounded border-input" />CNAM</label>
-                <label className="flex items-center gap-1.5 text-xs"><input type="checkbox" checked={newAnalysis.priority === "urgent"} onChange={e => setNewAnalysis(p => ({ ...p, priority: e.target.checked ? "urgent" : "normal" }))} className="rounded border-input" />Urgent</label>
-              </div>
-              <div className="flex items-end gap-2 col-span-1">
-                <Button size="sm" className="gradient-primary text-primary-foreground" onClick={handleAdd}><Save className="h-3.5 w-3.5 mr-1" />Enregistrer</Button>
-                <Button variant="outline" size="sm" onClick={() => setShowNew(false)}><X className="h-3.5 w-3.5" /></Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {filtered.map((a) => {
-            const config = statusConfig[a.status];
-            const Icon = config.icon;
-            return (
-              <div key={a.id} className={`rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all ${a.priority === "urgent" ? "border-l-3 border-l-destructive" : ""}`}>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-start gap-4">
-                    <div className={`h-11 w-11 rounded-lg flex items-center justify-center shrink-0 ${config.class}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-foreground">{a.id}</h3>
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${config.class}`}>{config.label}</span>
-                        {a.priority === "urgent" && <span className="rounded-full bg-destructive/10 text-destructive px-2 py-0.5 text-[10px] font-medium">Urgent</span>}
-                        {a.cnam && <span className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium"><Shield className="h-3 w-3" />CNAM</span>}
+        {/* ── Table ── */}
+        <div className="rounded-xl border bg-card shadow-card overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="p-4 text-xs font-medium text-muted-foreground">Demande</th>
+                <th className="p-4 text-xs font-medium text-muted-foreground hidden sm:table-cell">Examens</th>
+                <th className="p-4 text-xs font-medium text-muted-foreground hidden md:table-cell">Prescripteur</th>
+                <th className="p-4 text-xs font-medium text-muted-foreground">Statut</th>
+                <th className="p-4 text-xs font-medium text-muted-foreground hidden sm:table-cell">PDFs</th>
+                <th className="p-4 text-xs font-medium text-muted-foreground w-20">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filtered.map(d => {
+                const cfg = statusConfig[d.status];
+                return (
+                  <tr key={d.id}
+                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${selected?.id === d.id ? "bg-primary/5" : ""} ${d.priority === "urgent" ? "border-l-4 border-l-destructive" : ""}`}
+                    onClick={() => { setSelected(d); setConfirmTransmit(false); }}>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                          d.priority === "urgent" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                        }`}>{d.avatar}</div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-foreground text-sm">{d.patient}</span>
+                            {d.priority === "urgent" && <span className="text-[9px] bg-destructive/10 text-destructive px-1 py-0.5 rounded font-medium">URG</span>}
+                          </div>
+                          <span className="text-[11px] text-muted-foreground">{d.id} · {d.date}</span>
+                        </div>
                       </div>
-                      <p className="text-sm font-medium text-foreground mt-1">{a.type}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <User className="h-3.5 w-3.5" />{a.patient} · {a.doctor} · {a.date}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-sm font-bold text-foreground flex items-center gap-1"><Banknote className="h-4 w-4 text-accent" />{a.amount}</span>
-                    {a.status === "waiting" && (
-                      <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm" onClick={() => handleStatusChange(a.id, "in_progress")}>
-                        Enregistrer prélèvement
+                    </td>
+                    <td className="p-4 text-xs text-muted-foreground hidden sm:table-cell max-w-48 truncate">{d.examens.join(", ")}</td>
+                    <td className="p-4 text-xs text-muted-foreground hidden md:table-cell">{d.prescriber}</td>
+                    <td className="p-4">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium flex items-center gap-1 w-fit ${cfg.cls}`}>
+                        <cfg.icon className="h-3 w-3" />{cfg.label}
+                      </span>
+                    </td>
+                    <td className="p-4 hidden sm:table-cell">
+                      {d.pdfs.length > 0 ? (
+                        <span className="flex items-center gap-1 text-xs text-accent font-medium"><FileText className="h-3.5 w-3.5" />{d.pdfs.length}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <Button size="sm" variant="outline" className="text-[10px] h-7" onClick={e => { e.stopPropagation(); setSelected(d); }}>
+                        <Eye className="h-3 w-3 mr-1" />Ouvrir
                       </Button>
-                    )}
-                    {a.status === "in_progress" && (
-                      <Button className="bg-accent text-accent-foreground hover:bg-accent/90" size="sm" onClick={() => handleStatusChange(a.id, "ready")}>
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Valider résultats
-                      </Button>
-                    )}
-                    {a.status === "ready" && (
-                      <Button variant="outline" size="sm" className="text-xs" onClick={() => handleStatusChange(a.id, "sent")}>
-                        <Send className="h-3.5 w-3.5 mr-1" />Envoyer au médecin
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
           {filtered.length === 0 && (
-            <div className="text-center py-12"><FlaskConical className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-muted-foreground">Aucune analyse trouvée</p></div>
+            <div className="text-center py-12"><FlaskConical className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-muted-foreground">Aucune demande</p></div>
           )}
         </div>
       </div>
+
+      {/* ══ Detail Drawer ══ */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setSelected(null)}>
+          <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border bg-card shadow-elevated p-5 mx-0 sm:mx-4 animate-fade-in max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="sm:hidden flex justify-center mb-3"><div className="h-1 w-10 rounded-full bg-muted-foreground/20" /></div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`h-11 w-11 rounded-full flex items-center justify-center text-xs font-bold ${
+                  selected.priority === "urgent" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                }`}>{selected.avatar}</div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">{selected.id}</h3>
+                  <p className="text-xs text-muted-foreground">{selected.date}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+                <button onClick={() => setSelected(null)}><X className="h-5 w-5 text-muted-foreground" /></button>
+              </div>
+            </div>
+
+            {/* Patient info */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1"><User className="h-3 w-3" />Patient</p>
+                <p className="text-sm font-medium text-foreground mt-0.5">{selected.patient}</p>
+                <p className="text-[10px] text-muted-foreground">Né(e) le {selected.patientDob}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Shield className="h-3 w-3" />Assurance</p>
+                <p className="text-sm font-medium text-foreground mt-0.5">{selected.assurance}</p>
+                {selected.numAssurance && <p className="text-[10px] text-muted-foreground">N° {selected.numAssurance}</p>}
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Stethoscope className="h-3 w-3" />Prescripteur</p>
+                <p className="text-sm font-medium text-foreground mt-0.5">{selected.prescriber}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-[10px] text-muted-foreground">Montant</p>
+                <p className="text-sm font-bold text-foreground mt-0.5">{selected.amount}</p>
+              </div>
+            </div>
+
+            {/* Examens requested */}
+            <div className="rounded-lg border p-3 mb-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Examens demandés</p>
+              <div className="flex flex-wrap gap-1.5">
+                {selected.examens.map((ex, i) => (
+                  <span key={i} className="rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium">{ex}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes */}
+            {selected.notes && (
+              <div className="rounded-lg bg-warning/5 border border-warning/20 p-3 mb-4">
+                <p className="text-[10px] text-warning font-medium mb-1">Note interne</p>
+                <p className="text-xs text-foreground">{selected.notes}</p>
+              </div>
+            )}
+
+            {/* PDF Results zone */}
+            <div className="rounded-lg border p-3 mb-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Résultats PDF ({selected.pdfs.length})
+              </p>
+              {selected.pdfs.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">Aucun PDF uploadé</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {selected.pdfs.map(pdf => (
+                    <div key={pdf.id} className="flex items-center justify-between rounded-lg bg-muted/50 p-2.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="h-4 w-4 text-destructive shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{pdf.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{pdf.size} · {pdf.uploadedAt}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5 text-muted-foreground" /></Button>
+                        {!isLocked && (
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDeletePdf(selected.id, pdf.id)}>
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Upload button (only if not transmitted) */}
+              {!isLocked && (
+                <Button variant="outline" size="sm" className="mt-2 w-full text-xs" onClick={() => handleUploadPdf(selected.id)}>
+                  <Upload className="h-3.5 w-3.5 mr-1.5" />Ajouter un PDF (mock)
+                </Button>
+              )}
+            </div>
+
+            {/* Status */}
+            <div className="mb-4">
+              <span className={`rounded-full px-3 py-1 text-xs font-medium border flex items-center gap-1.5 w-fit ${statusConfig[selected.status].cls}`}>
+                {(() => { const I = statusConfig[selected.status].icon; return <I className="h-3.5 w-3.5" />; })()}
+                {statusConfig[selected.status].label}
+              </span>
+            </div>
+
+            {/* Action buttons */}
+            {!isLocked && (
+              <div className="space-y-2">
+                {selected.status === "received" && (
+                  <Button size="sm" className="w-full gradient-primary text-primary-foreground text-xs" onClick={() => handleSetStatus(selected.id, "in_progress")}>
+                    <Activity className="h-3.5 w-3.5 mr-1.5" />Passer en cours
+                  </Button>
+                )}
+                {selected.status === "in_progress" && (
+                  <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
+                    disabled={selected.pdfs.length === 0}
+                    onClick={() => handleSetStatus(selected.id, "results_ready")}>
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                    {selected.pdfs.length === 0 ? "Uploadez au moins 1 PDF" : "Marquer résultat prêt"}
+                  </Button>
+                )}
+                {selected.status === "results_ready" && !confirmTransmit && (
+                  <Button size="sm" className="w-full text-xs" variant="outline" onClick={() => setConfirmTransmit(true)}>
+                    <Send className="h-3.5 w-3.5 mr-1.5" />Transmettre au médecin
+                  </Button>
+                )}
+                {confirmTransmit && (
+                  <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-2">
+                    <p className="text-xs text-warning font-medium">Confirmer la transmission ?</p>
+                    <p className="text-[10px] text-muted-foreground">Les résultats seront envoyés et la demande sera verrouillée.</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="gradient-primary text-primary-foreground text-xs" onClick={handleTransmit}>
+                        <Send className="h-3.5 w-3.5 mr-1" />Confirmer
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-xs" onClick={() => setConfirmTransmit(false)}>Annuler</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isLocked && (
+              <div className="rounded-lg bg-muted/50 p-3 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Demande transmise — lecture seule</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
