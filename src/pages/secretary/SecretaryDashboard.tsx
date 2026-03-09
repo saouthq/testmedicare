@@ -577,7 +577,7 @@ const SecretaryDashboard = () => {
               </div>
               <div className="divide-y">
                 {[
-                  { patient: "Amine Ben Ali", amount: 35, method: "CNAM", time: "08:45", status: "paid" },
+                  { patient: "Amine Ben Ali", amount: 35, method: "Assurance", time: "08:45", status: "paid" },
                   { patient: "Karim Mansour", amount: 35, method: "Espèces", time: "09:15", status: "paid" },
                   { patient: "Leila Chahed", amount: 60, method: "Carte", time: "09:30", status: "paid" },
                 ].map((t, i) => (
