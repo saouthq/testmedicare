@@ -58,9 +58,9 @@ const SecretaryOffice = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-bold text-foreground">{officeInfo.name}</h2>
-                  {officeInfo.conventionCNAM && (
+                  {officeInfo.conventionAssurance && (
                     <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                      <Shield className="h-3 w-3" />Conventionné CNAM
+                      <Shield className="h-3 w-3" />Conventionné Assurance
                     </span>
                   )}
                 </div>
