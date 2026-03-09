@@ -32,6 +32,9 @@ const AdminSettings = () => {
     labDemands: true,
     prescriptionSend: true,
     patientMessaging: false,
+    textReviews: true,
+    medicinesDirectory: true,
+    patientChat: false,
   });
 
   // Security / OTP
