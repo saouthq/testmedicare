@@ -106,6 +106,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
     { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
     { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
+    { title: "Promotions", url: "/dashboard/admin/promotions", icon: CreditCard },
     { title: "Paiements", url: "/dashboard/admin/payments", icon: CreditCard },
     { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
     { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
