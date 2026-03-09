@@ -66,7 +66,7 @@ export const mockLandingStats = [
   { value: "5 000+", label: "Praticiens" },
   { value: "500K+", label: "Patients" },
   { value: "2M+", label: "RDV pris" },
-  { value: "4.8/5", label: "Satisfaction" },
+  { value: "98%", label: "Satisfaction" },
 ];
 
 // ─── Cabinet Rules (règles du cabinet) ──────────────────────
