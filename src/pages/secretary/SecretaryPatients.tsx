@@ -192,10 +192,10 @@ const SecretaryPatients = () => {
                         <div><Label className="text-[10px]">Email</Label><Input value={editForm.email} onChange={e => setEditForm(f => f ? { ...f, email: e.target.value } : f)} className="mt-0.5 h-8 text-xs" /></div>
                         <div><Label className="text-[10px]">Assurance</Label>
                           <select value={editForm.assurance} onChange={e => setEditForm(f => f ? { ...f, assurance: e.target.value } : f)} className="mt-0.5 w-full h-8 rounded-md border bg-background px-2 text-xs">
-                            <option>CNAM</option><option>CNRPS</option><option>Privée</option><option>Sans</option>
+                            <option>CNAM</option><option>CNRPS</option><option>Maghrebia</option><option>STAR</option><option>GAT</option><option>Sans assurance</option>
                           </select>
                         </div>
-                        <div><Label className="text-[10px]">N° CNAM</Label><Input value={editForm.cnamId} onChange={e => setEditForm(f => f ? { ...f, cnamId: e.target.value } : f)} className="mt-0.5 h-8 text-xs" /></div>
+                        <div><Label className="text-[10px]">N° Assuré</Label><Input value={editForm.cnamId} onChange={e => setEditForm(f => f ? { ...f, cnamId: e.target.value } : f)} className="mt-0.5 h-8 text-xs" placeholder="Optionnel" /></div>
                         <div><Label className="text-[10px]">Médecin</Label>
                           <select value={editForm.doctor} onChange={e => setEditForm(f => f ? { ...f, doctor: e.target.value } : f)} className="mt-0.5 w-full h-8 rounded-md border bg-background px-2 text-xs">
                             <option>Dr. Bouazizi</option><option>Dr. Gharbi</option><option>Dr. Hammami</option>
