@@ -11,3 +11,5 @@ export * from "./admin";
 export * from "./medicines";
 export * from "./establishments";
 export * from "./promotions";
+export * from "./hospital";
+export * from "./clinic";
