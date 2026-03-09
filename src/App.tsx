@@ -208,6 +208,8 @@ const App = () => (
           <Route path="/dashboard/admin/notification-templates" element={<AdminGuard><AdminNotificationTemplates /></AdminGuard>} />
           <Route path="/dashboard/admin/analytics" element={<AdminGuard><AdminAnalytics /></AdminGuard>} />
           <Route path="/dashboard/admin/support" element={<AdminGuard><AdminSupport /></AdminGuard>} />
+          <Route path="/dashboard/admin/guard-pharmacies" element={<AdminGuard><AdminGuardPharmacies /></AdminGuard>} />
+          <Route path="/dashboard/admin/campaigns" element={<AdminGuard><AdminCampaigns /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 
