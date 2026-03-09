@@ -97,6 +97,7 @@ const navItems: Record<string, NavItem[]> = {
   ],
   admin: [
     { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
+    { title: "Gestion Admin", url: "/dashboard/admin/iam", icon: ShieldCheck },
     { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
     { title: "Organisations", url: "/dashboard/admin/organizations", icon: Building2 },
     { title: "Validations KYC", url: "/dashboard/admin/verifications", icon: ShieldCheck },
@@ -112,7 +113,6 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
     { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
     { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
-    { title: "Journal", url: "/dashboard/admin/logs", icon: ScrollText },
   ],
 };
 
