@@ -87,7 +87,7 @@ export const mockReviews = [
 
 export const mockFaqItems = [
   { q: "Comment se déroule une première consultation ?", a: "La première consultation dure environ 45 minutes. Elle comprend un entretien approfondi sur vos antécédents médicaux, un examen clinique complet et si nécessaire, des examens complémentaires." },
-  { q: "Prenez-vous l'Assurance ?", a: "Oui, le cabinet accepte les principales assurances (CNAM, CNRPS, Maghrebia, etc.). Le tiers payant est pratiqué." },
+  { q: "Quelles assurances acceptez-vous ?", a: "Oui, le cabinet accepte les principales assurances (CNAM, CNRPS, Maghrebia, STAR, GAT, etc.). Le tiers payant est pratiqué." },
   { q: "Faites-vous des téléconsultations ?", a: "Oui, je propose des téléconsultations vidéo pour le suivi de maladies chroniques et le renouvellement d'ordonnances." },
   { q: "Quel est le délai moyen pour obtenir un RDV ?", a: "Le délai moyen est de 2 à 3 jours ouvrés. Pour les urgences, des créneaux sont réservés chaque jour." },
 ];

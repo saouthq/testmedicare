@@ -411,7 +411,7 @@ const PatientBooking = () => {
 
             {/* Important info */}
             <div className="mt-5 rounded-xl border border-warning/30 bg-warning/5 p-4">
-              <p className="text-sm text-foreground"><strong>Important :</strong> Merci de vous présenter 10 minutes avant l'heure de votre rendez-vous avec votre carte CNAM et votre carte d'identité.</p>
+              <p className="text-sm text-foreground"><strong>Important :</strong> Merci de vous présenter 10 minutes avant l'heure de votre rendez-vous avec votre carte d'assurance et votre carte d'identité.</p>
               <p className="text-xs text-muted-foreground mt-2">📋 {doctor.cancellationPolicy}</p>
               {doctor.autoConfirm && <p className="text-xs text-accent mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Ce médecin confirme automatiquement les RDV</p>}
             </div>

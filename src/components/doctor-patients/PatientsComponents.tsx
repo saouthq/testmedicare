@@ -270,7 +270,7 @@ export function PatientsNewModal() {
             <div><Label className="text-xs">Groupe sanguin</Label><Input value={ctx.newForm.bloodType} onChange={(e) => ctx.setNewForm((f) => ({ ...f, bloodType: e.target.value }))} className="mt-1 h-9" placeholder="A+" /></div>
             <div className="col-span-2"><Label className="text-xs">Allergies (virgules)</Label><Input value={ctx.newForm.allergies} onChange={(e) => ctx.setNewForm((f) => ({ ...f, allergies: e.target.value }))} className="mt-1 h-9" placeholder="Pénicilline, AINS..." /></div>
             <div className="col-span-2"><Label className="text-xs">Pathologies chroniques (virgules)</Label><Input value={ctx.newForm.conditions} onChange={(e) => ctx.setNewForm((f) => ({ ...f, conditions: e.target.value }))} className="mt-1 h-9" placeholder="Diabète type 2, HTA..." /></div>
-            <div className="col-span-2"><Label className="text-xs">Identifiant CNAM</Label><Input value={ctx.newForm.cnamId} onChange={(e) => ctx.setNewForm((f) => ({ ...f, cnamId: e.target.value }))} className="mt-1 h-9" placeholder="CNAM..." /></div>
+            <div className="col-span-2"><Label className="text-xs">N° Assurance</Label><Input value={ctx.newForm.cnamId} onChange={(e) => ctx.setNewForm((f) => ({ ...f, cnamId: e.target.value }))} className="mt-1 h-9" placeholder="Numéro d'assurance..." /></div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" className="text-xs" onClick={() => ctx.setShowNewPatient(false)}>Annuler</Button>

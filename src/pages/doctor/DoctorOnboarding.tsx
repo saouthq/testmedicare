@@ -110,8 +110,8 @@ const DoctorOnboarding = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <input type="checkbox" id="cnam" checked={cnam} onChange={e => setCnam(e.target.checked)} className="rounded border-input" />
-              <Label htmlFor="cnam" className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-primary" />Conventionné CNAM</Label>
+              <input type="checkbox" id="insurance" checked={acceptsInsurance} onChange={e => setAcceptsInsurance(e.target.checked)} className="rounded border-input" />
+              <Label htmlFor="insurance" className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-primary" />Accepte les assurances (CNAM, CNRPS, etc.)</Label>
             </div>
             <div><Label>Présentation</Label><textarea placeholder="Décrivez votre parcours et vos spécialités..." className="mt-1.5 w-full rounded-xl border bg-background px-4 py-3 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-ring" /></div>
           </div>
