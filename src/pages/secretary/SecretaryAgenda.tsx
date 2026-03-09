@@ -23,8 +23,7 @@ interface AgendaAppointment {
   motif: string;
   status: AppointmentStatus;
   phone: string;
-  cnam: boolean;
-  assurance?: string;
+  assurance: string;
   teleconsultation?: boolean;
   notes?: string;
   arrivedAt?: string;
