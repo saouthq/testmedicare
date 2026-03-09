@@ -138,7 +138,7 @@ function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void 
                 {rx.status === "active" ? "Active" : "Expirée"}
               </Badge>
               {rx.sent && <Badge variant="outline" className="text-[11px]">Envoyée</Badge>}
-              {rx.cnam && <Badge variant="outline" className="text-[11px]">CNAM</Badge>}
+              {rx.cnam && <Badge variant="outline" className="text-[11px]">Assuré</Badge>}
             </div>
             <div className="text-xs text-muted-foreground truncate">{rx.id} • {rx.date}</div>
             <div className="text-xs text-muted-foreground truncate mt-0.5">{rx.items.join(" • ")}</div>
@@ -183,7 +183,7 @@ export function PrescriptionDetail() {
               <SheetDescription className="text-xs">
                 {selected.status === "active" ? "Ordonnance active" : "Ordonnance expirée"}
                 {selected.sent ? " • Envoyée" : " • Non envoyée"}
-                {selected.cnam ? " • CNAM" : ""}
+                {selected.cnam ? " • Assuré" : ""}
               </SheetDescription>
             </SheetHeader>
 
@@ -206,7 +206,7 @@ export function PrescriptionDetail() {
                   <div className="flex justify-between"><span className="text-muted-foreground">Montant</span><span className="font-medium">{selected.total}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Médecin</span><span className="font-medium">{selected.doctor}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Pharmacie</span><span className="font-medium">{selected.pharmacy || "Non assignée"}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">CNAM</span><span className="font-medium">{selected.cnam ? "Oui" : "Non"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Assurance</span><span className="font-medium">{selected.cnam ? "Oui" : "Non"}</span></div>
                 </div>
               </div>
 

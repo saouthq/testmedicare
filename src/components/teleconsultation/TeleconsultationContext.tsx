@@ -100,7 +100,7 @@ export function TeleconsultationProvider({ role, children }: { role: "patient" |
 
   const otherPerson = role === "patient"
     ? { name: "Dr. Ahmed Bouazizi", role: "Médecin généraliste", initials: "AB" }
-    : { name: "Amine Ben Ali", role: "Patient · 33 ans · CNAM", initials: "AB" };
+    : { name: "Amine Ben Ali", role: "Patient · 33 ans · Assuré", initials: "AB" };
 
   // Simulate connection check
   useEffect(() => {

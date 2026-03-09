@@ -38,7 +38,7 @@ export const mockDoctorProfile = {
   experience: "15 ans",
   registrationYear: 2010,
   orderNumber: "TN-10101010",
-  presentation: "Médecin généraliste diplômé de la Faculté de Médecine de Tunis, je vous accueille dans mon cabinet moderne à El Manar pour des consultations de médecine générale, suivi de maladies chroniques (diabète, hypertension), bilans de santé complets et vaccinations.\n\nJe porte une attention particulière à l'écoute de mes patients et à une approche globale de la santé. Mon cabinet est équipé d'un ECG, d'un échographe et d'un laboratoire d'analyses rapides.\n\nConventionné CNAM, je pratique le tiers payant pour faciliter vos démarches.",
+  presentation: "Médecin généraliste diplômé de la Faculté de Médecine de Tunis, je vous accueille dans mon cabinet moderne à El Manar pour des consultations de médecine générale, suivi de maladies chroniques (diabète, hypertension), bilans de santé complets et vaccinations.\n\nJe porte une attention particulière à l'écoute de mes patients et à une approche globale de la santé. Mon cabinet est équipé d'un ECG, d'un échographe et d'un laboratoire d'analyses rapides.\n\nConventionné Assurance, je pratique le tiers payant pour faciliter vos démarches.",
   diplomas: [
     { title: "Doctorat en Médecine", school: "Faculté de Médecine de Tunis", year: "2010" },
     { title: "DU Diabétologie", school: "Université de Tunis El Manar", year: "2012" },
@@ -87,7 +87,7 @@ export const mockReviews = [
 
 export const mockFaqItems = [
   { q: "Comment se déroule une première consultation ?", a: "La première consultation dure environ 45 minutes. Elle comprend un entretien approfondi sur vos antécédents médicaux, un examen clinique complet et si nécessaire, des examens complémentaires." },
-  { q: "Prenez-vous la CNAM ?", a: "Oui, le cabinet est conventionné CNAM Secteur 1. Le tiers payant est pratiqué." },
+  { q: "Prenez-vous l'Assurance ?", a: "Oui, le cabinet accepte les principales assurances (CNAM, CNRPS, Maghrebia, etc.). Le tiers payant est pratiqué." },
   { q: "Faites-vous des téléconsultations ?", a: "Oui, je propose des téléconsultations vidéo pour le suivi de maladies chroniques et le renouvellement d'ordonnances." },
   { q: "Quel est le délai moyen pour obtenir un RDV ?", a: "Le délai moyen est de 2 à 3 jours ouvrés. Pour les urgences, des créneaux sont réservés chaque jour." },
 ];

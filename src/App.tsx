@@ -51,6 +51,7 @@ import DoctorOnboarding from "./pages/doctor/DoctorOnboarding";
 import DoctorBilling from "./pages/doctor/DoctorBilling";
 import DoctorConnect from "./pages/doctor/DoctorConnect";
 import DoctorAIAssistant from "./pages/doctor/DoctorAIAssistant";
+import DoctorWaitingRoom from "./pages/doctor/DoctorWaitingRoom";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
@@ -163,6 +164,7 @@ const App = () => (
           <Route path="/dashboard/doctor/billing" element={<DoctorBilling />} />
           <Route path="/dashboard/doctor/ai-assistant" element={<DoctorAIAssistant />} />
           <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
+          <Route path="/dashboard/doctor/waiting-room" element={<DoctorWaitingRoom />} />
 
           {/* Pharmacy */}
           <Route path="/dashboard/pharmacy" element={<PharmacyDashboard />} />
