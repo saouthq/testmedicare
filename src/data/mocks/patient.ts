@@ -107,11 +107,11 @@ export const mockPatientPrescriptions: PrescriptionWithPharmacies[] = [
     items: ["Amlodipine 10mg - 1x/jour"], 
     status: "active", 
     total: "28 DT", 
-    assurance: "CNAM", 
+    assurance: "Assurance publique", 
     pharmacy: "Pharmacie El Amal",
     sentToPharmacies: []
   },
-  { id: "ORD-2025-038", doctor: "Dr. Hammami", date: "15 Déc 2025", items: ["Crème dermocorticoïde", "Lotion hydratante"], status: "expired", total: "35 DT", assurance: "CNAM", pharmacy: "Pharmacie Pasteur" },
+  { id: "ORD-2025-038", doctor: "Dr. Hammami", date: "15 Déc 2025", items: ["Crème dermocorticoïde", "Lotion hydratante"], status: "expired", total: "35 DT", assurance: "Assurance publique", pharmacy: "Pharmacie Pasteur" },
   { id: "ORD-2025-032", doctor: "Dr. Bouazizi", date: "20 Nov 2025", items: ["Oméprazole 20mg", "Gaviscon"], status: "expired", total: "22 DT", assurance: "", pharmacy: "Pharmacie Pasteur" },
 ];
 

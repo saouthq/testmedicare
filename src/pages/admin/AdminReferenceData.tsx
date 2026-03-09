@@ -17,7 +17,7 @@ const initialData: Record<RefTab, string[]> = {
   cities: ["Tunis", "Ariana", "Ben Arous", "Manouba", "Sousse", "Sfax", "Monastir", "Nabeul", "Bizerte", "Gabès", "Médenine", "Kairouan", "Kasserine", "Gafsa", "Tozeur", "Kébili", "Tataouine", "Zaghouan", "Siliana", "Le Kef", "Jendouba", "Béja", "Sidi Bouzid", "Mahdia"],
   languages: ["Français", "Arabe", "Anglais", "Allemand", "Italien"],
   motifs: ["Consultation générale", "Suivi", "Renouvellement ordonnance", "Certificat médical", "Urgence", "Bilan"],
-  assurances: ["CNAM", "CNRPS", "Maghrebia", "STAR", "GAT Assurances", "Carte Assurances", "ASTREE", "AMI Assurances", "Sans assurance"],
+  assurances: ["Assurance publique", "CNRPS", "Maghrebia", "STAR", "GAT Assurances", "Carte Assurances", "ASTREE", "AMI Assurances", "Sans assurance"],
 };
 
 const tabLabels: Record<RefTab, string> = {

@@ -120,12 +120,12 @@ export const mockLabAnalysisTypes = [
 
 /* ── Patient list for lab ──────────────────────────────── */
 export const mockLabPatients = [
-  { name: "Amine Ben Ali", dob: "12/03/1992", assurance: "CNAM", phone: "+216 71 234 567", avatar: "AB", totalDemands: 4 },
-  { name: "Fatma Trabelsi", dob: "05/11/1970", assurance: "CNRPS", phone: "+216 22 345 678", avatar: "FT", totalDemands: 6 },
+  { name: "Amine Ben Ali", dob: "12/03/1992", assurance: "Assurance publique", phone: "+216 71 234 567", avatar: "AB", totalDemands: 4 },
+  { name: "Fatma Trabelsi", dob: "05/11/1970", assurance: "Assurance publique", phone: "+216 22 345 678", avatar: "FT", totalDemands: 6 },
   { name: "Mohamed Sfar", dob: "22/07/1998", assurance: "Sans assurance", phone: "+216 55 456 789", avatar: "MS", totalDemands: 1 },
-  { name: "Nadia Jemni", dob: "14/09/1959", assurance: "CNAM", phone: "+216 98 567 890", avatar: "NJ", totalDemands: 8 },
+  { name: "Nadia Jemni", dob: "14/09/1959", assurance: "Assurance publique", phone: "+216 98 567 890", avatar: "NJ", totalDemands: 8 },
   { name: "Sami Ayari", dob: "30/01/1984", assurance: "Maghrebia", phone: "+216 29 678 901", avatar: "SA", totalDemands: 3 },
-  { name: "Rania Meddeb", dob: "18/06/1988", assurance: "CNAM", phone: "+216 52 789 012", avatar: "RM", totalDemands: 5 },
+  { name: "Rania Meddeb", dob: "18/06/1988", assurance: "Assurance publique", phone: "+216 52 789 012", avatar: "RM", totalDemands: 5 },
   { name: "Karim Mansour", dob: "02/12/1975", assurance: "STAR", phone: "+216 50 890 123", avatar: "KM", totalDemands: 2 },
   { name: "Leila Chahed", dob: "25/04/1991", assurance: "GAT", phone: "+216 23 901 234", avatar: "LC", totalDemands: 3 },
 ];
