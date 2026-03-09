@@ -93,7 +93,7 @@ export const mockPatientPrescriptions: PrescriptionWithPharmacies[] = [
     items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], 
     status: "active", 
     total: "45 DT", 
-    cnam: true, 
+    assurance: "Maghrebia", 
     pharmacy: null,
     sentToPharmacies: [
       { pharmacyId: "ph1", pharmacyName: "Pharmacie El Amal", status: "ready", respondedAt: "10 Fév 14:30", pickupTime: "Avant 18h" },
@@ -107,12 +107,12 @@ export const mockPatientPrescriptions: PrescriptionWithPharmacies[] = [
     items: ["Amlodipine 10mg - 1x/jour"], 
     status: "active", 
     total: "28 DT", 
-    cnam: true, 
+    assurance: "CNAM", 
     pharmacy: "Pharmacie El Amal",
     sentToPharmacies: []
   },
-  { id: "ORD-2025-038", doctor: "Dr. Hammami", date: "15 Déc 2025", items: ["Crème dermocorticoïde", "Lotion hydratante"], status: "expired", total: "35 DT", cnam: true, pharmacy: "Pharmacie Pasteur" },
-  { id: "ORD-2025-032", doctor: "Dr. Bouazizi", date: "20 Nov 2025", items: ["Oméprazole 20mg", "Gaviscon"], status: "expired", total: "22 DT", cnam: false, pharmacy: "Pharmacie Pasteur" },
+  { id: "ORD-2025-038", doctor: "Dr. Hammami", date: "15 Déc 2025", items: ["Crème dermocorticoïde", "Lotion hydratante"], status: "expired", total: "35 DT", assurance: "CNAM", pharmacy: "Pharmacie Pasteur" },
+  { id: "ORD-2025-032", doctor: "Dr. Bouazizi", date: "20 Nov 2025", items: ["Oméprazole 20mg", "Gaviscon"], status: "expired", total: "22 DT", assurance: "", pharmacy: "Pharmacie Pasteur" },
 ];
 
 // ─── Notifications ───────────────────────────────────────────

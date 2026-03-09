@@ -157,9 +157,9 @@ export const mockPatientAnalyses: AnalysisResult[] = [
 // ─── Doctor Prescriptions ────────────────────────────────────
 
 export const mockDoctorPrescriptions: Prescription[] = [
-  { id: "ORD-2026-045", doctor: "Dr. Bouazizi", patient: "Amine Ben Ali", date: "20 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], status: "active", total: "45 DT", cnam: true, pharmacy: null, sent: true },
-  { id: "ORD-2026-044", doctor: "Dr. Bouazizi", patient: "Fatma Trabelsi", date: "20 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], status: "active", total: "28 DT", cnam: true, pharmacy: null, sent: true },
-  { id: "ORD-2026-043", doctor: "Dr. Bouazizi", patient: "Nadia Jemni", date: "17 Fév 2026", items: ["Ibuprofène 400mg - 3x/jour pendant 7 jours", "Tramadol 50mg - si douleur intense"], status: "active", total: "35 DT", cnam: true, pharmacy: null, sent: false },
+  { id: "ORD-2026-045", doctor: "Dr. Bouazizi", patient: "Amine Ben Ali", date: "20 Fév 2026", items: ["Metformine 850mg - 2x/jour", "Glibenclamide 5mg - 1x/jour"], status: "active", total: "45 DT", assurance: "Maghrebia", pharmacy: null, sent: true },
+  { id: "ORD-2026-044", doctor: "Dr. Bouazizi", patient: "Fatma Trabelsi", date: "20 Fév 2026", items: ["Amlodipine 10mg - 1x/jour"], status: "active", total: "28 DT", assurance: "CNAM", pharmacy: null, sent: true },
+  { id: "ORD-2026-043", doctor: "Dr. Bouazizi", patient: "Nadia Jemni", date: "17 Fév 2026", items: ["Ibuprofène 400mg - 3x/jour pendant 7 jours", "Tramadol 50mg - si douleur intense"], status: "active", total: "35 DT", assurance: "CNAM", pharmacy: null, sent: false },
 ];
 
 // ─── Doctor Stats ────────────────────────────────────────────
