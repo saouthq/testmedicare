@@ -224,6 +224,7 @@ const App = () => (
           <Route path="/dashboard/admin/iam" element={<AdminGuard><AdminIAM /></AdminGuard>} />
           <Route path="/dashboard/admin/disputes" element={<AdminGuard><AdminDisputes /></AdminGuard>} />
           <Route path="/dashboard/admin/feature-matrix" element={<AdminGuard><AdminFeatureMatrix /></AdminGuard>} />
+          <Route path="/dashboard/admin/modules" element={<AdminGuard><AdminModules /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 
