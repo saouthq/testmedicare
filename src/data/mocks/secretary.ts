@@ -10,8 +10,8 @@ export const mockSecretaryTeam = [
 ];
 
 export const mockSecretaryWaitingRoom = [
-  { id: 1, patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", motif: "Suivi diabète", status: "waiting" as string, avatar: "AB", assurance: "CNAM", waitMin: 15 },
-  { id: 2, patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", motif: "Bilan cardiaque", status: "waiting" as string, avatar: "FT", assurance: "CNAM", waitMin: 10 },
+  { id: 1, patient: "Amine Ben Ali", arrivedAt: "09:15", appointment: "09:30", doctor: "Dr. Bouazizi", motif: "Suivi diabète", status: "waiting" as string, avatar: "AB", assurance: "Maghrebia", waitMin: 15 },
+  { id: 2, patient: "Fatma Trabelsi", arrivedAt: "09:20", appointment: "09:45", doctor: "Dr. Gharbi", motif: "Bilan cardiaque", status: "waiting" as string, avatar: "FT", assurance: "Assurance publique", waitMin: 10 },
   { id: 3, patient: "Mohamed Sfar", arrivedAt: "09:25", appointment: "10:00", doctor: "Dr. Bouazizi", motif: "Contrôle annuel", status: "waiting" as string, avatar: "MS", assurance: "Sans assurance", waitMin: 5 },
 ];
 
