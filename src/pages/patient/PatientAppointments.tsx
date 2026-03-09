@@ -393,7 +393,7 @@ const PatientAppointments = () => {
                     <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
                     {currentApt.canModify && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReschedule(currentApt.id); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprogrammer</Button>}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full text-xs"><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => toast({ title: "Calendrier", description: "Fonctionnalité bientôt disponible — ajout au calendrier Google/Apple." })}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
                   {currentApt.canCancel && (
                     showCancelConfirm === currentApt.id ? (
                       <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
