@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { useNotifications } from "@/stores/notificationsStore";
 import {
   Stethoscope,
   ShieldCheck,
@@ -70,7 +71,6 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
     { title: "Secrétaires", url: "/dashboard/doctor/secretary", icon: Building2 },
     { title: "Statistiques", url: "/dashboard/doctor/stats", icon: BarChart3 },
-    
   ],
   pharmacy: [
     { title: "Tableau de bord", url: "/dashboard/pharmacy", icon: LayoutDashboard },
@@ -134,7 +134,12 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
   const expanded = pinned || hovered || sidebarOpen;
 
-  const unreadCount = useMemo(() => mockNotifications.filter(n => !n.read).length, []);
+  // Cross-role notifications count
+  const { notifications: crossNotifs } = useNotifications(role);
+  const crossUnread = crossNotifs.filter((n) => !n.read).length;
+  const mockUnread = useMemo(() => mockNotifications.filter(n => !n.read).length, []);
+  const unreadCount = crossUnread + mockUnread;
+
   const userInitials = useMemo(() => {
     if (role === "doctor") return mockDoctorProfile.initials;
     if (role === "patient") return mockPatients[0]?.avatar || "AB";
@@ -145,7 +150,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     <div className="flex min-h-screen bg-background">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-foreground/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden animate-fade-in" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Toggle button when sidebar is hidden */}
@@ -197,7 +202,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 min-h-0 px-1.5 py-1.5 space-y-0.5 overflow-y-auto overflow-x-hidden">
+          <nav className="flex-1 min-h-0 px-1.5 py-1.5 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-thin">
             {items.map((item) => {
               const isActive = location.pathname === item.url;
               return (
@@ -206,7 +211,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
                   to={item.url}
                   onClick={() => setSidebarOpen(false)}
                   title={!expanded ? item.title : undefined}
-                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors whitespace-nowrap active-scale ${
                     isActive
                       ? "bg-primary/10 text-primary font-medium"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -226,7 +231,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             <Link
               to={`/dashboard/${role}/settings`}
               title={!expanded ? "Paramètres" : undefined}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap"
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap active-scale"
             >
               <Settings className="h-4 w-4 shrink-0" />
               <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Paramètres</span>
@@ -234,7 +239,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             <Link
               to="/login"
               title={!expanded ? "Déconnexion" : undefined}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap"
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap active-scale"
             >
               <LogOut className="h-4 w-4 shrink-0" />
               <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Déconnexion</span>
@@ -245,33 +250,41 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card/80 backdrop-blur-md px-6">
+        {/* Top bar — glass effect */}
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card/80 glass-header px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(true)}>
+            <button className="lg:hidden text-muted-foreground active-scale p-1" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-base font-semibold text-foreground">{title}</h1>
+            <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to={role === "patient" ? "/dashboard/patient/notifications" : `/dashboard/${role}`} className="relative" onClick={() => { if (role !== "patient") { toast({ title: "Notifications", description: "Centre de notifications bientôt disponible." }); } }}>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Link
+              to={role === "patient" ? "/dashboard/patient/notifications" : `/dashboard/${role}`}
+              className="relative"
+              onClick={() => {
+                if (role !== "patient") {
+                  toast({ title: "Notifications", description: "Centre de notifications bientôt disponible." });
+                }
+              }}
+            >
+              <Button variant="ghost" size="icon" className="h-9 w-9">
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-destructive text-[9px] font-medium text-destructive-foreground flex items-center justify-center">
-                    {unreadCount}
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground flex items-center justify-center animate-scale-in">
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </Button>
             </Link>
-            <div className="h-7 w-7 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-medium">
+            <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-medium shadow-sm">
               {userInitials}
             </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-6">{children}</main>
+        {/* Page content — responsive padding */}
+        <main className="flex-1 p-4 sm:p-6 pb-safe">{children}</main>
       </div>
     </div>
   );
