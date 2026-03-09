@@ -581,7 +581,7 @@ const AdminFeatureMatrix = () => {
                 ))}
               </div>
             ))}
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Summary */}
