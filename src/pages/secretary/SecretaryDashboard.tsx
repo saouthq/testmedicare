@@ -624,7 +624,7 @@ const SecretaryDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-foreground">{p.name}</p>
-                        {p.cnam && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                        {p.assurance && p.assurance !== "Sans assurance" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{p.assurance}</span>}
                         {p.balance > 0 && <span className="text-[9px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-medium">{p.balance} DT dû</span>}
                       </div>
                       <p className="text-xs text-muted-foreground">
