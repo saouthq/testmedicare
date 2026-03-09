@@ -86,6 +86,7 @@ import PharmacyDetail from "./pages/public/PharmacyDetail";
 import MedicinesDirectory from "./pages/public/MedicinesDirectory";
 import MedicineDetail from "./pages/public/MedicineDetail";
 import PublicBooking from "./pages/public/PublicBooking";
+import FindAppointments from "./pages/public/FindAppointments";
 
 // Shared
 import Messages from "./pages/messaging/Messages";
