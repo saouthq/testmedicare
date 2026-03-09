@@ -27,6 +27,7 @@ const DoctorAIAssistant = () => {
   return (
     <DashboardLayout role="doctor" title="Assistant IA">
       <FeatureGate featureId="ai_assistant">
+      <div className="rounded-xl border bg-card shadow-card overflow-hidden flex flex-col" style={{ height: "calc(100vh - 180px)" }}>
         {/* Disclaimer banner */}
         <div className="bg-warning/5 border-b border-warning/20 px-4 py-3">
           <p className="text-xs text-warning flex items-center gap-2">
