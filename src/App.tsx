@@ -94,6 +94,7 @@ import AdminNotificationTemplates from "./pages/admin/AdminNotificationTemplates
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminGuardPharmacies from "./pages/admin/AdminGuardPharmacies";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import AdminPromotions from "./pages/admin/AdminPromotions";
 import AdminGuard from "./components/admin/AdminGuard";
 
 // Shared
