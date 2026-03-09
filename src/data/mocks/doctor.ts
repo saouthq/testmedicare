@@ -95,14 +95,14 @@ export const mockFaqItems = [
 // ─── Doctor Dashboard ────────────────────────────────────────
 
 export const mockTodaySchedule: DoctorScheduleItem[] = [
-  { time: "08:30", patient: "Amine Ben Ali", type: "Consultation", duration: "30 min", status: "done", motif: "Suivi diabète", avatar: "AB", cnam: true, phone: "+216 55 123 456" },
-  { time: "09:00", patient: "Fatma Trabelsi", type: "Suivi", duration: "20 min", status: "done", motif: "Contrôle tension", avatar: "FT", cnam: true, phone: "+216 55 234 567" },
-  { time: "09:30", patient: "Mohamed Sfar", type: "Première visite", duration: "45 min", status: "current", motif: "Bilan initial", avatar: "MS", cnam: false, phone: "+216 55 345 678" },
-  { time: "10:15", patient: "Nadia Jemni", type: "Contrôle", duration: "20 min", status: "upcoming", motif: "Douleurs articulaires", avatar: "NJ", cnam: true, phone: "+216 55 456 789" },
-  { time: "10:45", patient: "Sami Ayari", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Renouvellement ordonnance", avatar: "SA", cnam: true },
-  { time: "14:00", patient: "Rania Meddeb", type: "Suivi", duration: "20 min", status: "upcoming", motif: "Suivi cholestérol", avatar: "RM", cnam: true },
-  { time: "14:30", patient: "Youssef Belhadj", type: "Téléconsultation", duration: "20 min", status: "upcoming", motif: "Résultats analyses", avatar: "YB", teleconsultation: true, cnam: false },
-  { time: "15:00", patient: "Salma Dridi", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Certificat médical", avatar: "SD", cnam: true },
+  { time: "08:30", patient: "Amine Ben Ali", type: "Consultation", duration: "30 min", status: "done", motif: "Suivi diabète", avatar: "AB", assurance: "Maghrebia", phone: "+216 55 123 456" },
+  { time: "09:00", patient: "Fatma Trabelsi", type: "Suivi", duration: "20 min", status: "done", motif: "Contrôle tension", avatar: "FT", assurance: "CNAM", phone: "+216 55 234 567" },
+  { time: "09:30", patient: "Mohamed Sfar", type: "Première visite", duration: "45 min", status: "current", motif: "Bilan initial", avatar: "MS", assurance: "", phone: "+216 55 345 678" },
+  { time: "10:15", patient: "Nadia Jemni", type: "Contrôle", duration: "20 min", status: "upcoming", motif: "Douleurs articulaires", avatar: "NJ", assurance: "CNAM", phone: "+216 55 456 789" },
+  { time: "10:45", patient: "Sami Ayari", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Renouvellement ordonnance", avatar: "SA", assurance: "CNAM" },
+  { time: "14:00", patient: "Rania Meddeb", type: "Suivi", duration: "20 min", status: "upcoming", motif: "Suivi cholestérol", avatar: "RM", assurance: "CNRPS" },
+  { time: "14:30", patient: "Youssef Belhadj", type: "Téléconsultation", duration: "20 min", status: "upcoming", motif: "Résultats analyses", avatar: "YB", teleconsultation: true, assurance: "" },
+  { time: "15:00", patient: "Salma Dridi", type: "Consultation", duration: "30 min", status: "upcoming", motif: "Certificat médical", avatar: "SD", assurance: "STAR" },
 ];
 
 export const mockWaitingRoom: WaitingRoomEntry[] = [
