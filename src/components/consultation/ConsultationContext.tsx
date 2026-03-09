@@ -99,7 +99,9 @@ interface Ctx {
   completion: CompletionState;
   nextAction: { label: string; onClick: () => void };
   lastSavedAt: Date | null;
-  templates: Array<{ key: string; label: string; apply: () => void }>;
+  templates: Array<{ key: string; label: string; isCustom?: boolean; apply: () => void }>;
+  saveAsTemplate: (label: string) => void;
+  deleteTemplate: (key: string) => void;
   pastConsults: typeof mockPastConsults;
   // Print
   rxPrintHtml: string; labsPrintHtml: string; reportPrintHtml: string;
