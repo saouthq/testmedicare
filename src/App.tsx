@@ -216,6 +216,8 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        {/* Floating simulation panel for cross-role workflow testing */}
+        <SimulationPanel />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
