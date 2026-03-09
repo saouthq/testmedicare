@@ -228,11 +228,37 @@ const BecomePartner = () => {
     }, 100);
   };
 
+  // Document uploads (simulated)
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, { name: string; size: string; uploaded: boolean }>>({});
+
+  const handleFileSelect = (docLabel: string) => {
+    // Simulate file selection
+    const fakeNames = ["diplome_medecine.pdf", "cin_recto_verso.pdf", "attestation_ordre.pdf", "licence_pharmacie.pdf", "autorisation.pdf", "registre_commerce.pdf"];
+    const fakeSizes = ["1.2 Mo", "856 Ko", "2.1 Mo", "1.8 Mo", "945 Ko", "1.5 Mo"];
+    const idx = Math.floor(Math.random() * fakeNames.length);
+    
+    setUploadedDocs(prev => ({
+      ...prev,
+      [docLabel]: { name: fakeNames[idx], size: fakeSizes[idx], uploaded: true },
+    }));
+    toast({ title: "Document ajouté", description: docLabel });
+  };
+
+  const removeDoc = (docLabel: string) => {
+    setUploadedDocs(prev => {
+      const next = { ...prev };
+      delete next[docLabel];
+      return next;
+    });
+  };
+
+  const allDocsUploaded = requiredDocs.every(doc => uploadedDocs[doc]?.uploaded);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Submit to shared store — appears in admin KYC
-    submitRegistration({
+    const reg = submitRegistration({
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
