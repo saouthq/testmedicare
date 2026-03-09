@@ -69,7 +69,7 @@ export const mockLabDemands: LabDemand[] = [
   },
   {
     id: "DEM-004", patient: "Nadia Jemni", patientDob: "14/09/1959", avatar: "NJ",
-    assurance: "CNAM", numAssurance: "11223344",
+    assurance: "Assurance publique", numAssurance: "11223344",
     prescriber: "Dr. Bouazizi", examens: ["Glycémie à jeun"],
     status: "transmitted", date: "18 Fév 2026", priority: "normal", amount: "25 DT",
     pdfs: [
