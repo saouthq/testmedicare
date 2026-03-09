@@ -50,10 +50,10 @@ const quickInvoiceActs = [
 ];
 
 const recentPatients = [
-  { name: "Amine Ben Ali", avatar: "AB", phone: "+216 71 234 567", cnam: true, nextRdv: "28 Fév 14:30", balance: 0 },
-  { name: "Fatma Trabelsi", avatar: "FT", phone: "+216 22 345 678", cnam: true, nextRdv: "25 Fév 10:00", balance: 60 },
-  { name: "Mohamed Sfar", avatar: "MS", phone: "+216 55 456 789", cnam: false, nextRdv: null, balance: 0 },
-  { name: "Nadia Jemni", avatar: "NJ", phone: "+216 98 567 890", cnam: true, nextRdv: "3 Mar 09:00", balance: 25 },
+  { name: "Amine Ben Ali", avatar: "AB", phone: "+216 71 234 567", assurance: "CNAM", nextRdv: "28 Fév 14:30", balance: 0 },
+  { name: "Fatma Trabelsi", avatar: "FT", phone: "+216 22 345 678", assurance: "CNAM", nextRdv: "25 Fév 10:00", balance: 60 },
+  { name: "Mohamed Sfar", avatar: "MS", phone: "+216 55 456 789", assurance: "Sans assurance", nextRdv: null, balance: 0 },
+  { name: "Nadia Jemni", avatar: "NJ", phone: "+216 98 567 890", assurance: "CNAM", nextRdv: "3 Mar 09:00", balance: 25 },
 ];
 
 const SecretaryDashboard = () => {
