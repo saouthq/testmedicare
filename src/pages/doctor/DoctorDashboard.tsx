@@ -52,7 +52,12 @@ const DoctorDashboard = () => {
     <DashboardLayout role="doctor" title="Tableau de bord">
       <div className="space-y-6">
         {/* Upgrade banner for Essentiel plan */}
-        <UpgradeBanner />
+        {isEssentiel && (
+          <UpgradeBanner
+            feature={`Passez au Pro · ${proPlan?.price || 149} DT/mois`}
+            description="Débloquez la téléconsultation vidéo, l'assistant IA, les statistiques avancées et la gestion des secrétaires."
+          />
+        )}
         {/* Profile completion banner */}
         {completionPercent < 100 && (
           <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-center gap-4">
