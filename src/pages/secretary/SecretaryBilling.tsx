@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +8,8 @@ import {
   AlertCircle, CreditCard, ArrowUpRight, Eye, Printer, Send, Receipt, Shield, X, Save, Trash2
 } from "lucide-react";
 import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/data/mockData";
-
-interface Invoice {
+import { useSharedBilling, initBillingStoreIfEmpty, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
+import { toast } from "@/hooks/use-toast";
   id: string; patient: string; doctor: string; date: string; amount: number;
   type: string; payment: string; status: string; avatar: string; assurance: string;
 }
