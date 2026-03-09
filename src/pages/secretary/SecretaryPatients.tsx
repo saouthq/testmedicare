@@ -100,7 +100,7 @@ const SecretaryPatients = () => {
                             <p className="font-medium text-foreground text-sm">{p.name}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <p className="text-[11px] text-muted-foreground">{p.dob}</p>
-                              {p.assurance === "CNAM" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">CNAM</span>}
+                              {p.assurance && p.assurance !== "Sans assurance" && p.assurance !== "—" && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">{p.assurance}</span>}
                             </div>
                           </div>
                         </div>
