@@ -1,5 +1,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { plansByActivity } from "@/stores/featureMatrixStore";
 import { useState } from "react";
 import {
   Calendar, Clock, CheckCircle2, Play,
