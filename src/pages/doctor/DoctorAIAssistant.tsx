@@ -79,6 +79,7 @@ const DoctorAIAssistant = () => {
           </div>
         </div>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 };
