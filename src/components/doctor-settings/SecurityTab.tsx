@@ -177,7 +177,7 @@ const SecurityTab = () => {
         onCancel={() => setShowDeleteAccount(false)}
         title="Supprimer votre compte"
         description="Cette action est irréversible. Votre compte, vos données patients et votre historique seront supprimés définitivement sous 30 jours. Vous recevrez un email de confirmation."
-        variant="destructive"
+        variant="danger"
         confirmLabel="Confirmer la suppression"
       />
     </div>
