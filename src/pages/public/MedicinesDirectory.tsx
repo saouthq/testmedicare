@@ -68,6 +68,7 @@ const MedicinesDirectory = () => {
           ))}
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 };

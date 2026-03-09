@@ -46,6 +46,7 @@ const ClinicsDirectory = () => {
           ))}
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 };

@@ -46,6 +46,7 @@ const HospitalsDirectory = () => {
           ))}
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 };
