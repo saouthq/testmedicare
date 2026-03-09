@@ -15,10 +15,10 @@ const HospitalDashboard = () => {
   const pendingAdmissions = mockHospitalPatients.filter(p => p.status === "pending_admission").length;
   const equipmentIssues = mockHospitalEquipment.filter(e => e.status !== "operational").length;
 
-  const stats = [
-    { label: "Taux d'occupation", value: `${occupancyRate}%`, icon: Bed, trend: occupancyRate > 85 ? "Élevé" : "Normal" },
+  const items = [
+    { label: "Taux d'occupation", value: `${occupancyRate}%`, icon: Bed },
     { label: "Patients hospitalisés", value: String(mockHospitalPatients.filter(p => p.status === "hospitalized" || p.status === "icu").length), icon: Users },
-    { label: "Patients Réa/USI", value: String(icuPatients), icon: HeartPulse, trend: icuPatients > 8 ? "Critique" : "Stable" },
+    { label: "Patients Réa/USI", value: String(icuPatients), icon: HeartPulse },
     { label: "Personnel en service", value: String(onDutyStaff), icon: Stethoscope },
   ];
 
