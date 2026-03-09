@@ -118,7 +118,7 @@ const SecretaryOffice = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-foreground text-sm">{d.name}</p>
-                        {d.conventionCNAM && <Shield className="h-3 w-3 text-primary" />}
+                        {d.conventionAssurance && <Shield className="h-3 w-3 text-primary" />}
                       </div>
                       <p className="text-xs text-muted-foreground">{d.specialty} · {d.phone}</p>
                     </div>
