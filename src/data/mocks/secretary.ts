@@ -135,14 +135,14 @@ export const mockSecretaryPatientsWithHistory = [
 ];
 
 export const mockSecretaryBillingInvoices = [
-  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "CNAM", status: "paid", avatar: "AB", cnam: true },
-  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", cnam: true },
-  { id: "FAC-2026-085", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", date: "19 Fév", amount: 35, type: "Consultation G", payment: "Espèces", status: "paid", avatar: "MS", cnam: false },
-  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", cnam: true },
-  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", cnam: true },
-  { id: "FAC-2026-082", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Téléconsultation", payment: "Virement", status: "paid", avatar: "YB", cnam: false },
-  { id: "FAC-2026-080", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "15 Fév", amount: 60, type: "Suivi", payment: "—", status: "overdue", avatar: "RM", cnam: true },
-  { id: "FAC-2026-078", patient: "Salma Dridi", doctor: "Dr. Bouazizi", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "SD", cnam: true },
+  { id: "FAC-2026-087", patient: "Amine Ben Ali", doctor: "Dr. Bouazizi", date: "20 Fév", amount: 35, type: "Consultation G", payment: "Assurance", status: "paid", avatar: "AB", assurance: "CNAM" },
+  { id: "FAC-2026-086", patient: "Fatma Trabelsi", doctor: "Dr. Gharbi", date: "20 Fév", amount: 60, type: "Cardio", payment: "—", status: "pending", avatar: "FT", assurance: "CNAM" },
+  { id: "FAC-2026-085", patient: "Mohamed Sfar", doctor: "Dr. Bouazizi", date: "19 Fév", amount: 35, type: "Consultation G", payment: "Espèces", status: "paid", avatar: "MS", assurance: "Sans assurance" },
+  { id: "FAC-2026-084", patient: "Nadia Jemni", doctor: "Dr. Hammami", date: "19 Fév", amount: 80, type: "1ère consultation", payment: "—", status: "pending", avatar: "NJ", assurance: "CNAM" },
+  { id: "FAC-2026-083", patient: "Sami Ayari", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Consultation G", payment: "Chèque", status: "paid", avatar: "SA", assurance: "CNAM" },
+  { id: "FAC-2026-082", patient: "Youssef Belhadj", doctor: "Dr. Bouazizi", date: "18 Fév", amount: 35, type: "Téléconsultation", payment: "Virement", status: "paid", avatar: "YB", assurance: "Sans assurance" },
+  { id: "FAC-2026-080", patient: "Rania Meddeb", doctor: "Dr. Gharbi", date: "15 Fév", amount: 60, type: "Suivi", payment: "—", status: "overdue", avatar: "RM", assurance: "CNRPS" },
+  { id: "FAC-2026-078", patient: "Salma Dridi", doctor: "Dr. Bouazizi", date: "12 Fév", amount: 150, type: "Bilan complet", payment: "—", status: "overdue", avatar: "SD", assurance: "Maghrebia" },
 ];
 
 /** Billing act types reference data */
