@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import { useState } from "react";
 import {
   Calendar, Clock, CheckCircle2, Play,
