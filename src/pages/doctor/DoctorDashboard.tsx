@@ -1,4 +1,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import UpgradeBanner from "@/components/shared/UpgradeBanner";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { plansByActivity } from "@/stores/featureMatrixStore";
 import { useState } from "react";
 import {
   Calendar, Clock, CheckCircle2, Play,
@@ -32,6 +35,9 @@ const DoctorDashboard = () => {
   const [renewalRequests] = useRenewalRequests();
   const [profileCompletion] = useProfileCompletion();
 
+  const [sub] = useDoctorSubscription();
+  const isEssentiel = sub.plan === "essentiel";
+  const proPlan = plansByActivity[sub.activity]?.find(p => p.id === "pro");
   const completionPercent = getProfileCompletionPercent(profileCompletion);
   const pendingRenewals = renewalRequests.filter(r => r.status === "pending");
 
@@ -45,6 +51,13 @@ const DoctorDashboard = () => {
   return (
     <DashboardLayout role="doctor" title="Tableau de bord">
       <div className="space-y-6">
+        {/* Upgrade banner for Essentiel plan */}
+        {isEssentiel && (
+          <UpgradeBanner
+            feature={`Passez au Pro · ${proPlan?.price || 149} DT/mois`}
+            description="Débloquez la téléconsultation vidéo, l'assistant IA, les statistiques avancées et la gestion des secrétaires."
+          />
+        )}
         {/* Profile completion banner */}
         {completionPercent < 100 && (
           <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-center gap-4">
