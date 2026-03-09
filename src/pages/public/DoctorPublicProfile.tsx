@@ -18,6 +18,7 @@ import {
 
 const DoctorPublicProfile = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
