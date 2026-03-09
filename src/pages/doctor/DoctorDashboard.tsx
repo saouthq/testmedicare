@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockTodaySchedule, mockWaitingRoom, mockUrgentAlerts, mockDoctorProfile, mockPatients } from "@/data/mockData";
+import { toast } from "@/hooks/use-toast";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 

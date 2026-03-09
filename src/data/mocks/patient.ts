@@ -50,7 +50,7 @@ export const mockPatientAppointments: PatientAppointment[] = [
 
 export const mockPatientAppointmentsFull: PatientAppointment[] = [
   ...mockPatientAppointments,
-  { id: 4, doctor: "Dr. Leila Chebbi", specialty: "Ophtalmologue", date: "5 Mar 2026", time: "11:00", type: "cabinet", address: "12 Rue de Carthage, Sousse", avatar: "LC", status: "confirmed", motif: "Contrôle annuel vue", canModify: true, canCancel: true, hasInsurance: false, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Pièce d'identité"], instructions: "", cabinetRules: { cancellationHours: 24, maxReschedules: 2, latePolicy: "15 min max" } },
+  { id: 4, doctor: "Dr. Leila Chebbi", specialty: "Ophtalmologue", date: "5 Mar 2026", time: "11:00", type: "cabinet", address: "12 Rue de Carthage, Sousse", avatar: "LC", status: "confirmed", motif: "Contrôle annuel vue", canModify: true, canCancel: true, hasInsurance: false, cancellationPolicy: "Annulation gratuite jusqu'à 24h avant", documents: ["Pièce d'identité"], instructions: "", cabinetRules: { cancellationHours: 24, maxReschedules: 2, latePolicy: "15 min max" }, doctorId: 4 },
 ];
 
 export const mockPastAppointments: PastAppointment[] = [

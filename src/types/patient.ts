@@ -64,6 +64,8 @@ export interface PatientAppointment {
   requiresPayment?: boolean;
   paymentStatus?: "pending" | "paid" | "failed";
   amount?: number;
+  /** ID du médecin pour navigation booking */
+  doctorId?: number;
 }
 
 export interface PastAppointment {

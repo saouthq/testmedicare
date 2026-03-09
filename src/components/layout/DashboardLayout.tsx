@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
+import { toast } from "@/hooks/use-toast";
 import {
   Stethoscope,
   ShieldCheck,
