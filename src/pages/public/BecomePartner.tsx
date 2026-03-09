@@ -228,11 +228,47 @@ const BecomePartner = () => {
     }, 100);
   };
 
+  const requiredDocs = useMemo(() => {
+    if (["generaliste", "specialiste", "dentiste", "kine"].includes(activity))
+      return ["Diplôme de médecine / d'exercice", "CIN recto/verso", "Attestation d'inscription à l'Ordre"];
+    if (activity === "laboratory")
+      return ["Autorisation d'exercice", "Registre de commerce", "CIN du gérant"];
+    if (activity === "pharmacy")
+      return ["Licence de pharmacie", "Registre de commerce", "CIN du titulaire"];
+    return ["Autorisation sanitaire", "Registre de commerce", "Convention cadre"];
+  }, [activity]);
+
+  // Document uploads (simulated)
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, { name: string; size: string; uploaded: boolean }>>({});
+
+  const handleFileSelect = (docLabel: string) => {
+    // Simulate file selection
+    const fakeNames = ["diplome_medecine.pdf", "cin_recto_verso.pdf", "attestation_ordre.pdf", "licence_pharmacie.pdf", "autorisation.pdf", "registre_commerce.pdf"];
+    const fakeSizes = ["1.2 Mo", "856 Ko", "2.1 Mo", "1.8 Mo", "945 Ko", "1.5 Mo"];
+    const idx = Math.floor(Math.random() * fakeNames.length);
+    
+    setUploadedDocs(prev => ({
+      ...prev,
+      [docLabel]: { name: fakeNames[idx], size: fakeSizes[idx], uploaded: true },
+    }));
+    toast({ title: "Document ajouté", description: docLabel });
+  };
+
+  const removeDoc = (docLabel: string) => {
+    setUploadedDocs(prev => {
+      const next = { ...prev };
+      delete next[docLabel];
+      return next;
+    });
+  };
+
+  const allDocsUploaded = requiredDocs.every(doc => uploadedDocs[doc]?.uploaded);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Submit to shared store — appears in admin KYC
-    submitRegistration({
+    const reg = submitRegistration({
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
@@ -255,15 +291,7 @@ const BecomePartner = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const requiredDocs = useMemo(() => {
-    if (["generaliste", "specialiste", "dentiste", "kine"].includes(activity))
-      return ["Diplôme de médecine / d'exercice", "CIN recto/verso", "Attestation d'inscription à l'Ordre"];
-    if (activity === "laboratory")
-      return ["Autorisation d'exercice", "Registre de commerce", "CIN du gérant"];
-    if (activity === "pharmacy")
-      return ["Licence de pharmacie", "Registre de commerce", "CIN du titulaire"];
-    return ["Autorisation sanitaire", "Registre de commerce", "Convention cadre"];
-  }, [activity]);
+  // requiredDocs already defined above
 
   return (
     <div className="min-h-screen bg-background">
@@ -600,27 +628,56 @@ const BecomePartner = () => {
                   </Select>
                 </div>
 
-                {/* Required documents */}
-                <div className="rounded-lg border border-warning/20 bg-warning/5 p-4">
-                  <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <Upload className="h-4 w-4 text-warning" />
-                    Documents requis pour la vérification
+                {/* Document upload workflow */}
+                <div className="rounded-xl border bg-card p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Upload className="h-4 w-4 text-primary" />
+                      Documents justificatifs
+                    </p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      allDocsUploaded ? "bg-accent/10 text-accent" : "bg-warning/10 text-warning"
+                    }`}>
+                      {Object.keys(uploadedDocs).length}/{requiredDocs.length} uploadés
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Joignez vos documents pour accélérer la vérification de votre dossier. Formats acceptés : PDF, JPG, PNG (max 10 Mo).
                   </p>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Votre compte sera activé après vérification de ces documents par notre équipe.
-                  </p>
-                  <ul className="space-y-1.5">
-                    {requiredDocs.map((doc, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                        <FileText className="h-3.5 w-3.5 text-warning" />
-                        {doc}
-                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">requis</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-[10px] text-muted-foreground mt-3">
-                    📧 Les documents seront demandés par email après soumission du formulaire.
-                  </p>
+                  <div className="space-y-2.5">
+                    {requiredDocs.map((doc, i) => {
+                      const uploaded = uploadedDocs[doc];
+                      return (
+                        <div key={i} className={`rounded-lg border p-3 flex items-center gap-3 transition-colors ${uploaded ? "border-accent/30 bg-accent/5" : "border-dashed border-border hover:border-primary/30 hover:bg-primary/[0.02]"}`}>
+                          <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${uploaded ? "bg-accent/10" : "bg-muted"}`}>
+                            {uploaded ? <CheckCircle2 className="h-4 w-4 text-accent" /> : <FileText className="h-4 w-4 text-muted-foreground" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground">{doc}</p>
+                            {uploaded ? (
+                              <p className="text-[10px] text-accent">{uploaded.name} — {uploaded.size}</p>
+                            ) : (
+                              <p className="text-[10px] text-muted-foreground">Requis — Cliquez pour ajouter</p>
+                            )}
+                          </div>
+                          {uploaded ? (
+                            <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-destructive" onClick={() => removeDoc(doc)}>
+                              Supprimer
+                            </Button>
+                          ) : (
+                            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleFileSelect(doc)}>
+                              <Upload className="h-3 w-3 mr-1" />Ajouter
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!allDocsUploaded && (
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      💡 Vous pouvez soumettre sans tous les documents, mais votre inscription sera traitée plus rapidement avec un dossier complet.
+                    </p>
+                  )}
                 </div>
 
                 <div>

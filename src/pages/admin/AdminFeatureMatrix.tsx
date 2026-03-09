@@ -497,8 +497,9 @@ const AdminFeatureMatrix = () => {
         </div>
 
         {/* Plan header bar */}
-        <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-          <div className="grid border-b" style={{ gridTemplateColumns: `2fr ${currentPlans.map(() => "1fr").join(" ")}` }}>
+        <div className="rounded-xl border bg-card shadow-card overflow-hidden flex flex-col" style={{ maxHeight: "calc(100vh - 20rem)" }}>
+          {/* Sticky plan header */}
+          <div className="grid border-b shrink-0" style={{ gridTemplateColumns: `2fr ${currentPlans.map(() => "1fr").join(" ")}` }}>
             <div className="p-4 bg-muted/30 flex items-center">
               <span className="text-sm font-semibold text-foreground">Fonctionnalité</span>
             </div>
@@ -510,8 +511,8 @@ const AdminFeatureMatrix = () => {
             ))}
           </div>
 
-          {/* Feature rows grouped by category */}
-          <ScrollArea className="max-h-[60vh]">
+          {/* Scrollable feature rows */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {Object.entries(groupedFeatures).map(([category, features]) => (
               <div key={category}>
                 {/* Category header */}
@@ -580,7 +581,7 @@ const AdminFeatureMatrix = () => {
                 ))}
               </div>
             ))}
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Summary */}

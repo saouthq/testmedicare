@@ -1,10 +1,11 @@
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
+import AdminSpotlight from "@/components/admin/AdminSpotlight";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
@@ -148,6 +149,20 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const [pinned, setPinned] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+
+  // Global Cmd+K shortcut for admin spotlight
+  useEffect(() => {
+    if (role !== "admin") return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSpotlightOpen(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [role]);
 
   const expanded = pinned || hovered || sidebarOpen;
 
@@ -323,6 +338,29 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h1>
           </div>
            <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Admin spotlight trigger */}
+            {role === "admin" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex items-center gap-2 h-8 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setSpotlightOpen(true)}
+              >
+                <Search className="h-3.5 w-3.5" />
+                <span>Actions</span>
+                <kbd className="ml-1 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">⌘K</kbd>
+              </Button>
+            )}
+            {role === "admin" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="sm:hidden h-9 w-9"
+                onClick={() => setSpotlightOpen(true)}
+              >
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
             {role === "patient" ? (
               <Link to="/dashboard/patient/notifications" className="relative">
                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -360,6 +398,11 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
       {/* Notification Center drawer */}
       <NotificationCenter open={notifOpen} onOpenChange={setNotifOpen} role={role} />
+
+      {/* Admin Spotlight */}
+      {role === "admin" && (
+        <AdminSpotlight open={spotlightOpen} onClose={() => setSpotlightOpen(false)} />
+      )}
     </div>
   );
 };
