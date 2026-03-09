@@ -199,7 +199,7 @@ const SecretaryBilling = () => {
                   {selectedInv.cnam && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-primary" />
-                      <p className="text-xs font-semibold text-primary">Assuré CNAM</p>
+                      <p className="text-xs font-semibold text-primary">Assuré</p>
                     </div>
                   )}
                   <div className="space-y-1.5 pt-2">
