@@ -18,19 +18,20 @@ const Login = () => {
     // Mock login - simulate redirect based on email
     setTimeout(() => {
       setLoading(false);
+      let role = "patient";
       if (email.includes("doctor") || email.includes("dr")) {
-        navigate("/dashboard/doctor");
+        role = "doctor";
       } else if (email.includes("pharma")) {
-        navigate("/dashboard/pharmacy");
+        role = "pharmacy";
       } else if (email.includes("labo")) {
-        navigate("/dashboard/laboratory");
+        role = "laboratory";
       } else if (email.includes("admin")) {
-        navigate("/dashboard/admin");
+        role = "admin";
       } else if (email.includes("secr")) {
-        navigate("/dashboard/secretary");
-      } else {
-        navigate("/dashboard/patient");
+        role = "secretary";
       }
+      localStorage.setItem("userRole", role);
+      navigate(`/dashboard/${role}`);
     }, 800);
   };
 
@@ -83,12 +84,19 @@ const Login = () => {
           <div className="mt-8">
             <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t" /></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Accès rapide (démo)</span></div></div>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <Link to="/dashboard/patient"><Button variant="outline" className="w-full" size="sm">Patient</Button></Link>
-              <Link to="/dashboard/doctor"><Button variant="outline" className="w-full" size="sm">Médecin</Button></Link>
-              <Link to="/dashboard/pharmacy"><Button variant="outline" className="w-full" size="sm">Pharmacie</Button></Link>
-              <Link to="/dashboard/secretary"><Button variant="outline" className="w-full" size="sm">Secrétaire</Button></Link>
-              <Link to="/dashboard/laboratory"><Button variant="outline" className="w-full" size="sm">Laboratoire</Button></Link>
-              <Link to="/dashboard/admin"><Button variant="outline" className="w-full" size="sm">Admin</Button></Link>
+              {[
+                { role: "patient", label: "Patient" },
+                { role: "doctor", label: "Médecin" },
+                { role: "pharmacy", label: "Pharmacie" },
+                { role: "secretary", label: "Secrétaire" },
+                { role: "laboratory", label: "Laboratoire" },
+                { role: "admin", label: "Admin" },
+              ].map(r => (
+                <Button key={r.role} variant="outline" className="w-full" size="sm"
+                  onClick={() => { localStorage.setItem("userRole", r.role); navigate(`/dashboard/${r.role}`); }}>
+                  {r.label}
+                </Button>
+              ))}
             </div>
           </div>
 

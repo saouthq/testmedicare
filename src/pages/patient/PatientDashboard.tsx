@@ -15,6 +15,7 @@ import { downloadCalendarEvent } from "@/lib/calendarExport";
 import { usePatientAppointments, usePatientProfile, cancelAppointment, getDashboardStats } from "@/stores/patientStore";
 import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors, mockHealthDocuments, mockVaccinations, mockTreatments } from "@/data/mockData";
 import { useNotifications } from "@/stores/notificationsStore";
+import { requestRenewal } from "@/stores/doctorStore";
 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
@@ -50,8 +51,15 @@ const PatientDashboard = () => {
     setDrawerApt(null);
   };
 
-  // Prescription renewal mock
+  // Prescription renewal — writes to doctor's renewal store
   const handleRenewal = (prescId: string) => {
+    const prescription = recentPrescriptions.find(p => p.id === prescId);
+    requestRenewal({
+      patientName: `${profile.firstName} ${profile.lastName}`,
+      patientAvatar: `${profile.firstName[0]}${profile.lastName[0]}`,
+      prescriptionId: prescId,
+      items: prescription ? [prescription.id] : [prescId],
+    });
     toast({ title: "Demande envoyée", description: "Votre demande de renouvellement a été envoyée au médecin." });
   };
 

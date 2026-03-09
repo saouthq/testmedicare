@@ -1,12 +1,13 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift } from "lucide-react";
+import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockSubscriptionInfo, mockPlans, mockSubscriptionInvoices, mockTeleconsultTransactions, InvoiceStatus } from "@/data/mockData";
 import { getMyActivePromo } from "@/services/admin/adminPromotionsService";
+import { useSharedBilling, markInvoicePaid, getBillingStats, type SharedInvoice } from "@/stores/billingStore";
 
-type BillingTab = "subscription" | "teleconsult";
+type BillingTab = "subscription" | "teleconsult" | "cabinet";
 
 const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: any }> = {
   paid: { label: "Payé", color: "bg-accent/10 text-accent border-accent/20", icon: CheckCircle2 },
@@ -21,6 +22,8 @@ const DoctorBilling = () => {
   const [detailTx, setDetailTx] = useState<string | null>(null);
   const [showChangeCard, setShowChangeCard] = useState(false);
   const activePromo = getMyActivePromo(1);
+  const [sharedInvoices] = useSharedBilling();
+  const cabinetStats = getBillingStats(sharedInvoices);
 
   const filteredTx = mockTeleconsultTransactions.filter(tx =>
     !search || tx.patient.toLowerCase().includes(search.toLowerCase()) || tx.ref.toLowerCase().includes(search.toLowerCase())
@@ -39,6 +42,10 @@ const DoctorBilling = () => {
           </button>
           <button onClick={() => setTab("teleconsult")} className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${tab === "teleconsult" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
             Téléconsultations
+          </button>
+          <button onClick={() => setTab("cabinet")} className={`rounded-md px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === "cabinet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            <Building2 className="h-3.5 w-3.5" />Cabinet
+            {sharedInvoices.length > 0 && <span className="text-[10px] bg-primary-foreground/20 rounded-full px-1.5">{sharedInvoices.length}</span>}
           </button>
         </div>
 
@@ -222,6 +229,78 @@ const DoctorBilling = () => {
                 <Button className="flex-1 gradient-primary text-primary-foreground shadow-primary-glow">Envoyer facture</Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ CABINET TAB — Shared billing from secretary ═══ */}
+      {tab === "cabinet" && (
+        <div className="space-y-6">
+          {/* Stats */}
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-xl border bg-card p-4 shadow-card text-center">
+              <p className="text-2xl font-bold text-foreground">{cabinetStats.total} DT</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+            <div className="rounded-xl border bg-accent/5 border-accent/20 p-4 text-center">
+              <p className="text-2xl font-bold text-accent">{cabinetStats.paid} DT</p>
+              <p className="text-xs text-muted-foreground">Encaissé</p>
+            </div>
+            <div className="rounded-xl border bg-warning/5 border-warning/20 p-4 text-center">
+              <p className="text-2xl font-bold text-warning">{cabinetStats.pending} DT</p>
+              <p className="text-xs text-muted-foreground">En attente</p>
+            </div>
+            <div className="rounded-xl border bg-destructive/5 border-destructive/20 p-4 text-center">
+              <p className="text-2xl font-bold text-destructive">{cabinetStats.overdue} DT</p>
+              <p className="text-xs text-muted-foreground">Impayé</p>
+            </div>
+          </div>
+
+          {/* Invoice list */}
+          <div className="rounded-xl border bg-card shadow-card overflow-hidden">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />Factures du cabinet
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Factures créées par la secrétaire ou le système</p>
+            </div>
+            {sharedInvoices.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                Aucune facture. Les factures créées par la secrétaire apparaîtront ici.
+              </div>
+            ) : (
+              <div className="divide-y">
+                {sharedInvoices.map(inv => (
+                  <div key={inv.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                        {inv.avatar}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{inv.patient}</p>
+                        <p className="text-[11px] text-muted-foreground">{inv.id} · {inv.date} · {inv.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-foreground">{inv.amount} DT</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        inv.status === "paid" ? "bg-accent/10 text-accent" :
+                        inv.status === "pending" ? "bg-warning/10 text-warning" :
+                        "bg-destructive/10 text-destructive"
+                      }`}>
+                        {inv.status === "paid" ? "Payé" : inv.status === "pending" ? "En attente" : "Impayé"}
+                      </span>
+                      {inv.status !== "paid" && (
+                        <Button size="sm" variant="outline" className="h-7 text-[10px]"
+                          onClick={() => { markInvoicePaid(inv.id, "Espèces"); }}>
+                          <CheckCircle2 className="h-3 w-3 mr-1" />Encaisser
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
