@@ -17,6 +17,7 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import ActionPalette, { type ActionItem } from "@/components/shared/ActionPalette";
 import SecretaryTeleconsultPanel from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
 import { markPatientAbsent } from "@/stores/appointmentsStore";
+import { updateWaitingStatus, startConsultation, completeConsultation } from "@/stores/doctorStore";
 
 type DashTab = "overview" | "billing" | "patients";
 
@@ -123,12 +124,16 @@ const SecretaryDashboard = () => {
     // TODO BACKEND: PATCH /api/appointments/{id}/checkin
     setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "arrived" as WaitingStatus } : w));
     const p = waitingRoom.find(w => w.id === id);
-    toast({ title: "Check-in effectué", description: `${p?.patient} est arrivé(e).` });
+    // Sync to doctor store
+    updateWaitingStatus(id, "arrived");
+    toast({ title: "Check-in effectué", description: `${p?.patient} est arrivé(e). Visible côté médecin.` });
   };
 
   const handleCallPatient = (id: number) => {
     // TODO BACKEND: PATCH /api/appointments/{id}/call
     setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "called" as WaitingStatus } : w));
+    // Sync to doctor store
+    updateWaitingStatus(id, "waiting");
   };
 
   const handleSendToConsult = (id: number) => {
@@ -139,12 +144,19 @@ const SecretaryDashboard = () => {
       if (wr && a.patient === wr.patient) return { ...a, status: "in_progress" };
       return a;
     }));
+    // Sync to doctor store
+    const p = waitingRoom.find(w => w.id === id);
+    if (p) startConsultation(p.patient);
+    toast({ title: "Patient envoyé en consultation", description: `${p?.patient} — visible côté médecin.` });
   };
 
   const handleFinish = (id: number) => {
     // TODO BACKEND: PATCH /api/appointments/{id}/finish
     setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "done" as WaitingStatus } : w));
-    toast({ title: "Consultation terminée" });
+    // Sync to doctor store
+    const p = waitingRoom.find(w => w.id === id);
+    if (p) completeConsultation(p.patient);
+    toast({ title: "Consultation terminée", description: `${p?.patient} — prêt pour facturation.` });
   };
 
   const handleMarkAbsent = (id: number) => {

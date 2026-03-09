@@ -7,7 +7,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
 import { mockSecretaryAgendaDoctors, mockSecretaryAgendaAppointments } from "@/data/mockData";
+import { waitingRoomStore } from "@/stores/doctorStore";
+import type { WaitingEntry } from "@/stores/doctorStore";
 
 type ViewMode = "timeline" | "list";
 type AppointmentStatus = "done" | "in_progress" | "in_waiting" | "confirmed" | "upcoming" | "cancelled" | "no_show";
@@ -58,6 +62,49 @@ const SecretaryAgenda = () => {
   const [selectedApt, setSelectedApt] = useState<AgendaAppointment | null>(null);
   const [showNewRdv, setShowNewRdv] = useState(false);
   const [search, setSearch] = useState("");
+
+  // New RDV form state
+  const [newRdvPatient, setNewRdvPatient] = useState("");
+  const [newRdvDate, setNewRdvDate] = useState("");
+  const [newRdvTime, setNewRdvTime] = useState("10:00");
+  const [newRdvDoctor, setNewRdvDoctor] = useState("Dr. Bouazizi");
+  const [newRdvMotif, setNewRdvMotif] = useState("Consultation");
+  const [newRdvNotes, setNewRdvNotes] = useState("");
+  const [newRdvPhone, setNewRdvPhone] = useState("");
+
+  const handleCreateRdv = () => {
+    if (!newRdvPatient.trim()) {
+      toast({ title: "Patient requis", variant: "destructive" });
+      return;
+    }
+    const id = Date.now();
+    const avatar = newRdvPatient.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    const [h, m] = newRdvTime.split(":").map(Number);
+    const endTime = `${String(h).padStart(2, "0")}:${String(m + 30).padStart(2, "0")}`;
+
+    // Add to local agenda
+    const newApt: AgendaAppointment = {
+      id, time: newRdvTime, endTime, patient: newRdvPatient, avatar,
+      doctor: newRdvDoctor, type: newRdvMotif, motif: newRdvMotif,
+      status: "upcoming", phone: newRdvPhone || "+216 XX XXX XXX",
+      assurance: "—", notes: newRdvNotes,
+    };
+    setAppointments(prev => [...prev, newApt].sort((a, b) => a.time.localeCompare(b.time)));
+
+    // Sync to doctor waiting room store
+    const entry: WaitingEntry = {
+      id, patient: newRdvPatient, avatar, time: newRdvTime,
+      motif: newRdvMotif, type: newRdvMotif, duration: "30 min",
+      status: "scheduled", phone: newRdvPhone,
+    };
+    waitingRoomStore.set(prev => [...prev, entry]);
+
+    // Reset form
+    setShowNewRdv(false);
+    setNewRdvPatient(""); setNewRdvDate(""); setNewRdvTime("10:00");
+    setNewRdvDoctor("Dr. Bouazizi"); setNewRdvMotif("Consultation"); setNewRdvNotes(""); setNewRdvPhone("");
+    toast({ title: "RDV créé", description: `${newRdvPatient} · ${newRdvTime} avec ${newRdvDoctor}. Visible dans l'agenda médecin.` });
+  };
 
   const filtered = appointments.filter(a => {
     if (selectedDoctor !== "Tous" && a.doctor !== selectedDoctor) return false;
@@ -486,33 +533,28 @@ const SecretaryAgenda = () => {
                 <button onClick={() => setShowNewRdv(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
               </div>
               <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Patient</label>
-                  <Input placeholder="Rechercher un patient..." className="mt-1" />
-                </div>
+                <div><Label className="text-xs">Patient *</Label><Input placeholder="Nom du patient" value={newRdvPatient} onChange={e => setNewRdvPatient(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">Téléphone</Label><Input placeholder="+216 XX XXX XXX" value={newRdvPhone} onChange={e => setNewRdvPhone(e.target.value)} className="mt-1" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-xs font-medium text-muted-foreground">Date</label><Input type="date" className="mt-1" /></div>
-                  <div><label className="text-xs font-medium text-muted-foreground">Heure</label><Input type="time" className="mt-1" /></div>
+                  <div><Label className="text-xs">Date</Label><Input type="date" value={newRdvDate} onChange={e => setNewRdvDate(e.target.value)} className="mt-1" /></div>
+                  <div><Label className="text-xs">Heure</Label><Input type="time" value={newRdvTime} onChange={e => setNewRdvTime(e.target.value)} className="mt-1" /></div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Médecin</label>
-                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                <div><Label className="text-xs">Médecin</Label>
+                  <select value={newRdvDoctor} onChange={e => setNewRdvDoctor(e.target.value)} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
                     <option>Dr. Bouazizi</option><option>Dr. Gharbi</option><option>Dr. Hammami</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Motif</label>
-                  <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                <div><Label className="text-xs">Motif</Label>
+                  <select value={newRdvMotif} onChange={e => setNewRdvMotif(e.target.value)} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
                     <option>Consultation</option><option>Suivi</option><option>Contrôle</option><option>Première visite</option><option>Téléconsultation</option><option>Urgence</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Notes</label>
-                  <textarea placeholder="Notes..." rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" />
+                <div><Label className="text-xs">Notes</Label>
+                  <textarea placeholder="Notes..." rows={2} value={newRdvNotes} onChange={e => setNewRdvNotes(e.target.value)} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" />
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button variant="outline" className="flex-1" onClick={() => setShowNewRdv(false)}>Annuler</Button>
-                  <Button className="flex-1 gradient-primary text-primary-foreground" onClick={() => setShowNewRdv(false)}>Créer le RDV</Button>
+                  <Button className="flex-1 gradient-primary text-primary-foreground shadow-primary-glow" onClick={handleCreateRdv}>Créer le RDV</Button>
                 </div>
               </div>
             </div>
