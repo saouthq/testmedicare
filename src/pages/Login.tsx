@@ -90,6 +90,8 @@ const Login = () => {
                 { role: "pharmacy", label: "Pharmacie" },
                 { role: "secretary", label: "Secrétaire" },
                 { role: "laboratory", label: "Laboratoire" },
+                { role: "hospital", label: "Hôpital" },
+                { role: "clinic", label: "Clinique" },
                 { role: "admin", label: "Admin" },
               ].map(r => (
                 <Button key={r.role} variant="outline" className="w-full" size="sm"
