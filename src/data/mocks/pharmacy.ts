@@ -1,7 +1,7 @@
 /**
  * Mock data — Pharmacy domain
  * Model: Patient sends prescription → Pharmacy processes (per-item availability + alternatives)
- * Pickup time mandatory when "ready_pickup". CNAM → Assurance.
+ * Pickup time mandatory when "ready_pickup".
  */
 import type { PharmacyPrescription } from "@/types";
 
