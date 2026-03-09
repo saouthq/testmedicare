@@ -130,7 +130,7 @@ const SearchDoctors = () => {
           {filtered.map((d, i) => {
             const hasAnyAvail = d.availAM.slice(0, dayRange).some(Boolean) || d.availPM.slice(0, dayRange).some(Boolean);
             return (
-              <Link key={i} to={`/doctor/${i + 1}`} className="block rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all">
+              <Link key={d.id} to={`/doctor/${d.id}`} className="block rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all">
                 <div className="p-4">
                   <div className="flex gap-3 sm:gap-4">
                     <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm sm:text-base shrink-0">{d.avatar}</div>

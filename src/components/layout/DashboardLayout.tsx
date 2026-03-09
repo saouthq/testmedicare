@@ -253,7 +253,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             <h1 className="text-base font-semibold text-foreground">{title}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Link to={`/dashboard/${role}/notifications`} className="relative">
+            <Link to={role === "patient" ? "/dashboard/patient/notifications" : `/dashboard/${role}`} className="relative" onClick={() => { if (role !== "patient") { toast({ title: "Notifications", description: "Centre de notifications bientôt disponible." }); } }}>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 {unreadCount > 0 && (
