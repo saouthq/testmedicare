@@ -124,7 +124,7 @@ const DoctorPublicProfile = () => {
                   </div>
                   <div className="rounded-lg bg-primary/5 border border-primary/20 p-1.5 sm:p-2 text-center">
                     <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary mx-auto" />
-                    <p className="text-[9px] sm:text-[10px] text-primary font-medium">CNAM</p>
+                    <p className="text-[9px] sm:text-[10px] text-primary font-medium">Assurance</p>
                   </div>
                   <div className="rounded-lg bg-accent/5 border border-accent/20 p-1.5 sm:p-2 text-center">
                     <p className="text-sm sm:text-base font-bold text-foreground">{doctorData.experience}</p>
