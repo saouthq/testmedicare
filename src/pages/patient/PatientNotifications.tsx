@@ -1,3 +1,7 @@
+/**
+ * PatientNotifications — Reads from both mock data AND cross-role notifications store.
+ * Cross-role events (pharmacy ready, care sheet, lab results) appear automatically.
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { Bell, Calendar, FileText, MessageSquare, AlertCircle, CheckCircle2, Clock, Trash2, Shield, ChevronRight, Activity, Pill, Video, ArrowRight } from "lucide-react";
@@ -12,8 +16,9 @@ interface Notification {
 }
 
 import { mockNotifications as rawNotifications } from "@/data/mockData";
+import { useNotifications } from "@/stores/notificationsStore";
 
-// Enrich notifications with actions and dates
+// Enrich mock notifications with actions and dates
 const enrichedNotifications: Notification[] = (rawNotifications as any[]).map((n, i) => ({
   ...n,
   date: i < 3 ? "Aujourd'hui" : i < 5 ? "Hier" : "Cette semaine",
@@ -33,12 +38,40 @@ const typeConfig: Record<NotificationType, { icon: any; class: string; label: st
   system: { icon: AlertCircle, class: "bg-muted text-muted-foreground", label: "Système" },
 };
 
-const PatientNotifications = () => {
-  const [notifications, setNotifications] = useState(enrichedNotifications);
-  const [filter, setFilter] = useState<"all" | "unread" | NotificationType>("all");
-  const unreadCount = notifications.filter(n => !n.read).length;
+// Map cross-role notification types to display types
+function mapCrossType(t: string): NotificationType {
+  if (t === "pharmacy_ready" || t === "prescription_sent") return "prescription";
+  if (t === "lab_results") return "result";
+  if (t === "care_sheet") return "system";
+  if (t === "appointment_absent") return "appointment";
+  return "system";
+}
 
-  const filtered = notifications.filter(n => {
+const PatientNotifications = () => {
+  // Cross-role notifications from store
+  const { notifications: crossNotifs, setNotifications: setCrossNotifs } = useNotifications("patient");
+
+  // Convert cross-role notifications to local format
+  const crossConverted: Notification[] = crossNotifs.map((cn) => ({
+    id: cn.id,
+    type: mapCrossType(cn.type),
+    title: cn.title,
+    message: cn.message,
+    time: new Date(cn.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+    read: cn.read,
+    date: "Aujourd'hui",
+    actionLabel: cn.actionLink ? "Voir" : undefined,
+    actionLink: cn.actionLink,
+  }));
+
+  const [notifications, setNotifications] = useState(enrichedNotifications);
+
+  // Merge: cross-role first (newest), then static mocks
+  const allNotifications = [...crossConverted, ...notifications];
+  const [filter, setFilter] = useState<"all" | "unread" | NotificationType>("all");
+  const unreadCount = allNotifications.filter(n => !n.read).length;
+
+  const filtered = allNotifications.filter(n => {
     if (filter === "unread") return !n.read;
     if (filter !== "all") return n.type === filter;
     return true;
@@ -53,12 +86,21 @@ const PatientNotifications = () => {
   }, {});
 
   const markRead = (id: string) => {
+    // Try local first
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    // Also mark in cross-role store
+    setCrossNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setCrossNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   const deleteNotif = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setNotifications(prev => prev.filter(n => n.id !== id));
+    setCrossNotifs((prev) => prev.filter((n) => n.id !== id));
   };
 
   return (
@@ -76,7 +118,7 @@ const PatientNotifications = () => {
                 <p className="text-xs text-muted-foreground">Restez informé de vos rendez-vous et résultats</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="text-xs" onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}>
+            <Button variant="outline" size="sm" className="text-xs" onClick={markAllRead}>
               Tout marquer comme lu
             </Button>
           </div>
@@ -85,12 +127,12 @@ const PatientNotifications = () => {
         {/* Filters */}
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {[
-            { key: "all" as const, label: "Toutes", count: notifications.length },
+            { key: "all" as const, label: "Toutes", count: allNotifications.length },
             { key: "unread" as const, label: "Non lues", count: unreadCount },
-            { key: "appointment" as const, label: "RDV", count: notifications.filter(n => n.type === "appointment").length },
-            { key: "prescription" as const, label: "Ordonnances", count: notifications.filter(n => n.type === "prescription").length },
-            { key: "result" as const, label: "Résultats", count: notifications.filter(n => n.type === "result").length },
-            { key: "message" as const, label: "Messages", count: notifications.filter(n => n.type === "message").length },
+            { key: "appointment" as const, label: "RDV", count: allNotifications.filter(n => n.type === "appointment").length },
+            { key: "prescription" as const, label: "Ordonnances", count: allNotifications.filter(n => n.type === "prescription").length },
+            { key: "result" as const, label: "Résultats", count: allNotifications.filter(n => n.type === "result").length },
+            { key: "message" as const, label: "Messages", count: allNotifications.filter(n => n.type === "message").length },
           ].map(f => (
             <button
               key={f.key}
@@ -154,7 +196,6 @@ const PatientNotifications = () => {
                             </div>
                           </div>
 
-                          {/* Action button */}
                           {n.actionLink && (
                             <Link
                               to={n.actionLink}

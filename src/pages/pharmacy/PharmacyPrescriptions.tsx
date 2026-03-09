@@ -1,10 +1,9 @@
 /**
- * Pharmacy Prescriptions — Full workflow with per-item availability,
- * alternatives, pickup time, and status transitions.
- * Patient-sent model. CNAM → Assurance.
+ * Pharmacy Prescriptions — Now reads from cross-role store + local mocks.
+ * Pharmacy responses write back to store → patient sees updates.
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText, Search, CheckCircle2, Clock, Pill, Eye, Shield, AlertCircle,
   User, X, Package, AlertTriangle, Inbox, Activity, Send, Phone
@@ -19,6 +18,8 @@ import type {
   PharmacyPrescription, PharmacyPrescriptionStatus, PharmacyItemAvailability,
 } from "@/types";
 import { toast } from "sonner";
+import { useSharedPrescriptions, pharmacyRespond } from "@/stores/prescriptionsStore";
+import { useNotifications } from "@/stores/notificationsStore";
 
 const statusCfg: Record<string, { label: string; cls: string; icon: any }> = {
   received:     { label: "Reçue",            cls: "bg-warning/10 text-warning",              icon: Inbox },
@@ -30,6 +31,10 @@ const statusCfg: Record<string, { label: string; cls: string; icon: any }> = {
 };
 
 const PharmacyPrescriptions = () => {
+  // Merge local mock prescriptions with any sent via cross-role store
+  const [sharedPrescriptions] = useSharedPrescriptions();
+  const { notifications: pharmNotifs } = useNotifications("pharmacy");
+
   const [prescriptions, setPrescriptions] = useState<PharmacyPrescription[]>(mockPharmacyPrescriptions);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -39,6 +44,42 @@ const PharmacyPrescriptions = () => {
   const [pickupTime, setPickupTime] = useState("");
   const [comment, setComment] = useState("");
   const [itemAvail, setItemAvail] = useState<Record<number, { availability: PharmacyItemAvailability; alternative: string }>>({});
+
+  // Inject shared prescriptions from patients into local list
+  useEffect(() => {
+    if (sharedPrescriptions.length === 0) return;
+    setPrescriptions((prev) => {
+      let updated = [...prev];
+      for (const sp of sharedPrescriptions) {
+        if (!updated.find((p) => p.id === sp.id)) {
+          // Convert shared prescription to pharmacy format
+          updated = [
+            {
+              id: sp.id,
+              patient: sp.patientName,
+              avatar: sp.patientName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+              doctor: sp.doctorName,
+              date: sp.date,
+              assurance: sp.assurance,
+              patientPhone: "",
+              urgent: false,
+              total: sp.total,
+              status: "received" as PharmacyPrescriptionStatus,
+              items: sp.items.map((name) => ({
+                name,
+                dosage: "",
+                quantity: 1,
+                availability: "available" as PharmacyItemAvailability,
+                price: "—",
+              })),
+            },
+            ...updated,
+          ];
+        }
+      }
+      return updated;
+    });
+  }, [sharedPrescriptions]);
 
   const filtered = prescriptions.filter(p => {
     if (filter !== "all" && p.status !== filter) return false;
@@ -75,9 +116,8 @@ const PharmacyPrescriptions = () => {
     }));
   };
 
-  /* ── Status change ── */
+  /* ── Status change — also writes to cross-role store ── */
   const handleStatus = (id: string, status: PharmacyPrescriptionStatus) => {
-    // TODO BACKEND: PATCH /api/pharmacy/prescriptions/{id} { status, pickupTime, comment, items }
     if (status === "ready_pickup" && !pickupTime) {
       toast.error("Veuillez indiquer une heure de retrait");
       return;
@@ -85,18 +125,47 @@ const PharmacyPrescriptions = () => {
     saveItems(id);
     setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, status, pickupTime: pickupTime || p.pickupTime, comment } : p));
     toast.success(`Ordonnance ${id} → ${statusCfg[status].label}`);
+
+    // Write response to cross-role store so patient sees it
+    const shared = sharedPrescriptions.find((sp) => sp.id === id);
+    if (shared) {
+      // Find all pharmacy entries for this prescription and update them
+      for (const ph of shared.sentToPharmacies) {
+        if (ph.status === "pending") {
+          const mappedStatus = status === "ready_pickup" ? "ready" : status === "preparing" ? "preparing" : status === "unavailable" ? "unavailable" : "preparing";
+          pharmacyRespond(id, ph.pharmacyId, {
+            status: mappedStatus as "preparing" | "ready" | "unavailable",
+            pickupTime: status === "ready_pickup" ? pickupTime : undefined,
+          });
+          break; // respond for first pending pharmacy entry
+        }
+      }
+    }
+
     if (status === "ready_pickup") {
-      // TODO BACKEND: POST /api/notifications — notify patient
-      toast.info("Notification envoyée au patient (mock)");
+      toast.info("✅ Notification envoyée au patient via le store");
     }
     setSelected(null);
   };
 
   const isReadOnly = selected?.status === "delivered";
 
+  // Unread pharmacy notifications count
+  const unreadPharmNotifs = pharmNotifs.filter((n) => !n.read).length;
+
   return (
     <DashboardLayout role="pharmacy" title="Ordonnances">
       <div className="space-y-5">
+        {/* Unread notifications banner */}
+        {unreadPharmNotifs > 0 && (
+          <div className="rounded-xl bg-warning/5 border border-warning/20 p-3 flex items-center gap-3">
+            <Inbox className="h-5 w-5 text-warning" />
+            <p className="text-sm text-foreground font-medium">
+              {unreadPharmNotifs} nouvelle(s) ordonnance(s) reçue(s) de patients
+            </p>
+          </div>
+        )}
+
         {/* ── Filters ── */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <div className="flex items-center gap-3 flex-wrap">
@@ -234,7 +303,6 @@ const PharmacyPrescriptions = () => {
                       </div>
                       <p className="text-[11px] text-muted-foreground ml-6">Qté prescrite : {item.quantity}</p>
 
-                      {/* Availability selector (editable if not delivered) */}
                       {!isReadOnly && (
                         <div className="ml-6 mt-2 space-y-1.5">
                           <div className="flex items-center gap-1.5">
@@ -260,7 +328,6 @@ const PharmacyPrescriptions = () => {
                         </div>
                       )}
 
-                      {/* Read-only availability badge */}
                       {isReadOnly && (
                         <div className="ml-6 mt-1">
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${availCls}`}>{availLabel}</span>
@@ -273,7 +340,7 @@ const PharmacyPrescriptions = () => {
               </div>
             </div>
 
-            {/* Pickup time (required for ready_pickup) */}
+            {/* Pickup time */}
             {!isReadOnly && (
               <div className="rounded-lg border p-3 mb-4">
                 <Label className="text-xs font-semibold">Heure de retrait</Label>
@@ -333,7 +400,6 @@ const PharmacyPrescriptions = () => {
                     <Send className="h-3.5 w-3.5 mr-1.5" />Délivrée
                   </Button>
                 )}
-                {/* Partial / Unavailable shortcuts */}
                 {selected.status !== "delivered" && selected.status !== "partial" && selected.status !== "unavailable" && (
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" className="flex-1 text-xs text-warning" onClick={() => handleStatus(selected.id, "partial")}>
