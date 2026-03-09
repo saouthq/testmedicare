@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import PublicHeader from "@/components/public/PublicHeader";
+import PublicFooter from "@/components/public/PublicFooter";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
