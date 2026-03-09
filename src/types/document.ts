@@ -2,44 +2,11 @@
  * Types métier partagés — Document / Lab
  */
 
+/** Panel used by doctor when creating a lab request */
 export interface LabPanel {
   key: string;
   label: string;
   hint?: string;
-}
-
-export interface LabAnalysis {
-  id: string;
-  patient: string;
-  type: string;
-  doctor: string;
-  date: string;
-  status: string;
-  amount: string;
-  cnam: boolean;
-  avatar: string;
-  priority: string;
-}
-
-export interface LabResultValue {
-  name: string;
-  value: string;
-  ref: string;
-  status: string;
-}
-
-export interface LabResult {
-  id: string;
-  analysis: string;
-  patient: string;
-  type: string;
-  date: string;
-  doctor: string;
-  sent: boolean;
-  amount: string;
-  cnam: boolean;
-  avatar: string;
-  values: LabResultValue[];
 }
 
 export interface PharmacyPrescriptionItem {
