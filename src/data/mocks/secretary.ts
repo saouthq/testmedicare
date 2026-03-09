@@ -56,7 +56,7 @@ export const mockOfficeInfo = {
   fax: "+216 71 234 568",
   email: "contact@cabinet-elmanar.tn",
   openingHours: "Lun-Ven: 8h-18h / Sam: 8h-13h",
-  conventionCNAM: true,
+  conventionAssurance: true,
   registreCommerce: "B12345678",
 };
 
