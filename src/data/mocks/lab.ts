@@ -85,7 +85,7 @@ export const mockLabDemands: LabDemand[] = [
   },
   {
     id: "DEM-006", patient: "Rania Meddeb", patientDob: "18/06/1988", avatar: "RM",
-    assurance: "CNAM", numAssurance: "99887766",
+    assurance: "Assurance publique", numAssurance: "99887766",
     prescriber: "Dr. Gharbi", examens: ["Bilan lipidique"],
     status: "transmitted", date: "17 Fév 2026", priority: "normal", amount: "55 DT",
     pdfs: [
