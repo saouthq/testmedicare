@@ -16,6 +16,7 @@ import { mockSecretaryWaitingRoom, mockSecretaryAppointments } from "@/data/mock
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import ActionPalette, { type ActionItem } from "@/components/shared/ActionPalette";
 import SecretaryTeleconsultPanel from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
+import { markPatientAbsent } from "@/stores/appointmentsStore";
 
 type DashTab = "overview" | "billing" | "patients";
 
