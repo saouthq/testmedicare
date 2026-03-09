@@ -3,10 +3,11 @@
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Clock, Phone, CheckCircle2, AlertCircle, Package, RefreshCw } from "lucide-react";
+import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Clock, Phone, CheckCircle2, AlertCircle, Package, RefreshCw, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { requestRenewal } from "@/stores/doctorStore";
 
 import { mockPatientPrescriptions as initialPrescriptions, mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
 import { useSharedPrescriptions, sendPrescriptionToPharmacies } from "@/stores/prescriptionsStore";
