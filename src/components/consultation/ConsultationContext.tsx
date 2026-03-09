@@ -399,6 +399,11 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     return (q ? paletteActions.filter(a => `${a.label} ${a.hint || ""}`.toLowerCase().includes(q)) : paletteActions).slice(0, 8);
   }, [paletteActions, paletteQuery]);
 
+  // Mark patient as in_consultation in waiting room on mount
+  useEffect(() => {
+    startConsultation(patient.name);
+  }, [patient.name]);
+
   // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
