@@ -12,7 +12,7 @@ const ClinicDashboard = () => {
   const availableDoctors = mockClinicDoctors.filter(d => d.available).length;
   const availableRooms = mockClinicRooms.filter(r => r.status === "available" && r.type !== "waiting").length;
 
-  const stats = [
+  const items = [
     { label: "RDV aujourd'hui", value: String(todayAppts.length), icon: Calendar },
     { label: "Terminés", value: String(completed), icon: CheckCircle },
     { label: "Médecins présents", value: `${availableDoctors}/${mockClinicDoctors.length}`, icon: Stethoscope },
