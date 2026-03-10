@@ -119,6 +119,7 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
       { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
+      { title: "Centre de revenus", url: "/dashboard/admin/revenue", icon: Banknote },
     ],
   },
   {
@@ -128,6 +129,7 @@ const adminSections: NavSection[] = [
       { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
       { title: "Organisations", url: "/dashboard/admin/organizations", icon: Building2 },
       { title: "Validations KYC", url: "/dashboard/admin/verifications", icon: ShieldCheck },
+      { title: "Suivi onboarding", url: "/dashboard/admin/onboarding", icon: Activity },
     ],
   },
   {
@@ -138,6 +140,7 @@ const adminSections: NavSection[] = [
       { title: "Pharmacies garde", url: "/dashboard/admin/guard-pharmacies", icon: Pill },
       { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
       { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
+      { title: "Performance médecins", url: "/dashboard/admin/doctor-performance", icon: Activity },
     ],
   },
   {
@@ -158,6 +161,7 @@ const adminSections: NavSection[] = [
       { title: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
       { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
       { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
+      { title: "Contenu & Pages", url: "/dashboard/admin/content", icon: ScrollText },
       { title: "Email & SMS", url: "/dashboard/admin/email-config", icon: MessageSquare },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
       { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
