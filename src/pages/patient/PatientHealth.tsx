@@ -42,11 +42,27 @@ import {
 import type { ChatMessage } from "@/data/mockData";
 
 const PatientHealth = () => {
-  const [section, setSection] = useState<HealthSection>("menu");
+  const [searchParams] = useSearchParams();
+  const initialSection = searchParams.get("section") as HealthSection || "menu";
+  const [section, setSection] = useState<HealthSection>(initialSection);
   const [showUpload, setShowUpload] = useState(false);
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>(aiInitial);
   const [aiInput, setAiInput] = useState("");
   const [aiIdx, setAiIdx] = useState(0);
+  
+  // "Declared empty" state per section
+  const [declaredEmpty, setDeclaredEmpty] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("medicare_health_empty") || "{}"); } catch { return {}; }
+  });
+  
+  const toggleDeclaredEmpty = (key: string) => {
+    setDeclaredEmpty(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem("medicare_health_empty", JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast({ title: declaredEmpty[key] ? "Section réactivée" : "Déclaré vide", description: declaredEmpty[key] ? "Vous pouvez maintenant ajouter des éléments." : "Section marquée comme vide." });
+  };
 
   // Cross-role: lab results
   useEffect(() => { initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]); }, []);
