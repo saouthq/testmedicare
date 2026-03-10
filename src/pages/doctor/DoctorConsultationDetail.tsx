@@ -8,6 +8,7 @@ import { ConsultationNotes } from "@/components/consultation/ConsultationNotes";
 import { ActionDock } from "@/components/consultation/ActionDock";
 import { SlidePanel } from "@/components/consultation/SlidePanel";
 import { CloseModal, HistoryDrawer, CommandPalette, ClosedView } from "@/components/consultation/ConsultationModals";
+import SpecialtyTools from "@/components/consultation/SpecialtyTools";
 
 /**
  * DoctorConsultationDetail — Page principale
