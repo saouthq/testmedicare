@@ -54,8 +54,8 @@ const AdminCampaigns = () => {
   const [sendMotifOpen, setSendMotifOpen] = useState(false);
   // Segments
   const [segmentEnabled, setSegmentEnabled] = useState(false);
-  const [segmentCity, setSegmentCity] = useState("");
-  const [segmentSpecialty, setSegmentSpecialty] = useState("");
+  const [segmentCity, setSegmentCity] = useState("all");
+  const [segmentSpecialty, setSegmentSpecialty] = useState("all");
   // Schedule
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
