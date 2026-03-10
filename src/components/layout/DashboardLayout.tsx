@@ -45,6 +45,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Prendre RDV", url: "/search", icon: Search },
     { title: "Mon espace santé", url: "/dashboard/patient/health", icon: Activity },
     { title: "Ordonnances", url: "/dashboard/patient/prescriptions", icon: FileText },
+    { title: "Assistant IA", url: "/dashboard/patient/health?section=ai", icon: Bot },
     { title: "Messagerie", url: "/dashboard/patient/messages", icon: MessageSquare },
     { title: "Notifications", url: "/dashboard/patient/notifications", icon: Bell },
   ],
