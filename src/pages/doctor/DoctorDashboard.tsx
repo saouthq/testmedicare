@@ -103,7 +103,7 @@ const DoctorDashboard = () => {
 
         {/* Hero — compact overview */}
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 relative overflow-hidden rounded-2xl gradient-primary p-5 text-primary-foreground">
+          <div className="lg:col-span-2 relative overflow-hidden rounded-2xl gradient-primary p-5 text-primary-foreground min-h-0">
             <div className="relative z-10">
               <p className="text-primary-foreground/70 text-sm">Bonjour,</p>
               <h2 className="text-xl font-bold mt-0.5">{mockDoctorProfile.name}</h2>

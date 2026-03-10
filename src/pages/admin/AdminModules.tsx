@@ -4,6 +4,7 @@
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
+import ModuleCustomization from "@/components/admin/ModuleCustomization";
 import {
   ShieldCheck, Search, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2,
   Calendar, Video, FileText, MessageSquare, Bell, FlaskConical, Pill,
@@ -54,6 +55,7 @@ const AdminModules = () => {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [confirmToggle, setConfirmToggle] = useState<{ mod: PlatformModule; enable: boolean } | null>(null);
+  const [activeTab, setActiveTab] = useState<"modules" | "customize">("modules");
 
   const categories = useMemo(() => [...new Set(platformModules.map(m => m.category))], []);
 
@@ -125,7 +127,23 @@ const AdminModules = () => {
   return (
     <DashboardLayout role="admin" title="Gestion des Modules">
       <div className="space-y-6">
-        {/* Header stats */}
+        {/* Tab switcher */}
+        <div className="flex gap-0.5 rounded-lg border bg-card p-0.5 w-fit">
+          <button onClick={() => setActiveTab("modules")}
+            className={`rounded-md px-4 py-2 text-xs font-medium transition-colors ${activeTab === "modules" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            Activation / Désactivation
+          </button>
+          <button onClick={() => setActiveTab("customize")}
+            className={`rounded-md px-4 py-2 text-xs font-medium transition-colors ${activeTab === "customize" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            Personnalisation des labels
+          </button>
+        </div>
+
+        {activeTab === "customize" ? (
+          <ModuleCustomization />
+        ) : (
+        <>
+        {/* Original modules content */}
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border bg-accent/5 border-accent/20 p-4 flex items-center gap-4">
             <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center">
@@ -294,6 +312,8 @@ const AdminModules = () => {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Confirm critical disable dialog */}

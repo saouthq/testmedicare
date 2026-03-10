@@ -59,6 +59,8 @@ import PharmacyPrescriptions from "./pages/pharmacy/PharmacyPrescriptions";
 import PharmacyStock from "./pages/pharmacy/PharmacyStock";
 import PharmacyHistory from "./pages/pharmacy/PharmacyHistory";
 import PharmacySettings from "./pages/pharmacy/PharmacySettings";
+import PharmacyConnect from "./pages/pharmacy/PharmacyConnect";
+import PharmacyPatients from "./pages/pharmacy/PharmacyPatients";
 
 // Laboratory
 import LaboratoryDashboard from "./pages/laboratory/LaboratoryDashboard";
@@ -210,6 +212,8 @@ const App = () => (
           <Route path="/dashboard/pharmacy/stock" element={<PharmacyStock />} />
           <Route path="/dashboard/pharmacy/history" element={<PharmacyHistory />} />
           <Route path="/dashboard/pharmacy/settings" element={<PharmacySettings />} />
+          <Route path="/dashboard/pharmacy/connect" element={<PharmacyConnect />} />
+          <Route path="/dashboard/pharmacy/patients" element={<PharmacyPatients />} />
           <Route path="/dashboard/pharmacy/messages" element={<Messages role="pharmacy" />} />
 
           {/* Laboratory */}

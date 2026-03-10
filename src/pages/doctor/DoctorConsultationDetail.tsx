@@ -8,6 +8,7 @@ import { ConsultationNotes } from "@/components/consultation/ConsultationNotes";
 import { ActionDock } from "@/components/consultation/ActionDock";
 import { SlidePanel } from "@/components/consultation/SlidePanel";
 import { CloseModal, HistoryDrawer, CommandPalette, ClosedView } from "@/components/consultation/ConsultationModals";
+import SpecialtyTools from "@/components/consultation/SpecialtyTools";
 
 /**
  * DoctorConsultationDetail — Page principale
@@ -94,7 +95,10 @@ function ConsultationInner() {
             <PatientSidebar />
           </div>
         )}
-        <ConsultationNotes />
+        <div className="space-y-3">
+          <ConsultationNotes />
+          <SpecialtyTools />
+        </div>
         {/* ActionDock — sticky sur desktop pour rester visible sans scroller */}
         <div className="lg:sticky lg:top-[88px] lg:self-start lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:scrollbar-thin">
           <ActionDock />

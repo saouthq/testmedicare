@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import CareSheetModal from "./CareSheetModal";
 import {
   AlertCircle,
   AlertTriangle,
@@ -508,6 +509,7 @@ export function CommandPalette() {
 
 export function ClosedView() {
   const ctx = useConsultation();
+  const [careSheetOpen, setCareSheetOpen] = useState(false);
 
   const handleSendToPatient = () => {
     toast({
@@ -654,6 +656,11 @@ export function ClosedView() {
           <Mail className="h-4 w-4 mr-2" />
           Envoyer au patient
         </Button>
+        <Button variant="outline" onClick={() => setCareSheetOpen(true)}>
+          <FileText className="h-4 w-4 mr-2" />
+          Feuille de soins
+          <span className="ml-1 text-[9px] bg-warning/20 text-warning px-1.5 py-0.5 rounded font-medium">BETA</span>
+        </Button>
         <Button
           className="gradient-primary text-primary-foreground shadow-primary-glow"
           onClick={() => ctx.navigate("/dashboard/doctor/consultation/new")}
@@ -661,6 +668,17 @@ export function ClosedView() {
           <Plus className="h-4 w-4 mr-2" /> Nouvelle consultation
         </Button>
       </div>
+
+      {/* Care Sheet Modal */}
+      <CareSheetModal
+        open={careSheetOpen}
+        onClose={() => setCareSheetOpen(false)}
+        patientName={ctx.patient.name}
+        patientId={1}
+        consultationDate={new Date().toLocaleDateString("fr-FR")}
+        motif={ctx.motif || "Consultation générale"}
+        amount={ctx.consultAmount || "70"}
+      />
     </div>
   );
 }
