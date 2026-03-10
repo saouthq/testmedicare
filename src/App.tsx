@@ -78,6 +78,9 @@ import SecretaryOffice from "./pages/secretary/SecretaryOffice";
 import SecretaryDocuments from "./pages/secretary/SecretaryDocuments";
 import SecretaryBilling from "./pages/secretary/SecretaryBilling";
 import SecretarySettings from "./pages/secretary/SecretarySettings";
+import SecretaryCallLog from "./pages/secretary/SecretaryCallLog";
+import SecretaryStats from "./pages/secretary/SecretaryStats";
+import SecretarySMS from "./pages/secretary/SecretarySMS";
 
 // Hospital
 import HospitalDashboard from "./pages/hospital/HospitalDashboard";
