@@ -193,7 +193,7 @@ const AdminCampaigns = () => {
                       <Select value={segmentSpecialty} onValueChange={setSegmentSpecialty}>
                         <SelectTrigger className="mt-1"><SelectValue placeholder="Toutes" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Toutes</SelectItem>
+                          <SelectItem value="all">Toutes</SelectItem>
                           {SPECIALTIES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
