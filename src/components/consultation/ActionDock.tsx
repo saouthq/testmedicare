@@ -45,28 +45,12 @@ import { mockMedicines } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { getSpecialtyConfig } from "./specialtyConfig";
+import { getSpecialtyMeds, getSpecialtyLabs, baseMeds } from "./specialtyMedDB";
 
-// ── Medicine DB ───────────────────────────────────────────────
-const MED_DB = [
+// ── Medicine DB — now specialty-aware ─────────────────────────
+const BASE_MED_DB = [
   ...mockMedicines.map((m) => ({ name: `${m.name} ${m.dosage}`, form: m.form })),
-  { name: "Amoxicilline 500mg", form: "Gélule" },
-  { name: "Amoxicilline 1g", form: "Comprimé" },
-  { name: "Augmentin 1g/125mg", form: "Comprimé" },
-  { name: "Voltarène 75mg", form: "Comprimé" },
-  { name: "Ibuprofène 400mg", form: "Comprimé" },
-  { name: "Oméprazole 20mg", form: "Gélule" },
-  { name: "Metformine 850mg", form: "Comprimé" },
-  { name: "Amlodipine 5mg", form: "Comprimé" },
-  { name: "Losartan 50mg", form: "Comprimé" },
-  { name: "Atorvastatine 20mg", form: "Comprimé" },
-  { name: "Lévothyroxine 50µg", form: "Comprimé" },
-  { name: "Prednisolone 20mg", form: "Comprimé" },
-  { name: "Céfixime 200mg", form: "Comprimé" },
-  { name: "Ciprofloxacine 500mg", form: "Comprimé" },
-  { name: "Azithromycine 500mg", form: "Comprimé" },
-  { name: "Paracétamol 500mg", form: "Comprimé" },
-  { name: "Tramadol 50mg", form: "Gélule" },
-  { name: "Pantoprazole 40mg", form: "Comprimé" },
+  ...baseMeds,
 ];
 
 const POSOLOGY_PRESETS = [
