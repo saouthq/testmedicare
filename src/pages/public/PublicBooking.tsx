@@ -106,7 +106,27 @@ const PublicBooking = () => {
     }
   };
 
-  const handleConfirm = () => {
+  const selectedMotifData = doctor.motifs.find(m => m.name === selectedMotif);
+  const isTeleconsult = selectedMotif && doctor.teleconsultation; // simplified check
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  const handleGoToPayment = () => {
+    if (isTeleconsult && selectedMotifData) {
+      setStep("payment");
+    } else {
+      handleConfirmBooking();
+    }
+  };
+
+  const handlePayAndConfirm = () => {
+    setPaymentProcessing(true);
+    setTimeout(() => {
+      setPaymentProcessing(false);
+      handleConfirmBooking();
+    }, 2000);
+  };
+
+  const handleConfirmBooking = () => {
     // Store guest appointment in localStorage
     const guestAppointments = JSON.parse(localStorage.getItem("guestAppointments") || "[]");
     guestAppointments.push({
