@@ -236,12 +236,7 @@ function StatusDot({ ok }: { ok: boolean }) {
 }
 
 // ── Tab bar ────────────────────────────────────────────────────
-const TABS = [
-  { key: "rx" as const, icon: Pill, label: "Rx" },
-  { key: "labs" as const, icon: Activity, label: "Analyses" },
-  { key: "docs" as const, icon: FileText, label: "Docs" },
-  { key: "close" as const, icon: CheckCircle2, label: "Clôture" },
-] as const;
+// Tab labels now dynamic in ActionDock component based on specialty
 
 // ── Payment mode selector ──────────────────────────────────────
 const PAYMENT_MODES: { key: PaymentMode; label: string; Icon: any }[] = [
