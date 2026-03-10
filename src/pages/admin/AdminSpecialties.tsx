@@ -1,11 +1,12 @@
 /**
  * AdminSpecialties — Admin page to manage doctor specialties, quotas, and feature access.
+ * Note: Le tarif de consultation est fixé librement par chaque médecin, pas par l'admin.
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
 import {
-  Search, Eye, Settings, Stethoscope, Plus, Edit2, Trash2, CheckCircle2,
-  Users, BarChart3, Shield, Activity, ToggleLeft, ToggleRight, Save, X,
+  Search, Settings, Stethoscope, CheckCircle2,
+  Users, BarChart3, Shield, ToggleLeft, ToggleRight, Save,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,23 +21,22 @@ interface SpecialtyEntry {
   category: "generaliste" | "specialiste" | "dentiste" | "kine";
   activeDoctors: number;
   enabled: boolean;
-  consultPrice: number;
   features: string[];
   requiredDocs: string[];
 }
 
 const defaultSpecialties: SpecialtyEntry[] = [
-  { id: "generaliste", label: "Médecin généraliste", icon: "🩺", category: "generaliste", activeDoctors: 124, enabled: true, consultPrice: 35, features: ["Ordonnances", "Analyses", "Téléconsultation", "Certificats"], requiredDocs: ["Diplôme de médecine", "Inscription Ordre des médecins"] },
-  { id: "cardiologue", label: "Cardiologue", icon: "❤️", category: "specialiste", activeDoctors: 18, enabled: true, consultPrice: 60, features: ["ECG intégré", "Écho cardiaque", "Holter", "Épreuve d'effort", "Ordonnances cardio"], requiredDocs: ["DES Cardiologie", "Inscription Ordre"] },
-  { id: "ophtalmologue", label: "Ophtalmologue", icon: "👁️", category: "specialiste", activeDoctors: 12, enabled: true, consultPrice: 45, features: ["Acuité visuelle", "Fond d'œil", "Tonométrie", "Prescription optique", "OCT"], requiredDocs: ["DES Ophtalmologie", "Inscription Ordre"] },
-  { id: "dermatologue", label: "Dermatologue", icon: "🔬", category: "specialiste", activeDoctors: 15, enabled: true, consultPrice: 50, features: ["Galerie photos", "Dermatoscopie", "Biopsie", "Photothérapie"], requiredDocs: ["DES Dermatologie", "Inscription Ordre"] },
-  { id: "pediatre", label: "Pédiatre", icon: "👶", category: "specialiste", activeDoctors: 22, enabled: true, consultPrice: 40, features: ["Courbes de croissance", "Carnet vaccinal", "Développement psychomoteur"], requiredDocs: ["DES Pédiatrie", "Inscription Ordre"] },
-  { id: "orl", label: "ORL", icon: "👂", category: "specialiste", activeDoctors: 8, enabled: true, consultPrice: 50, features: ["Audiogramme", "Endoscopie", "Vidéonystagmographie"], requiredDocs: ["DES ORL", "Inscription Ordre"] },
-  { id: "psychiatre", label: "Psychiatre", icon: "🧠", category: "specialiste", activeDoctors: 10, enabled: true, consultPrice: 70, features: ["Échelles PHQ-9/GAD-7", "Notes confidentielles", "Suivi psychotropes"], requiredDocs: ["DES Psychiatrie", "Inscription Ordre"] },
-  { id: "neurologue", label: "Neurologue", icon: "⚡", category: "specialiste", activeDoctors: 6, enabled: true, consultPrice: 60, features: ["EEG", "EMG", "Dosage antiépileptiques"], requiredDocs: ["DES Neurologie", "Inscription Ordre"] },
-  { id: "gynecologue", label: "Gynécologue", icon: "🌸", category: "specialiste", activeDoctors: 14, enabled: true, consultPrice: 70, features: ["Suivi grossesse", "Échographie obstétricale", "Frottis"], requiredDocs: ["DES Gynécologie-Obstétrique", "Inscription Ordre"] },
-  { id: "dentiste", label: "Chirurgien-Dentiste", icon: "🦷", category: "dentiste", activeDoctors: 35, enabled: true, consultPrice: 80, features: ["Schéma dentaire", "Devis & Plans", "Panoramique", "CBCT"], requiredDocs: ["Diplôme de chirurgie dentaire", "Inscription Ordre des dentistes"] },
-  { id: "kine", label: "Kinésithérapeute", icon: "🦴", category: "kine", activeDoctors: 28, enabled: true, consultPrice: 25, features: ["Échelle EVA", "Bilans articulaires", "Programme exercices"], requiredDocs: ["Diplôme de kinésithérapie", "Inscription Ordre des kinés"] },
+  { id: "generaliste", label: "Médecin généraliste", icon: "🩺", category: "generaliste", activeDoctors: 124, enabled: true, features: ["Ordonnances", "Analyses", "Téléconsultation", "Certificats"], requiredDocs: ["Diplôme de médecine", "Inscription Ordre des médecins"] },
+  { id: "cardiologue", label: "Cardiologue", icon: "❤️", category: "specialiste", activeDoctors: 18, enabled: true, features: ["ECG intégré", "Écho cardiaque", "Holter", "Épreuve d'effort", "Ordonnances cardio"], requiredDocs: ["DES Cardiologie", "Inscription Ordre"] },
+  { id: "ophtalmologue", label: "Ophtalmologue", icon: "👁️", category: "specialiste", activeDoctors: 12, enabled: true, features: ["Acuité visuelle", "Fond d'œil", "Tonométrie", "Prescription optique", "OCT"], requiredDocs: ["DES Ophtalmologie", "Inscription Ordre"] },
+  { id: "dermatologue", label: "Dermatologue", icon: "🔬", category: "specialiste", activeDoctors: 15, enabled: true, features: ["Galerie photos", "Dermatoscopie", "Biopsie", "Photothérapie"], requiredDocs: ["DES Dermatologie", "Inscription Ordre"] },
+  { id: "pediatre", label: "Pédiatre", icon: "👶", category: "specialiste", activeDoctors: 22, enabled: true, features: ["Courbes de croissance", "Carnet vaccinal", "Développement psychomoteur"], requiredDocs: ["DES Pédiatrie", "Inscription Ordre"] },
+  { id: "orl", label: "ORL", icon: "👂", category: "specialiste", activeDoctors: 8, enabled: true, features: ["Audiogramme", "Endoscopie", "Vidéonystagmographie"], requiredDocs: ["DES ORL", "Inscription Ordre"] },
+  { id: "psychiatre", label: "Psychiatre", icon: "🧠", category: "specialiste", activeDoctors: 10, enabled: true, features: ["Échelles PHQ-9/GAD-7", "Notes confidentielles", "Suivi psychotropes"], requiredDocs: ["DES Psychiatrie", "Inscription Ordre"] },
+  { id: "neurologue", label: "Neurologue", icon: "⚡", category: "specialiste", activeDoctors: 6, enabled: true, features: ["EEG", "EMG", "Dosage antiépileptiques"], requiredDocs: ["DES Neurologie", "Inscription Ordre"] },
+  { id: "gynecologue", label: "Gynécologue", icon: "🌸", category: "specialiste", activeDoctors: 14, enabled: true, features: ["Suivi grossesse", "Échographie obstétricale", "Frottis"], requiredDocs: ["DES Gynécologie-Obstétrique", "Inscription Ordre"] },
+  { id: "dentiste", label: "Chirurgien-Dentiste", icon: "🦷", category: "dentiste", activeDoctors: 35, enabled: true, features: ["Schéma dentaire", "Devis & Plans", "Panoramique", "CBCT"], requiredDocs: ["Diplôme de chirurgie dentaire", "Inscription Ordre des dentistes"] },
+  { id: "kine", label: "Kinésithérapeute", icon: "🦴", category: "kine", activeDoctors: 28, enabled: true, features: ["Échelle EVA", "Bilans articulaires", "Programme exercices"], requiredDocs: ["Diplôme de kinésithérapie", "Inscription Ordre des kinés"] },
 ];
 
 const AdminSpecialties = () => {
@@ -44,7 +44,7 @@ const AdminSpecialties = () => {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<SpecialtyEntry | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editPrice, setEditPrice] = useState("");
+  const [editFeature, setEditFeature] = useState("");
 
   const filtered = useMemo(() => {
     if (!search) return specs;
@@ -63,15 +63,23 @@ const AdminSpecialties = () => {
 
   const openDetail = (s: SpecialtyEntry) => {
     setSelected(s);
-    setEditPrice(String(s.consultPrice));
     setDrawerOpen(true);
   };
 
-  const savePrice = () => {
+  const addFeature = () => {
+    if (!selected || !editFeature.trim()) return;
+    const newFeature = editFeature.trim();
+    setSpecs(prev => prev.map(s => s.id === selected.id ? { ...s, features: [...s.features, newFeature] } : s));
+    setSelected(prev => prev ? { ...prev, features: [...prev.features, newFeature] } : null);
+    setEditFeature("");
+    toast({ title: "Fonctionnalité ajoutée" });
+  };
+
+  const removeFeature = (feature: string) => {
     if (!selected) return;
-    setSpecs(prev => prev.map(s => s.id === selected.id ? { ...s, consultPrice: Number(editPrice) || s.consultPrice } : s));
-    toast({ title: "Tarif mis à jour", description: `${selected.label}: ${editPrice} DT` });
-    setDrawerOpen(false);
+    setSpecs(prev => prev.map(s => s.id === selected.id ? { ...s, features: s.features.filter(f => f !== feature) } : s));
+    setSelected(prev => prev ? { ...prev, features: prev.features.filter(f => f !== feature) } : null);
+    toast({ title: "Fonctionnalité retirée" });
   };
 
   return (
@@ -142,8 +150,8 @@ const AdminSpecialties = () => {
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Spécialité</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Catégorie</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Praticiens</th>
-                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Tarif</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Features</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Docs KYC</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
                 </tr>
@@ -168,9 +176,11 @@ const AdminSpecialties = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center text-foreground font-medium">{s.activeDoctors}</td>
-                    <td className="px-4 py-3 text-center text-foreground">{s.consultPrice} DT</td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{s.features.length}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{s.requiredDocs.length}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={() => toggleSpec(s.id)} className={s.enabled ? "text-accent" : "text-muted-foreground"}>
@@ -198,7 +208,7 @@ const AdminSpecialties = () => {
               <ul className="text-xs text-muted-foreground mt-2 space-y-1">
                 <li>• <strong>Désactiver une spécialité</strong> empêche les nouvelles inscriptions et masque la spécialité dans les recherches.</li>
                 <li>• Les praticiens existants conservent leur accès mais ne peuvent plus prendre de nouveaux patients.</li>
-                <li>• Le <strong>tarif de consultation</strong> est le tarif de base suggéré. Les praticiens peuvent le personnaliser.</li>
+                <li>• Le <strong>tarif de consultation</strong> est fixé librement par chaque praticien depuis son espace personnel.</li>
                 <li>• Les <strong>features</strong> sont les outils spécifiques disponibles dans l'espace consultation de chaque spécialité.</li>
               </ul>
             </div>
@@ -226,19 +236,8 @@ const AdminSpecialties = () => {
                       <p className="text-[11px] text-muted-foreground">Praticiens actifs</p>
                     </div>
                     <div className="rounded-lg border p-3 text-center">
-                      <p className="text-lg font-bold text-foreground">{selected.consultPrice} DT</p>
-                      <p className="text-[11px] text-muted-foreground">Tarif de base</p>
-                    </div>
-                  </div>
-
-                  {/* Edit price */}
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tarif de consultation (DT)</label>
-                    <div className="flex gap-2 mt-1">
-                      <Input value={editPrice} onChange={e => setEditPrice(e.target.value)} className="h-9 text-sm" type="number" />
-                      <Button size="sm" className="h-9 gradient-primary text-primary-foreground" onClick={savePrice}>
-                        <Save className="h-3.5 w-3.5 mr-1" />Sauver
-                      </Button>
+                      <p className="text-lg font-bold text-foreground">{selected.features.length}</p>
+                      <p className="text-[11px] text-muted-foreground">Fonctionnalités</p>
                     </div>
                   </div>
 
@@ -247,11 +246,18 @@ const AdminSpecialties = () => {
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Fonctionnalités activées</label>
                     <div className="mt-2 space-y-1.5">
                       {selected.features.map((f, i) => (
-                        <div key={i} className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2">
+                        <div key={i} className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 group">
                           <CheckCircle2 className="h-3.5 w-3.5 text-accent shrink-0" />
-                          <span className="text-sm text-foreground">{f}</span>
+                          <span className="text-sm text-foreground flex-1">{f}</span>
+                          <button onClick={() => removeFeature(f)} className="text-destructive opacity-0 group-hover:opacity-100 text-xs transition-opacity">✕</button>
                         </div>
                       ))}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Input value={editFeature} onChange={e => setEditFeature(e.target.value)} placeholder="Nouvelle fonctionnalité..." className="h-8 text-sm" onKeyDown={e => e.key === "Enter" && addFeature()} />
+                      <Button size="sm" className="h-8 gradient-primary text-primary-foreground" onClick={addFeature}>
+                        <Save className="h-3.5 w-3.5 mr-1" />Ajouter
+                      </Button>
                     </div>
                   </div>
 
