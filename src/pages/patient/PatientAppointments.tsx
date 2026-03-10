@@ -411,6 +411,8 @@ const PatientAppointments = () => {
                       </Button>
                     )
                   )}
+                  {/* Signalement litige */}
+                  <ReportButton type="dispute" targetId={String(currentApt.id)} targetName={`RDV ${currentApt.doctor} — ${currentApt.date}`} variant="button" size="sm" />
                 </div>
               </div>
             )}
