@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Calendar, ChevronLeft, ChevronRight, MapPin, Clock, CheckCircle2,
   Shield, Video, Upload, FileText, Plus, AlertTriangle,
-  CalendarPlus, Edit3 } from
+  CalendarPlus, Edit3, CreditCard, Loader2 } from
 "lucide-react";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { mockDoctorProfile } from "@/data/mockData";
