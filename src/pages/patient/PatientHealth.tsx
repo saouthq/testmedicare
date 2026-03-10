@@ -182,6 +182,23 @@ const PatientHealth = () => {
     </DropdownMenu>
   );
 
+  const SectionHeader = ({ title, sectionKey, onBack, onAdd }: { title: string; sectionKey?: string; onBack: () => void; onAdd?: () => void }) => (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <button onClick={onBack} className="text-primary hover:underline text-sm">← Retour</button>
+        <h3 className="font-semibold text-foreground">{title}</h3>
+      </div>
+      <div className="flex items-center gap-2">
+        {sectionKey && (
+          <Button size="sm" variant="ghost" onClick={() => toggleDeclaredEmpty(sectionKey)} className="text-[10px] text-muted-foreground">
+            {declaredEmpty[sectionKey] ? "Réactiver" : "Déclarer vide"}
+          </Button>
+        )}
+        {onAdd && <Button size="sm" variant="outline" onClick={() => { setEditIndex(null); setEditData(null); onAdd(); }}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>}
+      </div>
+    </div>
+  );
+
   // Completion percentage
   const completionSections = [
     { key: "documents", items: documents, label: "Documents" },
