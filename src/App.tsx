@@ -68,6 +68,7 @@ import LaboratoryAnalyses from "./pages/laboratory/LaboratoryAnalyses";
 import LaboratoryResults from "./pages/laboratory/LaboratoryResults";
 import LaboratoryPatients from "./pages/laboratory/LaboratoryPatients";
 import LaboratorySettings from "./pages/laboratory/LaboratorySettings";
+import LaboratoryReporting from "./pages/laboratory/LaboratoryReporting";
 
 // Secretary
 import SecretaryDashboard from "./pages/secretary/SecretaryDashboard";
