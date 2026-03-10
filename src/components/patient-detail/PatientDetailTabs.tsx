@@ -113,6 +113,10 @@ function HistoriqueContent() {
 
 function AntecedentsContent() {
   const { ante, setAnte, anteHistory, saveAnte } = usePatientDetail();
+  const [sub] = useDoctorSubscription();
+  const specialtyConfig = getPatientSpecialtyConfig(sub.activity, sub.specialty);
+  const labels = specialtyConfig.anteLabels || { medical: "Médicaux", surgical: "Chirurgicaux", traumatic: "Traumatiques", family: "Familiaux" };
+  
   return (
     <>
       <Card title="Antécédents" right={
@@ -122,7 +126,7 @@ function AntecedentsContent() {
         </div>
       }>
         <div className="grid gap-3 md:grid-cols-2">
-          {([["Médicaux", "medical"], ["Chirurgicaux", "surgical"], ["Traumatiques", "traumatic"], ["Familiaux", "family"]] as const).map(([label, key]) => (
+          {([[labels.medical, "medical"], [labels.surgical, "surgical"], [labels.traumatic, "traumatic"], [labels.family, "family"]] as const).map(([label, key]) => (
             <div key={key}>
               <Label className="text-xs text-muted-foreground">{label}</Label>
               <textarea value={(ante as any)[key]} onChange={(e) => setAnte({ ...ante, [key]: e.target.value })} rows={3}
