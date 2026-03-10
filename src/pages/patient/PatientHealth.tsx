@@ -287,7 +287,7 @@ const PatientHealth = () => {
         {/* DOCUMENTS */}
         {section === "documents" && (
           <div>
-            <SectionHeader title="Documents" onBack={() => setSection("menu")} />
+            <SectionHeader title="Documents" sectionKey="documents" onBack={() => setSection("menu")} />
             <div className="flex justify-end mb-3"><Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setShowUpload(!showUpload)}><Upload className="h-4 w-4 mr-1" />Importer</Button></div>
             {showUpload && (
               <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 text-center mb-3">
