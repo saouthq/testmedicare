@@ -55,6 +55,7 @@ const AdminModules = () => {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [confirmToggle, setConfirmToggle] = useState<{ mod: PlatformModule; enable: boolean } | null>(null);
+  const [activeTab, setActiveTab] = useState<"modules" | "customize">("modules");
 
   const categories = useMemo(() => [...new Set(platformModules.map(m => m.category))], []);
 
