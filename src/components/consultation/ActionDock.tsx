@@ -246,6 +246,12 @@ export function ActionDock() {
   const [sub] = useDoctorSubscription();
   const config = getSpecialtyConfig(sub.activity, sub.specialty);
   const dockLabels = config.dockTabs || { rx: "Rx", labs: "Analyses", docs: "Docs", close: "Clôture" };
+  
+  // Specialty-specific lab suggestions
+  const specialtyLabSuggestions = useMemo(() => {
+    const labList = getSpecialtyLabs(sub.activity, sub.specialty);
+    return labList.filter(l => !ctx.analyses.includes(l));
+  }, [sub.activity, sub.specialty, ctx.analyses]);
 
   const TABS = [
     { key: "rx" as const, icon: Pill, label: dockLabels.rx },
