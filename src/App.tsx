@@ -129,7 +129,12 @@ import AdminCompliance from "./pages/admin/AdminCompliance";
 import AdminSpecialties from "./pages/admin/AdminSpecialties";
 import AdminActions from "./pages/admin/AdminActions";
 import AdminEmailConfig from "./pages/admin/AdminEmailConfig";
+import AdminOnboarding from "./pages/admin/AdminOnboarding";
+import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminDoctorPerformance from "./pages/admin/AdminDoctorPerformance";
+import AdminContentPages from "./pages/admin/AdminContentPages";
 import AdminGuard from "./components/admin/AdminGuard";
+import DoctorSubscription from "./pages/doctor/DoctorSubscription";
 
 // Shared
 import Messages from "./pages/messaging/Messages";
