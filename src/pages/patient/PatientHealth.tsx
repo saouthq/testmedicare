@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState, useEffect } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical, FlaskConical } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical, FlaskConical, CheckCircle2 } from "lucide-react";
 import AddItemModal from "@/components/patient-health/AddItemModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
