@@ -28,6 +28,7 @@ import {
   getEnabledFeatureLabels,
   planNameToTier,
   featureCatalog,
+  specialtyFeatureHighlights,
   type ActivityType,
   type PublicPlanConfig,
 } from "@/stores/featureMatrixStore";
