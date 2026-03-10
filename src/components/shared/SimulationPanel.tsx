@@ -1,9 +1,9 @@
 /**
- * SimulationPanel — Dev tool to test cross-role workflows, plan simulation, and specialty role testing.
- * Floating button → opens panel with 3 tabs: Cross-rôles, Plan médecin, Spécialités.
+ * SimulationPanel — Dev tool to test cross-role workflows, plan simulation, specialty testing, and full navigation.
+ * Floating button → opens panel with 4 tabs: Cross-rôles, Plan médecin, Spécialités, Navigation.
  */
 import { useState } from "react";
-import { Zap, X, FlaskConical, Pill, Stethoscope, UserX, Crown, Eye, Heart, Ear, Brain, Baby, Bone, Smile } from "lucide-react";
+import { Zap, X, FlaskConical, Pill, Stethoscope, UserX, Crown, Eye, Heart, Ear, Brain, Baby, Bone, Smile, LayoutDashboard, Users, Calendar, FileText, Settings, MessageSquare, ClipboardList, Banknote, Building2, ShieldCheck, BarChart3, Plug, Bot, Clock, Gavel, Flag, CreditCard, ScrollText, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore";
 import { updateLabDemandStatus, addLabPdf, labStore, initLabStoreIfEmpty } from "@/stores/labStore";
@@ -15,7 +15,7 @@ import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/store
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType, type PlanTier } from "@/stores/featureMatrixStore";
 import { useNavigate, useLocation } from "react-router-dom";
 
-type PanelTab = "simulation" | "plan" | "specialty";
+type PanelTab = "simulation" | "plan" | "specialty" | "navigation";
 
 /** All testable specialty configs */
 const specialtyConfigs = [
@@ -32,10 +32,118 @@ const specialtyConfigs = [
   { id: "kine", label: "Kinésithérapeute", icon: Bone, activity: "kine" as ActivityType, specialty: undefined, color: "text-orange-500" },
 ];
 
+/** Role navigation structure for quick-access to all spaces */
+interface NavGroup { label: string; icon: any; color: string; role: string; links: { label: string; url: string; icon: any }[] }
+
+const roleNavGroups: NavGroup[] = [
+  {
+    label: "Patient", icon: Users, color: "text-primary", role: "patient",
+    links: [
+      { label: "Dashboard", url: "/dashboard/patient", icon: LayoutDashboard },
+      { label: "Rendez-vous", url: "/dashboard/patient/appointments", icon: Calendar },
+      { label: "Recherche", url: "/search", icon: Eye },
+      { label: "Espace santé", url: "/dashboard/patient/health", icon: Activity },
+      { label: "Ordonnances", url: "/dashboard/patient/prescriptions", icon: FileText },
+      { label: "Notifications", url: "/dashboard/patient/notifications", icon: Activity },
+      { label: "Messagerie", url: "/dashboard/patient/messages", icon: MessageSquare },
+      { label: "Paramètres", url: "/dashboard/patient/settings", icon: Settings },
+    ],
+  },
+  {
+    label: "Médecin", icon: Stethoscope, color: "text-accent", role: "doctor",
+    links: [
+      { label: "Dashboard", url: "/dashboard/doctor", icon: LayoutDashboard },
+      { label: "Planning", url: "/dashboard/doctor/schedule", icon: Calendar },
+      { label: "Salle d'attente", url: "/dashboard/doctor/waiting-room", icon: Clock },
+      { label: "Patients", url: "/dashboard/doctor/patients", icon: Users },
+      { label: "Consultation", url: "/dashboard/doctor/consultation/new?patient=1", icon: ClipboardList },
+      { label: "Ordonnances", url: "/dashboard/doctor/prescriptions", icon: FileText },
+      { label: "Fiche patient", url: "/dashboard/doctor/patients/1", icon: Eye },
+      { label: "Facturation", url: "/dashboard/doctor/billing", icon: Banknote },
+      { label: "Connect", url: "/dashboard/doctor/connect", icon: Plug },
+      { label: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
+      { label: "Statistiques", url: "/dashboard/doctor/stats", icon: BarChart3 },
+      { label: "Paramètres", url: "/dashboard/doctor/settings", icon: Settings },
+    ],
+  },
+  {
+    label: "Pharmacie", icon: Pill, color: "text-warning", role: "pharmacy",
+    links: [
+      { label: "Dashboard", url: "/dashboard/pharmacy", icon: LayoutDashboard },
+      { label: "Ordonnances", url: "/dashboard/pharmacy/prescriptions", icon: FileText },
+      { label: "Stock", url: "/dashboard/pharmacy/stock", icon: Pill },
+      { label: "Patients", url: "/dashboard/pharmacy/patients", icon: Users },
+      { label: "Historique", url: "/dashboard/pharmacy/history", icon: Clock },
+      { label: "Connect", url: "/dashboard/pharmacy/connect", icon: Plug },
+      { label: "Paramètres", url: "/dashboard/pharmacy/settings", icon: Settings },
+    ],
+  },
+  {
+    label: "Laboratoire", icon: FlaskConical, color: "text-accent", role: "laboratory",
+    links: [
+      { label: "Dashboard", url: "/dashboard/laboratory", icon: LayoutDashboard },
+      { label: "Analyses", url: "/dashboard/laboratory/analyses", icon: FlaskConical },
+      { label: "Résultats", url: "/dashboard/laboratory/results", icon: ClipboardList },
+      { label: "Patients", url: "/dashboard/laboratory/patients", icon: Users },
+      { label: "Paramètres", url: "/dashboard/laboratory/settings", icon: Settings },
+    ],
+  },
+  {
+    label: "Secrétaire", icon: Building2, color: "text-primary", role: "secretary",
+    links: [
+      { label: "Dashboard", url: "/dashboard/secretary", icon: LayoutDashboard },
+      { label: "Agenda", url: "/dashboard/secretary/agenda", icon: Calendar },
+      { label: "Patients", url: "/dashboard/secretary/patients", icon: Users },
+      { label: "Bureau", url: "/dashboard/secretary/office", icon: Building2 },
+      { label: "Documents", url: "/dashboard/secretary/documents", icon: FileText },
+      { label: "Facturation", url: "/dashboard/secretary/billing", icon: Banknote },
+      { label: "Paramètres", url: "/dashboard/secretary/settings", icon: Settings },
+    ],
+  },
+  {
+    label: "Admin", icon: ShieldCheck, color: "text-destructive", role: "admin",
+    links: [
+      { label: "Dashboard", url: "/dashboard/admin", icon: LayoutDashboard },
+      { label: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
+      { label: "Vérifications", url: "/dashboard/admin/verifications", icon: ShieldCheck },
+      { label: "Paiements", url: "/dashboard/admin/payments", icon: CreditCard },
+      { label: "Modules", url: "/dashboard/admin/modules", icon: Settings },
+      { label: "Plans", url: "/dashboard/admin/plans", icon: Crown },
+      { label: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
+      { label: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: Flag },
+      { label: "Feature Matrix", url: "/dashboard/admin/feature-matrix", icon: BarChart3 },
+      { label: "IAM", url: "/dashboard/admin/iam", icon: ShieldCheck },
+      { label: "Litiges", url: "/dashboard/admin/disputes", icon: Gavel },
+      { label: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
+      { label: "Audit Logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
+      { label: "Compliance", url: "/dashboard/admin/compliance", icon: ShieldCheck },
+      { label: "Actions", url: "/dashboard/admin/actions", icon: Zap },
+      { label: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
+    ],
+  },
+  {
+    label: "Public", icon: Eye, color: "text-muted-foreground", role: "public",
+    links: [
+      { label: "Accueil", url: "/", icon: LayoutDashboard },
+      { label: "Recherche", url: "/search", icon: Eye },
+      { label: "Profil médecin", url: "/doctor/1", icon: Stethoscope },
+      { label: "Réservation", url: "/booking/1", icon: Calendar },
+      { label: "Cliniques", url: "/clinics", icon: Building2 },
+      { label: "Hôpitaux", url: "/hospitals", icon: Building2 },
+      { label: "Pharmacies", url: "/pharmacies", icon: Pill },
+      { label: "Médicaments", url: "/medicaments", icon: FlaskConical },
+      { label: "Comment ça marche", url: "/how-it-works", icon: Eye },
+      { label: "Devenir partenaire", url: "/become-partner", icon: Users },
+      { label: "Aide", url: "/help", icon: MessageSquare },
+    ],
+  },
+];
+
 const SimulationPanel = () => {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<PanelTab>("simulation");
+  const [tab, setTab] = useState<PanelTab>("navigation");
   const [sub] = useDoctorSubscription();
+  const [expandedRole, setExpandedRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -86,7 +194,6 @@ const SimulationPanel = () => {
     setDoctorActivity(config.activity, config.specialty);
     setDoctorPlan("pro");
     toast.success(`🔄 Rôle: ${config.label} (Pro)`);
-    // If on doctor space, navigate to consultation to test
     if (location.pathname.startsWith("/dashboard/doctor")) {
       navigate("/dashboard/doctor/consultation/new?patient=1");
     } else {
@@ -94,9 +201,26 @@ const SimulationPanel = () => {
     }
   };
 
+  const goTo = (url: string, role?: string) => {
+    // Auto-set role for admin routes
+    if (role === "admin") {
+      localStorage.setItem("userRole", "admin");
+    }
+    navigate(url);
+  };
+
   const currentActivity = activities.find(a => a.id === sub.activity);
   const currentPlans = plansByActivity[sub.activity] || [];
   const currentSpecialtyInfo = sub.specialty ? specialtyFeatureHighlights[sub.specialty] : null;
+
+  // Detect which role space the user is currently in
+  const currentRole = location.pathname.startsWith("/dashboard/admin") ? "admin"
+    : location.pathname.startsWith("/dashboard/doctor") ? "doctor"
+    : location.pathname.startsWith("/dashboard/patient") ? "patient"
+    : location.pathname.startsWith("/dashboard/pharmacy") ? "pharmacy"
+    : location.pathname.startsWith("/dashboard/laboratory") ? "laboratory"
+    : location.pathname.startsWith("/dashboard/secretary") ? "secretary"
+    : "public";
 
   if (!open) {
     return (
@@ -114,24 +238,81 @@ const SimulationPanel = () => {
     <div className="fixed bottom-4 right-4 z-[100] w-96 max-h-[80vh] rounded-2xl border bg-card shadow-elevated animate-fade-in overflow-hidden flex flex-col">
       {/* Tabs */}
       <div className="flex border-b shrink-0">
-        <button onClick={() => setTab("simulation")}
-          className={`flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${tab === "simulation" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
-          <Zap className="h-3.5 w-3.5" />Cross-rôles
-        </button>
-        <button onClick={() => setTab("plan")}
-          className={`flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${tab === "plan" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
-          <Crown className="h-3.5 w-3.5" />Plan
-        </button>
-        <button onClick={() => setTab("specialty")}
-          className={`flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${tab === "specialty" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
-          <Stethoscope className="h-3.5 w-3.5" />Spécialités
-        </button>
+        {([
+          { key: "navigation" as PanelTab, label: "🗺️ Nav", icon: LayoutDashboard },
+          { key: "simulation" as PanelTab, label: "⚡ Test", icon: Zap },
+          { key: "plan" as PanelTab, label: "💎 Plan", icon: Crown },
+          { key: "specialty" as PanelTab, label: "🩺 Spé", icon: Stethoscope },
+        ]).map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`flex-1 py-2.5 text-[11px] font-medium transition-colors ${tab === t.key ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
+            {t.label}
+          </button>
+        ))}
         <button onClick={() => setOpen(false)} className="px-3 text-muted-foreground hover:text-foreground">
           <X className="h-4 w-4" />
         </button>
       </div>
 
       <div className="p-4 space-y-3 overflow-y-auto flex-1">
+        {/* Navigation tab — full role sitemap */}
+        {tab === "navigation" && (
+          <>
+            <p className="text-[10px] text-muted-foreground">Naviguez dans tous les espaces de la plateforme.</p>
+            
+            {/* Current location */}
+            <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center gap-2">
+              <span className="text-[10px] text-primary font-medium">📍</span>
+              <span className="text-[11px] text-foreground font-medium truncate">{location.pathname}</span>
+              <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full ml-auto">{currentRole}</span>
+            </div>
+
+            {/* Role groups */}
+            <div className="space-y-1">
+              {roleNavGroups.map(group => {
+                const isExpanded = expandedRole === group.role;
+                const isCurrentRole = currentRole === group.role;
+                const Icon = group.icon;
+                return (
+                  <div key={group.role}>
+                    <button
+                      onClick={() => setExpandedRole(isExpanded ? null : group.role)}
+                      className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-all ${
+                        isCurrentRole ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <Icon className={`h-4 w-4 ${group.color}`} />
+                      <span className="text-xs font-semibold text-foreground flex-1">{group.label}</span>
+                      <span className="text-[9px] text-muted-foreground">{group.links.length} pages</span>
+                      <span className={`text-[10px] transition-transform ${isExpanded ? "rotate-90" : ""}`}>▶</span>
+                    </button>
+                    {isExpanded && (
+                      <div className="ml-3 mt-1 space-y-0.5 border-l-2 border-muted pl-3">
+                        {group.links.map(link => {
+                          const isActive = location.pathname === link.url || location.pathname.startsWith(link.url + "/");
+                          const LinkIcon = link.icon;
+                          return (
+                            <button
+                              key={link.url}
+                              onClick={() => goTo(link.url, group.role)}
+                              className={`w-full flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-all ${
+                                isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                              }`}
+                            >
+                              <LinkIcon className="h-3 w-3 shrink-0" />
+                              <span className="text-[11px] font-medium">{link.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         {/* Simulation tab */}
         {tab === "simulation" && (
           <>
@@ -149,6 +330,29 @@ const SimulationPanel = () => {
               <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateAbsent}>
                 <UserX className="h-3.5 w-3.5 mr-2 text-destructive" />Simuler patient absent
               </Button>
+            </div>
+            
+            {/* Quick role switchers */}
+            <div className="border-t pt-2 space-y-1.5">
+              <p className="text-[10px] text-muted-foreground font-medium">Accès rapide :</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { label: "Patient", url: "/dashboard/patient", color: "text-primary" },
+                  { label: "Médecin", url: "/dashboard/doctor", color: "text-accent" },
+                  { label: "Pharmacie", url: "/dashboard/pharmacy", color: "text-warning" },
+                  { label: "Labo", url: "/dashboard/laboratory", color: "text-primary" },
+                  { label: "Secrétaire", url: "/dashboard/secretary", color: "text-primary" },
+                  { label: "Admin", url: "/dashboard/admin", color: "text-destructive" },
+                ].map(r => (
+                  <button key={r.url}
+                    onClick={() => goTo(r.url, r.label === "Admin" ? "admin" : undefined)}
+                    className={`rounded-lg border px-2 py-2 text-center text-[10px] font-medium transition-all hover:bg-muted/50 ${
+                      location.pathname.startsWith(r.url) ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                    }`}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -192,12 +396,11 @@ const SimulationPanel = () => {
           </>
         )}
 
-        {/* Specialty tab — role switcher + test links */}
+        {/* Specialty tab */}
         {tab === "specialty" && (
           <>
             <p className="text-[10px] text-muted-foreground">Basculez rapidement vers une spécialité et testez sa consultation.</p>
             
-            {/* Current role indicator */}
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
               <p className="text-[10px] font-medium text-primary uppercase">Rôle actif</p>
               <p className="text-sm font-semibold text-foreground mt-0.5">
@@ -214,7 +417,6 @@ const SimulationPanel = () => {
               )}
             </div>
 
-            {/* Specialty grid */}
             <div className="grid grid-cols-2 gap-1.5">
               {specialtyConfigs.map(config => {
                 const isActive = (config.activity === sub.activity && config.specialty === sub.specialty) ||
@@ -233,15 +435,11 @@ const SimulationPanel = () => {
                     {specInfo && (
                       <p className="text-[9px] text-muted-foreground mt-1 truncate">{specInfo.highlights[0]}</p>
                     )}
-                    {specInfo?.disabledFeatures && specInfo.disabledFeatures.length > 0 && (
-                      <p className="text-[9px] text-destructive mt-0.5">⚠ {specInfo.disabledFeatures.length} feature(s) off</p>
-                    )}
                   </button>
                 );
               })}
             </div>
 
-            {/* Quick test links */}
             <div className="space-y-1.5 border-t pt-2">
               <p className="text-[10px] text-muted-foreground font-medium">Tests rapides :</p>
               <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => navigate("/dashboard/doctor/consultation/new?patient=1")}>
@@ -270,6 +468,7 @@ const SimulationPanel = () => {
             localStorage.removeItem("doctor_renewal_requests");
             localStorage.removeItem("medicare_admin_modules");
             localStorage.removeItem("medicare_module_labels");
+            localStorage.removeItem("medicare_health_empty");
             window.location.reload();
           }}>
             🗑️ Réinitialiser tous les stores
