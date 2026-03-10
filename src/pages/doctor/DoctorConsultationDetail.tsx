@@ -39,14 +39,14 @@ function ConsultationInner() {
   }
 
   return (
-    <DashboardLayout role="doctor" title="Consultation en cours">
+    <DashboardLayout role="doctor" title={`${consultLabel} en cours`}>
       {/* Modals */}
       <CloseModal />
       <HistoryDrawer />
       <CommandPalette />
       <SlidePanel />
 
-      {/* Top bar — sticky en haut */}
+      {/* Top bar */}
       <div className="sticky top-0 z-20 rounded-xl border bg-card p-3 shadow-card mb-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
@@ -57,6 +57,7 @@ function ConsultationInner() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-foreground">{ctx.patient.name}</h2>
                 <span className="text-xs text-muted-foreground">{ctx.patient.age} ans · {ctx.patient.gender}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{config.label}</span>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">En cours</span>
               </div>
               <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
