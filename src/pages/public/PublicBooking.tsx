@@ -189,7 +189,7 @@ const PublicBooking = () => {
         </div>
 
         {/* Progress indicator */}
-        {step !== "done" && step !== "create-account" && (
+        {step !== "done" && step !== "create-account" && step !== "payment" && (
           <div className="flex items-center gap-2 mb-5">
             {["auth", "motif", "info", "confirm"].map((s, i) => (
               <div key={s} className="flex items-center gap-2 flex-1">
