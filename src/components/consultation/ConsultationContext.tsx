@@ -551,7 +551,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
       diagnosis,
       conclusion,
       extraAnalyses: analyses.length > 0 ? analyses : undefined,
-      defaultDockTab: dockTab,
+      defaultDockTab: dockTab === "close" ? "rx" : dockTab,
     };
     const updated = [...customTemplates, newTpl];
     setCustomTemplates(updated);

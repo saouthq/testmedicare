@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export type DockTab = "rx" | "labs" | "docs" | "close";
+export type PaymentMode = "cash" | "card" | "check" | "transfer" | "insurance";
 export type SlideType = "rx" | "labs" | "report" | "certificate" | "sickleave" | "rdv";
 
 export type PrescriptionItem = {
