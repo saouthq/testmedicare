@@ -218,6 +218,7 @@ const App = () => (
           <Route path="/dashboard/doctor/ai-assistant" element={<DoctorAIAssistant />} />
           <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
           <Route path="/dashboard/doctor/waiting-room" element={<DoctorWaitingRoom />} />
+          <Route path="/dashboard/doctor/protocols" element={<DoctorProtocols />} />
 
           {/* Pharmacy */}
           <Route path="/dashboard/pharmacy" element={<PharmacyDashboard />} />
