@@ -85,9 +85,12 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Tableau de bord", url: "/dashboard/secretary", icon: LayoutDashboard },
     { title: "Agenda", url: "/dashboard/secretary/agenda", icon: Calendar },
     { title: "Patients", url: "/dashboard/secretary/patients", icon: Users },
+    { title: "Journal d'appels", url: "/dashboard/secretary/call-log", icon: Activity },
+    { title: "SMS & Rappels", url: "/dashboard/secretary/sms", icon: MessageSquare },
     { title: "Facturation", url: "/dashboard/secretary/billing", icon: CreditCard },
     { title: "Cabinet", url: "/dashboard/secretary/office", icon: Building2 },
     { title: "Documents", url: "/dashboard/secretary/documents", icon: ScrollText },
+    { title: "Statistiques", url: "/dashboard/secretary/stats", icon: BarChart3 },
     { title: "Messagerie", url: "/dashboard/secretary/messages", icon: MessageSquare },
   ],
   hospital: [
