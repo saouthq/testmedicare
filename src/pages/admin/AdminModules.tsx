@@ -4,6 +4,7 @@
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
+import ModuleCustomization from "@/components/admin/ModuleCustomization";
 import {
   ShieldCheck, Search, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2,
   Calendar, Video, FileText, MessageSquare, Bell, FlaskConical, Pill,
