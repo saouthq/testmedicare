@@ -230,6 +230,16 @@ export const buildDefaultState = (activityId: ActivityType): FeatureState => {
       if (activityId === "pharmacy" && ["rx_reception", "stock_basic", "guard_schedule"].includes(f.id)) enabled = true;
       if (activityId === "pharmacy" && plan !== "essentiel" && ["stock_advanced", "substitution_auto"].includes(f.id)) enabled = true;
 
+      // Specialty-specific: disable teleconsult for ophtalmo
+      // (Ophtalmo needs in-person exams: acuité visuelle, fond d'oeil, etc.)
+      if (activityId === "specialiste" && ["teleconsult_video", "teleconsult_chat", "teleconsult_screen_share", "teleconsult_recording"].includes(f.id)) {
+        // Keep enabled by default but overrides will disable for specific specialties
+      }
+
+      // Enable specialty tools
+      if (activityId === "specialiste" && f.id === "ophtalmo_exam" && plan !== "essentiel") enabled = true;
+      if (activityId === "specialiste" && f.id === "cardio_ecg" && plan !== "essentiel") enabled = true;
+
       state[f.id][plan] = enabled;
     });
   });
