@@ -10,13 +10,6 @@ import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsult
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent, openGoogleMapsDirections } from "@/lib/calendarExport";
 import { ReportButton } from "@/components/shared/ReportButton";
-import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
-import EmptyState from "@/components/shared/EmptyState";
-import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsultButton";
-import { toast } from "@/hooks/use-toast";
-import { downloadCalendarEvent, openGoogleMapsDirections } from "@/lib/calendarExport";
 
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
