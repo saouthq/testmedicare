@@ -16,12 +16,6 @@ import {
   mockFaqItems as faqItems,
 } from "@/data/mockData";
 import { ReportButton } from "@/components/shared/ReportButton";
-import {
-  mockDoctorProfile as doctorData,
-  mockAvailableSlots as availableSlots,
-  mockReviews as reviews,
-  mockFaqItems as faqItems,
-} from "@/data/mockData";
 
 const DoctorPublicProfile = () => {
   const navigate = useNavigate();
