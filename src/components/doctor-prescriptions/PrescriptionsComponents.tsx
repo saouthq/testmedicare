@@ -228,9 +228,9 @@ export function PrescriptionDetail() {
                 <Button variant="outline" size="sm" className="text-xs" onClick={() => handleDuplicate(selected.id)}>
                   <Copy className="mr-1 h-3.5 w-3.5" /> Dupliquer
                 </Button>
-                {!selected.sent && (
+                {!selected.sent && isPharmacySendEnabled() && (
                   <Button size="sm" className="text-xs bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleResend(selected.id)}>
-                    <Send className="mr-1 h-3.5 w-3.5" /> Envoyer
+                    <Send className="mr-1 h-3.5 w-3.5" /> Envoyer à la pharmacie
                   </Button>
                 )}
               </div>
