@@ -509,6 +509,7 @@ export function CommandPalette() {
 
 export function ClosedView() {
   const ctx = useConsultation();
+  const [careSheetOpen, setCareSheetOpen] = useState(false);
 
   const handleSendToPatient = () => {
     toast({
