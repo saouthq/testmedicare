@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar, 
   FileText, Pill, Activity, User, Phone, Loader2, ArrowRight, Upload,
+  CreditCard,
 } from "lucide-react";
 
 const doctor = {
