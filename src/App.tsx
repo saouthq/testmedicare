@@ -70,6 +70,7 @@ import LaboratoryResults from "./pages/laboratory/LaboratoryResults";
 import LaboratoryPatients from "./pages/laboratory/LaboratoryPatients";
 import LaboratorySettings from "./pages/laboratory/LaboratorySettings";
 import LaboratoryReporting from "./pages/laboratory/LaboratoryReporting";
+import LaboratoryQuality from "./pages/laboratory/LaboratoryQuality";
 
 // Secretary
 import SecretaryDashboard from "./pages/secretary/SecretaryDashboard";
