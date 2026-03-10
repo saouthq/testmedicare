@@ -229,10 +229,10 @@ const AdminCampaigns = () => {
             {/* Estimated + Preview */}
             <div className="rounded-lg border bg-muted/20 p-3 flex items-center justify-between">
               <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3.5 w-3.5" />Estimation : <strong className="text-foreground">{estimatedRecipients.toLocaleString()}</strong> destinataires</span>
-              {segmentEnabled && (segmentCity || segmentSpecialty) && (
+              {segmentEnabled && (segmentCity !== "all" || segmentSpecialty !== "all") && (
                 <div className="flex gap-1">
-                  {segmentCity && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{segmentCity}</span>}
-                  {segmentSpecialty && <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">{segmentSpecialty}</span>}
+                  {segmentCity !== "all" && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{segmentCity}</span>}
+                  {segmentSpecialty !== "all" && <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">{segmentSpecialty}</span>}
                 </div>
               )}
             </div>
