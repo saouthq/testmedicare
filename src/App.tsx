@@ -271,6 +271,8 @@ const App = () => (
           <Route path="/dashboard/admin/plans" element={<AdminGuard><AdminPlanManager /></AdminGuard>} />
           <Route path="/dashboard/admin/overrides" element={<AdminGuard><AdminOverrides /></AdminGuard>} />
           <Route path="/dashboard/admin/feature-flags" element={<AdminGuard><AdminFeatureFlags /></AdminGuard>} />
+          <Route path="/dashboard/admin/compliance" element={<AdminGuard><AdminCompliance /></AdminGuard>} />
+          <Route path="/dashboard/admin/email-config" element={<AdminGuard><AdminEmailConfig /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 
