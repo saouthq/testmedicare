@@ -254,6 +254,16 @@ const PAYMENT_MODES: { key: PaymentMode; label: string; Icon: any }[] = [
 // ─────────────────────────────────────────────────────────────
 export function ActionDock() {
   const ctx = useConsultation();
+  const [sub] = useDoctorSubscription();
+  const config = getSpecialtyConfig(sub.activity, sub.specialty);
+  const dockLabels = config.dockTabs || { rx: "Rx", labs: "Analyses", docs: "Docs", close: "Clôture" };
+
+  const TABS = [
+    { key: "rx" as const, icon: Pill, label: dockLabels.rx },
+    { key: "labs" as const, icon: Activity, label: dockLabels.labs },
+    { key: "docs" as const, icon: FileText, label: dockLabels.docs },
+    { key: "close" as const, icon: CheckCircle2, label: dockLabels.close },
+  ] as const;
 
   // Badge counts
   const rxCount = ctx.rxItems.filter((i) => i.medication.trim()).length;
