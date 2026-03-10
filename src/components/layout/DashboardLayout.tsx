@@ -67,7 +67,9 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Tableau de bord", url: "/dashboard/pharmacy", icon: LayoutDashboard },
     { title: "Ordonnances", url: "/dashboard/pharmacy/prescriptions", icon: FileText },
     { title: "Stock", url: "/dashboard/pharmacy/stock", icon: Pill },
+    { title: "Mes patients", url: "/dashboard/pharmacy/patients", icon: Users },
     { title: "Historique", url: "/dashboard/pharmacy/history", icon: Clock },
+    { title: "Connect", url: "/dashboard/pharmacy/connect", icon: Plug },
     { title: "Messagerie", url: "/dashboard/pharmacy/messages", icon: MessageSquare },
   ],
   laboratory: [
