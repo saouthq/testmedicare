@@ -45,7 +45,7 @@ const daysOfMonth = () => {
   return d;
 };
 
-type Step = "auth" | "motif" | "info" | "confirm" | "done" | "create-account";
+type Step = "auth" | "motif" | "info" | "confirm" | "payment" | "done" | "create-account";
 
 const PublicBooking = () => {
   const { doctorId } = useParams();
