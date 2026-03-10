@@ -78,8 +78,8 @@ const AdminCampaigns = () => {
       sentAt: scheduleEnabled ? undefined : new Date().toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric" }),
       scheduledAt: scheduleEnabled ? `${scheduleDate} ${scheduleTime}` : undefined,
       recipientCount: estimatedRecipients,
-      segmentCity: segmentCity || undefined,
-      segmentSpecialty: segmentSpecialty || undefined,
+      segmentCity: segmentCity !== "all" ? segmentCity : undefined,
+      segmentSpecialty: segmentSpecialty !== "all" ? segmentSpecialty : undefined,
     };
     setCampaigns(prev => [newCampaign, ...prev]);
     appendLog("campaign_sent", "notification_campaign", newCampaign.id, 
