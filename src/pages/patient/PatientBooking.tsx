@@ -100,14 +100,33 @@ const PatientBooking = () => {
     return true;
   };
 
-  const handleConfirm = () => {
-    // Write to shared store — appears in Dashboard & Appointments
+  const isTeleconsult = selectedLieuData?.type === "teleconsultation";
+  const requiresPayment = isTeleconsult && selectedMotifData;
+
+  const handleGoToPayment = () => {
+    if (requiresPayment) {
+      setCurrentStep(6);
+    } else {
+      handleConfirmBooking();
+    }
+  };
+
+  const handlePayAndConfirm = () => {
+    setPaymentProcessing(true);
+    // TODO BACKEND: POST /api/payments/teleconsult
+    setTimeout(() => {
+      setPaymentProcessing(false);
+      handleConfirmBooking();
+    }, 2000);
+  };
+
+  const handleConfirmBooking = () => {
     bookAppointment({
       doctor: doctor.name,
       specialty: doctor.specialty,
       date: `${selectedDay} Fév 2026`,
       time: selectedSlot,
-      type: selectedLieuData?.type === "teleconsultation" ? "teleconsultation" : "cabinet",
+      type: isTeleconsult ? "teleconsultation" : "cabinet",
       address: selectedLieuData?.address || "",
       avatar: doctor.avatar,
       status: doctor.autoConfirm ? "confirmed" : "pending",
