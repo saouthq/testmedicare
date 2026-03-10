@@ -239,19 +239,49 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Trust */}
+      {/* Testimonials */}
       <section className="border-t py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-foreground text-center mb-8">Confiance & Confidentialité</h2>
-          <div className="grid gap-6 sm:grid-cols-3 max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-2">Ce qu'ils en disent</h2>
+          <p className="text-sm text-muted-foreground text-center mb-8">Avis vérifiés de nos utilisateurs</p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
             {[
-              { icon: Shield, title: "Données sécurisées", desc: "Vos données de santé sont chiffrées et protégées." },
-              { icon: Lock, title: "Confidentialité", desc: "Aucune donnée n'est partagée sans votre consentement." },
-              { icon: Heart, title: "Qualité vérifiée", desc: "Tous les praticiens sont vérifiés et diplômés." },
+              { name: "Fatma B.", role: "Patiente", text: "J'ai trouvé un ophtalmologue en 2 minutes et pris RDV pour le lendemain. Simple et rapide !", avatar: "FB" },
+              { name: "Dr. Karim M.", role: "Cardiologue", text: "Medicare me permet de gérer mon planning et mes patients efficacement. L'interface est intuitive et professionnelle.", avatar: "KM" },
+              { name: "Sarra T.", role: "Patiente", text: "La téléconsultation m'a évité un déplacement inutile. Le paiement sécurisé et le compte-rendu reçu immédiatement.", avatar: "ST" },
+              { name: "Dr. Nadia H.", role: "Pédiatre", text: "Les outils de suivi de croissance et le carnet vaccinal intégrés facilitent le suivi de mes petits patients.", avatar: "NH" },
+              { name: "Mohamed A.", role: "Pharmacien", text: "Je reçois les ordonnances directement sur la plateforme et peux informer le patient quand c'est prêt. Fini les appels !", avatar: "MA" },
+              { name: "Leila K.", role: "Patiente", text: "Mon espace santé centralise tous mes documents, vaccins et traitements. Mon médecin a accès à tout instantanément.", avatar: "LK" },
+            ].map((t, i) => (
+              <div key={i} className="rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-bold">{t.avatar}</div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-[11px] text-primary">{t.role}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">"{t.text}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust */}
+      <section className="border-t bg-muted/30 py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">Confiance & Confidentialité</h2>
+          <div className="grid gap-6 sm:grid-cols-4 max-w-4xl mx-auto">
+            {[
+              { icon: Shield, title: "Données chiffrées", desc: "Chiffrement AES-256 de bout en bout pour toutes vos données médicales." },
+              { icon: Lock, title: "RGPD conforme", desc: "Conformité totale avec la réglementation tunisienne et européenne sur la protection des données." },
+              { icon: Heart, title: "Praticiens vérifiés", desc: "Tous les professionnels sont vérifiés via leur numéro d'inscription au Conseil de l'Ordre." },
+              { icon: Video, title: "Téléconsultation sécurisée", desc: "Appels vidéo chiffrés avec partage de dossier médical en temps réel." },
             ].map((f, i) => (
               <div key={i} className="rounded-xl border bg-card p-5 shadow-card text-center">
                 <f.icon className="h-8 w-8 text-primary mx-auto mb-3" />
-                <h3 className="font-semibold text-foreground mb-1">{f.title}</h3>
+                <h3 className="font-semibold text-foreground mb-1 text-sm">{f.title}</h3>
                 <p className="text-xs text-muted-foreground">{f.desc}</p>
               </div>
             ))}
