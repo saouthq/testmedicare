@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type DockTab = "rx" | "labs" | "docs" | "tasks";
+export type DockTab = "rx" | "labs" | "docs" | "close";
 export type SlideType = "rx" | "labs" | "report" | "certificate" | "sickleave" | "rdv";
 
 export type PrescriptionItem = {
