@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import {
-  Eye, Heart, Baby, Ear, Brain, Smile, Bone, Camera, Activity,
+  Eye, Heart, Baby, Ear, Brain, Smile, Bone, Camera, Activity, Stethoscope,
   ChevronDown, ChevronUp, CheckCircle2, Plus, X, Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
