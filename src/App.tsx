@@ -247,6 +247,9 @@ const App = () => (
           <Route path="/dashboard/secretary/office" element={<SecretaryOffice />} />
           <Route path="/dashboard/secretary/documents" element={<SecretaryDocuments />} />
           <Route path="/dashboard/secretary/billing" element={<SecretaryBilling />} />
+          <Route path="/dashboard/secretary/call-log" element={<SecretaryCallLog />} />
+          <Route path="/dashboard/secretary/stats" element={<SecretaryStats />} />
+          <Route path="/dashboard/secretary/sms" element={<SecretarySMS />} />
           <Route path="/dashboard/secretary/settings" element={<SecretarySettings />} />
           <Route path="/dashboard/secretary/messages" element={<Messages role="secretary" />} />
 
