@@ -312,6 +312,8 @@ const AdminModules = () => {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Confirm critical disable dialog */}
