@@ -387,7 +387,7 @@ const PatientHealth = () => {
         {/* HABITS */}
         {section === "habits" && (
           <div>
-            <SectionHeader title="Habitudes de vie" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("habit")} />
+            <SectionHeader title="Habitudes de vie" sectionKey="habits" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("habit")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {habits.map((h, i) => (
                 <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
