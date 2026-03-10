@@ -85,12 +85,22 @@ function RxItemCard({ idx }: { idx: number }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLInputElement>(null);
+  const [sub] = useDoctorSubscription();
+
+  // Merge specialty-specific meds with base DB
+  const MED_DB = useMemo(() => {
+    const specialtyMeds = getSpecialtyMeds(sub.activity, sub.specialty);
+    const merged = [...specialtyMeds, ...BASE_MED_DB];
+    // Deduplicate by name
+    const seen = new Set<string>();
+    return merged.filter(m => { if (seen.has(m.name)) return false; seen.add(m.name); return true; });
+  }, [sub.activity, sub.specialty]);
 
   const suggestions = useMemo(() => {
     const q = (query || item.medication).toLowerCase();
     if (q.length < 2) return [];
-    return MED_DB.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [query, item.medication]);
+    return MED_DB.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 8);
+  }, [query, item.medication, MED_DB]);
 
   const selectMed = (name: string) => {
     ctx.updateRxItem(idx, "medication", name);
