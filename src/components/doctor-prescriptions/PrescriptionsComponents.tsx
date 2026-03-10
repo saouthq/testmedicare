@@ -14,6 +14,17 @@ import type { PrescriptionFilter } from "./types";
 import type { Prescription } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { isModuleEnabled } from "@/stores/adminModulesStore";
+
+/** Check if pharmacy send feature is enabled (module + feature flag) */
+function isPharmacySendEnabled(): boolean {
+  if (!isModuleEnabled("pharmacy")) return false;
+  try {
+    const flags = JSON.parse(localStorage.getItem("medicare_admin_features") || "{}");
+    if (flags.prescriptionSendPharmacy === false) return false;
+  } catch {}
+  return true;
+}
 
 /* ── Stats ── */
 export function PrescriptionsStats() {
