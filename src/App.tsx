@@ -236,6 +236,7 @@ const App = () => (
           <Route path="/dashboard/laboratory/results" element={<LaboratoryResults />} />
           <Route path="/dashboard/laboratory/patients" element={<LaboratoryPatients />} />
           <Route path="/dashboard/laboratory/reporting" element={<LaboratoryReporting />} />
+          <Route path="/dashboard/laboratory/quality" element={<LaboratoryQuality />} />
           <Route path="/dashboard/laboratory/settings" element={<LaboratorySettings />} />
           <Route path="/dashboard/laboratory/messages" element={<Messages role="laboratory" />} />
 
