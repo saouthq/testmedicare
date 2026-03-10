@@ -15,6 +15,7 @@ import {
   mockReviews as reviews,
   mockFaqItems as faqItems,
 } from "@/data/mockData";
+import { ReportButton } from "@/components/shared/ReportButton";
 
 const DoctorPublicProfile = () => {
   const navigate = useNavigate();
@@ -278,6 +279,7 @@ const DoctorPublicProfile = () => {
                       <p className="text-sm text-foreground mt-3 leading-relaxed">{r.text}</p>
                       <div className="flex items-center gap-3 mt-3">
                         <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"><ThumbsUp className="h-3 w-3" />{r.helpful} utile{r.helpful > 1 ? "s" : ""}</button>
+                        <ReportButton type="comment" targetId={`review-${i}`} targetName={`Avis de ${r.author}`} variant="icon" size="sm" />
                       </div>
                     </div>
                   ))}

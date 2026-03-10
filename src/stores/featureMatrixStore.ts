@@ -230,6 +230,16 @@ export const buildDefaultState = (activityId: ActivityType): FeatureState => {
       if (activityId === "pharmacy" && ["rx_reception", "stock_basic", "guard_schedule"].includes(f.id)) enabled = true;
       if (activityId === "pharmacy" && plan !== "essentiel" && ["stock_advanced", "substitution_auto"].includes(f.id)) enabled = true;
 
+      // Specialty-specific: disable teleconsult for ophtalmo
+      // (Ophtalmo needs in-person exams: acuité visuelle, fond d'oeil, etc.)
+      if (activityId === "specialiste" && ["teleconsult_video", "teleconsult_chat", "teleconsult_screen_share", "teleconsult_recording"].includes(f.id)) {
+        // Keep enabled by default but overrides will disable for specific specialties
+      }
+
+      // Enable specialty tools
+      if (activityId === "specialiste" && f.id === "ophtalmo_exam" && plan !== "essentiel") enabled = true;
+      if (activityId === "specialiste" && f.id === "cardio_ecg" && plan !== "essentiel") enabled = true;
+
       state[f.id][plan] = enabled;
     });
   });
@@ -315,4 +325,51 @@ export const planNameToTier = (name: string, activity: ActivityType): PlanTier =
   if (lower.includes("cabinet") || lower.includes("établissement")) return "cabinet";
   if (lower.includes("pro") || lower.includes("premium")) return "pro";
   return "essentiel";
+};
+
+/**
+ * Specialty-specific feature descriptions.
+ * Used in onboarding to show what's unique to each specialty.
+ */
+export const specialtyFeatureHighlights: Record<string, { highlights: string[]; disabledFeatures: string[]; extraTools: string[] }> = {
+  "Ophtalmologue": {
+    highlights: ["Examen ophtalmologique intégré", "Acuité visuelle numérique", "Fond d'œil documenté", "Prescription lunettes/lentilles"],
+    disabledFeatures: ["teleconsult_video", "teleconsult_chat"], // Ophtalmo needs in-person
+    extraTools: ["ophtalmo_exam"],
+  },
+  "Cardiologue": {
+    highlights: ["Interprétation ECG intégrée", "Suivi tension artérielle", "Holter numérique", "Échocardiographie documentée"],
+    disabledFeatures: [],
+    extraTools: ["cardio_ecg"],
+  },
+  "Dermatologue": {
+    highlights: ["Galerie photos dermatologiques", "Suivi lésions cutanées", "Téléconsultation photo", "Dermatoscope numérique"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Gynécologue": {
+    highlights: ["Suivi grossesse intégré", "Échographies documentées", "Calendrier menstruel", "Suivi fertilité"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Pédiatre": {
+    highlights: ["Courbes de croissance automatiques", "Carnet de vaccination intégré", "Calcul IMC enfant", "Suivi développement"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Psychiatre": {
+    highlights: ["Notes de séance sécurisées", "Suivi thérapeutique", "Échelles psychométriques", "Téléconsultation renforcée"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "ORL": {
+    highlights: ["Audiogramme numérique", "Examen endoscopique", "Schéma ORL interactif"],
+    disabledFeatures: ["teleconsult_video"],
+    extraTools: [],
+  },
+  "Neurologue": {
+    highlights: ["EEG documenté", "Bilan neurologique structuré", "Suivi épilepsie"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
 };

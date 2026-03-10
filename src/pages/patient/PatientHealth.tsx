@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState, useEffect } from "react";
-import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical, FlaskConical } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { FileText, Heart, Pill, Syringe, Upload, ChevronRight, Plus, AlertTriangle, X, Eye, Download, Calendar, Shield, Activity, Thermometer, Stethoscope, Scissors, Users, Apple, Bot, Send, Save, CheckCircle, Trash2, Pencil, MoreVertical, FlaskConical, CheckCircle2 } from "lucide-react";
 import AddItemModal from "@/components/patient-health/AddItemModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,11 +42,27 @@ import {
 import type { ChatMessage } from "@/data/mockData";
 
 const PatientHealth = () => {
-  const [section, setSection] = useState<HealthSection>("menu");
+  const [searchParams] = useSearchParams();
+  const initialSection = searchParams.get("section") as HealthSection || "menu";
+  const [section, setSection] = useState<HealthSection>(initialSection);
   const [showUpload, setShowUpload] = useState(false);
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>(aiInitial);
   const [aiInput, setAiInput] = useState("");
   const [aiIdx, setAiIdx] = useState(0);
+  
+  // "Declared empty" state per section
+  const [declaredEmpty, setDeclaredEmpty] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("medicare_health_empty") || "{}"); } catch { return {}; }
+  });
+  
+  const toggleDeclaredEmpty = (key: string) => {
+    setDeclaredEmpty(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem("medicare_health_empty", JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast({ title: declaredEmpty[key] ? "Section réactivée" : "Déclaré vide", description: declaredEmpty[key] ? "Vous pouvez maintenant ajouter des éléments." : "Section marquée comme vide." });
+  };
 
   // Cross-role: lab results
   useEffect(() => { initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]); }, []);
@@ -165,15 +182,38 @@ const PatientHealth = () => {
     </DropdownMenu>
   );
 
-  const SectionHeader = ({ title, onBack, onAdd }: { title: string; onBack: () => void; onAdd?: () => void }) => (
+  const SectionHeader = ({ title, sectionKey, onBack, onAdd }: { title: string; sectionKey?: string; onBack: () => void; onAdd?: () => void }) => (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
         <button onClick={onBack} className="text-primary hover:underline text-sm">← Retour</button>
         <h3 className="font-semibold text-foreground">{title}</h3>
       </div>
-      {onAdd && <Button size="sm" variant="outline" onClick={() => { setEditIndex(null); setEditData(null); onAdd(); }}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>}
+      <div className="flex items-center gap-2">
+        {sectionKey && (
+          <Button size="sm" variant="ghost" onClick={() => toggleDeclaredEmpty(sectionKey)} className="text-[10px] text-muted-foreground">
+            {declaredEmpty[sectionKey] ? "Réactiver" : "Déclarer vide"}
+          </Button>
+        )}
+        {onAdd && <Button size="sm" variant="outline" onClick={() => { setEditIndex(null); setEditData(null); onAdd(); }}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>}
+      </div>
     </div>
   );
+
+  // Completion percentage
+  const completionSections = [
+    { key: "documents", items: documents, label: "Documents" },
+    { key: "antecedents", items: antecedents, label: "Antécédents" },
+    { key: "treatments", items: treatments, label: "Traitements" },
+    { key: "allergies", items: allergies, label: "Allergies" },
+    { key: "habits", items: habits, label: "Habitudes" },
+    { key: "family", items: family, label: "Famille" },
+    { key: "surgeries", items: surgeries, label: "Opérations" },
+    { key: "vaccinations", items: vaccinations, label: "Vaccins" },
+    { key: "measures", items: measures, label: "Mesures" },
+  ];
+  
+  const completedCount = completionSections.filter(s => s.items.length > 0 || declaredEmpty[s.key]).length;
+  const completionPct = Math.round((completedCount / completionSections.length) * 100);
 
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
@@ -181,23 +221,60 @@ const PatientHealth = () => {
         {/* MENU */}
         {section === "menu" && (
           <div className="space-y-4">
+            {/* Completion bar */}
             <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
-              <div className="flex items-center gap-3">
-                <Heart className="h-8 w-8 text-primary/40 shrink-0" />
-                <div><h3 className="font-bold text-foreground text-sm">Complétez votre profil santé</h3><p className="text-xs text-muted-foreground mt-0.5">Recevez des rappels personnalisés et préparez vos consultations</p></div>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
-              {menuItems.map(item => (
-                <button key={item.key} onClick={() => setSection(item.key)} className="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
-                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><item.icon className="h-4 w-4 text-primary" /></div>
-                  <div className="flex-1"><p className="text-sm font-medium text-foreground">{item.label}</p></div>
-                  <div className="flex items-center gap-2">
-                    {item.count !== undefined && <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">{item.count}</span>}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Heart className="h-6 w-6 text-primary shrink-0" />
+                  <div>
+                    <h3 className="font-bold text-foreground text-sm">
+                      {completionPct === 100 ? "Profil santé complet !" : "Complétez votre profil santé"}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {completionPct === 100 
+                        ? "Votre dossier est à jour, vos consultations seront mieux préparées."
+                        : "Recevez des rappels personnalisés et préparez vos consultations"}
+                    </p>
                   </div>
-                </button>
-              ))}
+                </div>
+                <span className={`text-lg font-bold ${completionPct === 100 ? "text-accent" : "text-primary"}`}>{completionPct}%</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${completionPct === 100 ? "bg-accent" : "bg-primary"}`} style={{ width: `${completionPct}%` }} />
+              </div>
+              {completionPct < 100 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {completionSections.filter(s => s.items.length === 0 && !declaredEmpty[s.key]).map(s => (
+                    <span key={s.key} className="text-[10px] bg-warning/10 text-warning px-2 py-0.5 rounded-full">{s.label}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {menuItems.map(item => {
+                const isEmpty = declaredEmpty[item.key];
+                return (
+                  <button key={item.key} onClick={() => setSection(item.key)} className="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      (item.count && item.count > 0) || isEmpty ? "bg-accent/10" : "bg-primary/10"
+                    }`}>
+                      {(item.count && item.count > 0) || isEmpty 
+                        ? <CheckCircle2 className="h-4 w-4 text-accent" />
+                        : <item.icon className="h-4 w-4 text-primary" />
+                      }
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">{item.label}</p>
+                      {isEmpty && item.count === 0 && <p className="text-[10px] text-muted-foreground">Déclaré vide</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.count !== undefined && item.count > 0 && <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">{item.count}</span>}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
             <button onClick={() => setSection("ai")} className="w-full rounded-xl border bg-card shadow-card p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Bot className="h-4 w-4 text-primary" /></div>
@@ -210,7 +287,7 @@ const PatientHealth = () => {
         {/* DOCUMENTS */}
         {section === "documents" && (
           <div>
-            <SectionHeader title="Documents" onBack={() => setSection("menu")} />
+            <SectionHeader title="Documents" sectionKey="documents" onBack={() => setSection("menu")} />
             <div className="flex justify-end mb-3"><Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setShowUpload(!showUpload)}><Upload className="h-4 w-4 mr-1" />Importer</Button></div>
             {showUpload && (
               <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 text-center mb-3">
@@ -256,7 +333,7 @@ const PatientHealth = () => {
         {/* ANTECEDENTS */}
         {section === "antecedents" && (
           <div>
-            <SectionHeader title="Antécédents médicaux" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("antecedent")} />
+            <SectionHeader title="Antécédents médicaux" sectionKey="antecedents" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("antecedent")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {antecedents.map((a, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
@@ -274,7 +351,7 @@ const PatientHealth = () => {
         {/* TREATMENTS */}
         {section === "treatments" && (
           <div>
-            <SectionHeader title="Traitements réguliers" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("treatment")} />
+            <SectionHeader title="Traitements réguliers" sectionKey="treatments" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("treatment")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {treatments.map((t, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
@@ -292,7 +369,7 @@ const PatientHealth = () => {
         {/* ALLERGIES */}
         {section === "allergies" && (
           <div>
-            <SectionHeader title="Allergies" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("allergy")} />
+            <SectionHeader title="Allergies" sectionKey="allergies" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("allergy")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {allergies.map((a, i) => (
                 <div key={i} className="p-3 bg-destructive/5 hover:bg-destructive/10 transition-colors flex items-start gap-2">
@@ -310,7 +387,7 @@ const PatientHealth = () => {
         {/* HABITS */}
         {section === "habits" && (
           <div>
-            <SectionHeader title="Habitudes de vie" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("habit")} />
+            <SectionHeader title="Habitudes de vie" sectionKey="habits" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("habit")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {habits.map((h, i) => (
                 <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
@@ -328,7 +405,7 @@ const PatientHealth = () => {
         {/* FAMILY */}
         {section === "family" && (
           <div>
-            <SectionHeader title="Antécédents familiaux" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("family")} />
+            <SectionHeader title="Antécédents familiaux" sectionKey="family" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("family")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {family.map((f, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
@@ -343,7 +420,7 @@ const PatientHealth = () => {
         {/* SURGERIES */}
         {section === "surgeries" && (
           <div>
-            <SectionHeader title="Opérations chirurgicales" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("surgery")} />
+            <SectionHeader title="Opérations chirurgicales" sectionKey="surgeries" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("surgery")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {surgeries.map((s, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
@@ -361,7 +438,7 @@ const PatientHealth = () => {
         {/* VACCINATIONS */}
         {section === "vaccinations" && (
           <div>
-            <SectionHeader title="Vaccins" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("vaccination")} />
+            <SectionHeader title="Vaccins" sectionKey="vaccinations" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("vaccination")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {vaccinations.map((v, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
@@ -382,7 +459,7 @@ const PatientHealth = () => {
         {/* MEASURES */}
         {section === "measures" && (
           <div>
-            <SectionHeader title="Mesures" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("measure")} />
+            <SectionHeader title="Mesures" sectionKey="measures" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("measure")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {measures.map((m, i) => (
                 <div key={i} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">

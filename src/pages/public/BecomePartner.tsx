@@ -28,6 +28,7 @@ import {
   getEnabledFeatureLabels,
   planNameToTier,
   featureCatalog,
+  specialtyFeatureHighlights,
   type ActivityType,
   type PublicPlanConfig,
 } from "@/stores/featureMatrixStore";
@@ -246,6 +247,40 @@ const BecomePartner = () => {
                 )}
               </div>
             </div>
+
+            {/* Specialty-specific highlights */}
+            {formData.specialty && specialtyFeatureHighlights[formData.specialty] && (
+              <div className="max-w-lg mx-auto mb-8">
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-card">
+                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-primary" />
+                    Fonctionnalités spécifiques — {formData.specialty}
+                  </h3>
+                  <div className="space-y-2">
+                    {specialtyFeatureHighlights[formData.specialty].highlights.map((h, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm text-foreground">{h}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {specialtyFeatureHighlights[formData.specialty].disabledFeatures.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-primary/20">
+                      <p className="text-xs text-muted-foreground mb-1.5">Non disponible pour cette spécialité :</p>
+                      {specialtyFeatureHighlights[formData.specialty].disabledFeatures.map((fId, i) => {
+                        const feat = featureCatalog.find(f => f.id === fId);
+                        return feat ? (
+                          <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <X className="h-3 w-3 text-destructive shrink-0" />
+                            <span>{feat.label} — consultation en cabinet requise</span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Billing toggle */}
             <div className="flex justify-center mb-8">
