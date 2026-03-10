@@ -405,7 +405,7 @@ const PatientHealth = () => {
         {/* FAMILY */}
         {section === "family" && (
           <div>
-            <SectionHeader title="Antécédents familiaux" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("family")} />
+            <SectionHeader title="Antécédents familiaux" sectionKey="family" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("family")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {family.map((f, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
