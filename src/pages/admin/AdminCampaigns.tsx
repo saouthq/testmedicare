@@ -87,7 +87,7 @@ const AdminCampaigns = () => {
     );
     toast({ title: scheduleEnabled ? "Campagne programmée (mock)" : "Campagne envoyée (mock)" });
     setTitle(""); setMessage(""); setShowCreate(false); setSendMotifOpen(false);
-    setSegmentEnabled(false); setSegmentCity(""); setSegmentSpecialty("");
+    setSegmentEnabled(false); setSegmentCity("all"); setSegmentSpecialty("all");
     setScheduleEnabled(false); setScheduleDate(""); setScheduleTime("09:00");
   };
 
