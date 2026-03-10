@@ -182,7 +182,7 @@ const AdminCampaigns = () => {
                     <Select value={segmentCity} onValueChange={setSegmentCity}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Toutes" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Toutes</SelectItem>
+                        <SelectItem value="all">Toutes</SelectItem>
                         {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
