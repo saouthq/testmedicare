@@ -114,6 +114,9 @@ import AdminIAM from "./pages/admin/AdminIAM";
 import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminFeatureMatrix from "./pages/admin/AdminFeatureMatrix";
 import AdminModules from "./pages/admin/AdminModules";
+import AdminPlanManager from "./pages/admin/AdminPlanManager";
+import AdminOverrides from "./pages/admin/AdminOverrides";
+import AdminFeatureFlags from "./pages/admin/AdminFeatureFlags";
 import AdminGuard from "./components/admin/AdminGuard";
 
 // Shared
@@ -263,6 +266,9 @@ const App = () => (
           <Route path="/dashboard/admin/disputes" element={<AdminGuard><AdminDisputes /></AdminGuard>} />
           <Route path="/dashboard/admin/feature-matrix" element={<AdminGuard><AdminFeatureMatrix /></AdminGuard>} />
           <Route path="/dashboard/admin/modules" element={<AdminGuard><AdminModules /></AdminGuard>} />
+          <Route path="/dashboard/admin/plans" element={<AdminGuard><AdminPlanManager /></AdminGuard>} />
+          <Route path="/dashboard/admin/overrides" element={<AdminGuard><AdminOverrides /></AdminGuard>} />
+          <Route path="/dashboard/admin/feature-flags" element={<AdminGuard><AdminFeatureFlags /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 

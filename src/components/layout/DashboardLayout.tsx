@@ -10,7 +10,7 @@ import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
 import { getEnabledFeatures } from "@/stores/featureMatrixStore";
 import { useAdminModules, isSidebarUrlEnabled, getDisabledModuleForRoute } from "@/stores/adminModulesStore";
-import { Lock, Power } from "lucide-react";
+import { Lock, Power, Crown, UserCog, Flag as FlagIcon } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
@@ -135,8 +135,10 @@ const adminSections: NavSection[] = [
   {
     label: "Finance & Offres",
     items: [
+      { title: "Plans & Tarifs", url: "/dashboard/admin/plans", icon: Crown },
       { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
       { title: "Matrice fonctionnalités", url: "/dashboard/admin/feature-matrix", icon: Activity },
+      { title: "Overrides comptes", url: "/dashboard/admin/overrides", icon: UserCog },
       { title: "Paiements", url: "/dashboard/admin/payments", icon: Banknote },
       { title: "Promotions", url: "/dashboard/admin/promotions", icon: CreditCard },
     ],
@@ -145,6 +147,7 @@ const adminSections: NavSection[] = [
     label: "Système",
     items: [
       { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
+      { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
       { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
       { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
