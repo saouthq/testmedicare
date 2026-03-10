@@ -43,6 +43,8 @@ import type { PaymentMode } from "./types";
 import { scrollToId } from "./helpers";
 import { mockMedicines } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { getSpecialtyConfig } from "./specialtyConfig";
 
 // ── Medicine DB ───────────────────────────────────────────────
 const MED_DB = [
