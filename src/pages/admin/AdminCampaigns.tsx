@@ -63,8 +63,8 @@ const AdminCampaigns = () => {
 
   const estimatedRecipients = useMemo(() => {
     let base = target === "all" ? 12458 : target === "patients" ? 8500 : target === "doctors" ? 1245 : 300;
-    if (segmentEnabled && segmentCity) base = Math.round(base * 0.15);
-    if (segmentEnabled && segmentSpecialty) base = Math.round(base * 0.2);
+    if (segmentEnabled && segmentCity !== "all") base = Math.round(base * 0.15);
+    if (segmentEnabled && segmentSpecialty !== "all") base = Math.round(base * 0.2);
     return base;
   }, [target, segmentEnabled, segmentCity, segmentSpecialty]);
 
