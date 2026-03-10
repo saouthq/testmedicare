@@ -26,10 +26,13 @@ const DoctorConsultationDetail = () => {
 
 function ConsultationInner() {
   const ctx = useConsultation();
+  const [sub] = useDoctorSubscription();
+  const config = getSpecialtyConfig(sub.activity, sub.specialty);
+  const consultLabel = sub.activity === "kine" ? "Séance" : "Consultation";
 
   if (ctx.closed) {
     return (
-      <DashboardLayout role="doctor" title="Consultation terminée">
+      <DashboardLayout role="doctor" title={`${consultLabel} terminée`}>
         <ClosedView />
       </DashboardLayout>
     );
