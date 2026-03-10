@@ -59,10 +59,10 @@ const daysOfMonth = () => {
   return days;
 };
 
-type MainStep = 1 | 2 | 3 | 4 | 5;
+type MainStep = 1 | 2 | 3 | 4 | 5 | 6;
 type FinalState = "done" | "conflict" | "waitlist" | null;
 
-const stepLabels = ["Patient", "Motif", "Date", "Lieu", "Confirmation"];
+const stepLabels = ["Patient", "Motif", "Date", "Lieu", "Confirmation", "Paiement"];
 
 const PatientBooking = () => {
   const { doctorId } = useParams();
