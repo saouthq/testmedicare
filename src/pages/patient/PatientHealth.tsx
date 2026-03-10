@@ -438,7 +438,7 @@ const PatientHealth = () => {
         {/* VACCINATIONS */}
         {section === "vaccinations" && (
           <div>
-            <SectionHeader title="Vaccins" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("vaccination")} />
+            <SectionHeader title="Vaccins" sectionKey="vaccinations" onBack={() => setSection("menu")} onAdd={() => setShowAddModal("vaccination")} />
             <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
               {vaccinations.map((v, i) => (
                 <div key={i} className="p-3 hover:bg-muted/20 transition-colors flex items-start gap-2">
