@@ -1,18 +1,25 @@
 /**
- * Admin System Settings — Feature flags, maintenance with motif, OTP config
+ * Admin System Settings — Platform config, fees, commissions, notifications, security, maintenance
+ * Full workflow with save/audit + motif for destructive actions
  * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle, Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound } from "lucide-react";
+import {
+  Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle,
+  Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound, CreditCard,
+  Percent, Mail, MessageSquare, Clock, Users, Palette, FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 
-type SettingsTab = "general" | "features" | "security" | "maintenance";
+type SettingsTab = "general" | "fees" | "features" | "notifications" | "security" | "maintenance";
 
 const AdminSettings = () => {
   const [tab, setTab] = useState<SettingsTab>("general");
@@ -21,8 +28,22 @@ const AdminSettings = () => {
   // General
   const [platformName, setPlatformName] = useState("Medicare.tn");
   const [supportEmail, setSupportEmail] = useState("support@medicare.tn");
+  const [supportPhone, setSupportPhone] = useState("+216 71 000 000");
   const [maxFileSize, setMaxFileSize] = useState("10");
   const [autoApprovePatients, setAutoApprovePatients] = useState(true);
+  const [defaultLanguage, setDefaultLanguage] = useState("fr");
+  const [timezone, setTimezone] = useState("Africa/Tunis");
+  const [termsUrl, setTermsUrl] = useState("https://medicare.tn/legal/cgu");
+  const [privacyUrl, setPrivacyUrl] = useState("https://medicare.tn/legal/privacy");
+
+  // Fees & Commissions
+  const [teleconsultFee, setTeleconsultFee] = useState("60");
+  const [platformCommission, setPlatformCommission] = useState("15");
+  const [paymentMethods, setPaymentMethods] = useState({ card: true, bankTransfer: true, cash: true, eDinar: false });
+  const [minimumPayout, setMinimumPayout] = useState("50");
+  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
+  const [vatRate, setVatRate] = useState("19");
+  const [invoicePrefix, setInvoicePrefix] = useState("MC");
 
   // Feature flags
   const [features, setFeatures] = useState({
@@ -35,6 +56,20 @@ const AdminSettings = () => {
     textReviews: true,
     medicinesDirectory: true,
     patientChat: false,
+    onlinePayment: true,
+    appointmentReminder: true,
+  });
+
+  // Notifications
+  const [notifConfig, setNotifConfig] = useState({
+    rdvReminder: true, rdvReminderDelay: "24",
+    rdvConfirmation: true,
+    prescriptionReady: true,
+    labResultReady: true,
+    accountApproved: true,
+    paymentReceipt: true,
+    weeklyReport: false,
+    marketingConsent: true,
   });
 
   // Security / OTP
@@ -42,9 +77,13 @@ const AdminSettings = () => {
   const [otpMaxRetries, setOtpMaxRetries] = useState("5");
   const [sessionTimeout, setSessionTimeout] = useState("30");
   const [twoFactor, setTwoFactor] = useState(false);
+  const [passwordMinLength, setPasswordMinLength] = useState("8");
+  const [loginAttempts, setLoginAttempts] = useState("5");
+  const [lockoutDuration, setLockoutDuration] = useState("15");
 
   // Maintenance
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("La plateforme est en maintenance. Nous serons de retour très bientôt.");
   const [maintenanceMotifOpen, setMaintenanceMotifOpen] = useState(false);
 
   const Toggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
@@ -54,7 +93,7 @@ const AdminSettings = () => {
   );
 
   const handleSave = () => {
-    appendLog("settings_updated", "system", "settings", "Paramètres système mis à jour");
+    appendLog("settings_updated", "system", "settings", `Paramètres système mis à jour (onglet: ${tab})`);
     setSaved(true);
     toast({ title: "Paramètres sauvegardés" });
     setTimeout(() => setSaved(false), 2000);
@@ -87,8 +126,10 @@ const AdminSettings = () => {
 
   const tabs = [
     { key: "general" as SettingsTab, label: "Général", icon: Settings },
+    { key: "fees" as SettingsTab, label: "Tarifs & Commissions", icon: CreditCard },
     { key: "features" as SettingsTab, label: "Feature flags", icon: Zap },
-    { key: "security" as SettingsTab, label: "Sécurité & OTP", icon: Shield },
+    { key: "notifications" as SettingsTab, label: "Notifications", icon: Bell },
+    { key: "security" as SettingsTab, label: "Sécurité", icon: Shield },
     { key: "maintenance" as SettingsTab, label: "Maintenance", icon: Server },
   ];
 
@@ -99,9 +140,11 @@ const AdminSettings = () => {
     labDemands: { label: "Demandes labo", desc: "Workflow demandes d'analyses" },
     prescriptionSend: { label: "Envoi ordonnances", desc: "Patients peuvent envoyer aux pharmacies" },
     patientMessaging: { label: "Messagerie patients", desc: "Chat patient-médecin (bêta)" },
-    textReviews: { label: "Avis texte", desc: "Avis patients sur les médecins (texte uniquement, pas d'étoiles)" },
+    textReviews: { label: "Avis texte", desc: "Avis patients sur les médecins" },
     medicinesDirectory: { label: "Annuaire médicaments", desc: "Répertoire public des médicaments" },
     patientChat: { label: "Chat patient", desc: "Chat en temps réel patient-secrétariat" },
+    onlinePayment: { label: "Paiement en ligne", desc: "Paiement par carte bancaire" },
+    appointmentReminder: { label: "Rappels RDV", desc: "SMS/push de rappel automatique" },
   };
 
   return (
@@ -109,8 +152,8 @@ const AdminSettings = () => {
       <div className="max-w-4xl space-y-6">
         <div className="flex gap-1 rounded-lg border bg-card p-1 overflow-x-auto">
           {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${tab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-              <t.icon className="h-4 w-4" />{t.label}
+            <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${tab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <t.icon className="h-3.5 w-3.5" />{t.label}
             </button>
           ))}
         </div>
@@ -119,30 +162,140 @@ const AdminSettings = () => {
         {tab === "general" && (
           <div className="space-y-6">
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-5">
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Informations générales</h3>
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Informations plateforme</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label>Nom de la plateforme</Label><Input value={platformName} onChange={e => setPlatformName(e.target.value)} className="mt-1" /></div>
-                <div><Label>Email support</Label><Input value={supportEmail} onChange={e => setSupportEmail(e.target.value)} className="mt-1" /></div>
-                <div><Label>Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => setMaxFileSize(e.target.value)} type="number" className="mt-1" /></div>
-                <div><Label>Devise</Label><Input value="Dinar Tunisien (DT)" disabled className="mt-1 bg-muted/50" /></div>
+                <div><Label className="text-xs">Nom de la plateforme</Label><Input value={platformName} onChange={e => setPlatformName(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">Email support</Label><Input value={supportEmail} onChange={e => setSupportEmail(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">Téléphone support</Label><Input value={supportPhone} onChange={e => setSupportPhone(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">Devise</Label><Input value="Dinar Tunisien (DT)" disabled className="mt-1 bg-muted/50" /></div>
+                <div><Label className="text-xs">Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => setMaxFileSize(e.target.value)} type="number" className="mt-1" /></div>
+                <div>
+                  <Label className="text-xs">Langue par défaut</Label>
+                  <Select value={defaultLanguage} onValueChange={setDefaultLanguage}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fr">Français</SelectItem>
+                      <SelectItem value="ar">Arabe</SelectItem>
+                      <SelectItem value="en">Anglais</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label className="text-xs">Fuseau horaire</Label><Input value={timezone} disabled className="mt-1 bg-muted/50" /></div>
               </div>
             </div>
+
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
-              <h3 className="font-semibold text-foreground">Inscriptions</h3>
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Pages légales</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><Label className="text-xs">URL CGU</Label><Input value={termsUrl} onChange={e => setTermsUrl(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">URL Politique de confidentialité</Label><Input value={privacyUrl} onChange={e => setPrivacyUrl(e.target.value)} className="mt-1" /></div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><Users className="h-4 w-4 text-primary" />Inscriptions</h3>
               <div className="flex items-center justify-between py-3 border-b">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Approbation automatique des patients</p>
-                  <p className="text-xs text-muted-foreground">Les patients sont activés automatiquement</p>
+                  <p className="text-sm font-medium text-foreground">Approbation auto des patients</p>
+                  <p className="text-xs text-muted-foreground">Les patients sont activés sans validation manuelle</p>
                 </div>
                 <Toggle enabled={autoApprovePatients} onToggle={() => setAutoApprovePatients(!autoApprovePatients)} />
               </div>
               <div className="flex items-center justify-between py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">Validation manuelle pros</p>
-                  <p className="text-xs text-muted-foreground">Médecins/labos/pharmacies nécessitent KYC</p>
+                  <p className="text-xs text-muted-foreground">Médecins, labos, pharmacies nécessitent KYC</p>
                 </div>
                 <Toggle enabled={true} onToggle={() => {}} />
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fees & Commissions */}
+        {tab === "fees" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-card p-6 shadow-card space-y-5">
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Tarification</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs">Tarif téléconsultation (DT)</Label>
+                  <Input value={teleconsultFee} onChange={e => setTeleconsultFee(e.target.value)} type="number" className="mt-1" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Prix par défaut facturé au patient</p>
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1"><Percent className="h-3 w-3" />Commission plateforme (%)</Label>
+                  <Input value={platformCommission} onChange={e => setPlatformCommission(e.target.value)} type="number" className="mt-1" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Prélevé sur chaque téléconsultation</p>
+                </div>
+                <div>
+                  <Label className="text-xs">TVA (%)</Label>
+                  <Input value={vatRate} onChange={e => setVatRate(e.target.value)} type="number" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Préfixe factures</Label>
+                  <Input value={invoicePrefix} onChange={e => setInvoicePrefix(e.target.value)} className="mt-1" />
+                </div>
+              </div>
+
+              {/* Simulation */}
+              <div className="rounded-lg bg-muted/30 border p-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">Simulation</p>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-lg font-bold text-foreground">{teleconsultFee} DT</p>
+                    <p className="text-[10px] text-muted-foreground">Facturé au patient</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-primary">{(Number(teleconsultFee) * Number(platformCommission) / 100).toFixed(1)} DT</p>
+                    <p className="text-[10px] text-muted-foreground">Commission Medicare</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-accent">{(Number(teleconsultFee) * (100 - Number(platformCommission)) / 100).toFixed(1)} DT</p>
+                    <p className="text-[10px] text-muted-foreground">Reversé au médecin</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-6 shadow-card space-y-5">
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Versements</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs">Versement minimum (DT)</Label>
+                  <Input value={minimumPayout} onChange={e => setMinimumPayout(e.target.value)} type="number" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Fréquence des versements</Label>
+                  <Select value={payoutFrequency} onValueChange={setPayoutFrequency}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Quotidien</SelectItem>
+                      <SelectItem value="weekly">Hebdomadaire</SelectItem>
+                      <SelectItem value="biweekly">Bimensuel</SelectItem>
+                      <SelectItem value="monthly">Mensuel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
+              <h3 className="font-semibold text-foreground">Modes de paiement acceptés</h3>
+              {[
+                { key: "card", label: "Carte bancaire", desc: "Visa, Mastercard" },
+                { key: "bankTransfer", label: "Virement bancaire", desc: "Virement SWIFT/SEPA" },
+                { key: "cash", label: "Espèces", desc: "Paiement en cabinet" },
+                { key: "eDinar", label: "E-Dinar", desc: "Paiement mobile (La Poste)" },
+              ].map(pm => (
+                <div key={pm.key} className="flex items-center justify-between py-3 border-b last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{pm.label}</p>
+                    <p className="text-xs text-muted-foreground">{pm.desc}</p>
+                  </div>
+                  <Toggle enabled={paymentMethods[pm.key as keyof typeof paymentMethods]} onToggle={() => setPaymentMethods(prev => ({ ...prev, [pm.key]: !prev[pm.key as keyof typeof paymentMethods] }))} />
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -151,7 +304,7 @@ const AdminSettings = () => {
         {tab === "features" && (
           <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
             <h3 className="font-semibold text-foreground flex items-center gap-2"><Zap className="h-4 w-4 text-primary" />Feature flags</h3>
-            <p className="text-xs text-muted-foreground">Activez ou désactivez les fonctionnalités de la plateforme.</p>
+            <p className="text-xs text-muted-foreground">Activez ou désactivez les fonctionnalités de la plateforme. Les changements sont immédiats et loggés.</p>
             {Object.entries(featureLabels).map(([key, { label, desc }]) => (
               <div key={key} className="flex items-center justify-between py-3 border-b last:border-0">
                 <div>
@@ -161,6 +314,46 @@ const AdminSettings = () => {
                 <Toggle enabled={features[key as keyof typeof features]} onToggle={() => toggleFeature(key as keyof typeof features)} />
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Notifications */}
+        {tab === "notifications" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><Bell className="h-4 w-4 text-primary" />Notifications automatiques</h3>
+              <p className="text-xs text-muted-foreground">Configurez quels événements déclenchent une notification.</p>
+              {[
+                { key: "rdvReminder", label: "Rappel de RDV", desc: "SMS/push avant le rendez-vous" },
+                { key: "rdvConfirmation", label: "Confirmation de RDV", desc: "Email après prise de RDV" },
+                { key: "prescriptionReady", label: "Ordonnance disponible", desc: "Push au patient" },
+                { key: "labResultReady", label: "Résultats d'analyses", desc: "SMS/push quand résultats prêts" },
+                { key: "accountApproved", label: "Compte approuvé", desc: "Email au professionnel" },
+                { key: "paymentReceipt", label: "Reçu de paiement", desc: "Email après paiement" },
+                { key: "weeklyReport", label: "Rapport hebdomadaire", desc: "Email récapitulatif aux médecins" },
+                { key: "marketingConsent", label: "Opt-in marketing", desc: "Permettre les emails promotionnels" },
+              ].map(n => (
+                <div key={n.key} className="flex items-center justify-between py-3 border-b last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{n.label}</p>
+                    <p className="text-xs text-muted-foreground">{n.desc}</p>
+                  </div>
+                  <Toggle
+                    enabled={notifConfig[n.key as keyof typeof notifConfig] as boolean}
+                    onToggle={() => setNotifConfig(prev => ({ ...prev, [n.key]: !prev[n.key as keyof typeof notifConfig] }))}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><Clock className="h-4 w-4 text-primary" />Délai de rappel RDV</h3>
+              <div className="max-w-xs">
+                <Label className="text-xs">Heures avant le RDV</Label>
+                <Input value={notifConfig.rdvReminderDelay} onChange={e => setNotifConfig(prev => ({ ...prev, rdvReminderDelay: e.target.value }))} type="number" className="mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Le rappel sera envoyé {notifConfig.rdvReminderDelay}h avant le RDV</p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -176,27 +369,38 @@ const AdminSettings = () => {
                 </div>
                 <Toggle enabled={twoFactor} onToggle={() => setTwoFactor(!twoFactor)} />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 pt-2">
+              <div className="grid gap-4 sm:grid-cols-3 pt-2">
                 <div>
-                  <Label>Timeout session (min)</Label>
+                  <Label className="text-xs">Timeout session (min)</Label>
                   <Input value={sessionTimeout} onChange={e => setSessionTimeout(e.target.value)} type="number" className="mt-1" />
                 </div>
+                <div>
+                  <Label className="text-xs">Longueur min MDP</Label>
+                  <Input value={passwordMinLength} onChange={e => setPasswordMinLength(e.target.value)} type="number" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Tentatives connexion max</Label>
+                  <Input value={loginAttempts} onChange={e => setLoginAttempts(e.target.value)} type="number" className="mt-1" />
+                </div>
+              </div>
+              <div className="max-w-xs">
+                <Label className="text-xs">Durée verrouillage (min)</Label>
+                <Input value={lockoutDuration} onChange={e => setLockoutDuration(e.target.value)} type="number" className="mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Après {loginAttempts} échecs, le compte est bloqué {lockoutDuration} min</p>
               </div>
             </div>
 
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" />Configuration OTP</h3>
-              <p className="text-xs text-muted-foreground">Paramètres de sécurité pour les codes OTP (login, vérification).</p>
+              <p className="text-xs text-muted-foreground">Paramètres pour les codes OTP (login, vérification).</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>Cooldown entre envois (sec)</Label>
+                  <Label className="text-xs">Cooldown entre envois (sec)</Label>
                   <Input value={otpCooldown} onChange={e => setOtpCooldown(e.target.value)} type="number" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Temps minimum entre 2 envois d'OTP</p>
                 </div>
                 <div>
-                  <Label>Max tentatives</Label>
+                  <Label className="text-xs">Max tentatives</Label>
                   <Input value={otpMaxRetries} onChange={e => setOtpMaxRetries(e.target.value)} type="number" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Verrouillage après N échecs</p>
                 </div>
               </div>
             </div>
@@ -212,13 +416,19 @@ const AdminSettings = () => {
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
                     <Server className="h-4 w-4 text-primary" />Mode maintenance
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1">Rend la plateforme inaccessible aux utilisateurs</p>
+                  <p className="text-xs text-muted-foreground mt-1">Rend la plateforme inaccessible</p>
                 </div>
                 <Toggle enabled={maintenanceMode} onToggle={handleMaintenanceToggle} />
               </div>
               {maintenanceMode && (
-                <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                  <p className="text-sm text-destructive font-medium flex items-center gap-2"><AlertTriangle className="h-4 w-4" />La plateforme est en mode maintenance</p>
+                <div className="mt-4 space-y-3">
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-destructive font-medium flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Plateforme en maintenance</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Message affiché aux utilisateurs</Label>
+                    <Textarea value={maintenanceMessage} onChange={e => setMaintenanceMessage(e.target.value)} className="mt-1" rows={2} />
+                  </div>
                 </div>
               )}
             </div>
@@ -233,6 +443,8 @@ const AdminSettings = () => {
                   { label: "Uptime", value: "99.97%" },
                   { label: "Utilisateurs en ligne", value: "234" },
                   { label: "Requêtes/min", value: "1,247" },
+                  { label: "Cache hit rate", value: "94.2%" },
+                  { label: "Erreurs/jour", value: "< 0.01%" },
                 ].map((s, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b">
                     <span className="text-sm text-muted-foreground">{s.label}</span>
@@ -245,7 +457,7 @@ const AdminSettings = () => {
         )}
 
         {/* Save */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3 pb-6">
           {saved && <span className="flex items-center gap-1 text-sm text-accent"><CheckCircle className="h-4 w-4" />Sauvegardé</span>}
           <Button className="gradient-primary text-primary-foreground" onClick={handleSave}>
             <Save className="h-4 w-4 mr-1" />Enregistrer
@@ -253,7 +465,6 @@ const AdminSettings = () => {
         </div>
       </div>
 
-      {/* Maintenance motif dialog */}
       <MotifDialog
         open={maintenanceMotifOpen}
         onClose={() => setMaintenanceMotifOpen(false)}
