@@ -69,7 +69,7 @@ const AdminCampaigns = () => {
   }, [target, segmentEnabled, segmentCity, segmentSpecialty]);
 
   const handleSend = (motif: string) => {
-    const segLabel = [segmentCity, segmentSpecialty].filter(Boolean).join(", ");
+    const segLabel = [segmentCity !== "all" ? segmentCity : "", segmentSpecialty !== "all" ? segmentSpecialty : ""].filter(Boolean).join(", ");
     const newCampaign: Campaign = {
       id: `c-${Date.now()}`,
       title: title || "Sans titre",
