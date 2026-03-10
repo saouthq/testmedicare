@@ -5,11 +5,15 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
   Edit2,
   FileText,
   History,
   Lock,
+  Mail,
   Pill,
+  Plus,
+  Printer,
   Send,
   Stethoscope,
   X,
@@ -554,7 +558,7 @@ export function ClosedView() {
           ))}
           <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
             <p className="text-xs text-primary font-medium">Prochain RDV</p>
-            <p className="font-medium text-foreground">{ctx.nextRdv}</p>
+            <p className="font-medium text-foreground">{ctx.rdvDate || "Non planifié"}</p>
           </div>
           <div className="rounded-lg bg-accent/5 border border-accent/20 p-4">
             <p className="text-xs text-accent font-medium">Montant</p>
