@@ -1,14 +1,15 @@
 /**
  * useFeatureGating — Hook to check if a feature is enabled for the current doctor plan.
- * Returns helpers to check, gate, and render upgrade prompts.
+ * Now integrates with: plan features + per-account overrides + system feature flags + subscription status.
  *
  * Usage:
- *   const { can, gated, GateOverlay } = useFeatureGating();
+ *   const { can, canWithReason } = useFeatureGating();
  *   if (!can("teleconsult_video")) return <GateOverlay feature="Téléconsultation" />;
  */
 import { useMemo } from "react";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { getEnabledFeatures, type FeatureDef, type PlanTier, plansByActivity, featureCatalog } from "@/stores/featureMatrixStore";
+import { checkEntitlement, isFeatureFlagEnabled, type SubscriptionStatus } from "@/stores/entitlementStore";
 
 export function useFeatureGating() {
   const [sub] = useDoctorSubscription();
@@ -23,8 +24,27 @@ export function useFeatureGating() {
     [enabledFeatures]
   );
 
-  /** Check if a feature is enabled */
-  const can = (featureId: string): boolean => enabledIds.has(featureId);
+  // Mock subscription status — in real app, comes from backend
+  const subStatus: SubscriptionStatus = useMemo(() => {
+    try {
+      const stored = localStorage.getItem("medicare_sub_status");
+      if (stored) return stored as SubscriptionStatus;
+    } catch {}
+    return "active";
+  }, []);
+
+  /** Check if a feature is enabled (simple boolean) */
+  const can = (featureId: string): boolean => {
+    // System flag check
+    if (!isFeatureFlagEnabled(featureId)) return false;
+    // Plan check
+    return enabledIds.has(featureId);
+  };
+
+  /** Check with detailed reason */
+  const canWithReason = (featureId: string): { allowed: boolean; reason?: string } => {
+    return checkEntitlement(featureId, "current-user", enabledIds, subStatus);
+  };
 
   /** Get all features for current activity/plan */
   const features = enabledFeatures;
@@ -48,8 +68,18 @@ export function useFeatureGating() {
     return plan?.price ?? null;
   };
 
+  /** Is subscription blocked (impayé, suspendu, expiré) */
+  const isBlocked = ["expired", "unpaid", "suspended", "cancelled"].includes(subStatus);
+  const blockReason = isBlocked
+    ? subStatus === "unpaid" ? "Votre abonnement est impayé. Veuillez régulariser votre paiement."
+    : subStatus === "suspended" ? "Votre compte est suspendu. Contactez le support."
+    : subStatus === "expired" ? "Votre abonnement a expiré. Renouvelez pour continuer."
+    : "Votre abonnement est annulé."
+    : undefined;
+
   return {
     can,
+    canWithReason,
     features,
     plan: sub.plan,
     activity: sub.activity,
@@ -57,6 +87,9 @@ export function useFeatureGating() {
     getUpgradePlan,
     getUpgradePrice,
     enabledIds,
+    isBlocked,
+    blockReason,
+    subStatus,
   };
 }
 

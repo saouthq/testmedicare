@@ -1,15 +1,18 @@
 /**
- * Admin Subscriptions — Enhanced with plan change (upgrade/downgrade), motif, audit
+ * Admin Subscriptions — Complete subscriber management with all statuses
+ * Supports: active, trial, expired, unpaid, suspended, cancelled
+ * Actions: change plan, suspend, reactivate, extend, apply promo
  * TODO BACKEND: Replace with real API calls
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
 import {
   CreditCard, TrendingUp, Users, ArrowUpRight, Search, Eye, Gift, Calendar,
-  FileText, ArrowUp, ArrowDown, RefreshCw, Ban, CheckCircle,
+  FileText, ArrowUp, ArrowDown, RefreshCw, Ban, CheckCircle, Clock,
+  AlertTriangle, CalendarPlus, DollarSign,
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { mockAdminRevenue, mockAdminSubscriptions as mockPlanStats } from "@/data/mockData";
+import { mockAdminRevenue } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,27 +25,44 @@ import { getDoctorSubscriptions } from "@/services/admin/adminPromotionsService"
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
-import type { DoctorSubscription, DoctorSubStatus } from "@/types/promotion";
+import { subscriptionStatusConfig, type SubscriptionStatus } from "@/stores/entitlementStore";
+import { getPlansByRole, type AdminPlan } from "@/stores/adminPlanStore";
+import type { DoctorSubscription } from "@/types/promotion";
 
-const statusConfig: Record<DoctorSubStatus, { label: string; color: string }> = {
+// Extended status config (merge with entitlementStore)
+type ExtendedStatus = SubscriptionStatus;
+const statusConfig: Record<string, { label: string; color: string }> = {
   trial: { label: "Essai", color: "bg-warning/10 text-warning border-warning/20" },
   active: { label: "Actif", color: "bg-accent/10 text-accent border-accent/20" },
   expired: { label: "Expiré", color: "bg-destructive/10 text-destructive border-destructive/20" },
+  unpaid: { label: "Impayé", color: "bg-destructive/10 text-destructive border-destructive/20" },
+  suspended: { label: "Suspendu", color: "bg-destructive/10 text-destructive border-destructive/20" },
   cancelled: { label: "Annulé", color: "bg-muted text-muted-foreground border-border" },
 };
 
-const PLAN_PRICES: Record<string, number> = { "Basic": 39, "Pro": 129 };
+const PLAN_PRICES: Record<string, number> = { "Basic": 39, "Pro": 129, "Essentiel": 49, "Cabinet+": 299 };
 
 const AdminSubscriptions = () => {
-  const [subs, setSubs] = useState<DoctorSubscription[]>(getDoctorSubscriptions());
+  const [subs, setSubs] = useState<DoctorSubscription[]>(() => {
+    const stored = getDoctorSubscriptions();
+    // Enrich with extra statuses for demo
+    return stored.map((s, i) => {
+      if (i === 3 && s.status === "active") return { ...s, status: "expired" as any };
+      return s;
+    });
+  });
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | DoctorSubStatus>("all");
-  const [filterPlan, setFilterPlan] = useState<"all" | "Basic" | "Pro">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | string>("all");
+  const [filterPlan, setFilterPlan] = useState<"all" | string>("all");
   const [detailSub, setDetailSub] = useState<DoctorSubscription | null>(null);
 
   // Plan change
   const [changePlanSub, setChangePlanSub] = useState<DoctorSubscription | null>(null);
-  const [newPlan, setNewPlan] = useState<"Basic" | "Pro">("Pro");
+  const [newPlan, setNewPlan] = useState<string>("Pro");
+
+  // Extend dialog
+  const [extendSub, setExtendSub] = useState<DoctorSubscription | null>(null);
+  const [extendDays, setExtendDays] = useState(30);
 
   // Motif
   const [motifAction, setMotifAction] = useState<{ type: string; subId: string; data?: any } | null>(null);
@@ -64,11 +84,11 @@ const AdminSubscriptions = () => {
     totalRev: subs.filter(s => s.status === "active").reduce((sum, s) => sum + s.monthlyPrice, 0),
     active: subs.filter(s => s.status === "active").length,
     trial: subs.filter(s => s.status === "trial").length,
-    proCount: subs.filter(s => s.plan === "Pro" && s.status === "active").length,
-    basicCount: subs.filter(s => s.plan === "Basic" && s.status === "active").length,
+    unpaid: subs.filter(s => (s.status as string) === "unpaid").length,
+    suspended: subs.filter(s => (s.status as string) === "suspended").length,
+    expired: subs.filter(s => s.status === "expired").length,
   }), [subs]);
 
-  // Open plan change dialog
   const openChangePlan = (sub: DoctorSubscription) => {
     setChangePlanSub(sub);
     setNewPlan(sub.plan === "Basic" ? "Pro" : "Basic");
@@ -80,12 +100,14 @@ const AdminSubscriptions = () => {
     setChangePlanSub(null);
   };
 
-  const handleSuspend = (sub: DoctorSubscription) => {
-    setMotifAction({ type: "suspend", subId: sub.id });
-  };
+  const handleSuspend = (sub: DoctorSubscription) => setMotifAction({ type: "suspend", subId: sub.id });
+  const handleReactivate = (sub: DoctorSubscription) => setMotifAction({ type: "reactivate", subId: sub.id });
+  const handleMarkUnpaid = (sub: DoctorSubscription) => setMotifAction({ type: "mark_unpaid", subId: sub.id });
 
-  const handleReactivate = (sub: DoctorSubscription) => {
-    setMotifAction({ type: "reactivate", subId: sub.id });
+  const handleExtendConfirm = () => {
+    if (!extendSub) return;
+    setMotifAction({ type: "extend", subId: extendSub.id, data: { days: extendDays } });
+    setExtendSub(null);
   };
 
   const handleMotifConfirm = (motif: string) => {
@@ -97,47 +119,41 @@ const AdminSubscriptions = () => {
 
       if (type === "change_plan") {
         const oldPlan = s.plan;
-        const np = data.newPlan as "Basic" | "Pro";
-        const event = `Plan changé de ${oldPlan} (${PLAN_PRICES[oldPlan]} DT) → ${np} (${PLAN_PRICES[np]} DT) — Motif : ${motif}`;
+        const np = data.newPlan as string;
+        const event = `Plan changé de ${oldPlan} → ${np} — Motif : ${motif}`;
         appendLog("subscription_plan_changed", "subscription", subId, `${s.doctorName}: ${event}`);
         toast({ title: `Plan changé → ${np}`, description: s.doctorName });
-        return {
-          ...s,
-          plan: np,
-          monthlyPrice: PLAN_PRICES[np],
-          history: [...s.history, { date: new Date().toISOString().slice(0, 10), event }],
-        };
+        return { ...s, plan: np as any, monthlyPrice: PLAN_PRICES[np] || s.monthlyPrice, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event }] };
       }
 
       if (type === "suspend") {
-        appendLog("subscription_suspended", "subscription", subId, `Abonnement de ${s.doctorName} suspendu — Motif : ${motif}`);
+        appendLog("subscription_suspended", "subscription", subId, `${s.doctorName} suspendu — ${motif}`);
         toast({ title: "Abonnement suspendu", description: s.doctorName });
-        return {
-          ...s,
-          status: "cancelled" as DoctorSubStatus,
-          history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Suspendu par admin — Motif : ${motif}` }],
-        };
+        return { ...s, status: "suspended" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Suspendu — ${motif}` }] };
       }
 
       if (type === "reactivate") {
-        appendLog("subscription_reactivated", "subscription", subId, `Abonnement de ${s.doctorName} réactivé — Motif : ${motif}`);
+        appendLog("subscription_reactivated", "subscription", subId, `${s.doctorName} réactivé — ${motif}`);
         toast({ title: "Abonnement réactivé", description: s.doctorName });
-        return {
-          ...s,
-          status: "active" as DoctorSubStatus,
-          history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Réactivé par admin — Motif : ${motif}` }],
-        };
+        return { ...s, status: "active" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Réactivé — ${motif}` }] };
+      }
+
+      if (type === "mark_unpaid") {
+        appendLog("subscription_unpaid", "subscription", subId, `${s.doctorName} marqué impayé — ${motif}`);
+        toast({ title: "Marqué comme impayé", description: s.doctorName });
+        return { ...s, status: "unpaid" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Marqué impayé — ${motif}` }] };
+      }
+
+      if (type === "extend") {
+        const newDate = new Date(s.renewalDate);
+        newDate.setDate(newDate.getDate() + (data.days || 30));
+        appendLog("subscription_extended", "subscription", subId, `${s.doctorName} prolongé de ${data.days}j — ${motif}`);
+        toast({ title: `Prolongé de ${data.days} jours`, description: s.doctorName });
+        return { ...s, renewalDate: newDate.toISOString().slice(0, 10), history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Prolongé de ${data.days} jours — ${motif}` }] };
       }
 
       return s;
     }));
-
-    // Update detail if open
-    if (detailSub?.id === subId) {
-      const updated = subs.find(s => s.id === subId);
-      if (updated) setDetailSub({ ...updated }); // will refresh on next render
-    }
-
     setMotifAction(null);
   };
 
@@ -145,84 +161,70 @@ const AdminSubscriptions = () => {
     <DashboardLayout role="admin" title="Abonnements & Facturation">
       <div className="space-y-6">
         {/* Revenue stats */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-6">
           <div className="rounded-xl border bg-card p-5 shadow-card">
             <CreditCard className="h-5 w-5 text-primary" />
             <p className="mt-3 text-2xl font-bold text-foreground">{stats.totalRev.toLocaleString()} DT</p>
-            <p className="text-xs text-muted-foreground">Revenus récurrents/mois</p>
+            <p className="text-xs text-muted-foreground">MRR</p>
           </div>
           <div className="rounded-xl border bg-card p-5 shadow-card">
             <Users className="h-5 w-5 text-accent" />
             <p className="mt-3 text-2xl font-bold text-foreground">{stats.active}</p>
-            <p className="text-xs text-muted-foreground">Abonnés actifs</p>
+            <p className="text-xs text-muted-foreground">Actifs</p>
+          </div>
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <Clock className="h-5 w-5 text-warning" />
+            <p className="mt-3 text-2xl font-bold text-warning">{stats.trial}</p>
+            <p className="text-xs text-muted-foreground">En essai</p>
+          </div>
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <p className="mt-3 text-2xl font-bold text-destructive">{stats.unpaid}</p>
+            <p className="text-xs text-muted-foreground">Impayés</p>
+          </div>
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <Ban className="h-5 w-5 text-destructive" />
+            <p className="mt-3 text-2xl font-bold text-destructive">{stats.suspended}</p>
+            <p className="text-xs text-muted-foreground">Suspendus</p>
           </div>
           <div className="rounded-xl border bg-card p-5 shadow-card">
             <TrendingUp className="h-5 w-5 text-accent" />
             <p className="mt-3 text-2xl font-bold text-foreground">94%</p>
-            <p className="text-xs text-muted-foreground">Taux de rétention</p>
-          </div>
-          <div className="rounded-xl border bg-primary/5 p-5 shadow-card">
-            <ArrowUp className="h-5 w-5 text-primary" />
-            <p className="mt-3 text-2xl font-bold text-primary">{stats.proCount}</p>
-            <p className="text-xs text-muted-foreground">Plan Pro</p>
-          </div>
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <ArrowUpRight className="h-5 w-5 text-warning" />
-            <p className="mt-3 text-2xl font-bold text-foreground">{stats.trial}</p>
-            <p className="text-xs text-muted-foreground">En essai</p>
+            <p className="text-xs text-muted-foreground">Rétention</p>
           </div>
         </div>
 
-        {/* Charts */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border bg-card p-6 shadow-card">
-            <h3 className="font-semibold text-foreground mb-4">Évolution des revenus</h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mockAdminRevenue}>
-                  <defs>
-                    <linearGradient id="subRevGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={v => `${v / 1000}k`} />
-                  <Tooltip formatter={(v: number) => [`${v.toLocaleString()} DT`, "Revenus"]} contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
-                  <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" fill="url(#subRevGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className="rounded-xl border bg-card p-6 shadow-card">
-            <h3 className="font-semibold text-foreground mb-4">Répartition par plan</h3>
-            <div className="space-y-4">
-              {mockPlanStats.map((s, i) => (
-                <div key={i}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-foreground">{s.name}</span>
-                    <span className="text-sm font-bold text-foreground">{s.revenue}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (s.count / subs.length) * 100)}%` }} />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{s.count} abonnés</p>
-                </div>
-              ))}
-            </div>
+        {/* Chart */}
+        <div className="rounded-xl border bg-card p-6 shadow-card">
+          <h3 className="font-semibold text-foreground mb-4">Évolution des revenus</h3>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={mockAdminRevenue}>
+                <defs>
+                  <linearGradient id="subRevGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={v => `${v / 1000}k`} />
+                <Tooltip formatter={(v: number) => [`${v.toLocaleString()} DT`, "Revenus"]} contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
+                <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" fill="url(#subRevGrad)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
         {/* Subscriptions table */}
         <div className="rounded-xl border bg-card shadow-card overflow-hidden">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b px-5 py-4 gap-3">
-            <h3 className="font-semibold text-foreground">Abonnements partenaires</h3>
+            <h3 className="font-semibold text-foreground">Tous les abonnements</h3>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative w-48">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
               </div>
-              <Select value={filterPlan} onValueChange={v => setFilterPlan(v as any)}>
+              <Select value={filterPlan} onValueChange={v => setFilterPlan(v)}>
                 <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous</SelectItem>
@@ -230,13 +232,15 @@ const AdminSubscriptions = () => {
                   <SelectItem value="Pro">Pro</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={filterStatus} onValueChange={v => setFilterStatus(v as any)}>
-                <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <Select value={filterStatus} onValueChange={v => setFilterStatus(v)}>
+                <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="all">Tous statuts</SelectItem>
                   <SelectItem value="active">Actif</SelectItem>
                   <SelectItem value="trial">Essai</SelectItem>
                   <SelectItem value="expired">Expiré</SelectItem>
+                  <SelectItem value="unpaid">Impayé</SelectItem>
+                  <SelectItem value="suspended">Suspendu</SelectItem>
                   <SelectItem value="cancelled">Annulé</SelectItem>
                 </SelectContent>
               </Select>
@@ -258,32 +262,38 @@ const AdminSubscriptions = () => {
               {filtered.length === 0 && (
                 <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Aucun abonnement trouvé</TableCell></TableRow>
               )}
-              {filtered.map(s => (
-                <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setDetailSub(s)}>
-                  <TableCell className="font-medium text-foreground">{s.doctorName}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${s.plan === "Pro" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{s.plan}</span>
-                  </TableCell>
-                  <TableCell className="text-sm font-semibold text-foreground">{s.monthlyPrice} DT</TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusConfig[s.status].color}`}>{statusConfig[s.status].label}</span>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {s.promoName ? (
-                      <span className="flex items-center gap-1 text-xs text-accent"><Gift className="h-3.5 w-3.5" />{s.promoName}</span>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{formatDate(s.renewalDate)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailSub(s)} title="Détail"><Eye className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openChangePlan(s)} title="Changer de plan">
-                        {s.plan === "Basic" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-warning" />}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filtered.map(s => {
+                const sc = statusConfig[s.status] || statusConfig.cancelled;
+                return (
+                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setDetailSub(s)}>
+                    <TableCell className="font-medium text-foreground">{s.doctorName}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${s.plan === "Pro" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{s.plan}</span>
+                    </TableCell>
+                    <TableCell className="text-sm font-semibold text-foreground">{s.monthlyPrice} DT</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${sc.color}`}>{sc.label}</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {s.promoName ? (
+                        <span className="flex items-center gap-1 text-xs text-accent"><Gift className="h-3.5 w-3.5" />{s.promoName}</span>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{formatDate(s.renewalDate)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailSub(s)} title="Détail"><Eye className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openChangePlan(s)} title="Changer plan">
+                          <ArrowUp className="h-3.5 w-3.5 text-primary" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setExtendSub(s); setExtendDays(30); }} title="Prolonger">
+                          <CalendarPlus className="h-3.5 w-3.5 text-accent" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -294,60 +304,59 @@ const AdminSubscriptions = () => {
         <SheetContent className="sm:max-w-md flex flex-col p-0">
           <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
             <SheetTitle>Détail abonnement</SheetTitle>
-            <SheetDescription className="sr-only">Détails de l'abonnement partenaire</SheetDescription>
+            <SheetDescription className="sr-only">Détails de l'abonnement</SheetDescription>
           </SheetHeader>
           {detailSub && (
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-5">
                 <div className="rounded-lg border p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">Partenaire</p>
-                    <p className="text-sm font-semibold text-foreground">{detailSub.doctorName}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">Plan actuel</p>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${detailSub.plan === "Pro" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{detailSub.plan} — {detailSub.monthlyPrice} DT/mois</span>
-                  </div>
+                  {[
+                    ["Partenaire", detailSub.doctorName],
+                    ["Plan", `${detailSub.plan} — ${detailSub.monthlyPrice} DT/mois`],
+                    ["Date début", formatDate(detailSub.startDate)],
+                    ["Renouvellement", formatDate(detailSub.renewalDate)],
+                  ].map(([label, val]) => (
+                    <div key={label} className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">{label}</p>
+                      <p className="text-sm font-semibold text-foreground">{val}</p>
+                    </div>
+                  ))}
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">Statut</p>
-                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusConfig[detailSub.status].color}`}>{statusConfig[detailSub.status].label}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">Date début</p>
-                    <p className="text-sm text-foreground flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDate(detailSub.startDate)}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">Renouvellement</p>
-                    <p className="text-sm text-foreground">{formatDate(detailSub.renewalDate)}</p>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${(statusConfig[detailSub.status] || statusConfig.cancelled).color}`}>
+                      {(statusConfig[detailSub.status] || statusConfig.cancelled).label}
+                    </span>
                   </div>
                 </div>
 
-                {/* Promo applied */}
                 {detailSub.promoName && (
                   <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Gift className="h-4 w-4 text-accent" />
-                      <p className="text-sm font-semibold text-foreground">Promotion appliquée</p>
-                    </div>
+                    <div className="flex items-center gap-2 mb-2"><Gift className="h-4 w-4 text-accent" /><p className="text-sm font-semibold text-foreground">Promotion</p></div>
                     <p className="text-sm text-foreground">{detailSub.promoName}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Valable jusqu'au {formatDate(detailSub.promoEndDate || "")}</p>
                   </div>
                 )}
 
-                {/* Quick actions */}
+                {/* Actions */}
                 <div className="rounded-lg border p-4 space-y-2">
-                  <p className="text-xs font-semibold text-foreground mb-2">Actions rapides</p>
+                  <p className="text-xs font-semibold text-foreground mb-2">Actions</p>
                   <div className="flex gap-2 flex-wrap">
                     <Button size="sm" variant="outline" className="text-xs" onClick={() => { setDetailSub(null); openChangePlan(detailSub); }}>
-                      {detailSub.plan === "Basic" ? <ArrowUp className="h-3.5 w-3.5 mr-1 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 mr-1 text-warning" />}
-                      {detailSub.plan === "Basic" ? "Upgrader → Pro" : "Downgrader → Basic"}
+                      <ArrowUp className="h-3.5 w-3.5 mr-1 text-primary" />Changer plan
                     </Button>
-                    {(detailSub.status === "active" || detailSub.status === "trial") && (
-                      <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30" onClick={() => { setDetailSub(null); handleSuspend(detailSub); }}>
-                        <Ban className="h-3.5 w-3.5 mr-1" />Suspendre
-                      </Button>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => { setDetailSub(null); setExtendSub(detailSub); setExtendDays(30); }}>
+                      <CalendarPlus className="h-3.5 w-3.5 mr-1 text-accent" />Prolonger
+                    </Button>
+                    {["active", "trial"].includes(detailSub.status) && (
+                      <>
+                        <Button size="sm" variant="outline" className="text-xs text-warning border-warning/30" onClick={() => { setDetailSub(null); handleMarkUnpaid(detailSub); }}>
+                          <DollarSign className="h-3.5 w-3.5 mr-1" />Marquer impayé
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30" onClick={() => { setDetailSub(null); handleSuspend(detailSub); }}>
+                          <Ban className="h-3.5 w-3.5 mr-1" />Suspendre
+                        </Button>
+                      </>
                     )}
-                    {(detailSub.status === "cancelled" || detailSub.status === "expired") && (
+                    {["cancelled", "expired", "suspended", "unpaid"].includes(detailSub.status) && (
                       <Button size="sm" variant="outline" className="text-xs text-accent border-accent/30" onClick={() => { setDetailSub(null); handleReactivate(detailSub); }}>
                         <RefreshCw className="h-3.5 w-3.5 mr-1" />Réactiver
                       </Button>
@@ -379,49 +388,50 @@ const AdminSubscriptions = () => {
       {/* Change plan dialog */}
       <Dialog open={!!changePlanSub} onOpenChange={() => setChangePlanSub(null)}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Changer de plan</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Changer de plan</DialogTitle></DialogHeader>
           {changePlanSub && (
             <div className="space-y-4 py-2">
               <div className="rounded-lg border p-4 space-y-2">
                 <p className="text-sm text-muted-foreground">Partenaire : <span className="font-semibold text-foreground">{changePlanSub.doctorName}</span></p>
-                <p className="text-sm text-muted-foreground">Plan actuel : <span className={`font-semibold ${changePlanSub.plan === "Pro" ? "text-primary" : "text-foreground"}`}>{changePlanSub.plan} ({changePlanSub.monthlyPrice} DT/mois)</span></p>
+                <p className="text-sm text-muted-foreground">Plan actuel : <span className="font-semibold text-primary">{changePlanSub.plan} ({changePlanSub.monthlyPrice} DT)</span></p>
               </div>
-
               <div>
                 <Label className="text-xs">Nouveau plan</Label>
-                <Select value={newPlan} onValueChange={v => setNewPlan(v as "Basic" | "Pro")}>
+                <Select value={newPlan} onValueChange={setNewPlan}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Basic">Basic — 39 DT/mois</SelectItem>
                     <SelectItem value="Pro">Pro — 129 DT/mois</SelectItem>
+                    <SelectItem value="Cabinet+">Cabinet+ — 299 DT/mois</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              {newPlan !== changePlanSub.plan && (
-                <div className={`rounded-lg p-3 border ${newPlan === "Pro" ? "bg-primary/5 border-primary/20" : "bg-warning/5 border-warning/20"}`}>
-                  <div className="flex items-center gap-2">
-                    {newPlan === "Pro" ? <ArrowUp className="h-4 w-4 text-primary" /> : <ArrowDown className="h-4 w-4 text-warning" />}
-                    <p className="text-sm font-medium text-foreground">
-                      {newPlan === "Pro" ? "Upgrade" : "Downgrade"} : {changePlanSub.monthlyPrice} DT → {PLAN_PRICES[newPlan]} DT/mois
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {newPlan === "Pro"
-                      ? "Le partenaire aura accès aux fonctionnalités Pro (IA, téléconsultation avancée, stats détaillées)."
-                      : "Le partenaire perdra l'accès aux fonctionnalités Pro."}
-                  </p>
-                </div>
-              )}
             </div>
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setChangePlanSub(null)}>Annuler</Button>
-            <Button className="gradient-primary text-primary-foreground" onClick={handleChangePlanConfirm} disabled={newPlan === changePlanSub?.plan}>
-              Confirmer le changement
-            </Button>
+            <Button className="gradient-primary text-primary-foreground" onClick={handleChangePlanConfirm} disabled={newPlan === changePlanSub?.plan}>Confirmer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extend dialog */}
+      <Dialog open={!!extendSub} onOpenChange={() => setExtendSub(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Prolonger l'abonnement</DialogTitle></DialogHeader>
+          {extendSub && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">Partenaire : <span className="font-semibold text-foreground">{extendSub.doctorName}</span></p>
+              <p className="text-sm text-muted-foreground">Renouvellement actuel : <span className="font-semibold text-foreground">{formatDate(extendSub.renewalDate)}</span></p>
+              <div>
+                <Label className="text-xs">Nombre de jours à ajouter</Label>
+                <Input className="mt-1" type="number" min={1} max={365} value={extendDays} onChange={e => setExtendDays(Number(e.target.value))} />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setExtendSub(null)}>Annuler</Button>
+            <Button className="gradient-primary text-primary-foreground" onClick={handleExtendConfirm}>Prolonger</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -435,11 +445,13 @@ const AdminSubscriptions = () => {
           title={
             motifAction.type === "change_plan" ? "Confirmer le changement de plan"
               : motifAction.type === "suspend" ? "Suspendre l'abonnement"
+              : motifAction.type === "mark_unpaid" ? "Marquer comme impayé"
+              : motifAction.type === "extend" ? "Prolonger l'abonnement"
               : "Réactiver l'abonnement"
           }
-          description="Cette action sera enregistrée dans les audit logs et le partenaire sera notifié."
+          description="Cette action est tracée dans l'audit log et le partenaire sera notifié."
           confirmLabel="Confirmer"
-          destructive={motifAction.type === "suspend"}
+          destructive={motifAction.type === "suspend" || motifAction.type === "mark_unpaid"}
         />
       )}
     </DashboardLayout>
