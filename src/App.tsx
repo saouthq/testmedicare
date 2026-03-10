@@ -52,6 +52,7 @@ import DoctorBilling from "./pages/doctor/DoctorBilling";
 import DoctorConnect from "./pages/doctor/DoctorConnect";
 import DoctorAIAssistant from "./pages/doctor/DoctorAIAssistant";
 import DoctorWaitingRoom from "./pages/doctor/DoctorWaitingRoom";
+import DoctorProtocols from "./pages/doctor/DoctorProtocols";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
@@ -69,6 +70,7 @@ import LaboratoryResults from "./pages/laboratory/LaboratoryResults";
 import LaboratoryPatients from "./pages/laboratory/LaboratoryPatients";
 import LaboratorySettings from "./pages/laboratory/LaboratorySettings";
 import LaboratoryReporting from "./pages/laboratory/LaboratoryReporting";
+import LaboratoryQuality from "./pages/laboratory/LaboratoryQuality";
 
 // Secretary
 import SecretaryDashboard from "./pages/secretary/SecretaryDashboard";
@@ -78,6 +80,9 @@ import SecretaryOffice from "./pages/secretary/SecretaryOffice";
 import SecretaryDocuments from "./pages/secretary/SecretaryDocuments";
 import SecretaryBilling from "./pages/secretary/SecretaryBilling";
 import SecretarySettings from "./pages/secretary/SecretarySettings";
+import SecretaryCallLog from "./pages/secretary/SecretaryCallLog";
+import SecretaryStats from "./pages/secretary/SecretaryStats";
+import SecretarySMS from "./pages/secretary/SecretarySMS";
 
 // Hospital
 import HospitalDashboard from "./pages/hospital/HospitalDashboard";
