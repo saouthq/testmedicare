@@ -150,7 +150,7 @@ function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void 
           <Button variant="outline" size="sm" className="text-xs" onClick={() => handlePrint(rx.id)}>
             <Printer className="h-3.5 w-3.5" />
           </Button>
-          {!rx.sent && (
+          {!rx.sent && isPharmacySendEnabled() && (
             <Button variant="outline" size="sm" className="text-xs" onClick={() => handleResend(rx.id)}>
               <Send className="h-3.5 w-3.5" />
             </Button>
