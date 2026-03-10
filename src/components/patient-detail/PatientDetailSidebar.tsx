@@ -1,11 +1,13 @@
 /**
  * PatientDetailSidebar — Colonne droite du dossier patient.
- * Rappels + Traitements/ordonnance active + Notes rapides.
+ * Adapté dynamiquement selon la spécialité du médecin.
  */
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { usePatientDetail } from "./PatientDetailContext";
 import { toast } from "@/hooks/use-toast";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { getPatientSpecialtyConfig } from "./specialtyPatientConfig";
 
 function Card({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -24,26 +26,37 @@ export default function PatientDetailSidebar() {
     activeRx, activeTreatments, openRx,
     quickNotes, setQuickNotes, quickNotesSavedAt, quickNotesRef, setTab, appendQuickNote,
   } = usePatientDetail();
+  const [sub] = useDoctorSubscription();
+  const specialtyConfig = getPatientSpecialtyConfig(sub.activity, sub.specialty);
 
   return (
     <>
-      {/* Rappels */}
+      {/* Rappels — specialty-specific */}
       <Card title="Rappels" right={
         <Button variant="outline" size="sm" onClick={() => toast({ title: "Nouveau rappel", description: "Formulaire de création de rappel à brancher." })}>
           <Plus className="h-3.5 w-3.5 mr-1" />Créer un rappel
         </Button>
       }>
         <div className="space-y-2">
-          <div className="rounded-xl border bg-warning/10 px-3 py-2">
-            <div className="text-sm font-medium text-foreground">Bilan HbA1c à prescrire</div>
-            <div className="text-xs text-muted-foreground">3 mois</div>
-          </div>
-          <div className="rounded-xl border bg-background px-3 py-2">
-            <div className="text-sm font-medium text-foreground">Fond d'œil annuel</div>
-            <div className="text-xs text-muted-foreground">à prévoir</div>
-          </div>
+          {(specialtyConfig.reminders || []).map((r, i) => (
+            <div key={i} className={`rounded-xl border px-3 py-2 ${i === 0 ? "bg-warning/10" : "bg-background"}`}>
+              <div className="text-sm font-medium text-foreground">{r.label}</div>
+              <div className="text-xs text-muted-foreground">{r.hint}</div>
+            </div>
+          ))}
         </div>
       </Card>
+
+      {/* Specialty widgets */}
+      {specialtyConfig.sidebarWidgets?.map(w => (
+        <Card key={w.id} title={w.title}>
+          <div className="space-y-1.5">
+            {w.items.map((item, i) => (
+              <div key={i} className="text-sm text-foreground">{item}</div>
+            ))}
+          </div>
+        </Card>
+      ))}
 
       {/* Traitements / ordonnance active */}
       <Card title="Traitements / ordonnance active" right={
