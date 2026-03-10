@@ -59,6 +59,8 @@ import PharmacyPrescriptions from "./pages/pharmacy/PharmacyPrescriptions";
 import PharmacyStock from "./pages/pharmacy/PharmacyStock";
 import PharmacyHistory from "./pages/pharmacy/PharmacyHistory";
 import PharmacySettings from "./pages/pharmacy/PharmacySettings";
+import PharmacyConnect from "./pages/pharmacy/PharmacyConnect";
+import PharmacyPatients from "./pages/pharmacy/PharmacyPatients";
 
 // Laboratory
 import LaboratoryDashboard from "./pages/laboratory/LaboratoryDashboard";
