@@ -475,14 +475,14 @@ export function ActionDock() {
               </Button>
             </div>
 
-            {/* Smart suggestions */}
-            {ctx.labSuggestions.length > 0 && (
+            {/* Smart suggestions — specialty-specific */}
+            {(specialtyLabSuggestions.length > 0 || ctx.labSuggestions.length > 0) && (
               <div className="rounded-xl bg-muted/30 border p-2.5">
                 <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide mb-2">
-                  Suggestions selon le diagnostic
+                  {specialtyLabSuggestions.length > 0 ? `Examens ${config.label}` : "Suggestions selon le diagnostic"}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {ctx.labSuggestions.slice(0, 10).map((s) => (
+                  {(specialtyLabSuggestions.length > 0 ? specialtyLabSuggestions : ctx.labSuggestions).slice(0, 12).map((s) => (
                     <button
                       key={s}
                       onClick={() => ctx.addAnalyse(s)}
