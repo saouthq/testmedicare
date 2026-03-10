@@ -2,16 +2,16 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { plansByActivity } from "@/stores/featureMatrixStore";
+import { getSpecialtyConfig } from "@/components/consultation/specialtyConfig";
 import { useState } from "react";
 import {
   Calendar, Clock, CheckCircle2, Play,
   Bell, AlertTriangle, MessageSquare, Search,
-  MoreHorizontal, FileText, Video, RefreshCw, X, ChevronRight,
-  Settings, ArrowRight, Pill, UserCheck, RotateCcw
+  FileText, Video, X, ChevronRight,
+  Settings, ArrowRight, RotateCcw
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { mockUrgentAlerts, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
@@ -26,39 +26,36 @@ const getPatientId = (name: string) => {
   return p ? p.id : 1;
 };
 
-type StatusFilter = "all" | "done" | "current" | "upcoming";
-
 const DoctorDashboard = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   const teleconsultSessions = useTeleconsultSessions();
   const [waitingEntries] = useWaitingRoom();
   const [renewalRequests] = useRenewalRequests();
   const [profileCompletion] = useProfileCompletion();
 
   const [sub] = useDoctorSubscription();
+  const config = getSpecialtyConfig(sub.activity, sub.specialty);
   const isEssentiel = sub.plan === "essentiel";
   const proPlan = plansByActivity[sub.activity]?.find(p => p.id === "pro");
   const completionPercent = getProfileCompletionPercent(profileCompletion);
   const pendingRenewals = renewalRequests.filter(r => r.status === "pending");
 
-  // Derive schedule-like data from waiting room
   const activeWaiting = waitingEntries.filter(e => !["completed", "absent"].includes(e.status));
   const currentRdv = waitingEntries.find(e => e.status === "in_consultation");
   const nextRdv = waitingEntries.find(e => e.status === "scheduled" || e.status === "arrived" || e.status === "waiting");
   const doneCount = waitingEntries.filter(e => e.status === "completed").length;
   const totalCount = waitingEntries.length;
 
+  const kpi = config.kpiLabels || { done: "Terminées aujourd'hui", waiting: "En attente", renewals: "Renouvellements", teleconsult: "Téléconsultations" };
+
   return (
     <DashboardLayout role="doctor" title="Tableau de bord">
       <div className="space-y-6">
-        {/* Upgrade banner for Essentiel plan */}
         {isEssentiel && (
           <UpgradeBanner
             feature={`Passez au Pro · ${proPlan?.price || 149} DT/mois`}
             description="Débloquez la téléconsultation vidéo, l'assistant IA, les statistiques avancées et la gestion des secrétaires."
           />
         )}
-        {/* Profile completion banner */}
         {completionPercent < 100 && (
           <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-center gap-4">
             <div className="h-12 w-12 rounded-full border-4 border-warning/30 flex items-center justify-center shrink-0">
@@ -84,10 +81,10 @@ const DoctorDashboard = () => {
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             { label: "Planning", icon: Calendar, to: "/dashboard/doctor/schedule", color: "text-primary" },
-            { label: "Salle d'attente", icon: Clock, to: "/dashboard/doctor/waiting-room", color: "text-warning", badge: activeWaiting.length },
-            { label: "Consultation", icon: Play, to: currentRdv ? `/dashboard/doctor/consultation/new?patient=${getPatientId(currentRdv.patient)}` : "/dashboard/doctor/consultations", color: "text-accent" },
-            { label: "Mes patients", icon: Search, to: "/dashboard/doctor/patients", color: "text-primary" },
-            { label: "Ordonnances", icon: FileText, to: "/dashboard/doctor/prescriptions", color: "text-primary" },
+            { label: config.sidebarLabels?.["/dashboard/doctor/waiting-room"] || "Salle d'attente", icon: Clock, to: "/dashboard/doctor/waiting-room", color: "text-warning", badge: activeWaiting.length },
+            { label: config.sidebarLabels?.["/dashboard/doctor/consultations"] || "Consultation", icon: Play, to: currentRdv ? `/dashboard/doctor/consultation/new?patient=${getPatientId(currentRdv.patient)}` : "/dashboard/doctor/consultations", color: "text-accent" },
+            { label: config.sidebarLabels?.["/dashboard/doctor/patients"] || "Mes patients", icon: Search, to: "/dashboard/doctor/patients", color: "text-primary" },
+            { label: config.sidebarLabels?.["/dashboard/doctor/prescriptions"] || "Ordonnances", icon: FileText, to: "/dashboard/doctor/prescriptions", color: "text-primary" },
           ].map(action => (
             <Link key={action.label} to={action.to} className="rounded-xl border bg-card p-4 hover:shadow-card transition-all text-center relative">
               <action.icon className={`h-6 w-6 mx-auto ${action.color}`} />
@@ -101,19 +98,20 @@ const DoctorDashboard = () => {
           ))}
         </div>
 
-        {/* Hero — compact overview */}
+        {/* Hero */}
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 relative overflow-hidden rounded-2xl gradient-primary p-5 text-primary-foreground min-h-0">
             <div className="relative z-10">
               <p className="text-primary-foreground/70 text-sm">Bonjour,</p>
               <h2 className="text-xl font-bold mt-0.5">{mockDoctorProfile.name}</h2>
-              <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} consultations · Prochain : <span className="font-semibold">{nextRdv?.time || "—"}</span></p>
+              <p className="text-primary-foreground/60 text-xs mt-0.5">{config.dashboardSubtitle}</p>
+              <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} {config.kpiLabels?.done?.toLowerCase() || "consultations"} · Prochain : <span className="font-semibold">{nextRdv?.time || "—"}</span></p>
               <div className="flex gap-3 mt-3 flex-wrap">
                 <Link to={`/dashboard/doctor/consultation/new?patient=${currentRdv ? getPatientId(currentRdv.patient) : 1}`}>
-                  <Button size="sm" variant="secondary" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0"><Play className="h-4 w-4 mr-1.5" />Démarrer consultation</Button>
+                  <Button size="sm" variant="secondary" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0"><Play className="h-4 w-4 mr-1.5" />Démarrer {sub.activity === "kine" ? "séance" : "consultation"}</Button>
                 </Link>
                 <Link to="/dashboard/doctor/waiting-room">
-                  <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20"><Clock className="h-4 w-4 mr-1.5" />Salle d'attente ({activeWaiting.length})</Button>
+                  <Button size="sm" variant="secondary" className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20"><Clock className="h-4 w-4 mr-1.5" />{config.sidebarLabels?.["/dashboard/doctor/waiting-room"] || "Salle d'attente"} ({activeWaiting.length})</Button>
                 </Link>
               </div>
             </div>
@@ -123,7 +121,7 @@ const DoctorDashboard = () => {
           {/* Waiting room */}
           <div className="rounded-xl border bg-card shadow-card p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><Clock className="h-4 w-4 text-warning" />Salle d'attente</h3>
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><Clock className="h-4 w-4 text-warning" />{config.sidebarLabels?.["/dashboard/doctor/waiting-room"] || "Salle d'attente"}</h3>
               <span className="text-xs font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full">{activeWaiting.length}</span>
             </div>
             <div className="space-y-2.5">
@@ -153,7 +151,7 @@ const DoctorDashboard = () => {
           </div>
         </div>
 
-        {/* Renewal requests from patients */}
+        {/* Renewal requests */}
         {pendingRenewals.length > 0 && (
           <div className="rounded-xl border bg-card shadow-card p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -167,9 +165,7 @@ const DoctorDashboard = () => {
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">{req.patientAvatar}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{req.patientName}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {req.items.join(", ")} · {req.prescriptionId}
-                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{req.items.join(", ")} · {req.prescriptionId}</p>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     <Button size="sm" className="h-7 text-xs gradient-primary text-primary-foreground"
@@ -187,8 +183,8 @@ const DoctorDashboard = () => {
           </div>
         )}
 
-        {/* Teleconsultations actives */}
-        {teleconsultSessions.filter(s => s.status !== "ended").length > 0 && (
+        {/* Teleconsultations actives — hidden if specialty says so */}
+        {!config.hideTeleconsult && teleconsultSessions.filter(s => s.status !== "ended").length > 0 && (
           <div className="rounded-xl border bg-card shadow-card p-4">
             <div className="flex items-center gap-2 mb-3">
               <Video className="h-4 w-4 text-primary" />
@@ -234,24 +230,32 @@ const DoctorDashboard = () => {
           </div>
         )}
 
-        {/* Quick KPIs */}
+        {/* KPIs — labels from specialty config */}
         <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-xl border bg-card p-4 shadow-card text-center">
             <p className="text-2xl font-bold text-foreground">{doneCount}</p>
-            <p className="text-xs text-muted-foreground">Terminées aujourd'hui</p>
+            <p className="text-xs text-muted-foreground">{kpi.done}</p>
           </div>
           <div className="rounded-xl border bg-card p-4 shadow-card text-center">
             <p className="text-2xl font-bold text-warning">{activeWaiting.length}</p>
-            <p className="text-xs text-muted-foreground">En attente</p>
+            <p className="text-xs text-muted-foreground">{kpi.waiting}</p>
           </div>
           <div className="rounded-xl border bg-card p-4 shadow-card text-center">
             <p className="text-2xl font-bold text-primary">{pendingRenewals.length}</p>
-            <p className="text-xs text-muted-foreground">Renouvellements</p>
+            <p className="text-xs text-muted-foreground">{kpi.renewals}</p>
           </div>
-          <div className="rounded-xl border bg-card p-4 shadow-card text-center">
-            <p className="text-2xl font-bold text-accent">{teleconsultSessions.filter(s => s.status !== "ended").length}</p>
-            <p className="text-xs text-muted-foreground">Téléconsultations</p>
-          </div>
+          {!config.hideTeleconsult && (
+            <div className="rounded-xl border bg-card p-4 shadow-card text-center">
+              <p className="text-2xl font-bold text-accent">{teleconsultSessions.filter(s => s.status !== "ended").length}</p>
+              <p className="text-xs text-muted-foreground">{kpi.teleconsult}</p>
+            </div>
+          )}
+          {config.hideTeleconsult && (
+            <div className="rounded-xl border bg-card p-4 shadow-card text-center">
+              <p className="text-2xl font-bold text-accent">{totalCount}</p>
+              <p className="text-xs text-muted-foreground">Total du jour</p>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

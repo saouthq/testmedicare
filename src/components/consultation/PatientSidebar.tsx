@@ -1,6 +1,6 @@
 /**
  * PatientSidebar — Colonne gauche de la consultation
- * Redesigné : carte patient, constantes en grille visuelle, antécédents compacts
+ * Adapté par spécialité : vitals, antécédents, badges patient
  */
 import {
   Activity,
@@ -16,6 +16,8 @@ import {
   Thermometer,
   AlertTriangle,
   Stethoscope,
+  Eye,
+  Baby,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useConsultation } from "./ConsultationContext";
 import { autoGrowCompact } from "./helpers";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { getSpecialtyConfig } from "./specialtyConfig";
 
 // ── Vital chip ────────────────────────────────────────────────
 function VitalChip({
@@ -56,8 +60,15 @@ function VitalChip({
   );
 }
 
+// Icon mapping for config
+const iconMap: Record<string, any> = {
+  Gauge, Heart, Thermometer, Droplets, Scale, Activity, Eye, Baby,
+};
+
 export function PatientSidebar() {
   const ctx = useConsultation();
+  const [sub] = useDoctorSubscription();
+  const config = getSpecialtyConfig(sub.activity, sub.specialty);
 
   // Blood pressure ok check
   const bpOk =
@@ -71,11 +82,63 @@ export function PatientSidebar() {
   const spo2Num = parseFloat(ctx.vitals.oxygenSat);
   const spo2Ok = !isNaN(spo2Num) ? spo2Num >= 95 : undefined;
 
+  // Build vitals from config
+  const getVitalValue = (key: string) => {
+    if (key === "bp") return ctx.vitals.systolic && ctx.vitals.diastolic ? `${ctx.vitals.systolic}/${ctx.vitals.diastolic}` : "—";
+    if (key === "heartRate") return ctx.vitals.heartRate;
+    if (key === "temperature") return ctx.vitals.temperature;
+    if (key === "oxygenSat") return ctx.vitals.oxygenSat;
+    if (key === "weight") return ctx.vitals.weight;
+    if (key === "bmi") return ctx.bmi;
+    return "—";
+  };
+
+  const getVitalOk = (key: string) => {
+    if (key === "bp") return bpOk;
+    if (key === "bmi") return bmiOk;
+    if (key === "temperature") return tempOk;
+    if (key === "oxygenSat") return spo2Ok;
+    return undefined;
+  };
+
+  const getVitalColor = (key: string) => {
+    const map: Record<string, string> = { bp: "text-destructive", heartRate: "text-primary", temperature: "text-warning", oxygenSat: "text-primary", weight: "text-accent", bmi: "text-muted-foreground" };
+    return map[key] || "text-primary";
+  };
+
+  // Antecedents config based on specialty
+  const getAntecedents = () => {
+    const base = [
+      { label: "Médicaux", value: ctx.antMed, set: ctx.setAntMed, ph: "Diabète T2, HTA, asthme…", color: "border-l-primary" },
+      { label: "Chirurgicaux", value: ctx.antSurg, set: ctx.setAntSurg, ph: "Appendicectomie, hernie…", color: "border-l-warning" },
+      { label: "Traumatiques", value: ctx.antTrauma, set: ctx.setAntTrauma, ph: "Fracture, entorse…", color: "border-l-destructive" },
+      { label: "Familiaux", value: ctx.antFamily, set: ctx.setAntFamily, ph: "Diabète, cardiopathie…", color: "border-l-accent" },
+    ];
+
+    // Customize placeholders per specialty
+    if (sub.specialty === "Ophtalmologue") {
+      base[0].ph = "Diabète, HTA, glaucome familial…";
+      base[1].ph = "Chirurgie oculaire antérieure…";
+    } else if (sub.specialty === "Cardiologue") {
+      base[0].ph = "HTA, diabète, dyslipidémie…";
+      base[3].ph = "Cardiopathie familiale, mort subite…";
+    } else if (sub.specialty === "Pédiatre") {
+      base[0].ph = "Néonatals, pathologies infantiles…";
+      base[1].ph = "Chirurgie pédiatrique…";
+      base[2].ph = "Traumatismes…";
+      base[3].ph = "Maladies héréditaires, atopie…";
+    } else if (sub.specialty === "Psychiatre") {
+      base[0].ph = "ATCD psychiatriques, hospitalisations…";
+      base[3].ph = "ATCD familiaux psychiatriques…";
+    }
+
+    return base;
+  };
+
   return (
     <aside className="space-y-3">
       {/* ── Patient card ── */}
       <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-        {/* Header gradient */}
         <div className="gradient-hero h-12 relative" />
         <div className="px-4 pb-4 -mt-6">
           <div className="flex items-end gap-3 mb-3">
@@ -131,7 +194,7 @@ export function PatientSidebar() {
         </div>
       </div>
 
-      {/* ── Constantes ── */}
+      {/* ── Constantes — dynamiques par spécialité ── */}
       <div className="rounded-2xl border bg-card shadow-sm p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -147,57 +210,38 @@ export function PatientSidebar() {
             >
               {ctx.completion.vitalsOk ? "✓ OK" : "À compléter"}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => ctx.setVitalsOpen(!ctx.vitalsOpen)}
-            >
-              {ctx.vitalsOpen ? (
-                <>
-                  <ChevronUp className="h-3.5 w-3.5" />
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </>
-              )}
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => ctx.setVitalsOpen(!ctx.vitalsOpen)}>
+              {ctx.vitalsOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </Button>
           </div>
         </div>
 
-        {/* Vitals grid — always visible summary */}
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          <VitalChip
-            icon={Gauge}
-            label="TA (mmHg)"
-            value={ctx.vitals.systolic && ctx.vitals.diastolic ? `${ctx.vitals.systolic}/${ctx.vitals.diastolic}` : "—"}
-            color="text-destructive"
-            ok={bpOk}
-          />
-          <VitalChip icon={Heart} label="FC (bpm)" value={ctx.vitals.heartRate} color="text-primary" />
-          <VitalChip
-            icon={Thermometer}
-            label="Température"
-            value={ctx.vitals.temperature}
-            color="text-warning"
-            unit="°C"
-            ok={tempOk}
-          />
-          <VitalChip
-            icon={Droplets}
-            label="SpO2"
-            value={ctx.vitals.oxygenSat}
-            color="text-primary"
-            unit="%"
-            ok={spo2Ok}
-          />
+        {/* Dynamic vitals grid from specialty config */}
+        <div className="grid grid-cols-2 gap-2">
+          {config.vitals.map((v) => (
+            <VitalChip
+              key={v.key}
+              icon={iconMap[v.icon] || Activity}
+              label={v.label}
+              value={getVitalValue(v.key)}
+              color={getVitalColor(v.key)}
+              unit={v.unit}
+              ok={getVitalOk(v.key)}
+            />
+          ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <VitalChip icon={Scale} label="Poids" value={ctx.vitals.weight} color="text-accent" unit="kg" />
-          <VitalChip icon={Activity} label="IMC" value={ctx.bmi} color="text-muted-foreground" ok={bmiOk} />
-        </div>
+        {/* Extra specialty-specific vitals */}
+        {config.extraVitals && config.extraVitals.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            {config.extraVitals.map((v) => (
+              <div key={v.key} className="rounded-xl border p-2.5 bg-primary/5">
+                <span className="text-[10px] text-primary font-medium">{v.label}</span>
+                <p className="text-sm font-bold text-foreground mt-0.5">{v.placeholder || "—"}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Edit panel */}
         {ctx.vitalsOpen && (
@@ -206,99 +250,40 @@ export function PatientSidebar() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-[10px] text-muted-foreground">Systolique</Label>
-                <Input
-                  value={ctx.vitals.systolic}
-                  onChange={(e) => ctx.setVitals((v) => ({ ...v, systolic: e.target.value }))}
-                  className="h-7 text-xs mt-0.5"
-                  placeholder="120"
-                />
+                <Input value={ctx.vitals.systolic} onChange={(e) => ctx.setVitals((v) => ({ ...v, systolic: e.target.value }))} className="h-7 text-xs mt-0.5" placeholder="120" />
               </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">Diastolique</Label>
-                <Input
-                  value={ctx.vitals.diastolic}
-                  onChange={(e) => ctx.setVitals((v) => ({ ...v, diastolic: e.target.value }))}
-                  className="h-7 text-xs mt-0.5"
-                  placeholder="80"
-                />
+                <Input value={ctx.vitals.diastolic} onChange={(e) => ctx.setVitals((v) => ({ ...v, diastolic: e.target.value }))} className="h-7 text-xs mt-0.5" placeholder="80" />
               </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">FC (bpm)</Label>
-                <Input
-                  value={ctx.vitals.heartRate}
-                  onChange={(e) => ctx.setVitals((v) => ({ ...v, heartRate: e.target.value }))}
-                  className="h-7 text-xs mt-0.5"
-                  placeholder="72"
-                />
+                <Input value={ctx.vitals.heartRate} onChange={(e) => ctx.setVitals((v) => ({ ...v, heartRate: e.target.value }))} className="h-7 text-xs mt-0.5" placeholder="72" />
               </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">Température (°C)</Label>
-                <Input
-                  value={ctx.vitals.temperature}
-                  onChange={(e) => ctx.setVitals((v) => ({ ...v, temperature: e.target.value }))}
-                  className="h-7 text-xs mt-0.5"
-                  placeholder="37.0"
-                />
+                <Input value={ctx.vitals.temperature} onChange={(e) => ctx.setVitals((v) => ({ ...v, temperature: e.target.value }))} className="h-7 text-xs mt-0.5" placeholder="37.0" />
               </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">SpO2 (%)</Label>
-                <Input
-                  value={ctx.vitals.oxygenSat}
-                  onChange={(e) => ctx.setVitals((v) => ({ ...v, oxygenSat: e.target.value }))}
-                  className="h-7 text-xs mt-0.5"
-                  placeholder="98"
-                />
+                <Input value={ctx.vitals.oxygenSat} onChange={(e) => ctx.setVitals((v) => ({ ...v, oxygenSat: e.target.value }))} className="h-7 text-xs mt-0.5" placeholder="98" />
               </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">Poids (kg)</Label>
-                <Input
-                  value={ctx.vitals.weight}
-                  onChange={(e) => ctx.setVitals((v) => ({ ...v, weight: e.target.value }))}
-                  className="h-7 text-xs mt-0.5"
-                  placeholder="75"
-                />
+                <Input value={ctx.vitals.weight} onChange={(e) => ctx.setVitals((v) => ({ ...v, weight: e.target.value }))} className="h-7 text-xs mt-0.5" placeholder="75" />
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Antécédents ── */}
+      {/* ── Antécédents — with specialty-adapted placeholders ── */}
       <div className="rounded-2xl border bg-card shadow-sm p-4">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
           <Calendar className="h-4 w-4 text-primary" /> Antécédents
         </h3>
         <div className="space-y-2.5">
-          {[
-            {
-              label: "Médicaux",
-              value: ctx.antMed,
-              set: ctx.setAntMed,
-              ph: "Diabète T2, HTA, asthme…",
-              color: "border-l-primary",
-            },
-            {
-              label: "Chirurgicaux",
-              value: ctx.antSurg,
-              set: ctx.setAntSurg,
-              ph: "Appendicectomie, hernie…",
-              color: "border-l-warning",
-            },
-            {
-              label: "Traumatiques",
-              value: ctx.antTrauma,
-              set: ctx.setAntTrauma,
-              ph: "Fracture, entorse…",
-              color: "border-l-destructive",
-            },
-            {
-              label: "Familiaux",
-              value: ctx.antFamily,
-              set: ctx.setAntFamily,
-              ph: "Diabète, cardiopathie…",
-              color: "border-l-accent",
-            },
-          ].map((f) => (
+          {getAntecedents().map((f) => (
             <div key={f.label} className={`border-l-2 pl-2.5 ${f.color}`}>
               <Label className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">
                 {f.label}

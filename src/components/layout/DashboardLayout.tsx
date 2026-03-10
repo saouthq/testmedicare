@@ -250,11 +250,20 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     </>
   );
 
-  /** Render standard sidebar nav — with feature gating for doctor */
+  /** Render standard sidebar nav — with feature gating for doctor + specialty labels */
   const [doctorSub] = useDoctorSubscription();
   const doctorEnabledIds = useMemo(() => {
     if (role !== "doctor") return new Set<string>();
     return new Set(getEnabledFeatures(doctorSub.activity, doctorSub.plan, doctorSub.specialty).map(f => f.id));
+  }, [role, doctorSub]);
+
+  // Specialty config for sidebar label overrides & hidden items
+  const specConfig = useMemo(() => {
+    if (role !== "doctor") return null;
+    try {
+      const { getSpecialtyConfig } = require("@/components/consultation/specialtyConfig");
+      return getSpecialtyConfig(doctorSub.activity, doctorSub.specialty);
+    } catch { return null; }
   }, [role, doctorSub]);
 
   const renderStandardNav = () => (
@@ -263,6 +272,8 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
         const isActive = location.pathname === item.url;
         // Admin module gating — hide sidebar items for disabled modules
         if (role !== "admin" && !isSidebarUrlEnabled(item.url)) return null;
+        // Specialty-specific hidden items
+        if (role === "doctor" && specConfig?.sidebarHidden?.includes(item.url)) return null;
         // Feature gating for doctor subscription
         const requiredFeature = role === "doctor" ? sidebarFeatureMap[item.url] : undefined;
         const isLocked = requiredFeature ? !doctorEnabledIds.has(requiredFeature) : false;
@@ -270,6 +281,9 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
         // Hidden features (not blurred) - don't show in sidebar
         if (isLocked && !isBlurred) return null;
+
+        // Specialty label override
+        const displayTitle = (role === "doctor" && specConfig?.sidebarLabels?.[item.url]) || item.title;
 
         return (
           <Link
@@ -283,7 +297,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
               }
               setSidebarOpen(false);
             }}
-            title={!expanded ? item.title : undefined}
+            title={!expanded ? displayTitle : undefined}
             className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors whitespace-nowrap active-scale ${
               isLocked
                 ? "text-muted-foreground/50 cursor-not-allowed"
@@ -294,7 +308,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           >
             <item.icon className={`h-4 w-4 shrink-0 ${isLocked ? "opacity-40" : ""}`} />
             <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
-              {item.title}
+              {displayTitle}
             </span>
             {isLocked && expanded && <Lock className="h-3 w-3 text-muted-foreground/50 ml-auto shrink-0" />}
           </Link>

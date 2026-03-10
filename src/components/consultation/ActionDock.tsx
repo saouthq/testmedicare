@@ -43,6 +43,8 @@ import type { PaymentMode } from "./types";
 import { scrollToId } from "./helpers";
 import { mockMedicines } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { getSpecialtyConfig } from "./specialtyConfig";
 
 // ── Medicine DB ───────────────────────────────────────────────
 const MED_DB = [
@@ -234,12 +236,7 @@ function StatusDot({ ok }: { ok: boolean }) {
 }
 
 // ── Tab bar ────────────────────────────────────────────────────
-const TABS = [
-  { key: "rx" as const, icon: Pill, label: "Rx" },
-  { key: "labs" as const, icon: Activity, label: "Analyses" },
-  { key: "docs" as const, icon: FileText, label: "Docs" },
-  { key: "close" as const, icon: CheckCircle2, label: "Clôture" },
-] as const;
+// Tab labels now dynamic in ActionDock component based on specialty
 
 // ── Payment mode selector ──────────────────────────────────────
 const PAYMENT_MODES: { key: PaymentMode; label: string; Icon: any }[] = [
@@ -252,6 +249,16 @@ const PAYMENT_MODES: { key: PaymentMode; label: string; Icon: any }[] = [
 // ─────────────────────────────────────────────────────────────
 export function ActionDock() {
   const ctx = useConsultation();
+  const [sub] = useDoctorSubscription();
+  const config = getSpecialtyConfig(sub.activity, sub.specialty);
+  const dockLabels = config.dockTabs || { rx: "Rx", labs: "Analyses", docs: "Docs", close: "Clôture" };
+
+  const TABS = [
+    { key: "rx" as const, icon: Pill, label: dockLabels.rx },
+    { key: "labs" as const, icon: Activity, label: dockLabels.labs },
+    { key: "docs" as const, icon: FileText, label: dockLabels.docs },
+    { key: "close" as const, icon: CheckCircle2, label: dockLabels.close },
+  ] as const;
 
   // Badge counts
   const rxCount = ctx.rxItems.filter((i) => i.medication.trim()).length;
