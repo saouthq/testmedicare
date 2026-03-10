@@ -1,103 +1,100 @@
+/**
+ * PharmacyStock — Disponibilité médicaments (pas de gestion de stock quantitatif).
+ * Dispo: Disponible / Partiel / Indisponible
+ * Workflow: Retrait ordonnance, pas de commande fournisseur.
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, AlertTriangle, Package, Plus, ShoppingCart, ArrowDown, ArrowUp, Pill, Edit, Save, X, Trash2, Calendar, CheckCircle2, Send } from "lucide-react";
+import { Search, Pill, CheckCircle2, AlertTriangle, X, ToggleLeft, ToggleRight, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { mockPharmacyStock, mockPharmacyCategories } from "@/data/mockData";
+import { toast } from "@/hooks/use-toast";
 
-interface StockItem {
-  id: number; name: string; category: string; quantity: number; threshold: number;
-  status: string; price: string; expiry: string; supplier: string;
+type Availability = "available" | "partial" | "unavailable";
+
+interface MedItem {
+  id: number;
+  name: string;
+  category: string;
+  availability: Availability;
+  price: string;
 }
 
-const statusConfig: Record<string, { label: string; class: string }> = {
-  ok: { label: "En stock", class: "bg-accent/10 text-accent" },
-  low: { label: "Stock bas", class: "bg-warning/10 text-warning" },
-  critical: { label: "Rupture", class: "bg-destructive/10 text-destructive" },
+const availConfig: Record<Availability, { label: string; cls: string }> = {
+  available: { label: "Disponible", cls: "bg-accent/10 text-accent" },
+  partial: { label: "Partiel", cls: "bg-warning/10 text-warning" },
+  unavailable: { label: "Indisponible", cls: "bg-destructive/10 text-destructive" },
 };
 
 const PharmacyStock = () => {
-  const [stock, setStock] = useState<StockItem[]>(mockPharmacyStock.map(s => ({ ...s, expiry: s.expiry || "", supplier: s.supplier || "" })));
+  const [meds, setMeds] = useState<MedItem[]>(
+    mockPharmacyStock.map(s => ({
+      id: s.id,
+      name: s.name,
+      category: s.category,
+      availability: s.status === "critical" ? "unavailable" as Availability : s.status === "low" ? "partial" as Availability : "available" as Availability,
+      price: s.price,
+    }))
+  );
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
-  const [sortBy, setSortBy] = useState<"name" | "quantity">("name");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editQty, setEditQty] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
-  const [showOrder, setShowOrder] = useState(false);
-  const [orderItems, setOrderItems] = useState<{ name: string; qty: number; supplier: string }[]>([]);
-  const [orderSent, setOrderSent] = useState(false);
-  const [newItem, setNewItem] = useState({ name: "", category: "Antibiotiques", quantity: "0", threshold: "20", price: "", expiry: "", supplier: "" });
+  const [filterAvail, setFilterAvail] = useState<Availability | "all">("all");
 
-  const filtered = stock
-    .filter(s => {
-      if (selectedCategory !== "Tous" && s.category !== selectedCategory) return false;
-      if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
+  const filtered = meds
+    .filter(m => {
+      if (selectedCategory !== "Tous" && m.category !== selectedCategory) return false;
+      if (filterAvail !== "all" && m.availability !== filterAvail) return false;
+      if (search && !m.name.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     })
-    .sort((a, b) => sortBy === "quantity" ? a.quantity - b.quantity : a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  const totalProducts = stock.length;
-  const criticalCount = stock.filter(s => s.status === "critical").length;
-  const lowCount = stock.filter(s => s.status === "low").length;
-  const updateStatus = (qty: number, threshold: number) => qty <= 0 ? "critical" : qty < threshold ? "low" : "ok";
-
-  const handleEditSave = (id: number) => {
-    const qty = parseInt(editQty);
-    if (isNaN(qty)) return;
-    setStock(prev => prev.map(s => s.id === id ? { ...s, quantity: qty, status: updateStatus(qty, s.threshold) } : s));
-    setEditingId(null);
+  const counts = {
+    available: meds.filter(m => m.availability === "available").length,
+    partial: meds.filter(m => m.availability === "partial").length,
+    unavailable: meds.filter(m => m.availability === "unavailable").length,
   };
 
-  const handleAddItem = () => {
-    const qty = parseInt(newItem.quantity);
-    const thresh = parseInt(newItem.threshold);
-    if (!newItem.name || isNaN(qty)) return;
-    const maxId = Math.max(...stock.map(s => s.id), 0);
-    setStock(prev => [...prev, { id: maxId + 1, name: newItem.name, category: newItem.category, quantity: qty, threshold: thresh, status: updateStatus(qty, thresh), price: newItem.price, expiry: newItem.expiry, supplier: newItem.supplier }]);
-    setShowAdd(false);
-    setNewItem({ name: "", category: "Antibiotiques", quantity: "0", threshold: "20", price: "", expiry: "", supplier: "" });
+  const cycleAvailability = (id: number) => {
+    setMeds(prev => prev.map(m => {
+      if (m.id !== id) return m;
+      const next: Availability = m.availability === "available" ? "partial" : m.availability === "partial" ? "unavailable" : "available";
+      return { ...m, availability: next };
+    }));
   };
 
-  const openOrderModal = () => {
-    const lowItems = stock.filter(s => s.status === "low" || s.status === "critical");
-    setOrderItems(lowItems.map(s => ({ name: s.name, qty: Math.max(s.threshold * 2 - s.quantity, 10), supplier: s.supplier || "Grossiste principal" })));
-    setOrderSent(false);
-    setShowOrder(true);
-  };
-
-  const handleSendOrder = () => {
-    setOrderSent(true);
-    setTimeout(() => { setShowOrder(false); setOrderSent(false); }, 2000);
+  const toggleAvailability = (id: number, avail: Availability) => {
+    setMeds(prev => prev.map(m => m.id === id ? { ...m, availability: avail } : m));
+    toast({ title: "Disponibilité mise à jour" });
   };
 
   return (
-    <DashboardLayout role="pharmacy" title="Gestion du stock">
+    <DashboardLayout role="pharmacy" title="Disponibilité médicaments">
       <div className="space-y-6">
+        {/* Stats */}
         <div className="grid gap-4 grid-cols-3">
-          <div className="rounded-xl border bg-card p-4 shadow-card text-center"><p className="text-2xl font-bold text-foreground">{totalProducts}</p><p className="text-xs text-muted-foreground">Produits total</p></div>
-          <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 shadow-card text-center"><p className="text-2xl font-bold text-warning">{lowCount}</p><p className="text-xs text-muted-foreground">Stock bas</p></div>
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 shadow-card text-center"><p className="text-2xl font-bold text-destructive">{criticalCount}</p><p className="text-xs text-muted-foreground">Ruptures</p></div>
+          <button onClick={() => setFilterAvail(filterAvail === "available" ? "all" : "available")} className={`rounded-xl border p-4 shadow-card text-center transition-all ${filterAvail === "available" ? "border-accent ring-1 ring-accent" : "bg-card"}`}>
+            <p className="text-2xl font-bold text-accent">{counts.available}</p>
+            <p className="text-xs text-muted-foreground">Disponibles</p>
+          </button>
+          <button onClick={() => setFilterAvail(filterAvail === "partial" ? "all" : "partial")} className={`rounded-xl border p-4 shadow-card text-center transition-all ${filterAvail === "partial" ? "border-warning ring-1 ring-warning" : "bg-card"}`}>
+            <p className="text-2xl font-bold text-warning">{counts.partial}</p>
+            <p className="text-xs text-muted-foreground">Partiels</p>
+          </button>
+          <button onClick={() => setFilterAvail(filterAvail === "unavailable" ? "all" : "unavailable")} className={`rounded-xl border p-4 shadow-card text-center transition-all ${filterAvail === "unavailable" ? "border-destructive ring-1 ring-destructive" : "bg-card"}`}>
+            <p className="text-2xl font-bold text-destructive">{counts.unavailable}</p>
+            <p className="text-xs text-muted-foreground">Indisponibles</p>
+          </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Rechercher un médicament..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="text-xs" onClick={() => setSortBy(sortBy === "name" ? "quantity" : "name")}>
-              {sortBy === "quantity" ? <ArrowUp className="h-3.5 w-3.5 mr-1" /> : <ArrowDown className="h-3.5 w-3.5 mr-1" />}
-              {sortBy === "quantity" ? "Par quantité" : "Par nom"}
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAdd(!showAdd)}><Plus className="h-3.5 w-3.5 mr-1" />Ajouter</Button>
-            <Button className="gradient-primary text-primary-foreground shadow-primary-glow" size="sm" onClick={openOrderModal}>
-              <ShoppingCart className="h-4 w-4 mr-2" />Commander
-            </Button>
-          </div>
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Rechercher un médicament..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
+        {/* Categories */}
         <div className="flex flex-wrap gap-2">
           {mockPharmacyCategories.map(c => (
             <button key={c} onClick={() => setSelectedCategory(c)}
@@ -107,159 +104,77 @@ const PharmacyStock = () => {
           ))}
         </div>
 
-        {showAdd && (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
-            <h4 className="font-semibold text-foreground mb-3">Ajouter un médicament</h4>
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-              <div><Label className="text-xs">Nom</Label><Input value={newItem.name} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} className="mt-1 h-9" placeholder="Ex: Doliprane 500mg" /></div>
-              <div><Label className="text-xs">Catégorie</Label>
-                <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value }))} className="mt-1 w-full h-9 rounded-md border bg-background px-3 text-sm">
-                  {mockPharmacyCategories.filter(c => c !== "Tous").map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div><Label className="text-xs">Quantité</Label><Input type="number" value={newItem.quantity} onChange={e => setNewItem(p => ({ ...p, quantity: e.target.value }))} className="mt-1 h-9" /></div>
-              <div><Label className="text-xs">Seuil alerte</Label><Input type="number" value={newItem.threshold} onChange={e => setNewItem(p => ({ ...p, threshold: e.target.value }))} className="mt-1 h-9" /></div>
-              <div><Label className="text-xs">Prix</Label><Input value={newItem.price} onChange={e => setNewItem(p => ({ ...p, price: e.target.value }))} className="mt-1 h-9" placeholder="Ex: 5.5 DT" /></div>
-              <div><Label className="text-xs">Fournisseur</Label><Input value={newItem.supplier} onChange={e => setNewItem(p => ({ ...p, supplier: e.target.value }))} className="mt-1 h-9" /></div>
-              <div><Label className="text-xs">Expiration</Label><Input value={newItem.expiry} onChange={e => setNewItem(p => ({ ...p, expiry: e.target.value }))} className="mt-1 h-9" placeholder="Ex: Mar 2027" /></div>
-              <div className="flex items-end gap-2">
-                <Button size="sm" className="gradient-primary text-primary-foreground" onClick={handleAddItem}><Save className="h-3.5 w-3.5 mr-1" />Ajouter</Button>
-                <Button variant="outline" size="sm" onClick={() => setShowAdd(false)}><X className="h-3.5 w-3.5" /></Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {stock.filter(s => s.status !== "ok").length > 0 && (
-          <div className="rounded-xl border border-warning/30 bg-warning/5 p-4">
-            <div className="flex items-center gap-2 mb-2"><AlertTriangle className="h-5 w-5 text-warning" /><h3 className="font-medium text-foreground">Alertes de stock</h3></div>
+        {/* Alerts */}
+        {counts.unavailable > 0 && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+            <div className="flex items-center gap-2 mb-2"><AlertTriangle className="h-5 w-5 text-destructive" /><h3 className="font-medium text-foreground">Médicaments indisponibles</h3></div>
             <div className="flex flex-wrap gap-2">
-              {stock.filter(s => s.status !== "ok").map(s => (
-                <span key={s.name} className={`rounded-full px-3 py-1 text-xs font-medium ${statusConfig[s.status].class}`}>{s.name}: {s.quantity} unités</span>
+              {meds.filter(m => m.availability === "unavailable").map(m => (
+                <span key={m.id} className="rounded-full px-3 py-1 text-xs font-medium bg-destructive/10 text-destructive">{m.name}</span>
               ))}
             </div>
           </div>
         )}
 
+        {/* List */}
         <div className="rounded-xl border bg-card shadow-card overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b text-left">
                 <th className="p-4 text-xs font-medium text-muted-foreground">Médicament</th>
                 <th className="p-4 text-xs font-medium text-muted-foreground hidden sm:table-cell">Catégorie</th>
-                <th className="p-4 text-xs font-medium text-muted-foreground">Quantité</th>
                 <th className="p-4 text-xs font-medium text-muted-foreground hidden md:table-cell">Prix</th>
-                <th className="p-4 text-xs font-medium text-muted-foreground hidden lg:table-cell">Fournisseur</th>
-                <th className="p-4 text-xs font-medium text-muted-foreground hidden lg:table-cell">Expiration</th>
-                <th className="p-4 text-xs font-medium text-muted-foreground">Statut</th>
-                <th className="p-4 text-xs font-medium text-muted-foreground w-20">Actions</th>
+                <th className="p-4 text-xs font-medium text-muted-foreground">Disponibilité</th>
+                <th className="p-4 text-xs font-medium text-muted-foreground w-32">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map((s) => (
-                <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+              {filtered.map(m => (
+                <tr key={m.id} className="hover:bg-muted/30 transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${s.status === "critical" ? "bg-destructive/10" : s.status === "low" ? "bg-warning/10" : "bg-primary/10"}`}>
-                        <Pill className={`h-4 w-4 ${s.status === "critical" ? "text-destructive" : s.status === "low" ? "text-warning" : "text-primary"}`} />
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                        m.availability === "unavailable" ? "bg-destructive/10" : m.availability === "partial" ? "bg-warning/10" : "bg-accent/10"
+                      }`}>
+                        <Pill className={`h-4 w-4 ${
+                          m.availability === "unavailable" ? "text-destructive" : m.availability === "partial" ? "text-warning" : "text-accent"
+                        }`} />
                       </div>
-                      <span className="font-medium text-foreground text-sm">{s.name}</span>
+                      <span className="font-medium text-foreground text-sm">{m.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-xs text-muted-foreground hidden sm:table-cell">{s.category}</td>
+                  <td className="p-4 text-xs text-muted-foreground hidden sm:table-cell">{m.category}</td>
+                  <td className="p-4 text-xs font-medium text-foreground hidden md:table-cell">{m.price}</td>
                   <td className="p-4">
-                    {editingId === s.id ? (
-                      <div className="flex items-center gap-1">
-                        <Input value={editQty} onChange={e => setEditQty(e.target.value)} className="h-7 w-16 text-xs text-center" type="number" />
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleEditSave(s.id)}><Save className="h-3 w-3 text-accent" /></Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setEditingId(null)}><X className="h-3 w-3" /></Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${s.status === "critical" ? "bg-destructive" : s.status === "low" ? "bg-warning" : "bg-accent"}`}
-                            style={{ width: `${Math.min((s.quantity / s.threshold) * 100, 100)}%` }} />
-                        </div>
-                        <span className={`text-xs font-semibold ${s.status === "critical" ? "text-destructive" : s.status === "low" ? "text-warning" : "text-foreground"}`}>{s.quantity}</span>
-                      </div>
-                    )}
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${availConfig[m.availability].cls}`}>
+                      {availConfig[m.availability].label}
+                    </span>
                   </td>
-                  <td className="p-4 text-xs font-medium text-foreground hidden md:table-cell">{s.price}</td>
-                  <td className="p-4 text-xs text-muted-foreground hidden lg:table-cell">{s.supplier}</td>
-                  <td className="p-4 text-xs text-muted-foreground hidden lg:table-cell">{s.expiry}</td>
-                  <td className="p-4"><span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${statusConfig[s.status].class}`}>{statusConfig[s.status].label}</span></td>
                   <td className="p-4">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setEditingId(s.id); setEditQty(String(s.quantity)); }}>
-                      <Edit className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => toggleAvailability(m.id, "available")} title="Disponible"
+                        className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${m.availability === "available" ? "bg-accent/20 text-accent" : "text-muted-foreground hover:bg-muted"}`}>
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => toggleAvailability(m.id, "partial")} title="Partiel"
+                        className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${m.availability === "partial" ? "bg-warning/20 text-warning" : "text-muted-foreground hover:bg-muted"}`}>
+                        <Package className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => toggleAvailability(m.id, "unavailable")} title="Indisponible"
+                        className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${m.availability === "unavailable" ? "bg-destructive/20 text-destructive" : "text-muted-foreground hover:bg-muted"}`}>
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {filtered.length === 0 && (
+            <div className="p-8 text-center text-muted-foreground text-sm">Aucun médicament trouvé.</div>
+          )}
         </div>
       </div>
-
-      {/* ── Order Modal ── */}
-      {showOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowOrder(false)}>
-          <div className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-lg mx-4 animate-fade-in max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            {orderSent ? (
-              <div className="text-center py-8">
-                <CheckCircle2 className="h-16 w-16 text-accent mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-foreground">Commande envoyée !</h3>
-                <p className="text-sm text-muted-foreground mt-2">{orderItems.length} produit(s) commandé(s)</p>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-primary" />Bon de commande</h3>
-                  <button onClick={() => setShowOrder(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
-                </div>
-                {orderItems.length === 0 ? (
-                  <div className="text-center py-6">
-                    <CheckCircle2 className="h-10 w-10 text-accent mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">Tous les stocks sont suffisants !</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-xs text-muted-foreground">{orderItems.length} produit(s) en stock bas ou rupture</p>
-                    <div className="space-y-2">
-                      {orderItems.map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
-                          <Pill className="h-4 w-4 text-primary shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{item.supplier}</p>
-                          </div>
-                          <Input value={item.qty} onChange={e => { const u = [...orderItems]; u[i].qty = parseInt(e.target.value) || 0; setOrderItems(u); }}
-                            className="w-16 h-8 text-xs text-center" type="number" />
-                          <span className="text-xs text-muted-foreground">unités</span>
-                          <button onClick={() => setOrderItems(p => p.filter((_, j) => j !== i))} className="text-destructive"><Trash2 className="h-4 w-4" /></button>
-                        </div>
-                      ))}
-                    </div>
-                    <div><Label className="text-xs">Fournisseur</Label>
-                      <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
-                        <option>Grossiste principal</option><option>Saiph</option><option>Adwya</option><option>Médis</option>
-                      </select>
-                    </div>
-                    <div><Label className="text-xs">Notes</Label>
-                      <textarea rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" placeholder="Instructions spéciales..." />
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button variant="outline" className="flex-1" onClick={() => setShowOrder(false)}>Annuler</Button>
-                      <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleSendOrder}>
-                        <Send className="h-4 w-4 mr-2" />Envoyer la commande
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 };

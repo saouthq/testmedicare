@@ -1,14 +1,14 @@
 /**
- * Admin System Settings — Platform config, fees, commissions, notifications, security, maintenance
- * Full workflow with save/audit + motif for destructive actions
+ * Admin System Settings — Platform config, subscriptions, notifications, security, maintenance
+ * No commission/teleconsult fees — doctors set their own prices. Revenue = subscriptions only.
  * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import {
   Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle,
-  Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound, CreditCard,
-  Percent, Mail, MessageSquare, Clock, Users, Palette, FileText,
+  Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound,
+  Mail, MessageSquare, Clock, Users, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 
-type SettingsTab = "general" | "fees" | "features" | "notifications" | "security" | "maintenance";
+type SettingsTab = "general" | "features" | "notifications" | "security" | "maintenance";
 
 const AdminSettings = () => {
   const [tab, setTab] = useState<SettingsTab>("general");
@@ -36,28 +36,22 @@ const AdminSettings = () => {
   const [termsUrl, setTermsUrl] = useState("https://medicare.tn/legal/cgu");
   const [privacyUrl, setPrivacyUrl] = useState("https://medicare.tn/legal/privacy");
 
-  // Fees & Commissions
-  const [teleconsultFee, setTeleconsultFee] = useState("60");
-  const [platformCommission, setPlatformCommission] = useState("15");
-  const [paymentMethods, setPaymentMethods] = useState({ card: true, bankTransfer: true, cash: true, eDinar: false });
-  const [minimumPayout, setMinimumPayout] = useState("50");
-  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
-  const [vatRate, setVatRate] = useState("19");
-  const [invoicePrefix, setInvoicePrefix] = useState("MC");
-
-  // Feature flags
+  // Feature flags (granular cross-space controls)
   const [features, setFeatures] = useState({
     teleconsultation: true,
     aiAssistant: true,
     pharmacyGuard: true,
     labDemands: true,
-    prescriptionSend: true,
+    prescriptionSendPharmacy: true,
+    prescriptionSendLab: true,
     patientMessaging: false,
     textReviews: true,
     medicinesDirectory: true,
     patientChat: false,
     onlinePayment: true,
     appointmentReminder: true,
+    disputeReporting: true,
+    commentReporting: true,
   });
 
   // Notifications
@@ -93,6 +87,8 @@ const AdminSettings = () => {
   );
 
   const handleSave = () => {
+    // Persist feature flags to localStorage for cross-space usage
+    try { localStorage.setItem("medicare_admin_features", JSON.stringify(features)); } catch {}
     appendLog("settings_updated", "system", "settings", `Paramètres système mis à jour (onglet: ${tab})`);
     setSaved(true);
     toast({ title: "Paramètres sauvegardés" });
@@ -126,26 +122,31 @@ const AdminSettings = () => {
 
   const tabs = [
     { key: "general" as SettingsTab, label: "Général", icon: Settings },
-    { key: "fees" as SettingsTab, label: "Tarifs & Commissions", icon: CreditCard },
     { key: "features" as SettingsTab, label: "Feature flags", icon: Zap },
     { key: "notifications" as SettingsTab, label: "Notifications", icon: Bell },
     { key: "security" as SettingsTab, label: "Sécurité", icon: Shield },
     { key: "maintenance" as SettingsTab, label: "Maintenance", icon: Server },
   ];
 
-  const featureLabels: Record<string, { label: string; desc: string }> = {
-    teleconsultation: { label: "Téléconsultation", desc: "Activer les consultations vidéo" },
-    aiAssistant: { label: "Assistant IA", desc: "IA pour aide au diagnostic (médecins)" },
-    pharmacyGuard: { label: "Pharmacies de garde", desc: "Module de gestion des gardes" },
-    labDemands: { label: "Demandes labo", desc: "Workflow demandes d'analyses" },
-    prescriptionSend: { label: "Envoi ordonnances", desc: "Patients peuvent envoyer aux pharmacies" },
-    patientMessaging: { label: "Messagerie patients", desc: "Chat patient-médecin (bêta)" },
-    textReviews: { label: "Avis texte", desc: "Avis patients sur les médecins" },
-    medicinesDirectory: { label: "Annuaire médicaments", desc: "Répertoire public des médicaments" },
-    patientChat: { label: "Chat patient", desc: "Chat en temps réel patient-secrétariat" },
-    onlinePayment: { label: "Paiement en ligne", desc: "Paiement par carte bancaire" },
-    appointmentReminder: { label: "Rappels RDV", desc: "SMS/push de rappel automatique" },
+  const featureLabels: Record<string, { label: string; desc: string; category: string }> = {
+    teleconsultation: { label: "Téléconsultation", desc: "Activer les consultations vidéo", category: "Clinique" },
+    aiAssistant: { label: "Assistant IA", desc: "IA pour aide au diagnostic (médecins)", category: "Clinique" },
+    pharmacyGuard: { label: "Pharmacies de garde", desc: "Module de gestion des gardes", category: "Pharmacie" },
+    labDemands: { label: "Demandes labo", desc: "Workflow demandes d'analyses", category: "Laboratoire" },
+    prescriptionSendPharmacy: { label: "Envoi ordonnances → Pharmacie", desc: "Patients et médecins peuvent envoyer aux pharmacies", category: "Ordonnances" },
+    prescriptionSendLab: { label: "Envoi ordonnances → Labo", desc: "Envoi des demandes d'analyses aux laboratoires", category: "Ordonnances" },
+    patientMessaging: { label: "Messagerie patients", desc: "Chat patient-médecin (bêta)", category: "Communication" },
+    textReviews: { label: "Avis texte", desc: "Avis patients sur les médecins", category: "Public" },
+    medicinesDirectory: { label: "Annuaire médicaments", desc: "Répertoire public des médicaments", category: "Public" },
+    patientChat: { label: "Chat patient", desc: "Chat en temps réel patient-secrétariat", category: "Communication" },
+    onlinePayment: { label: "Paiement en ligne", desc: "Paiement par carte bancaire (téléconsultation)", category: "Finance" },
+    appointmentReminder: { label: "Rappels RDV", desc: "SMS/push de rappel automatique", category: "Communication" },
+    disputeReporting: { label: "Signalement litiges", desc: "Patients et médecins peuvent signaler un litige", category: "Modération" },
+    commentReporting: { label: "Signalement commentaires", desc: "Signaler un avis inapproprié", category: "Modération" },
   };
+
+  // Group features by category
+  const categories = [...new Set(Object.values(featureLabels).map(f => f.category))];
 
   return (
     <DashboardLayout role="admin" title="Paramètres système">
@@ -209,109 +210,40 @@ const AdminSettings = () => {
                 <Toggle enabled={true} onToggle={() => {}} />
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Fees & Commissions */}
-        {tab === "fees" && (
-          <div className="space-y-6">
-            <div className="rounded-xl border bg-card p-6 shadow-card space-y-5">
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Tarification</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label className="text-xs">Tarif téléconsultation (DT)</Label>
-                  <Input value={teleconsultFee} onChange={e => setTeleconsultFee(e.target.value)} type="number" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Prix par défaut facturé au patient</p>
-                </div>
-                <div>
-                  <Label className="text-xs flex items-center gap-1"><Percent className="h-3 w-3" />Commission plateforme (%)</Label>
-                  <Input value={platformCommission} onChange={e => setPlatformCommission(e.target.value)} type="number" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Prélevé sur chaque téléconsultation</p>
-                </div>
-                <div>
-                  <Label className="text-xs">TVA (%)</Label>
-                  <Input value={vatRate} onChange={e => setVatRate(e.target.value)} type="number" className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-xs">Préfixe factures</Label>
-                  <Input value={invoicePrefix} onChange={e => setInvoicePrefix(e.target.value)} className="mt-1" />
-                </div>
-              </div>
-
-              {/* Simulation */}
-              <div className="rounded-lg bg-muted/30 border p-4">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Simulation</p>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-lg font-bold text-foreground">{teleconsultFee} DT</p>
-                    <p className="text-[10px] text-muted-foreground">Facturé au patient</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-primary">{(Number(teleconsultFee) * Number(platformCommission) / 100).toFixed(1)} DT</p>
-                    <p className="text-[10px] text-muted-foreground">Commission Medicare</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-accent">{(Number(teleconsultFee) * (100 - Number(platformCommission)) / 100).toFixed(1)} DT</p>
-                    <p className="text-[10px] text-muted-foreground">Reversé au médecin</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl border bg-card p-6 shadow-card space-y-5">
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Versements</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label className="text-xs">Versement minimum (DT)</Label>
-                  <Input value={minimumPayout} onChange={e => setMinimumPayout(e.target.value)} type="number" className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-xs">Fréquence des versements</Label>
-                  <Select value={payoutFrequency} onValueChange={setPayoutFrequency}>
-                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily">Quotidien</SelectItem>
-                      <SelectItem value="weekly">Hebdomadaire</SelectItem>
-                      <SelectItem value="biweekly">Bimensuel</SelectItem>
-                      <SelectItem value="monthly">Mensuel</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
 
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
-              <h3 className="font-semibold text-foreground">Modes de paiement acceptés</h3>
-              {[
-                { key: "card", label: "Carte bancaire", desc: "Visa, Mastercard" },
-                { key: "bankTransfer", label: "Virement bancaire", desc: "Virement SWIFT/SEPA" },
-                { key: "cash", label: "Espèces", desc: "Paiement en cabinet" },
-                { key: "eDinar", label: "E-Dinar", desc: "Paiement mobile (La Poste)" },
-              ].map(pm => (
-                <div key={pm.key} className="flex items-center justify-between py-3 border-b last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{pm.label}</p>
-                    <p className="text-xs text-muted-foreground">{pm.desc}</p>
-                  </div>
-                  <Toggle enabled={paymentMethods[pm.key as keyof typeof paymentMethods]} onToggle={() => setPaymentMethods(prev => ({ ...prev, [pm.key]: !prev[pm.key as keyof typeof paymentMethods] }))} />
-                </div>
-              ))}
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" />Modèle de revenus</h3>
+              <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
+                <p className="text-sm font-medium text-foreground">Abonnements uniquement</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Les revenus de la plateforme proviennent exclusivement des abonnements des professionnels de santé.
+                  Aucune commission n'est prélevée sur les téléconsultations — les médecins fixent librement leurs tarifs.
+                </p>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Gérez les plans et tarifs d'abonnement depuis la page « Plans & Tarifs » dans le menu Finance & Offres.</p>
             </div>
           </div>
         )}
 
-        {/* Feature flags */}
+        {/* Feature flags — grouped by category */}
         {tab === "features" && (
-          <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
-            <h3 className="font-semibold text-foreground flex items-center gap-2"><Zap className="h-4 w-4 text-primary" />Feature flags</h3>
-            <p className="text-xs text-muted-foreground">Activez ou désactivez les fonctionnalités de la plateforme. Les changements sont immédiats et loggés.</p>
-            {Object.entries(featureLabels).map(([key, { label, desc }]) => (
-              <div key={key} className="flex items-center justify-between py-3 border-b last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{label}</p>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
-                </div>
-                <Toggle enabled={features[key as keyof typeof features]} onToggle={() => toggleFeature(key as keyof typeof features)} />
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-card p-6 shadow-card space-y-2">
+              <h3 className="font-semibold text-foreground flex items-center gap-2"><Zap className="h-4 w-4 text-primary" />Feature flags</h3>
+              <p className="text-xs text-muted-foreground">Activez ou désactivez les fonctionnalités. Les changements affectent <strong>tous les espaces</strong> concernés (patient, médecin, pharmacie, etc.).</p>
+            </div>
+            {categories.map(cat => (
+              <div key={cat} className="rounded-xl border bg-card p-6 shadow-card space-y-1">
+                <h4 className="text-sm font-semibold text-foreground mb-3">{cat}</h4>
+                {Object.entries(featureLabels).filter(([, v]) => v.category === cat).map(([key, { label, desc }]) => (
+                  <div key={key} className="flex items-center justify-between py-3 border-b last:border-0">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{label}</p>
+                      <p className="text-xs text-muted-foreground">{desc}</p>
+                    </div>
+                    <Toggle enabled={features[key as keyof typeof features]} onToggle={() => toggleFeature(key as keyof typeof features)} />
+                  </div>
+                ))}
               </div>
             ))}
           </div>
