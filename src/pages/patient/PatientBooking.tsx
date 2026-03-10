@@ -84,6 +84,8 @@ const PatientBooking = () => {
   const [message, setMessage] = useState("");
   const [documents, setDocuments] = useState<string[]>([]);
   const [showAddProfile, setShowAddProfile] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "edinar">("card");
 
   const selectedMotifData = doctor.motifs.find((m) => m.name === selectedMotif);
   const selectedLieuData = doctor.lieux.find((l) => l.name === selectedLieu);
