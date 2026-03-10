@@ -148,9 +148,12 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
       { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
+      { title: "Email & SMS", url: "/dashboard/admin/email-config", icon: MessageSquare },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
       { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
       { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
+      { title: "RGPD & Conformité", url: "/dashboard/admin/compliance", icon: ShieldCheck },
+      { title: "Journal système", url: "/dashboard/admin/logs", icon: Activity },
       { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
       { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
     ],
