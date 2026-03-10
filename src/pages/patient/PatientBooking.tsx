@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Calendar, ChevronLeft, ChevronRight, MapPin, Clock, CheckCircle2,
   Shield, Video, Upload, FileText, Plus, AlertTriangle,
-  CalendarPlus, Edit3 } from
+  CalendarPlus, Edit3, CreditCard, Loader2 } from
 "lucide-react";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { mockDoctorProfile } from "@/data/mockData";
@@ -59,10 +59,10 @@ const daysOfMonth = () => {
   return days;
 };
 
-type MainStep = 1 | 2 | 3 | 4 | 5;
+type MainStep = 1 | 2 | 3 | 4 | 5 | 6;
 type FinalState = "done" | "conflict" | "waitlist" | null;
 
-const stepLabels = ["Patient", "Motif", "Date", "Lieu", "Confirmation"];
+const stepLabels = ["Patient", "Motif", "Date", "Lieu", "Confirmation", "Paiement"];
 
 const PatientBooking = () => {
   const { doctorId } = useParams();
@@ -84,6 +84,8 @@ const PatientBooking = () => {
   const [message, setMessage] = useState("");
   const [documents, setDocuments] = useState<string[]>([]);
   const [showAddProfile, setShowAddProfile] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "edinar">("card");
 
   const selectedMotifData = doctor.motifs.find((m) => m.name === selectedMotif);
   const selectedLieuData = doctor.lieux.find((l) => l.name === selectedLieu);
@@ -98,14 +100,33 @@ const PatientBooking = () => {
     return true;
   };
 
-  const handleConfirm = () => {
-    // Write to shared store — appears in Dashboard & Appointments
+  const isTeleconsult = selectedLieuData?.type === "teleconsultation";
+  const requiresPayment = isTeleconsult && selectedMotifData;
+
+  const handleGoToPayment = () => {
+    if (requiresPayment) {
+      setCurrentStep(6);
+    } else {
+      handleConfirmBooking();
+    }
+  };
+
+  const handlePayAndConfirm = () => {
+    setPaymentProcessing(true);
+    // TODO BACKEND: POST /api/payments/teleconsult
+    setTimeout(() => {
+      setPaymentProcessing(false);
+      handleConfirmBooking();
+    }, 2000);
+  };
+
+  const handleConfirmBooking = () => {
     bookAppointment({
       doctor: doctor.name,
       specialty: doctor.specialty,
       date: `${selectedDay} Fév 2026`,
       time: selectedSlot,
-      type: selectedLieuData?.type === "teleconsultation" ? "teleconsultation" : "cabinet",
+      type: isTeleconsult ? "teleconsultation" : "cabinet",
       address: selectedLieuData?.address || "",
       avatar: doctor.avatar,
       status: doctor.autoConfirm ? "confirmed" : "pending",
@@ -446,6 +467,71 @@ const PatientBooking = () => {
           </div>
         }
 
+        {/* Step 6: Payment (teleconsultation only) */}
+        {currentStep === 6 &&
+        <div className="rounded-xl border bg-card p-5 shadow-card space-y-5">
+            <h3 className="text-lg font-semibold text-foreground">Paiement de la téléconsultation</h3>
+            <p className="text-sm text-muted-foreground">Le paiement est requis pour confirmer votre rendez-vous de téléconsultation. Comme sur Doctolib, le créneau est bloqué uniquement après le paiement.</p>
+
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Video className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-semibold text-foreground">{doctor.name}</p>
+                    <p className="text-xs text-muted-foreground">{selectedMotif} · {selectedDay} Fév à {selectedSlot}</p>
+                  </div>
+                </div>
+                <p className="text-xl font-bold text-primary">{selectedMotifData?.price} DT</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Mode de paiement</p>
+              {([
+                { id: "card" as const, label: "Carte bancaire", desc: "Visa, Mastercard", icon: CreditCard },
+                { id: "edinar" as const, label: "E-Dinar / Flouci", desc: "Paiement mobile", icon: CreditCard },
+              ]).map(pm => (
+                <button key={pm.id} onClick={() => setPaymentMethod(pm.id)}
+                  className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                    paymentMethod === pm.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/50"
+                  }`}>
+                  <pm.icon className={`h-5 w-5 ${paymentMethod === pm.id ? "text-primary" : "text-muted-foreground"}`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{pm.label}</p>
+                    <p className="text-xs text-muted-foreground">{pm.desc}</p>
+                  </div>
+                  {paymentMethod === pm.id && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                </button>
+              ))}
+            </div>
+
+            {paymentMethod === "card" && (
+              <div className="space-y-3 rounded-xl border p-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Numéro de carte</label>
+                  <Input placeholder="4242 4242 4242 4242" className="mt-1" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Expiration</label>
+                    <Input placeholder="MM/AA" className="mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">CVV</label>
+                    <Input placeholder="123" className="mt-1" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+              <p>🔒 Paiement sécurisé SSL — vos données bancaires ne sont jamais stockées.</p>
+              <p>💰 Remboursement intégral en cas d'annulation jusqu'à 24h avant le RDV.</p>
+            </div>
+          </div>
+        }
+
         {/* Navigation buttons */}
         <div className="flex justify-between gap-3">
           {currentStep > 1 ?
@@ -463,8 +549,21 @@ const PatientBooking = () => {
               Continuer<ChevronRight className="h-4 w-4 ml-1" />
             </Button> :
 
-          <Button className="gradient-primary text-primary-foreground shadow-primary-glow h-11" onClick={handleConfirm}>
-              <CheckCircle2 className="h-4 w-4 mr-2" />Confirmer le rendez-vous
+          currentStep === 5 ?
+          <Button className="gradient-primary text-primary-foreground shadow-primary-glow h-11" onClick={handleGoToPayment}>
+              {requiresPayment ? (
+                <><CreditCard className="h-4 w-4 mr-2" />Passer au paiement · {selectedMotifData?.price} DT</>
+              ) : (
+                <><CheckCircle2 className="h-4 w-4 mr-2" />Confirmer le rendez-vous</>
+              )}
+            </Button> :
+
+          <Button className="gradient-primary text-primary-foreground shadow-primary-glow h-11" onClick={handlePayAndConfirm} disabled={paymentProcessing}>
+              {paymentProcessing ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Traitement en cours...</>
+              ) : (
+                <><CreditCard className="h-4 w-4 mr-2" />Payer {selectedMotifData?.price} DT et confirmer</>
+              )}
             </Button>
           }
         </div>

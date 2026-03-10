@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight, Send, CreditCard, Info, Download } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight, Send, CreditCard, Info, Download, Flag } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,6 +9,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsultButton";
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent, openGoogleMapsDirections } from "@/lib/calendarExport";
+import { ReportButton } from "@/components/shared/ReportButton";
 
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
@@ -403,6 +404,8 @@ const PatientAppointments = () => {
                       </Button>
                     )
                   )}
+                  {/* Signalement litige */}
+                  <ReportButton type="dispute" targetId={String(currentApt.id)} targetName={`RDV ${currentApt.doctor} — ${currentApt.date}`} variant="button" size="sm" />
                 </div>
               </div>
             )}
@@ -436,6 +439,8 @@ const PatientAppointments = () => {
                     <p className="text-xs text-accent flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Avis envoyé</p>
                   )}
                   <Link to="/search"><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
+                  {/* Signalement */}
+                  <ReportButton type="appointment" targetId={String(currentPast.id)} targetName={`RDV ${currentPast.doctor} — ${currentPast.date}`} variant="button" size="sm" />
                 </div>
               </div>
             )}
