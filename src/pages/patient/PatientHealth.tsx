@@ -182,15 +182,21 @@ const PatientHealth = () => {
     </DropdownMenu>
   );
 
-  const SectionHeader = ({ title, onBack, onAdd }: { title: string; onBack: () => void; onAdd?: () => void }) => (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-3">
-        <button onClick={onBack} className="text-primary hover:underline text-sm">← Retour</button>
-        <h3 className="font-semibold text-foreground">{title}</h3>
-      </div>
-      {onAdd && <Button size="sm" variant="outline" onClick={() => { setEditIndex(null); setEditData(null); onAdd(); }}><Plus className="h-4 w-4 mr-1" />Ajouter</Button>}
-    </div>
-  );
+  // Completion percentage
+  const completionSections = [
+    { key: "documents", items: documents, label: "Documents" },
+    { key: "antecedents", items: antecedents, label: "Antécédents" },
+    { key: "treatments", items: treatments, label: "Traitements" },
+    { key: "allergies", items: allergies, label: "Allergies" },
+    { key: "habits", items: habits, label: "Habitudes" },
+    { key: "family", items: family, label: "Famille" },
+    { key: "surgeries", items: surgeries, label: "Opérations" },
+    { key: "vaccinations", items: vaccinations, label: "Vaccins" },
+    { key: "measures", items: measures, label: "Mesures" },
+  ];
+  
+  const completedCount = completionSections.filter(s => s.items.length > 0 || declaredEmpty[s.key]).length;
+  const completionPct = Math.round((completedCount / completionSections.length) * 100);
 
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
@@ -198,23 +204,60 @@ const PatientHealth = () => {
         {/* MENU */}
         {section === "menu" && (
           <div className="space-y-4">
+            {/* Completion bar */}
             <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
-              <div className="flex items-center gap-3">
-                <Heart className="h-8 w-8 text-primary/40 shrink-0" />
-                <div><h3 className="font-bold text-foreground text-sm">Complétez votre profil santé</h3><p className="text-xs text-muted-foreground mt-0.5">Recevez des rappels personnalisés et préparez vos consultations</p></div>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
-              {menuItems.map(item => (
-                <button key={item.key} onClick={() => setSection(item.key)} className="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
-                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><item.icon className="h-4 w-4 text-primary" /></div>
-                  <div className="flex-1"><p className="text-sm font-medium text-foreground">{item.label}</p></div>
-                  <div className="flex items-center gap-2">
-                    {item.count !== undefined && <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">{item.count}</span>}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Heart className="h-6 w-6 text-primary shrink-0" />
+                  <div>
+                    <h3 className="font-bold text-foreground text-sm">
+                      {completionPct === 100 ? "Profil santé complet !" : "Complétez votre profil santé"}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {completionPct === 100 
+                        ? "Votre dossier est à jour, vos consultations seront mieux préparées."
+                        : "Recevez des rappels personnalisés et préparez vos consultations"}
+                    </p>
                   </div>
-                </button>
-              ))}
+                </div>
+                <span className={`text-lg font-bold ${completionPct === 100 ? "text-accent" : "text-primary"}`}>{completionPct}%</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${completionPct === 100 ? "bg-accent" : "bg-primary"}`} style={{ width: `${completionPct}%` }} />
+              </div>
+              {completionPct < 100 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {completionSections.filter(s => s.items.length === 0 && !declaredEmpty[s.key]).map(s => (
+                    <span key={s.key} className="text-[10px] bg-warning/10 text-warning px-2 py-0.5 rounded-full">{s.label}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden divide-y">
+              {menuItems.map(item => {
+                const isEmpty = declaredEmpty[item.key];
+                return (
+                  <button key={item.key} onClick={() => setSection(item.key)} className="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      (item.count && item.count > 0) || isEmpty ? "bg-accent/10" : "bg-primary/10"
+                    }`}>
+                      {(item.count && item.count > 0) || isEmpty 
+                        ? <CheckCircle2 className="h-4 w-4 text-accent" />
+                        : <item.icon className="h-4 w-4 text-primary" />
+                      }
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">{item.label}</p>
+                      {isEmpty && item.count === 0 && <p className="text-[10px] text-muted-foreground">Déclaré vide</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.count !== undefined && item.count > 0 && <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">{item.count}</span>}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
             <button onClick={() => setSection("ai")} className="w-full rounded-xl border bg-card shadow-card p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Bot className="h-4 w-4 text-primary" /></div>
