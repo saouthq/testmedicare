@@ -45,28 +45,12 @@ import { mockMedicines } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { getSpecialtyConfig } from "./specialtyConfig";
+import { getSpecialtyMeds, getSpecialtyLabs, baseMeds } from "./specialtyMedDB";
 
-// ── Medicine DB ───────────────────────────────────────────────
-const MED_DB = [
+// ── Medicine DB — now specialty-aware ─────────────────────────
+const BASE_MED_DB = [
   ...mockMedicines.map((m) => ({ name: `${m.name} ${m.dosage}`, form: m.form })),
-  { name: "Amoxicilline 500mg", form: "Gélule" },
-  { name: "Amoxicilline 1g", form: "Comprimé" },
-  { name: "Augmentin 1g/125mg", form: "Comprimé" },
-  { name: "Voltarène 75mg", form: "Comprimé" },
-  { name: "Ibuprofène 400mg", form: "Comprimé" },
-  { name: "Oméprazole 20mg", form: "Gélule" },
-  { name: "Metformine 850mg", form: "Comprimé" },
-  { name: "Amlodipine 5mg", form: "Comprimé" },
-  { name: "Losartan 50mg", form: "Comprimé" },
-  { name: "Atorvastatine 20mg", form: "Comprimé" },
-  { name: "Lévothyroxine 50µg", form: "Comprimé" },
-  { name: "Prednisolone 20mg", form: "Comprimé" },
-  { name: "Céfixime 200mg", form: "Comprimé" },
-  { name: "Ciprofloxacine 500mg", form: "Comprimé" },
-  { name: "Azithromycine 500mg", form: "Comprimé" },
-  { name: "Paracétamol 500mg", form: "Comprimé" },
-  { name: "Tramadol 50mg", form: "Gélule" },
-  { name: "Pantoprazole 40mg", form: "Comprimé" },
+  ...baseMeds,
 ];
 
 const POSOLOGY_PRESETS = [
@@ -101,12 +85,22 @@ function RxItemCard({ idx }: { idx: number }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLInputElement>(null);
+  const [sub] = useDoctorSubscription();
+
+  // Merge specialty-specific meds with base DB
+  const MED_DB = useMemo(() => {
+    const specialtyMeds = getSpecialtyMeds(sub.activity, sub.specialty);
+    const merged = [...specialtyMeds, ...BASE_MED_DB];
+    // Deduplicate by name
+    const seen = new Set<string>();
+    return merged.filter(m => { if (seen.has(m.name)) return false; seen.add(m.name); return true; });
+  }, [sub.activity, sub.specialty]);
 
   const suggestions = useMemo(() => {
     const q = (query || item.medication).toLowerCase();
     if (q.length < 2) return [];
-    return MED_DB.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [query, item.medication]);
+    return MED_DB.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 8);
+  }, [query, item.medication, MED_DB]);
 
   const selectMed = (name: string) => {
     ctx.updateRxItem(idx, "medication", name);
@@ -252,6 +246,12 @@ export function ActionDock() {
   const [sub] = useDoctorSubscription();
   const config = getSpecialtyConfig(sub.activity, sub.specialty);
   const dockLabels = config.dockTabs || { rx: "Rx", labs: "Analyses", docs: "Docs", close: "Clôture" };
+  
+  // Specialty-specific lab suggestions
+  const specialtyLabSuggestions = useMemo(() => {
+    const labList = getSpecialtyLabs(sub.activity, sub.specialty);
+    return labList.filter(l => !ctx.analyses.includes(l));
+  }, [sub.activity, sub.specialty, ctx.analyses]);
 
   const TABS = [
     { key: "rx" as const, icon: Pill, label: dockLabels.rx },
@@ -475,14 +475,14 @@ export function ActionDock() {
               </Button>
             </div>
 
-            {/* Smart suggestions */}
-            {ctx.labSuggestions.length > 0 && (
+            {/* Smart suggestions — specialty-specific */}
+            {(specialtyLabSuggestions.length > 0 || ctx.labSuggestions.length > 0) && (
               <div className="rounded-xl bg-muted/30 border p-2.5">
                 <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide mb-2">
-                  Suggestions selon le diagnostic
+                  {specialtyLabSuggestions.length > 0 ? `Examens ${config.label}` : "Suggestions selon le diagnostic"}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {ctx.labSuggestions.slice(0, 10).map((s) => (
+                  {(specialtyLabSuggestions.length > 0 ? specialtyLabSuggestions : ctx.labSuggestions).slice(0, 12).map((s) => (
                     <button
                       key={s}
                       onClick={() => ctx.addAnalyse(s)}

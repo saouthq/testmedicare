@@ -1,6 +1,6 @@
 /**
  * PatientDetailTabs — Onglets principaux du dossier patient.
- * Contient la barre de recherche, le TabsBar, et le contenu de chaque onglet.
+ * Adapté dynamiquement selon la spécialité du médecin.
  */
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Search, FileText, Calendar } from "lucide-react";
 import { usePatientDetail } from "./PatientDetailContext";
 import { cx, humanSize } from "./helpers";
 import type { MainTab } from "./types";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { getPatientSpecialtyConfig } from "./specialtyPatientConfig";
 
 /* ── Card wrapper ── */
 function Card({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
@@ -41,6 +43,9 @@ function TabsBar({ value, onChange, options }: { value: MainTab; onChange: (v: M
 export default function PatientDetailTabs() {
   const ctx = usePatientDetail();
   const { tab, setTab, q, setQ, histFilter, setHistFilter, timeline, setDetailEvent, setDetailEdit, setDrawer } = ctx;
+  const [sub] = useDoctorSubscription();
+  const specialtyConfig = getPatientSpecialtyConfig(sub.activity, sub.specialty);
+  const anteLabels = specialtyConfig.anteLabels || { medical: "Médicaux", surgical: "Chirurgicaux", traumatic: "Traumatiques", family: "Familiaux" };
 
   return (
     <>
@@ -51,15 +56,7 @@ export default function PatientDetailTabs() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher dans le dossier… (ordonnance, analyse, note, date)" className="pl-9" />
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <TabsBar value={tab} onChange={setTab} options={[
-            { value: "historique", label: "Historique" },
-            { value: "antecedents", label: "Antécédents" },
-            { value: "traitement", label: "Traitement" },
-            { value: "constantes", label: "Constantes" },
-            { value: "notes", label: "Notes clinique" },
-            { value: "notes_prive", label: "Notes privé" },
-            { value: "documents", label: "Documents" },
-          ]} />
+          <TabsBar value={tab} onChange={setTab} options={specialtyConfig.tabs.map(t => ({ value: t.value as MainTab, label: t.label }))} />
           <div className="text-xs text-muted-foreground">La recherche filtre l'historique</div>
         </div>
       </Card>
@@ -116,6 +113,10 @@ function HistoriqueContent() {
 
 function AntecedentsContent() {
   const { ante, setAnte, anteHistory, saveAnte } = usePatientDetail();
+  const [sub] = useDoctorSubscription();
+  const specialtyConfig = getPatientSpecialtyConfig(sub.activity, sub.specialty);
+  const labels = specialtyConfig.anteLabels || { medical: "Médicaux", surgical: "Chirurgicaux", traumatic: "Traumatiques", family: "Familiaux" };
+  
   return (
     <>
       <Card title="Antécédents" right={
@@ -125,7 +126,7 @@ function AntecedentsContent() {
         </div>
       }>
         <div className="grid gap-3 md:grid-cols-2">
-          {([["Médicaux", "medical"], ["Chirurgicaux", "surgical"], ["Traumatiques", "traumatic"], ["Familiaux", "family"]] as const).map(([label, key]) => (
+          {([[labels.medical, "medical"], [labels.surgical, "surgical"], [labels.traumatic, "traumatic"], [labels.family, "family"]] as const).map(([label, key]) => (
             <div key={key}>
               <Label className="text-xs text-muted-foreground">{label}</Label>
               <textarea value={(ante as any)[key]} onChange={(e) => setAnte({ ...ante, [key]: e.target.value })} rows={3}

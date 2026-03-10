@@ -10,7 +10,7 @@ import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
 import { getEnabledFeatures } from "@/stores/featureMatrixStore";
 import { useAdminModules, isSidebarUrlEnabled, getDisabledModuleForRoute } from "@/stores/adminModulesStore";
-import { Lock, Power, Crown, UserCog, Flag as FlagIcon } from "lucide-react";
+import { Lock, Power, Crown, UserCog, Flag as FlagIcon, Zap } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
@@ -150,6 +150,8 @@ const adminSections: NavSection[] = [
     label: "Système",
     items: [
       { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
+      { title: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
+      { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
       { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
       { title: "Email & SMS", url: "/dashboard/admin/email-config", icon: MessageSquare },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },

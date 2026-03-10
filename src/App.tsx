@@ -120,6 +120,8 @@ import AdminPlanManager from "./pages/admin/AdminPlanManager";
 import AdminOverrides from "./pages/admin/AdminOverrides";
 import AdminFeatureFlags from "./pages/admin/AdminFeatureFlags";
 import AdminCompliance from "./pages/admin/AdminCompliance";
+import AdminSpecialties from "./pages/admin/AdminSpecialties";
+import AdminActions from "./pages/admin/AdminActions";
 import AdminEmailConfig from "./pages/admin/AdminEmailConfig";
 import AdminGuard from "./components/admin/AdminGuard";
 
@@ -274,6 +276,8 @@ const App = () => (
           <Route path="/dashboard/admin/modules" element={<AdminGuard><AdminModules /></AdminGuard>} />
           <Route path="/dashboard/admin/plans" element={<AdminGuard><AdminPlanManager /></AdminGuard>} />
           <Route path="/dashboard/admin/overrides" element={<AdminGuard><AdminOverrides /></AdminGuard>} />
+          <Route path="/dashboard/admin/specialties" element={<AdminGuard><AdminSpecialties /></AdminGuard>} />
+          <Route path="/dashboard/admin/actions" element={<AdminGuard><AdminActions /></AdminGuard>} />
           <Route path="/dashboard/admin/feature-flags" element={<AdminGuard><AdminFeatureFlags /></AdminGuard>} />
           <Route path="/dashboard/admin/compliance" element={<AdminGuard><AdminCompliance /></AdminGuard>} />
           <Route path="/dashboard/admin/email-config" element={<AdminGuard><AdminEmailConfig /></AdminGuard>} />
