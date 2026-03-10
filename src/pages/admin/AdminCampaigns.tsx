@@ -54,8 +54,8 @@ const AdminCampaigns = () => {
   const [sendMotifOpen, setSendMotifOpen] = useState(false);
   // Segments
   const [segmentEnabled, setSegmentEnabled] = useState(false);
-  const [segmentCity, setSegmentCity] = useState("");
-  const [segmentSpecialty, setSegmentSpecialty] = useState("");
+  const [segmentCity, setSegmentCity] = useState("all");
+  const [segmentSpecialty, setSegmentSpecialty] = useState("all");
   // Schedule
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
@@ -63,13 +63,13 @@ const AdminCampaigns = () => {
 
   const estimatedRecipients = useMemo(() => {
     let base = target === "all" ? 12458 : target === "patients" ? 8500 : target === "doctors" ? 1245 : 300;
-    if (segmentEnabled && segmentCity) base = Math.round(base * 0.15);
-    if (segmentEnabled && segmentSpecialty) base = Math.round(base * 0.2);
+    if (segmentEnabled && segmentCity !== "all") base = Math.round(base * 0.15);
+    if (segmentEnabled && segmentSpecialty !== "all") base = Math.round(base * 0.2);
     return base;
   }, [target, segmentEnabled, segmentCity, segmentSpecialty]);
 
   const handleSend = (motif: string) => {
-    const segLabel = [segmentCity, segmentSpecialty].filter(Boolean).join(", ");
+    const segLabel = [segmentCity !== "all" ? segmentCity : "", segmentSpecialty !== "all" ? segmentSpecialty : ""].filter(Boolean).join(", ");
     const newCampaign: Campaign = {
       id: `c-${Date.now()}`,
       title: title || "Sans titre",
@@ -78,8 +78,8 @@ const AdminCampaigns = () => {
       sentAt: scheduleEnabled ? undefined : new Date().toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric" }),
       scheduledAt: scheduleEnabled ? `${scheduleDate} ${scheduleTime}` : undefined,
       recipientCount: estimatedRecipients,
-      segmentCity: segmentCity || undefined,
-      segmentSpecialty: segmentSpecialty || undefined,
+      segmentCity: segmentCity !== "all" ? segmentCity : undefined,
+      segmentSpecialty: segmentSpecialty !== "all" ? segmentSpecialty : undefined,
     };
     setCampaigns(prev => [newCampaign, ...prev]);
     appendLog("campaign_sent", "notification_campaign", newCampaign.id, 
@@ -87,7 +87,7 @@ const AdminCampaigns = () => {
     );
     toast({ title: scheduleEnabled ? "Campagne programmée (mock)" : "Campagne envoyée (mock)" });
     setTitle(""); setMessage(""); setShowCreate(false); setSendMotifOpen(false);
-    setSegmentEnabled(false); setSegmentCity(""); setSegmentSpecialty("");
+    setSegmentEnabled(false); setSegmentCity("all"); setSegmentSpecialty("all");
     setScheduleEnabled(false); setScheduleDate(""); setScheduleTime("09:00");
   };
 
@@ -182,7 +182,7 @@ const AdminCampaigns = () => {
                     <Select value={segmentCity} onValueChange={setSegmentCity}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Toutes" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Toutes</SelectItem>
+                        <SelectItem value="all">Toutes</SelectItem>
                         {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -193,7 +193,7 @@ const AdminCampaigns = () => {
                       <Select value={segmentSpecialty} onValueChange={setSegmentSpecialty}>
                         <SelectTrigger className="mt-1"><SelectValue placeholder="Toutes" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Toutes</SelectItem>
+                          <SelectItem value="all">Toutes</SelectItem>
                           {SPECIALTIES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -229,10 +229,10 @@ const AdminCampaigns = () => {
             {/* Estimated + Preview */}
             <div className="rounded-lg border bg-muted/20 p-3 flex items-center justify-between">
               <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3.5 w-3.5" />Estimation : <strong className="text-foreground">{estimatedRecipients.toLocaleString()}</strong> destinataires</span>
-              {segmentEnabled && (segmentCity || segmentSpecialty) && (
+              {segmentEnabled && (segmentCity !== "all" || segmentSpecialty !== "all") && (
                 <div className="flex gap-1">
-                  {segmentCity && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{segmentCity}</span>}
-                  {segmentSpecialty && <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">{segmentSpecialty}</span>}
+                  {segmentCity !== "all" && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{segmentCity}</span>}
+                  {segmentSpecialty !== "all" && <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">{segmentSpecialty}</span>}
                 </div>
               )}
             </div>
