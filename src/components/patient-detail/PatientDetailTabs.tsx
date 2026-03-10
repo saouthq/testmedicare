@@ -43,6 +43,9 @@ function TabsBar({ value, onChange, options }: { value: MainTab; onChange: (v: M
 export default function PatientDetailTabs() {
   const ctx = usePatientDetail();
   const { tab, setTab, q, setQ, histFilter, setHistFilter, timeline, setDetailEvent, setDetailEdit, setDrawer } = ctx;
+  const [sub] = useDoctorSubscription();
+  const specialtyConfig = getPatientSpecialtyConfig(sub.activity, sub.specialty);
+  const anteLabels = specialtyConfig.anteLabels || { medical: "Médicaux", surgical: "Chirurgicaux", traumatic: "Traumatiques", family: "Familiaux" };
 
   return (
     <>
@@ -53,15 +56,7 @@ export default function PatientDetailTabs() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher dans le dossier… (ordonnance, analyse, note, date)" className="pl-9" />
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <TabsBar value={tab} onChange={setTab} options={[
-            { value: "historique", label: "Historique" },
-            { value: "antecedents", label: "Antécédents" },
-            { value: "traitement", label: "Traitement" },
-            { value: "constantes", label: "Constantes" },
-            { value: "notes", label: "Notes clinique" },
-            { value: "notes_prive", label: "Notes privé" },
-            { value: "documents", label: "Documents" },
-          ]} />
+          <TabsBar value={tab} onChange={setTab} options={specialtyConfig.tabs.map(t => ({ value: t.value as MainTab, label: t.label }))} />
           <div className="text-xs text-muted-foreground">La recherche filtre l'historique</div>
         </div>
       </Card>
