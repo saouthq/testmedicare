@@ -494,12 +494,64 @@ const PublicBooking = () => {
             
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep("info")}>Retour</Button>
-              <Button onClick={handleConfirm} className="flex-1 gradient-primary text-primary-foreground">
-                Confirmer le rendez-vous
+              <Button onClick={handleGoToPayment} className="flex-1 gradient-primary text-primary-foreground">
+                {isTeleconsult && selectedMotifData ? (
+                  <><CreditCard className="h-4 w-4 mr-1" />Passer au paiement · {selectedMotifData.price} DT</>
+                ) : (
+                  <>Confirmer le rendez-vous</>
+                )}
               </Button>
             </div>
           </div>
         )}
+
+        {/* Step: Payment (teleconsultation) */}
+        {step === "payment" && selectedMotifData && (
+          <div className="rounded-xl border bg-card p-5 shadow-card space-y-4">
+            <h3 className="font-semibold text-foreground">Paiement de la téléconsultation</h3>
+            <p className="text-sm text-muted-foreground">Le paiement est requis pour confirmer votre rendez-vous.</p>
+
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Video className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-semibold text-foreground">{doctor.name}</p>
+                    <p className="text-xs text-muted-foreground">{selectedMotif} · {selectedDay} Fév à {selectedSlot}</p>
+                  </div>
+                </div>
+                <p className="text-xl font-bold text-primary">{selectedMotifData.price} DT</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-xl border p-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Numéro de carte</label>
+                <Input placeholder="4242 4242 4242 4242" className="mt-1" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Expiration</label>
+                  <Input placeholder="MM/AA" className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">CVV</label>
+                  <Input placeholder="123" className="mt-1" />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+              <p>🔒 Paiement sécurisé SSL</p>
+              <p>💰 Remboursement intégral en cas d'annulation jusqu'à 24h avant le RDV.</p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep("confirm")}>Retour</Button>
+              <Button onClick={handlePayAndConfirm} disabled={paymentProcessing} className="flex-1 gradient-primary text-primary-foreground">
+                {paymentProcessing ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Traitement...</> : <><CreditCard className="h-4 w-4 mr-1" />Payer {selectedMotifData.price} DT</>}
+              </Button>
+            </div>
 
         {/* Step: Done */}
         {step === "done" && (

@@ -326,3 +326,50 @@ export const planNameToTier = (name: string, activity: ActivityType): PlanTier =
   if (lower.includes("pro") || lower.includes("premium")) return "pro";
   return "essentiel";
 };
+
+/**
+ * Specialty-specific feature descriptions.
+ * Used in onboarding to show what's unique to each specialty.
+ */
+export const specialtyFeatureHighlights: Record<string, { highlights: string[]; disabledFeatures: string[]; extraTools: string[] }> = {
+  "Ophtalmologue": {
+    highlights: ["Examen ophtalmologique intégré", "Acuité visuelle numérique", "Fond d'œil documenté", "Prescription lunettes/lentilles"],
+    disabledFeatures: ["teleconsult_video", "teleconsult_chat"], // Ophtalmo needs in-person
+    extraTools: ["ophtalmo_exam"],
+  },
+  "Cardiologue": {
+    highlights: ["Interprétation ECG intégrée", "Suivi tension artérielle", "Holter numérique", "Échocardiographie documentée"],
+    disabledFeatures: [],
+    extraTools: ["cardio_ecg"],
+  },
+  "Dermatologue": {
+    highlights: ["Galerie photos dermatologiques", "Suivi lésions cutanées", "Téléconsultation photo", "Dermatoscope numérique"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Gynécologue": {
+    highlights: ["Suivi grossesse intégré", "Échographies documentées", "Calendrier menstruel", "Suivi fertilité"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Pédiatre": {
+    highlights: ["Courbes de croissance automatiques", "Carnet de vaccination intégré", "Calcul IMC enfant", "Suivi développement"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Psychiatre": {
+    highlights: ["Notes de séance sécurisées", "Suivi thérapeutique", "Échelles psychométriques", "Téléconsultation renforcée"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "ORL": {
+    highlights: ["Audiogramme numérique", "Examen endoscopique", "Schéma ORL interactif"],
+    disabledFeatures: ["teleconsult_video"],
+    extraTools: [],
+  },
+  "Neurologue": {
+    highlights: ["EEG documenté", "Bilan neurologique structuré", "Suivi épilepsie"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+};
