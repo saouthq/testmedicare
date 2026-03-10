@@ -1,7 +1,15 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight, Send, CreditCard, Info, Download } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight, Send, CreditCard, Info, Download, Flag } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
+import EmptyState from "@/components/shared/EmptyState";
+import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsultButton";
+import { toast } from "@/hooks/use-toast";
+import { downloadCalendarEvent, openGoogleMapsDirections } from "@/lib/calendarExport";
+import { ReportButton } from "@/components/shared/ReportButton";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
