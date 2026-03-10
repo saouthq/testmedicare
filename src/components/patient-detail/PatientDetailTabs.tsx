@@ -1,6 +1,6 @@
 /**
  * PatientDetailTabs — Onglets principaux du dossier patient.
- * Contient la barre de recherche, le TabsBar, et le contenu de chaque onglet.
+ * Adapté dynamiquement selon la spécialité du médecin.
  */
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Search, FileText, Calendar } from "lucide-react";
 import { usePatientDetail } from "./PatientDetailContext";
 import { cx, humanSize } from "./helpers";
 import type { MainTab } from "./types";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { getPatientSpecialtyConfig } from "./specialtyPatientConfig";
 
 /* ── Card wrapper ── */
 function Card({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
