@@ -55,6 +55,9 @@ const AdminSpotlight = ({ open, onClose }: AdminSpotlightProps) => {
       { id: "nav-audit", label: "Audit logs", hint: "Journal d'activité", icon: <ScrollText className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/audit-logs") },
       { id: "nav-settings", label: "Paramètres système", hint: "Feature flags, maintenance", icon: <Settings className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/settings") },
       { id: "nav-modules", label: "Modules plateforme", hint: "Activer/désactiver des modules globaux", icon: <Power className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/modules") },
+      { id: "nav-plans", label: "Plans & Tarifs", hint: "CRUD plans d'abonnement", icon: <Crown className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/plans") },
+      { id: "nav-overrides", label: "Overrides comptes", hint: "Forcer features par utilisateur", icon: <UserCog className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/overrides") },
+      { id: "nav-flags", label: "Feature Flags", hint: "Flags système globaux", icon: <Flag className="h-4 w-4" />, group: "Navigation", onRun: () => go("/dashboard/admin/feature-flags") },
 
       // ── Actions rapides ──
       { id: "act-approve-kyc", label: "Aller aux validations KYC en attente", hint: "Voir les dossiers à traiter", icon: <ShieldCheck className="h-4 w-4" />, group: "Actions rapides", onRun: () => go("/dashboard/admin/verifications") },
