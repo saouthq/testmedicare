@@ -444,6 +444,8 @@ const PatientAppointments = () => {
                     <p className="text-xs text-accent flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Avis envoyé</p>
                   )}
                   <Link to="/search"><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
+                  {/* Signalement */}
+                  <ReportButton type="appointment" targetId={String(currentPast.id)} targetName={`RDV ${currentPast.doctor} — ${currentPast.date}`} variant="button" size="sm" />
                 </div>
               </div>
             )}
