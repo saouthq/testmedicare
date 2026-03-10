@@ -9,6 +9,8 @@ import { ActionDock } from "@/components/consultation/ActionDock";
 import { SlidePanel } from "@/components/consultation/SlidePanel";
 import { CloseModal, HistoryDrawer, CommandPalette, ClosedView } from "@/components/consultation/ConsultationModals";
 import SpecialtyTools from "@/components/consultation/SpecialtyTools";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { getSpecialtyConfig } from "@/components/consultation/specialtyConfig";
 
 /**
  * DoctorConsultationDetail — Page principale
