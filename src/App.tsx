@@ -120,6 +120,8 @@ import AdminPlanManager from "./pages/admin/AdminPlanManager";
 import AdminOverrides from "./pages/admin/AdminOverrides";
 import AdminFeatureFlags from "./pages/admin/AdminFeatureFlags";
 import AdminCompliance from "./pages/admin/AdminCompliance";
+import AdminSpecialties from "./pages/admin/AdminSpecialties";
+import AdminActions from "./pages/admin/AdminActions";
 import AdminEmailConfig from "./pages/admin/AdminEmailConfig";
 import AdminGuard from "./components/admin/AdminGuard";
 
