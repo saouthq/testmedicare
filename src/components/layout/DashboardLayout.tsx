@@ -77,6 +77,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Analyses", url: "/dashboard/laboratory/analyses", icon: FlaskConical },
     { title: "Résultats", url: "/dashboard/laboratory/results", icon: ClipboardList },
     { title: "Patients", url: "/dashboard/laboratory/patients", icon: Users },
+    { title: "Statistiques", url: "/dashboard/laboratory/reporting", icon: BarChart3 },
     { title: "Messagerie", url: "/dashboard/laboratory/messages", icon: MessageSquare },
   ],
   secretary: [
