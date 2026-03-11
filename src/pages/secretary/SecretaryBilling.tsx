@@ -34,7 +34,20 @@ const SecretaryBilling = () => {
   const [allTarifs] = useSharedTarifs();
   const actTypes = useMemo(() => getActiveActes(allTarifs).map(a => ({ label: a.name, price: a.price })), [allTarifs]);
 
-  const [invoices, setInvoices] = useState<Invoice[]>(mockSecretaryBillingInvoices);
+  // Seed billing store with mock data if empty, then use shared store
+  useEffect(() => {
+    const seedData: SharedInvoice[] = mockSecretaryBillingInvoices.map(inv => ({
+      ...inv, status: inv.status as "paid" | "pending" | "overdue", createdBy: "secretary" as const,
+    }));
+    initBillingStoreIfEmpty(seedData);
+  }, []);
+
+  const [sharedInvoices] = useSharedBilling();
+  
+  // Use shared store as primary, fallback to mock if empty
+  const invoices: Invoice[] = sharedInvoices.length > 0 
+    ? sharedInvoices.map(si => ({ id: si.id, patient: si.patient, doctor: si.doctor, date: si.date, amount: si.amount, type: si.type, payment: si.payment, status: si.status, avatar: si.avatar, assurance: si.assurance }))
+    : mockSecretaryBillingInvoices;
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
