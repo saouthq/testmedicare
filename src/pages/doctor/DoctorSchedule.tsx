@@ -54,39 +54,22 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 import { updateWaitingStatus, waitingRoomStore } from "@/stores/doctorStore";
-import { mockPatients } from "@/data/mockData";
+import { useSharedAppointments, updateAppointmentStatus, createAppointment as storeCreateAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import { useSharedBlockedSlots, addBlockedSlot, updateBlockedSlot as storeUpdateBlock, removeBlockedSlot } from "@/stores/sharedBlockedSlotsStore";
+import { useSharedPatients } from "@/stores/sharedPatientsStore";
+import { pushNotification } from "@/stores/notificationsStore";
+import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey } from "@/types/appointment";
+import { computeEndTime, DEFAULT_TYPE_COLORS as SHARED_TYPE_COLORS, type AppointmentStatus } from "@/types/appointment";
 
-// ─── Types ────────────────────────────────────────────────────
+// ─── Types (aliases to shared types) ──────────────────────────
 type ViewMode = "week" | "day" | "month" | "list";
-type ApptStatus = "pending" | "confirmed" | "arrived" | "in_progress" | "done" | "cancelled" | "absent";
-type ApptType = "Consultation" | "Suivi" | "Première visite" | "Urgence" | "Téléconsultation" | "Contrôle";
-type ColorKey = "primary" | "accent" | "warning" | "destructive" | "secondary" | "muted";
+type ApptStatus = AppointmentStatus;
+type ApptType = AppointmentType;
+type ColorKey = AppointmentColorKey;
+type Appt = SharedAppointment;
+type BlockedSlot = SharedBlockedSlot;
 
-interface Appt {
-  id: string;
-  date: string;
-  startTime: string;
-  duration: number;
-  patient: string;
-  patientId: number | null;
-  avatar: string;
-  phone: string;
-  motif: string;
-  type: ApptType;
-  status: ApptStatus;
-  assurance: string;
-  teleconsultation?: boolean;
-  notes?: string;
-  isNew?: boolean;
-}
-
-interface BlockedSlot {
-  id: string;
-  date: string;
-  startTime: string;
-  duration: number;
-  reason: string;
-}
+const CURRENT_DOCTOR = "Dr. Bouazizi";
 
 interface SlotCtx {
   date: string;
@@ -170,21 +153,15 @@ const COLOR_OPTIONS: {
 
 const colorStyle = (key: ColorKey) => COLOR_OPTIONS.find((c) => c.key === key)!;
 
-// Couleurs par défaut par type
-const DEFAULT_TYPE_COLORS: Record<ApptType, ColorKey> = {
-  Consultation: "primary",
-  Suivi: "accent",
-  "Première visite": "warning",
-  Urgence: "destructive",
-  Téléconsultation: "primary",
-  Contrôle: "accent",
-};
+// Couleurs par défaut par type — from shared config
+const DEFAULT_TYPE_COLORS: Record<ApptType, ColorKey> = { ...SHARED_TYPE_COLORS };
 
 // ─── Statuts ──────────────────────────────────────────────────
 const STATUS_LABEL: Record<ApptStatus, string> = {
   pending: "En attente",
   confirmed: "Confirmé",
   arrived: "Arrivé",
+  in_waiting: "En salle d'attente",
   in_progress: "En cours",
   done: "Terminé",
   cancelled: "Annulé",
@@ -194,6 +171,7 @@ const STATUS_CLS: Record<ApptStatus, string> = {
   pending: "bg-warning/10 text-warning border-warning/20",
   confirmed: "bg-accent/10 text-accent border-accent/20",
   arrived: "bg-primary/10 text-primary border-primary/20",
+  in_waiting: "bg-warning/10 text-warning border-warning/20",
   in_progress: "bg-primary/10 text-primary border-primary/20",
   done: "bg-muted text-muted-foreground border-border",
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
@@ -203,6 +181,7 @@ const STATUS_LEFT: Record<ApptStatus, string> = {
   pending: "border-l-warning",
   confirmed: "border-l-accent",
   arrived: "border-l-primary",
+  in_waiting: "border-l-warning",
   in_progress: "border-l-primary",
   done: "border-l-muted-foreground/30",
   cancelled: "border-l-destructive/40",
@@ -274,70 +253,7 @@ function monthCells(y: number, m: number): (Date | null)[] {
   return [...Array(pad).fill(null), ...Array.from({ length: total }, (_, i) => new Date(y, m, i + 1))];
 }
 
-// ─── Mock data ────────────────────────────────────────────────
-const PATS = [
-  { name: "Amine Ben Ali", id: 1, avatar: "AB", phone: "+216 22 345 678", assurance: "CNAM" },
-  { name: "Fatma Trabelsi", id: 2, avatar: "FT", phone: "+216 55 987 654", assurance: "CNSS" },
-  { name: "Mohamed Sfar", id: 3, avatar: "MS", phone: "+216 55 456 789", assurance: "STAR" },
-  { name: "Nadia Jemni", id: 4, avatar: "NJ", phone: "+216 98 567 890", assurance: "Publique" },
-  { name: "Sami Ayari", id: 5, avatar: "SA", phone: "+216 29 678 901", assurance: "Publique" },
-  { name: "Rania Meddeb", id: 6, avatar: "RM", phone: "+216 52 789 012", assurance: "Privée" },
-  { name: "Youssef Belhadj", id: 7, avatar: "YB", phone: "+216 98 123 456", assurance: "CNAM" },
-  { name: "Salma Dridi", id: 8, avatar: "SD", phone: "+216 71 345 678", assurance: "MAE" },
-  { name: "Karim Mansour", id: 9, avatar: "KM", phone: "+216 55 234 567", assurance: "CNSS" },
-  { name: "Leila Chahed", id: 10, avatar: "LC", phone: "+216 22 567 890", assurance: "CNAM" },
-];
-type SR = [number, string, number, number, ApptType, string, ApptStatus, boolean?];
-const SEEDS: SR[] = [
-  [0, "09:00", 30, 0, "Consultation", "Suivi diabète type 2", "confirmed"],
-  [0, "09:30", 30, 1, "Suivi", "Contrôle tension artérielle", "confirmed"],
-  [0, "10:00", 60, 2, "Première visite", "Bilan initial complet", "pending"],
-  [0, "11:30", 30, 3, "Contrôle", "Résultats analyses", "confirmed"],
-  [0, "14:00", 30, 4, "Consultation", "Renouvellement ordonnance", "arrived"],
-  [0, "15:00", 30, 5, "Suivi", "Suivi cholestérol", "confirmed"],
-  [0, "16:30", 30, 6, "Consultation", "Douleur épigastrique", "pending"],
-  [1, "08:30", 30, 7, "Consultation", "Check-up annuel", "confirmed"],
-  [1, "09:30", 60, 8, "Première visite", "Douleurs dorsales chroniques", "pending"],
-  [1, "11:00", 30, 9, "Téléconsultation", "Résultats IRM lombaire", "confirmed", true],
-  [1, "14:30", 30, 0, "Suivi", "Suivi grossesse T2", "confirmed"],
-  [1, "15:30", 30, 1, "Consultation", "Fièvre persistante", "confirmed"],
-  [2, "09:00", 30, 2, "Contrôle", "Post-opératoire J+15", "confirmed"],
-  [2, "10:00", 30, 3, "Suivi", "Diabète — HbA1c", "confirmed"],
-  [2, "11:30", 30, 4, "Téléconsultation", "Renouvellement Rx", "confirmed", true],
-  [2, "14:00", 60, 5, "Première visite", "Bilan cardio-vasculaire", "confirmed"],
-  [2, "16:30", 30, 6, "Consultation", "Douleur abdominale", "pending"],
-  [3, "08:00", 30, 7, "Urgence", "Douleur thoracique", "confirmed"],
-  [3, "09:00", 30, 8, "Consultation", "Toux chronique", "pending"],
-  [3, "14:30", 30, 9, "Suivi", "Suivi HTA — 3 mois", "confirmed"],
-  [3, "16:00", 30, 0, "Contrôle", "Glycémie post-jeûne", "confirmed"],
-  [4, "09:30", 30, 1, "Consultation", "Certificat médical sport", "confirmed"],
-  [4, "10:30", 30, 2, "Contrôle", "Rappel vaccinal — DTP", "pending"],
-  [4, "14:00", 30, 3, "Suivi", "Résultats mammographie", "confirmed"],
-  [4, "15:30", 60, 4, "Première visite", "Bilan thyroïdien complet", "confirmed"],
-  [5, "09:00", 30, 5, "Consultation", "Consultation générale", "confirmed"],
-  [5, "10:00", 30, 6, "Suivi", "Suivi post-infarctus", "confirmed"],
-];
-function seedAppts(ws: Date): Appt[] {
-  return SEEDS.map(([d, t, dur, pi, type, motif, status, tele]) => {
-    const date = addDays(ws, d as number),
-      p = PATS[pi as number];
-    return {
-      id: `${fmtDate(date)}-${t}-${p.id}`,
-      date: fmtDate(date),
-      startTime: t as string,
-      duration: dur as number,
-      patient: p.name,
-      patientId: p.id,
-      avatar: p.avatar,
-      phone: p.phone,
-      motif: motif as string,
-      type: type as ApptType,
-      status: status as ApptStatus,
-      assurance: p.assurance,
-      teleconsultation: !!tele,
-    };
-  });
-}
+// ─── Data now comes from shared stores ────────────────────────
 
 // ═══════════════════════════════════════════════════════════════════
 // SUB-COMPONENTS
@@ -548,7 +464,7 @@ function UnifiedBlockModal({
       toast({ title: "Durée minimum : 15 minutes", variant: "destructive" });
       return;
     }
-    onBlock({ id: `blk-${Date.now()}`, date, startTime: time, duration: totalMin, reason });
+    onBlock({ id: `blk-${Date.now()}`, date, startTime: time, duration: totalMin, reason, doctor: CURRENT_DOCTOR });
     toast({ title: "Créneau bloqué", description: `${date} ${time}→${endT} · ${reason}` });
     onClose();
   };
@@ -1670,7 +1586,7 @@ function CreateModal({
 }) {
   const [mode, setMode] = useState<"registered" | "new">("registered");
   const [q, setQ] = useState("");
-  const [patient, setPatient] = useState<(typeof PATS)[0] | null>(null);
+  const [patient, setPatient] = useState<{ name: string; id: number | null; avatar: string; phone: string; assurance: string } | null>(null);
   // Nouveau patient
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -1686,16 +1602,16 @@ function CreateModal({
   const [tele, setTele] = useState(false);
   const [showDrop, setShowDrop] = useState(false);
 
+  const [sharedPats] = useSharedPatients();
   const allPats = useMemo(() => {
-    const extra = mockPatients.map((p) => ({
+    return sharedPats.map(p => ({
       name: p.name,
       id: p.id,
-      avatar: typeof p.avatar === "string" ? p.avatar : p.name.slice(0, 2).toUpperCase(),
-      phone: p.phone ?? "",
-      assurance: p.mutuelle ?? "—",
+      avatar: p.avatar,
+      phone: p.phone,
+      assurance: p.assurance,
     }));
-    return [...PATS, ...extra].filter((p, i, a) => a.findIndex((x) => x.id === p.id) === i);
-  }, []);
+  }, [sharedPats]);
 
   const filtered =
     q.length > 0 ? allPats.filter((p) => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6) : [];
@@ -1720,6 +1636,7 @@ function CreateModal({
       id: `new-${Date.now()}`,
       date,
       startTime: time,
+      endTime: computeEndTime(time, duration),
       duration,
       patient: finalPatient.name,
       patientId: finalPatient.id,
@@ -1729,6 +1646,7 @@ function CreateModal({
       type,
       status: "confirmed",
       assurance: finalPatient.assurance,
+      doctor: CURRENT_DOCTOR,
       teleconsultation: tele || type === "Téléconsultation",
       notes,
       isNew,
@@ -2318,8 +2236,10 @@ const DoctorSchedule = () => {
 
   const [view, setView] = useState<ViewMode>("week");
   const [current, setCurrent] = useState(() => new Date());
-  const [apts, setApts] = useState<Appt[]>(() => seedAppts(weekStart(new Date())));
-  const [blocks, setBlocks] = useState<BlockedSlot[]>([]);
+  const [allApts] = useSharedAppointments();
+  const [allBlocks] = useSharedBlockedSlots();
+  const apts = useMemo(() => allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
+  const blocks = useMemo(() => allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
   const [typeColors, setTypeColors] = useState<Record<ApptType, ColorKey>>(DEFAULT_TYPE_COLORS);
 
   // Modal state
@@ -2366,29 +2286,19 @@ const DoctorSchedule = () => {
 
   const handleAction = useCallback(
     (action: string, id: string, payload?: Record<string, string>) => {
-      setApts((prev) =>
-        prev.map((a) => {
-          if (a.id !== id) return a;
-          switch (action) {
-            case "confirm":
-              return { ...a, status: "confirmed" };
-            case "arrived":
-              return { ...a, status: "arrived" };
-            case "start":
-              return { ...a, status: "in_progress" };
-            case "done":
-              return { ...a, status: "done" };
-            case "cancel":
-              return { ...a, status: "cancelled" };
-            case "absent":
-              return { ...a, status: "absent" };
-            case "reschedule":
-              return payload ? { ...a, date: payload.newDate, startTime: payload.newTime } : a;
-            default:
-              return a;
-          }
-        }),
-      );
+      // Write to shared store
+      switch (action) {
+        case "confirm": updateAppointmentStatus(id, "confirmed"); break;
+        case "arrived": updateAppointmentStatus(id, "arrived"); break;
+        case "start": updateAppointmentStatus(id, "in_progress"); break;
+        case "done": updateAppointmentStatus(id, "done"); break;
+        case "cancel": updateAppointmentStatus(id, "cancelled"); break;
+        case "absent": updateAppointmentStatus(id, "absent"); break;
+        case "reschedule":
+          if (payload) rescheduleAppointment(id, payload.newDate, payload.newTime);
+          break;
+      }
+      // Sync waiting room
       const apt = apts.find((a) => a.id === id);
       if (apt) {
         const entry = waitingRoomStore.read().find((e) => e.patient === apt.patient);
@@ -2399,17 +2309,13 @@ const DoctorSchedule = () => {
         }
       }
       const MSGS: Record<string, string> = {
-        confirm: "RDV confirmé",
-        arrived: "Patient arrivé",
-        start: "Consultation démarrée",
-        done: "Consultation terminée",
-        cancel: "RDV annulé",
-        absent: "Patient marqué absent",
+        confirm: "RDV confirmé", arrived: "Patient arrivé", start: "Consultation démarrée",
+        done: "Consultation terminée", cancel: "RDV annulé", absent: "Patient marqué absent",
         reschedule: "RDV reporté",
       };
       toast({ title: MSGS[action] ?? "Mise à jour" });
       if (action === "reschedule" && payload)
-        setSelApt((p) => (p ? { ...p, date: payload.newDate, startTime: payload.newTime } : p));
+        setSelApt((p) => (p ? { ...p, date: payload.newDate, startTime: payload.newTime, endTime: computeEndTime(payload.newTime, p.duration) } : p));
     },
     [apts],
   );
@@ -2594,7 +2500,7 @@ const DoctorSchedule = () => {
           initTime={blockModal.initTime}
           onClose={() => setBlockModal(null)}
           onBlock={(b) => {
-            setBlocks((p) => [...p, b]);
+            addBlockedSlot({ date: b.date, startTime: b.startTime, duration: b.duration, reason: b.reason, doctor: CURRENT_DOCTOR });
             setBlockModal(null);
           }}
         />
@@ -2606,11 +2512,11 @@ const DoctorSchedule = () => {
           block={editBlock}
           onClose={() => setEditBlock(null)}
           onUpdate={(b) => {
-            setBlocks((p) => p.map((x) => (x.id === b.id ? b : x)));
+            storeUpdateBlock(b.id, { date: b.date, startTime: b.startTime, duration: b.duration, reason: b.reason });
             setEditBlock(null);
           }}
           onDelete={(id) => {
-            setBlocks((p) => p.filter((x) => x.id !== id));
+            removeBlockedSlot(id);
             setEditBlock(null);
           }}
         />
@@ -2640,7 +2546,15 @@ const DoctorSchedule = () => {
             setDefDate(undefined);
             setDefTime(undefined);
           }}
-          onCreate={(a) => setApts((p) => [...p, a])}
+          onCreate={(a) => {
+            storeCreateAppointment({
+              date: a.date, startTime: a.startTime, duration: a.duration,
+              patient: a.patient, patientId: a.patientId, avatar: a.avatar,
+              phone: a.phone, motif: a.motif, type: a.type, status: a.status,
+              assurance: a.assurance, doctor: CURRENT_DOCTOR,
+              teleconsultation: a.teleconsultation, notes: a.notes, isNew: a.isNew,
+            });
+          }}
         />
       )}
 
