@@ -20,7 +20,6 @@ import PharmaciesDirectory from "./pages/public/PharmaciesDirectory";
 import PharmacyDetail from "./pages/public/PharmacyDetail";
 import MedicinesDirectory from "./pages/public/MedicinesDirectory";
 import MedicineDetail from "./pages/public/MedicineDetail";
-import FindAppointments from "./pages/public/FindAppointments";
 import MyAppointments from "./pages/public/MyAppointments";
 import HowItWorks from "./pages/public/HowItWorks";
 import Help from "./pages/public/Help";
