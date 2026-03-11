@@ -91,13 +91,6 @@ const SecretaryBilling = () => {
       status: status as "paid" | "pending" | "overdue", assurance: newCnam ? "Assurance publique" : "Sans assurance",
       createdBy: "secretary",
     });
-    // Sync to cross-role billing store → doctor sees it
-    createInvoice({
-      patient: newPatient, avatar, doctor: newDoctor, date: "20 Fév 2026",
-      amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
-      status: status as "paid" | "pending" | "overdue", assurance: newCnam ? "Assurance publique" : "Sans assurance",
-      createdBy: "secretary",
-    });
     setShowNew(false);
     setNewPatient(""); setNewActs(actTypes.length ? [{ type: actTypes[0].label, price: actTypes[0].price }] : []); setNewPayment("—");
     toast({ title: "Facture créée", description: `${newId} · ${newPatient} · ${total} DT — visible côté médecin.` });
