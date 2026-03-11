@@ -7,16 +7,15 @@ import {
   Search, Plus, Download, Banknote, FileText, CheckCircle2, Clock,
   AlertCircle, CreditCard, ArrowUpRight, Eye, Printer, Send, Receipt, Shield, X, Save, Trash2
 } from "lucide-react";
-import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/data/mockData";
+import { mockSecretaryBillingInvoices } from "@/data/mockData";
 import { useSharedBilling, initBillingStoreIfEmpty, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
+import { useSharedTarifs, getActiveActes } from "@/stores/sharedTarifsStore";
 import { toast } from "@/hooks/use-toast";
 
 interface Invoice {
   id: string; patient: string; doctor: string; date: string; amount: number;
   type: string; payment: string; status: string; avatar: string; assurance: string;
 }
-
-const actTypes = mockSecretaryBillingActTypes;
 
 const paymentMethods = [
   { method: "Assurance", count: 45, icon: Shield },
