@@ -778,7 +778,7 @@ const DoctorConsultations = () => {
 
   const isHistoryMode = statusFilter === "completed" || statusFilter === "cancelled" || statusFilter === "no_show";
 
-  const todayAll = useMemo(() => consultations.filter((c) => c.date === TODAY), [consultations]);
+  const todayAll = useMemo(() => consultations.filter((c) => c.date === today), [consultations, today]);
   const todayDone = useMemo(() => todayAll.filter((c) => c.status === "completed").length, [todayAll]);
   const todayNoShow = useMemo(() => todayAll.filter((c) => c.status === "no_show").length, [todayAll]);
   const todayCount = todayAll.length;
