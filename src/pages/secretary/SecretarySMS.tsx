@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { mockSecretaryTemplates, mockSecretaryAppointments } from "@/data/mockData";
+import { mockSecretaryTemplates } from "@/data/mockData";
+import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
 
 type SMSTab = "send" | "templates" | "history" | "auto";
 
