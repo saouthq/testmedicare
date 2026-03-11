@@ -11,11 +11,12 @@ type DetailTab = "info" | "history" | "billing";
 const SecretaryPatients = () => {
   const [search, setSearch] = useState("");
   const [showNewPatient, setShowNewPatient] = useState(false);
-  const [patients, setPatients] = useState(mockSecretaryPatientsWithHistory);
+  const [allPatients] = useSharedPatients();
+  const patients = allPatients;
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [detailTab, setDetailTab] = useState<DetailTab>("info");
-  const [editForm, setEditForm] = useState<typeof mockSecretaryPatientsWithHistory[0] | null>(null);
+  const [editForm, setEditForm] = useState<SharedPatient | null>(null);
   const [saved, setSaved] = useState(false);
 
   const selectedPatient = selectedPatientId ? patients.find(p => p.id === selectedPatientId) : null;
