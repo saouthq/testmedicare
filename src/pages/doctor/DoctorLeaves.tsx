@@ -190,10 +190,10 @@ const DoctorLeaves = () => {
             </div>
             <div><Label>Motif *</Label><Textarea value={form.motif} onChange={e => setForm(p => ({ ...p, motif: e.target.value }))} placeholder="Ex: Vacances, formation, etc." /></div>
             <div><Label>Médecin remplaçant (optionnel)</Label>
-              <Select value={form.replacementDoctor} onValueChange={v => setForm(p => ({ ...p, replacementDoctor: v }))}>
+              <Select value={form.replacementDoctor || "none"} onValueChange={v => setForm(p => ({ ...p, replacementDoctor: v === "none" ? "" : v }))}>
                 <SelectTrigger><SelectValue placeholder="Aucun remplaçant" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {replacementDoctors.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
