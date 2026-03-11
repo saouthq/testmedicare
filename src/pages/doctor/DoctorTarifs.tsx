@@ -84,7 +84,7 @@ const DoctorTarifs = () => {
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-warning/10 flex items-center justify-center"><Sun className="h-5 w-5 text-warning" /></div>
-          <div><p className="text-2xl font-bold text-foreground">{actes.filter(a => a.conventionne).length}</p><p className="text-xs text-muted-foreground">Conventionnés</p></div>
+          <div><p className="text-2xl font-bold text-foreground">{allActes.filter(a => a.conventionne).length}</p><p className="text-xs text-muted-foreground">Conventionnés</p></div>
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center"><Moon className="h-5 w-5 text-destructive" /></div>
