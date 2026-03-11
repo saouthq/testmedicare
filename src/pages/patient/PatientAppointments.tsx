@@ -15,11 +15,12 @@ type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
 import { useSharedAppointments, cancelAppointment as sharedCancelAppointment, rescheduleAppointment as sharedRescheduleAppointment } from "@/stores/sharedAppointmentsStore";
 import type { SharedAppointment } from "@/types/appointment";
+import { canCancel as checkCanCancel, canReschedule as checkCanReschedule } from "@/lib/appointmentRules";
 
 // Helper: derive display values from SharedAppointment
 const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" || a.teleconsultation;
-const canModifyApt = (a: SharedAppointment) => ["pending", "confirmed"].includes(a.status);
-const canCancelApt = (a: SharedAppointment) => ["pending", "confirmed"].includes(a.status);
+const canModifyApt = (a: SharedAppointment) => checkCanReschedule(a).allowed;
+const canCancelApt = (a: SharedAppointment) => checkCanCancel(a).allowed;
 const getScheduledAt = (a: SharedAppointment) => {
   try { return new Date(`${a.date}T${a.startTime}:00`).toISOString(); } catch { return new Date().toISOString(); }
 };
