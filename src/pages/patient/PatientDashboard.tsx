@@ -33,6 +33,7 @@ const PatientDashboard = () => {
   const { notifications: crossNotifs } = useNotifications("patient");
   const [health] = useHealth();
   const [doctorRx] = useDoctorPrescriptions();
+  const [favoriteDoctors] = useFavoriteDoctors();
 
   const PATIENT_ID = 1;
   const appointments = useMemo(() => 
