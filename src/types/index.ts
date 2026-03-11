@@ -8,3 +8,4 @@ export * from "./consultation";
 export * from "./document";
 export * from "./common";
 export * from "./promotion";
+export * from "./appointment";

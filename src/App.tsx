@@ -140,7 +140,7 @@ import AdminSatisfaction from "./pages/admin/AdminSatisfaction";
 import AdminAPIPartners from "./pages/admin/AdminAPIPartners";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminGuard from "./components/admin/AdminGuard";
-import DoctorSubscription from "./pages/doctor/DoctorSubscription";
+// DoctorSubscription removed — route redirects to billing
 
 // Shared
 import Messages from "./pages/messaging/Messages";
