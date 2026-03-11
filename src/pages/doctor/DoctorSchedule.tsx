@@ -161,6 +161,7 @@ const STATUS_LABEL: Record<ApptStatus, string> = {
   pending: "En attente",
   confirmed: "Confirmé",
   arrived: "Arrivé",
+  in_waiting: "En salle d'attente",
   in_progress: "En cours",
   done: "Terminé",
   cancelled: "Annulé",
