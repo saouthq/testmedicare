@@ -751,8 +751,8 @@ const DoctorConsultations = () => {
 
   const filtered = useMemo(() => {
     const byPeriod = consultations.filter((c) => {
-      if (filter === "today") return c.date === TODAY;
-      if (filter === "week") return WEEK.includes(c.date);
+      if (filter === "today") return c.date === today;
+      if (filter === "week") return weekDates.includes(c.date);
       return true;
     });
 
