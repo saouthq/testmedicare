@@ -587,7 +587,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Close — full cross-role sync
+  // Close — full cross-role sync: persist ALL documents + data to patient's health record
   const handleClose = () => {
     setClosed(true);
     setShowCloseModal(false);
@@ -597,28 +597,31 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
       /* no-op */
     }
 
+    const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    const doctorName = "Dr. Bouazizi";
+
     // 1) Mark appointment as completed
     const searchParams2 = new URLSearchParams(window.location.search);
     const aptId = searchParams2.get("aptId");
     if (aptId) {
       completeAppointmentConsultation(aptId);
     } else {
-      // Fallback: find the in_progress appointment for this patient today
       const allApts = sharedAppointmentsStore.read();
-      const today = new Date().toISOString().slice(0, 10);
+      const todayISO = new Date().toISOString().slice(0, 10);
       const match = allApts.find(
-        (a) => a.patient === patient.name && a.status === "in_progress" && a.date === today
+        (a) => a.patient === patient.name && a.status === "in_progress" && a.date === todayISO
       );
       if (match) completeAppointmentConsultation(match.id);
     }
 
     // 2) Write prescription to shared store if items exist
-    if (rxItems.filter(r => r.medication.trim()).length > 0) {
+    const validRx = rxItems.filter(r => r.medication.trim());
+    if (validRx.length > 0) {
       createPrescription({
-        doctor: "Dr. Bouazizi",
+        doctor: doctorName,
         patient: patient.name,
-        date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
-        items: rxItems.filter(r => r.medication.trim()).map(r => `${r.medication} — ${r.dosage} · ${r.duration}`),
+        date: today,
+        items: validRx.map(r => `${r.medication} — ${r.dosage} · ${r.duration}`),
         status: "active" as const,
         total: `${consultAmount} DT`,
         assurance: "",
@@ -627,15 +630,89 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    // 3) Add health document (consultation report) to patient's health record
+    // 3) Persist ALL documents to patient's health record (healthStore)
+    // ── Compte-rendu (consultation report)
     if (reportText.trim() || diagnosis.trim()) {
       addHealthDocument({
         name: `Compte-rendu — ${motif || "Consultation"}`,
         type: "Consultation",
-        date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
-        source: "Dr. Bouazizi",
+        date: today,
+        source: doctorName,
         size: "—",
       });
+    }
+
+    // ── Ordonnance
+    if (validRx.length > 0 && sendDocs.rx.enabled) {
+      addHealthDocument({
+        name: `Ordonnance — ${motif || "Consultation"} (${validRx.length} médicament${validRx.length > 1 ? "s" : ""})`,
+        type: "Ordonnance",
+        date: today,
+        source: doctorName,
+        size: "—",
+      });
+    }
+
+    // ── Demande d'analyses
+    if (analyses.length > 0 && sendDocs.analyses.enabled) {
+      addHealthDocument({
+        name: `Demande d'analyses — ${analyses.slice(0, 3).join(", ")}${analyses.length > 3 ? "…" : ""}`,
+        type: "Analyses",
+        date: today,
+        source: doctorName,
+        size: "—",
+      });
+    }
+
+    // ── Certificat médical (if signed)
+    if (certSignedAt) {
+      addHealthDocument({
+        name: `Certificat médical — ${certReason}`,
+        type: "Certificat",
+        date: today,
+        source: doctorName,
+        size: "—",
+      });
+    }
+
+    // ── Arrêt de travail (if signed)
+    if (slSignedAt) {
+      addHealthDocument({
+        name: `Arrêt de travail — du ${slStart} au ${slEnd}`,
+        type: "Arrêt de travail",
+        date: today,
+        source: doctorName,
+        size: "—",
+      });
+    }
+
+    // ── Feuille de soins (care sheet — always generated)
+    addHealthDocument({
+      name: `Feuille de soins — ${motif || "Consultation"} · ${consultAmount} DT`,
+      type: "Feuille de soins",
+      date: today,
+      source: doctorName,
+      size: "—",
+    });
+
+    // 4) Update patient health record with consultation data
+    // TODO BACKEND: POST /api/consultations/{id}/close — sync all data server-side
+    const { addAntecedent, addMeasure } = require("@/stores/healthStore");
+
+    // Record vitals as health measures
+    if (vitals.systolic && vitals.diastolic) {
+      addMeasure({ type: "Tension artérielle", value: `${vitals.systolic}/${vitals.diastolic} mmHg`, date: today, source: doctorName });
+    }
+    if (vitals.weight) {
+      addMeasure({ type: "Poids", value: `${vitals.weight} kg`, date: today, source: doctorName });
+    }
+    if (vitals.heartRate) {
+      addMeasure({ type: "Fréquence cardiaque", value: `${vitals.heartRate} bpm`, date: today, source: doctorName });
+    }
+
+    // Record diagnosis as antecedent
+    if (diagnosis.trim()) {
+      addAntecedent({ name: diagnosis.trim(), date: today, type: "Médical", notes: `Motif: ${motif}. ${conclusion}`.trim() });
     }
   };
 

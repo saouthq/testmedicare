@@ -16,6 +16,8 @@ import { mockDoctors } from "@/data/mocks/doctor";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
 import { bookAppointment, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
 import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
+import { sharedBlockedSlotsStore } from "@/stores/sharedBlockedSlotsStore";
+import { sharedLeavesStore } from "@/stores/sharedLeavesStore";
 import { doctorProfileStore, readDoctorProfile } from "@/stores/doctorProfileStore";
 import { validateBooking } from "@/lib/appointmentRules";
 import { getCurrentRole, readAuthUser } from "@/stores/authStore";
@@ -78,7 +80,7 @@ const buildDoctor = (id: string) => {
   };
 };
 
-// ─── Day Generation ─────────────────────────────────────────
+// ─── Day Generation (checks availability + leaves + blocked slots) ───
 const generateDays = (weekOffset: number) => {
   const today = new Date();
   const start = new Date(today);
@@ -87,15 +89,29 @@ const generateDays = (weekOffset: number) => {
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
   const availability = sharedAvailabilityStore.read();
-  const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string }[] = [];
+  const leaves = sharedLeavesStore.read();
+  const blockedSlots = sharedBlockedSlotsStore.read();
+
+  const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string; leaveReason?: string }[] = [];
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
     const frDayName = JS_DAY_TO_FR[date.getDay()];
     const dayConfig = availability.days[frDayName];
-    const isAvailable = dayConfig ? dayConfig.active : false;
     const dateStr = date.toISOString().slice(0, 10);
+
+    // Check if day is in the past
+    const isPast = dateStr < today.toISOString().slice(0, 10);
+
+    // Check leaves
+    const leave = leaves.find(l => l.status !== "past" && dateStr >= l.startDate && dateStr <= l.endDate);
+
+    // Check full-day blocks (duration >= 480 min = 8h)
+    const fullDayBlock = blockedSlots.find(b => b.date === dateStr && b.duration >= 480);
+
+    const isAvailable = !isPast && (dayConfig ? dayConfig.active : false) && !leave && !fullDayBlock;
+
     d.push({
       day: date.getDate(),
       month: date.getMonth(),
@@ -105,6 +121,7 @@ const generateDays = (weekOffset: number) => {
       label: `${date.getDate()} ${date.toLocaleDateString("fr-FR", { month: "short" })} ${date.getFullYear()}`,
       dateStr,
       frDayName,
+      leaveReason: leave ? leave.motif : fullDayBlock ? fullDayBlock.reason : undefined,
     });
   }
   return d;
@@ -158,12 +175,17 @@ const PublicBooking = () => {
   const isTeleconsult = consultType === "teleconsultation";
   const selectedMotifData = doctor.motifs.find(m => m.name === selectedMotif);
 
-  // Generate filtered slots
+  // Generate filtered slots (checks availability + blocked + leaves + existing apts)
   const filteredSlots = useMemo(() => {
     if (!selectedDayDateStr || !selectedDayFr) return [];
     const availability = sharedAvailabilityStore.read();
     const dayConfig = availability.days[selectedDayFr];
     if (!dayConfig || !dayConfig.active) return [];
+
+    // Check leaves
+    const leaves = sharedLeavesStore.read();
+    const isOnLeave = leaves.some(l => l.status !== "past" && selectedDayDateStr >= l.startDate && selectedDayDateStr <= l.endDate);
+    if (isOnLeave) return [];
 
     const slotDuration = selectedMotifData?.duration || availability.slotDuration || 30;
     const startMin = timeToMin(dayConfig.start);
@@ -171,23 +193,49 @@ const PublicBooking = () => {
     const breakStartMin = dayConfig.breakStart ? timeToMin(dayConfig.breakStart) : -1;
     const breakEndMin = dayConfig.breakEnd ? timeToMin(dayConfig.breakEnd) : -1;
 
+    // Existing appointments
     const existingApts = sharedAppointmentsStore.read()
       .filter(a => a.date === selectedDayDateStr && !["cancelled", "absent"].includes(a.status) && a.doctor === doctor.doctorRef);
 
+    // Blocked slots for this date
+    const blockedSlots = sharedBlockedSlotsStore.read()
+      .filter(b => b.date === selectedDayDateStr);
+
     const slots: string[] = [];
+    const now = new Date();
+    const isToday = selectedDayDateStr === now.toISOString().slice(0, 10);
+
     for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
+      // Skip break time
       if (breakStartMin >= 0 && breakEndMin >= 0 && m >= breakStartMin && m < breakEndMin) continue;
 
+      // Skip past slots if today
+      if (isToday) {
+        const slotHour = Math.floor(m / 60);
+        const slotMin = m % 60;
+        if (slotHour < now.getHours() || (slotHour === now.getHours() && slotMin <= now.getMinutes())) continue;
+      }
+
+      // Check overlap with existing appointments
       const isBooked = existingApts.some(a => {
         const aptStart = timeToMin(a.startTime);
         const aptEnd = aptStart + a.duration;
         return m < aptEnd && (m + slotDuration) > aptStart;
       });
+      if (isBooked) continue;
 
-      if (!isBooked) slots.push(minToTime(m));
+      // Check overlap with blocked slots
+      const isBlocked = blockedSlots.some(b => {
+        const bStart = timeToMin(b.startTime);
+        const bEnd = bStart + b.duration;
+        return m < bEnd && (m + slotDuration) > bStart;
+      });
+      if (isBlocked) continue;
+
+      slots.push(minToTime(m));
     }
     return slots;
-  }, [selectedDayDateStr, selectedDayFr, selectedMotifData]);
+  }, [selectedDayDateStr, selectedDayFr, selectedMotifData, doctor.doctorRef]);
 
   // ─── Handlers ─────────────────────────────────────────────
 
@@ -435,7 +483,6 @@ const PublicBooking = () => {
                       <span className="text-sm font-medium">{m.name}</span>
                       <span className="text-xs text-muted-foreground">({m.duration} min)</span>
                     </div>
-                    <span className="text-sm font-bold text-primary">{m.price} DT</span>
                   </button>
                 ))}
               </div>
@@ -715,12 +762,7 @@ const PublicBooking = () => {
                 <span className="text-muted-foreground">Assurance</span>
                 <span className="font-medium">{mockAssurances.find(a => a.id === assurance)?.name}</span>
               </div>
-              {selectedMotifData && (
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-muted-foreground font-medium">Tarif</span>
-                  <span className="font-bold text-primary">{selectedMotifData.price} DT</span>
-                </div>
-              )}
+              {/* Prices hidden by default in booking flow — only show in recap for teleconsult payment */}
             </div>
 
             {isTeleconsult && (

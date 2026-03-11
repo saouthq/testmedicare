@@ -10,6 +10,7 @@ import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
 import { getEnabledFeatures } from "@/stores/featureMatrixStore";
 import { useAdminModules, isSidebarUrlEnabled, getDisabledModuleForRoute } from "@/stores/adminModulesStore";
+import { isSidebarItemVisible } from "@/stores/sidebarVisibilityStore";
 import { Lock, Power, Crown, UserCog, Flag as FlagIcon, Zap } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
@@ -56,7 +57,6 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Salle d'attente", url: "/dashboard/doctor/waiting-room", icon: Clock },
     { title: "Mes patients", url: "/dashboard/doctor/patients", icon: Users },
     { title: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
-    { title: "Ordonnances", url: "/dashboard/doctor/prescriptions", icon: FileText },
     // ── Cabinet ──
     { title: "Facturation", url: "/dashboard/doctor/billing", icon: Banknote },
     { title: "Tarifs & Actes", url: "/dashboard/doctor/tarifs", icon: CreditCard },
@@ -167,6 +167,7 @@ const adminSections: NavSection[] = [
     label: "Système",
     items: [
       { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
+      { title: "Config Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
       { title: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
       { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
       { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
@@ -297,6 +298,8 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
         const isActive = location.pathname === item.url;
         // Admin module gating — hide sidebar items for disabled modules
         if (role !== "admin" && !isSidebarUrlEnabled(item.url)) return null;
+        // Admin sidebar visibility gating — hide items disabled by admin
+        if (role !== "admin" && !isSidebarItemVisible(role, item.url, role === "doctor" ? doctorSub.specialty : undefined)) return null;
         // Specialty-specific hidden items
         if (role === "doctor" && specConfig?.sidebarHidden?.includes(item.url)) return null;
         // Feature gating for doctor subscription

@@ -195,5 +195,126 @@ export function validateBooking(payload: {
   return { valid: errors.length === 0, errors };
 }
 
+// ─── Agenda Conflict Detection ──────────────────────────────
+
+export interface ConflictInfo {
+  appointment: SharedAppointment;
+  conflictType: "block" | "leave";
+}
+
+/**
+ * Find appointments that conflict with a proposed blocked slot or leave period.
+ * Used by DoctorSchedule, SecretaryAgenda when blocking slots or declaring leaves.
+ *
+ * Flow: declare block/leave → getConflicts → show warning → optionally cancel conflicting apts → save block/leave
+ */
+export function getConflictsWithBlock(
+  doctorName: string,
+  date: string,
+  startTime: string,
+  durationMin: number
+): ConflictInfo[] {
+  const apts = sharedAppointmentsStore.read();
+  const blockStart = timeToMin(startTime);
+  const blockEnd = blockStart + durationMin;
+
+  return apts
+    .filter(a => {
+      if (a.doctor !== doctorName) return false;
+      if (a.date !== date) return false;
+      if (["cancelled", "absent", "done"].includes(a.status)) return false;
+      const aStart = timeToMin(a.startTime);
+      const aEnd = aStart + a.duration;
+      return aStart < blockEnd && aEnd > blockStart;
+    })
+    .map(a => ({ appointment: a, conflictType: "block" as const }));
+}
+
+/**
+ * Find appointments that conflict with a proposed leave (multi-day).
+ */
+export function getConflictsWithLeave(
+  doctorName: string,
+  startDate: string,
+  endDate: string
+): ConflictInfo[] {
+  const apts = sharedAppointmentsStore.read();
+  const today = new Date().toISOString().slice(0, 10);
+
+  return apts
+    .filter(a => {
+      if (a.doctor !== doctorName) return false;
+      if (["cancelled", "absent", "done"].includes(a.status)) return false;
+      if (a.date < today) return false;
+      return a.date >= startDate && a.date <= endDate;
+    })
+    .map(a => ({ appointment: a, conflictType: "leave" as const }));
+}
+
+/**
+ * Get all available slots for a doctor on a given date.
+ * Accounts for: working hours, breaks, blocked slots, leaves, existing appointments.
+ * // TODO BACKEND: Replace with GET /api/doctors/:id/available-slots?date=YYYY-MM-DD
+ */
+export function getAvailableSlots(
+  doctorName: string,
+  date: string,
+  slotDuration?: number
+): string[] {
+  const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+  const aptDate = new Date(date + "T00:00:00");
+  const frDayName = JS_DAY_TO_FR[aptDate.getDay()];
+
+  const availability = sharedAvailabilityStore.read();
+  const dayConfig = availability.days[frDayName];
+  if (!dayConfig || !dayConfig.active) return [];
+
+  // Check leaves
+  const leaves = sharedLeavesStore.read();
+  const isOnLeave = leaves.some(l => l.status !== "past" && date >= l.startDate && date <= l.endDate);
+  if (isOnLeave) return [];
+
+  const duration = slotDuration || availability.slotDuration || 30;
+  const startMin = timeToMin(dayConfig.start);
+  const endMin = timeToMin(dayConfig.end);
+  const breakStartMin = dayConfig.breakStart ? timeToMin(dayConfig.breakStart) : -1;
+  const breakEndMin = dayConfig.breakEnd ? timeToMin(dayConfig.breakEnd) : -1;
+
+  const existingApts = sharedAppointmentsStore.read()
+    .filter(a => a.date === date && a.doctor === doctorName && !["cancelled", "absent"].includes(a.status));
+
+  const blockedSlots = sharedBlockedSlotsStore.read().filter(b => b.date === date);
+
+  const now = new Date();
+  const isToday = date === now.toISOString().slice(0, 10);
+  const slots: string[] = [];
+
+  for (let m = startMin; m + duration <= endMin; m += duration) {
+    if (breakStartMin >= 0 && breakEndMin >= 0 && m >= breakStartMin && m < breakEndMin) continue;
+
+    if (isToday) {
+      const h = Math.floor(m / 60), min = m % 60;
+      if (h < now.getHours() || (h === now.getHours() && min <= now.getMinutes())) continue;
+    }
+
+    const isBooked = existingApts.some(a => {
+      const aStart = timeToMin(a.startTime);
+      return m < aStart + a.duration && (m + duration) > aStart;
+    });
+    if (isBooked) continue;
+
+    const isBlocked = blockedSlots.some(b => {
+      const bStart = timeToMin(b.startTime);
+      return m < bStart + b.duration && (m + duration) > bStart;
+    });
+    if (isBlocked) continue;
+
+    const minStr = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+    slots.push(minStr);
+  }
+
+  return slots;
+}
+
 // ─── Exports ────────────────────────────────────────────────
 export { CANCELLATION_HOURS, MAX_RESCHEDULES };

@@ -142,6 +142,7 @@ import AdminContentPages from "./pages/admin/AdminContentPages";
 import AdminSatisfaction from "./pages/admin/AdminSatisfaction";
 import AdminAPIPartners from "./pages/admin/AdminAPIPartners";
 import AdminReports from "./pages/admin/AdminReports";
+import AdminSidebarConfig from "./pages/admin/AdminSidebarConfig";
 import AdminGuard from "./components/admin/AdminGuard";
 // DoctorSubscription removed — route redirects to billing
 
@@ -323,6 +324,7 @@ const App = () => (
           <Route path="/dashboard/admin/reports" element={<AdminGuard><AdminReports /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
+          <Route path="/dashboard/admin/sidebar-config" element={<AdminGuard><AdminSidebarConfig /></AdminGuard>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
