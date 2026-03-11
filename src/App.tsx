@@ -146,6 +146,7 @@ import DoctorSubscription from "./pages/doctor/DoctorSubscription";
 import Messages from "./pages/messaging/Messages";
 import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
 import SimulationPanel from "./components/shared/SimulationPanel";
+import ScrollToTop from "./components/shared/ScrollToTop";
 import { RouteModuleGate } from "./components/shared/ModuleGate";
 
 const queryClient = new QueryClient();
