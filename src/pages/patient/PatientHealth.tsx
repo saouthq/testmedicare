@@ -26,15 +26,6 @@ const menuItemsDef: { key: HealthSection; label: string; icon: any }[] = [
 ];
 
 import {
-  mockHealthDocuments as initialDocuments,
-  mockAntecedents as initialAntecedents,
-  mockTreatments as initialTreatments,
-  mockAllergies as initialAllergies,
-  mockHabits as initialHabits,
-  mockFamilyHistory as initialFamily,
-  mockSurgeries as initialSurgeries,
-  mockVaccinations as initialVaccinations,
-  mockMeasures as initialMeasures,
   mockPatientAiInitial as aiInitial,
   mockPatientAiResponses as aiMockResponses
 } from "@/data/mockData";
