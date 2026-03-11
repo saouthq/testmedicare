@@ -461,7 +461,7 @@ function UnifiedBlockModal({
       toast({ title: "Durée minimum : 15 minutes", variant: "destructive" });
       return;
     }
-    onBlock({ id: `blk-${Date.now()}`, date, startTime: time, duration: totalMin, reason });
+    onBlock({ id: `blk-${Date.now()}`, date, startTime: time, duration: totalMin, reason, doctor: CURRENT_DOCTOR });
     toast({ title: "Créneau bloqué", description: `${date} ${time}→${endT} · ${reason}` });
     onClose();
   };
