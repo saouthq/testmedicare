@@ -29,7 +29,7 @@ export interface DoctorProfile {
   reviewCount: number;
   actes: string[];
   memberships: string[];
-  accessInfo: string;
+  accessInfo: { parking: boolean; handicap: boolean; elevator: boolean; publicTransport: string };
 }
 
 const defaultProfile: DoctorProfile = {
