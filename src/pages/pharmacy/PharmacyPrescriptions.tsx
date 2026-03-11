@@ -125,7 +125,7 @@ const PharmacyPrescriptions = () => {
       return;
     }
     saveItems(id);
-    setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, status, pickupTime: pickupTime || p.pickupTime, comment } : p));
+    updatePharmacyRxStatus(id, status, { pickupTime: pickupTime || undefined, comment: comment || undefined });
     toast.success(`Ordonnance ${id} → ${statusCfg[status].label}`);
 
     // Write response to cross-role store so patient sees it

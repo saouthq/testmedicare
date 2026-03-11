@@ -101,7 +101,7 @@ const PharmacyStock = () => {
 
         {/* Categories */}
         <div className="flex flex-wrap gap-2">
-          {mockPharmacyCategories.map(c => (
+          {PHARMACY_CATEGORIES.map(c => (
             <button key={c} onClick={() => setSelectedCategory(c)}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${selectedCategory === c ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
               {c}
