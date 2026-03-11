@@ -69,6 +69,8 @@ const ALL_STORAGE_KEYS = [
   "medicare_lab_demands",
   "medicare_shared_prescriptions",
   "medicare_reports",
+  "medicare_chat_threads",
+  "medicare_chat_messages",
   "doctor_renewal_requests",
   "doctor_profile_completion",
   "medicare_patient_profile",
