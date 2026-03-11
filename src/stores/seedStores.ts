@@ -48,6 +48,8 @@ const ALL_STORES = [
   notificationsStore,
   doctorProfileStore,
   reportsStore,
+  threadsStore,
+  messagesItemsStore,
 ];
 
 const ALL_STORAGE_KEYS = [
