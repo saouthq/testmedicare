@@ -17,6 +17,7 @@ import {
   mockDoctors,
 } from "@/data/mockData";
 import { ReportButton } from "@/components/shared/ReportButton";
+import PublicHeader from "@/components/public/PublicHeader";
 
 // Build profile variants for different doctor IDs
 const buildProfileForDoctor = (id: string) => {
@@ -49,6 +50,28 @@ const DoctorPublicProfile = () => {
   const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
   const [openSection, setOpenSection] = useState<string | null>("presentation");
   const isMobile = useIsMobile();
+  
+  // 404 fallback: if doctor not found for the given ID
+  const numId = parseInt(id || "1");
+  const doctorExists = numId === 1 || mockDoctors.some(d => d.id === numId);
+  if (!doctorExists) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PublicHeader />
+        <div className="container mx-auto px-4 py-20 text-center max-w-md">
+          <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Médecin introuvable</h1>
+          <p className="text-muted-foreground mb-6">Le profil demandé n'existe pas ou a été supprimé.</p>
+          <div className="flex flex-col gap-2">
+            <Link to="/search"><Button className="w-full gradient-primary text-primary-foreground">Rechercher un médecin</Button></Link>
+            <Link to="/"><Button variant="outline" className="w-full">Retour à l'accueil</Button></Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const displayReviews = showAllReviews ? reviews : reviews.slice(0, 3);
   const verifiedCount = reviews.filter(r => r.verified).length;

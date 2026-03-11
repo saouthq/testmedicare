@@ -3,7 +3,7 @@
  * Accessible via téléphone + OTP
  */
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
@@ -39,6 +39,12 @@ const MyAppointments = () => {
   const [verified, setVerified] = useState(false);
   const [appointments, setAppointments] = useState<GuestAppointment[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<GuestAppointment | null>(null);
+
+  // Redirect logged-in patients to their dashboard appointments
+  const userRole = localStorage.getItem("userRole");
+  if (userRole === "patient") {
+    return <Navigate to="/dashboard/patient/appointments" replace />;
+  }
 
   const handleSendOtp = async () => {
     if (!phoneInput || phoneInput.length < 8) return;

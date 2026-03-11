@@ -20,6 +20,7 @@ import { requestRenewal } from "@/stores/doctorStore";
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<typeof mockHealthDocuments[0] | null>(null);
   const [appointments, setAppointments] = usePatientAppointments();
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
@@ -205,7 +206,7 @@ const PatientDashboard = () => {
                       <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
                       <p className="text-[11px] text-muted-foreground">{d.source} · {d.date}</p>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => toast({ title: "Aperçu", description: d.name })}>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPreviewDoc(d)}>
                       <Eye className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -304,6 +305,35 @@ const PatientDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Document preview modal ── */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setPreviewDoc(null)}>
+          <div className="w-full max-w-md rounded-2xl border bg-card shadow-elevated p-5 mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-foreground">Aperçu du document</h3>
+              <button onClick={() => setPreviewDoc(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="rounded-xl bg-muted/50 p-6 text-center mb-4">
+              <FileText className="h-12 w-12 text-primary mx-auto mb-3" />
+              <p className="font-semibold text-foreground">{previewDoc.name}</p>
+              <p className="text-xs text-muted-foreground mt-1">{previewDoc.type} · {previewDoc.date}</p>
+              <p className="text-xs text-muted-foreground">{previewDoc.source}</p>
+            </div>
+            <div className="rounded-xl border p-4 mb-4 space-y-2">
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Type</span><span className="font-medium text-foreground">{previewDoc.type}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Source</span><span className="font-medium text-foreground">{previewDoc.source}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date</span><span className="font-medium text-foreground">{previewDoc.date}</span></div>
+            </div>
+            <div className="flex gap-2">
+              <Button className="flex-1 gradient-primary text-primary-foreground" onClick={() => { toast({ title: "Téléchargement", description: `${previewDoc.name} téléchargé (mock).` }); }}>
+                Télécharger
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setPreviewDoc(null)}>Fermer</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── RDV detail drawer ── */}
       {currentApt && (

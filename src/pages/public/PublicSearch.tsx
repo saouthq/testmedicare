@@ -56,7 +56,6 @@ const PublicSearch = () => {
     if (filterMaxPrice && d.price > Number(filterMaxPrice)) return false;
     if (filterLangue && !d.languages?.includes(filterLangue)) return false;
     if (filterGouvernorat && !d.address.includes(filterGouvernorat)) return false;
-    if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     return true;
   });
   
@@ -98,7 +97,10 @@ const PublicSearch = () => {
                 className="pl-10 h-10" 
               />
             </div>
-            <Button className="gradient-primary text-primary-foreground h-10 px-5">
+            <Button className="gradient-primary text-primary-foreground h-10 px-5" onClick={() => {
+              const el = document.getElementById("search-results");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}>
               <Search className="h-4 w-4 mr-1.5" />Rechercher
             </Button>
           </div>
@@ -212,7 +214,7 @@ const PublicSearch = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4">
+        <div id="search-results" className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground font-medium">
             {filtered.length} résultat{filtered.length > 1 ? "s" : ""}
           </p>

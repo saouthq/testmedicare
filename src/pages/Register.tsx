@@ -32,9 +32,11 @@ const Register = () => {
 
   const handleChange = (field: string, value: string) => setFormData(prev => ({ ...prev, [field]: value }));
 
-  const passwordValid = formData.password.length >= 8;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+  const phoneValid = /^(\+216)?[0-9\s]{8,}$/.test(formData.phone.replace(/\s/g, ""));
+  const passwordValid = formData.password.length >= 8 && /[A-Z]/.test(formData.password) && /[0-9]/.test(formData.password);
   const passwordsMatch = formData.password === formData.confirmPassword;
-  const formValid = formData.firstName && formData.lastName && formData.email && formData.phone && passwordValid && passwordsMatch;
+  const formValid = formData.firstName.length >= 2 && formData.lastName.length >= 2 && emailValid && phoneValid && passwordValid && passwordsMatch;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,8 +153,12 @@ const Register = () => {
                     <div><Label>Prénom *</Label><Input value={formData.firstName} onChange={e => handleChange("firstName", e.target.value)} placeholder="Amine" className="mt-1.5" required /></div>
                     <div><Label>Nom *</Label><Input value={formData.lastName} onChange={e => handleChange("lastName", e.target.value)} placeholder="Ben Ali" className="mt-1.5" required /></div>
                   </div>
-                  <div><Label>Email *</Label><Input type="email" value={formData.email} onChange={e => handleChange("email", e.target.value)} placeholder="votre@email.tn" className="mt-1.5" required /></div>
-                  <div><Label>Téléphone *</Label><Input value={formData.phone} onChange={e => handleChange("phone", e.target.value)} placeholder="+216 XX XXX XXX" className="mt-1.5" required /></div>
+                  <div><Label>Email *</Label><Input type="email" value={formData.email} onChange={e => handleChange("email", e.target.value)} placeholder="votre@email.tn" className="mt-1.5" required />
+                    {formData.email && !emailValid && <p className="text-xs text-destructive mt-1">Format email invalide</p>}
+                  </div>
+                  <div><Label>Téléphone *</Label><Input value={formData.phone} onChange={e => handleChange("phone", e.target.value)} placeholder="+216 XX XXX XXX" className="mt-1.5" required />
+                    {formData.phone && !phoneValid && <p className="text-xs text-destructive mt-1">Numéro invalide (8 chiffres min, format +216)</p>}
+                  </div>
                   <div><Label>Gouvernorat</Label>
                     <select value={formData.gouvernorat} onChange={e => handleChange("gouvernorat", e.target.value)} className="mt-1.5 w-full rounded-lg border bg-background px-3 py-2 text-sm">
                       {gouvernorats.map(g => <option key={g}>{g}</option>)}
@@ -169,7 +175,7 @@ const Register = () => {
                         </button>
                       </div>
                       {formData.password && !passwordValid && (
-                        <p className="text-xs text-destructive mt-1">Minimum 8 caractères</p>
+                        <p className="text-xs text-destructive mt-1">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
                       )}
                     </div>
                     <div className="mt-3"><Label>Confirmer le mot de passe *</Label>
