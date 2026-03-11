@@ -53,7 +53,6 @@ import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
-import { updateWaitingStatus, waitingRoomStore } from "@/stores/doctorStore";
 import { useSharedAppointments, updateAppointmentStatus, createAppointment as storeCreateAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
 import { useSharedBlockedSlots, addBlockedSlot, updateBlockedSlot as storeUpdateBlock, removeBlockedSlot } from "@/stores/sharedBlockedSlotsStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";

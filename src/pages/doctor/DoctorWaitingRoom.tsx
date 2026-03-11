@@ -1,5 +1,5 @@
 /**
- * DoctorWaitingRoom — Salle d'attente du cabinet (uses shared doctorStore)
+ * DoctorWaitingRoom — Salle d'attente du cabinet (uses sharedAppointmentsStore)
  * 
  * // TODO BACKEND: GET /api/doctor/waiting-room, PUT /api/waiting-room/:id/status
  */
@@ -14,33 +14,49 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { mockPatients } from "@/data/mockData";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import {
-  useWaitingRoom, updateWaitingStatus, toggleWaitingTag, saveWaitingNote,
-  type WaitingStatus, type WaitingEntry
-} from "@/stores/doctorStore";
+  useSharedAppointments, updateAppointmentStatus, toggleAppointmentTag, saveAppointmentNote,
+  markPatientArrived, sendToWaitingRoom, startAppointmentConsultation, completeAppointmentConsultation,
+  markAppointmentAbsent, getTodayDate,
+} from "@/stores/sharedAppointmentsStore";
+import { useSharedPatients } from "@/stores/sharedPatientsStore";
+import type { AppointmentStatus, SharedAppointment } from "@/types/appointment";
+import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
 
-const statusConfig: Record<WaitingStatus, { label: string; color: string; bgColor: string }> = {
-  scheduled: { label: "À venir", color: "text-muted-foreground", bgColor: "bg-muted" },
-  arrived: { label: "Arrivé", color: "text-primary", bgColor: "bg-primary/10" },
-  waiting: { label: "En attente", color: "text-warning", bgColor: "bg-warning/10" },
-  in_consultation: { label: "En consultation", color: "text-accent", bgColor: "bg-accent/10" },
-  completed: { label: "Terminé", color: "text-muted-foreground", bgColor: "bg-muted/50" },
-  absent: { label: "Absent", color: "text-destructive", bgColor: "bg-destructive/10" },
-};
+const CURRENT_DOCTOR = "Dr. Bouazizi";
 
-const getPatientId = (name: string) => {
-  const p = mockPatients.find(p => p.name === name);
-  return p ? p.id : 1;
+const statusLabels: Record<AppointmentStatus, string> = {
+  pending: "À venir",
+  confirmed: "Confirmé",
+  arrived: "Arrivé",
+  in_waiting: "En attente",
+  in_progress: "En consultation",
+  done: "Terminé",
+  cancelled: "Annulé",
+  absent: "Absent",
 };
 
 const DoctorWaitingRoom = () => {
-  const [entries] = useWaitingRoom();
+  const [allAppointments] = useSharedAppointments();
+  const [patients] = useSharedPatients();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | WaitingStatus>("all");
-  const [noteModal, setNoteModal] = useState<{ open: boolean; id: number | null; note: string }>({ open: false, id: null, note: "" });
-  const [absentConfirm, setAbsentConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
+  const [filter, setFilter] = useState<"all" | AppointmentStatus>("all");
+  const [noteModal, setNoteModal] = useState<{ open: boolean; id: string | null; note: string }>({ open: false, id: null, note: "" });
+  const [absentConfirm, setAbsentConfirm] = useState<{ open: boolean; id: string | null }>({ open: false, id: null });
+
+  const today = getTodayDate();
+
+  // Today's appointments for current doctor = waiting room
+  const entries = useMemo(() =>
+    allAppointments.filter(a => a.date === today && a.doctor === CURRENT_DOCTOR),
+    [allAppointments, today]
+  );
+
+  const getPatientId = (name: string) => {
+    const p = patients.find(p => p.name === name);
+    return p ? p.id : 1;
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -48,31 +64,36 @@ const DoctorWaitingRoom = () => {
       .filter(e => filter === "all" || e.status === filter)
       .filter(e => !q || e.patient.toLowerCase().includes(q) || e.motif.toLowerCase().includes(q))
       .sort((a, b) => {
-        const priority: Record<WaitingStatus, number> = {
-          in_consultation: 0, waiting: 1, arrived: 2, scheduled: 3, completed: 4, absent: 5
+        const priority: Record<AppointmentStatus, number> = {
+          in_progress: 0, in_waiting: 1, arrived: 2, confirmed: 3, pending: 4, done: 5, cancelled: 6, absent: 7
         };
         const pDiff = priority[a.status] - priority[b.status];
         if (pDiff !== 0) return pDiff;
-        return a.time.localeCompare(b.time);
+        return a.startTime.localeCompare(b.startTime);
       });
   }, [entries, filter, search]);
 
   const stats = useMemo(() => ({
-    total: entries.filter(e => !["completed", "absent"].includes(e.status)).length,
-    waiting: entries.filter(e => e.status === "waiting").length,
-    inConsult: entries.filter(e => e.status === "in_consultation").length,
-    completed: entries.filter(e => e.status === "completed").length,
+    total: entries.filter(e => !["done", "cancelled", "absent"].includes(e.status)).length,
+    waiting: entries.filter(e => e.status === "in_waiting").length,
+    inConsult: entries.filter(e => e.status === "in_progress").length,
+    completed: entries.filter(e => e.status === "done").length,
     absent: entries.filter(e => e.status === "absent").length,
   }), [entries]);
 
-  const handleSetStatus = (id: number, newStatus: WaitingStatus) => {
-    updateWaitingStatus(id, newStatus);
-    toast({ title: "Statut mis à jour", description: `Patient marqué comme "${statusConfig[newStatus].label}"` });
+  const handleSetStatus = (id: string, newStatus: AppointmentStatus) => {
+    if (newStatus === "arrived") markPatientArrived(id);
+    else if (newStatus === "in_waiting") sendToWaitingRoom(id);
+    else if (newStatus === "in_progress") startAppointmentConsultation(id);
+    else if (newStatus === "done") completeAppointmentConsultation(id);
+    else if (newStatus === "absent") markAppointmentAbsent(id);
+    else updateAppointmentStatus(id, newStatus);
+    toast({ title: "Statut mis à jour", description: `Patient marqué comme "${statusLabels[newStatus]}"` });
   };
 
   const handleSaveNote = () => {
     if (noteModal.id === null) return;
-    saveWaitingNote(noteModal.id, noteModal.note);
+    saveAppointmentNote(noteModal.id, noteModal.note);
     toast({ title: "Note enregistrée", description: "Note interne sauvegardée." });
     setNoteModal({ open: false, id: null, note: "" });
   };
@@ -118,10 +139,10 @@ const DoctorWaitingRoom = () => {
             <Input placeholder="Rechercher un patient..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
           </div>
           <div className="flex gap-1.5 overflow-x-auto">
-            {(["all", "waiting", "arrived", "in_consultation", "scheduled", "completed", "absent"] as const).map(f => (
+            {(["all", "in_waiting", "arrived", "in_progress", "confirmed", "pending", "done", "absent"] as const).map(f => (
               <button key={f} onClick={() => setFilter(f)}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap ${filter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
-                {f === "all" ? "Tous" : statusConfig[f as WaitingStatus].label}
+                {f === "all" ? "Tous" : statusLabels[f as AppointmentStatus]}
               </button>
             ))}
           </div>
@@ -133,9 +154,9 @@ const DoctorWaitingRoom = () => {
             <div className="py-12 text-center text-muted-foreground">Aucun patient dans la salle d'attente</div>
           )}
           {filtered.map(entry => (
-            <div key={entry.id} className={`p-4 transition-colors ${entry.status === "in_consultation" ? "bg-accent/5" : entry.status === "waiting" ? "bg-warning/5" : ""}`}>
+            <div key={entry.id} className={`p-4 transition-colors ${entry.status === "in_progress" ? "bg-accent/5" : entry.status === "in_waiting" ? "bg-warning/5" : ""}`}>
               <div className="flex items-start gap-3">
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${entry.status === "in_consultation" ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${entry.status === "in_progress" ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                   {entry.avatar}
                 </div>
 
@@ -144,8 +165,8 @@ const DoctorWaitingRoom = () => {
                     <Link to={`/dashboard/doctor/patients/${getPatientId(entry.patient)}`} className="font-semibold text-foreground hover:text-primary truncate">
                       {entry.patient}
                     </Link>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusConfig[entry.status].bgColor} ${statusConfig[entry.status].color}`}>
-                      {statusConfig[entry.status].label}
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${APPOINTMENT_STATUS_CONFIG[entry.status].className}`}>
+                      {statusLabels[entry.status]}
                     </span>
                     {entry.tags?.includes("urgent") && (
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive flex items-center gap-1">
@@ -157,14 +178,14 @@ const DoctorWaitingRoom = () => {
                         <Clock className="h-3 w-3" />Retard
                       </span>
                     )}
-                    {entry.assurance && (
+                    {entry.assurance && entry.assurance !== "Sans assurance" && (
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">Assuré</span>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    RDV {entry.time} · {entry.motif} · {entry.type} · {entry.duration}
+                    RDV {entry.startTime} · {entry.motif} · {entry.type} · {entry.duration}min
                   </p>
-                  {entry.arrivedAt && entry.status !== "completed" && entry.status !== "absent" && (
+                  {entry.arrivedAt && !["done", "absent"].includes(entry.status) && (
                     <p className="text-xs text-primary mt-0.5">Arrivé à {entry.arrivedAt}</p>
                   )}
                   {entry.internalNote && (
@@ -176,25 +197,25 @@ const DoctorWaitingRoom = () => {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {entry.status === "scheduled" && (
+                  {(entry.status === "pending" || entry.status === "confirmed") && (
                     <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleSetStatus(entry.id, "arrived")}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-primary" />Arrivé
                     </Button>
                   )}
                   {entry.status === "arrived" && (
-                    <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleSetStatus(entry.id, "waiting")}>
+                    <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleSetStatus(entry.id, "in_waiting")}>
                       <Clock className="h-3.5 w-3.5 mr-1 text-warning" />En attente
                     </Button>
                   )}
-                  {(entry.status === "waiting" || entry.status === "arrived") && (
+                  {(entry.status === "in_waiting" || entry.status === "arrived") && (
                     <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(entry.patient)}`}>
                       <Button size="sm" className="h-8 text-xs gradient-primary text-primary-foreground">
                         <Play className="h-3.5 w-3.5 mr-1" />Appeler
                       </Button>
                     </Link>
                   )}
-                  {entry.status === "in_consultation" && (
-                    <Button size="sm" variant="outline" className="h-8 text-xs border-accent text-accent hover:bg-accent/10" onClick={() => handleSetStatus(entry.id, "completed")}>
+                  {entry.status === "in_progress" && (
+                    <Button size="sm" variant="outline" className="h-8 text-xs border-accent text-accent hover:bg-accent/10" onClick={() => handleSetStatus(entry.id, "done")}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Terminer
                     </Button>
                   )}
@@ -224,19 +245,19 @@ const DoctorWaitingRoom = () => {
                       </button>
                       <div className="border-t my-1" />
                       <button
-                        onClick={() => toggleWaitingTag(entry.id, "urgent")}
+                        onClick={() => toggleAppointmentTag(entry.id, "urgent")}
                         className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground"
                       >
                         <Tag className="h-3.5 w-3.5 text-destructive" />{entry.tags?.includes("urgent") ? "Retirer Urgent" : "Marquer Urgent"}
                       </button>
                       <button
-                        onClick={() => toggleWaitingTag(entry.id, "retard")}
+                        onClick={() => toggleAppointmentTag(entry.id, "retard")}
                         className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-muted transition-colors text-foreground"
                       >
                         <Clock className="h-3.5 w-3.5 text-warning" />{entry.tags?.includes("retard") ? "Retirer Retard" : "Marquer Retard"}
                       </button>
                       <div className="border-t my-1" />
-                      {!["completed", "absent"].includes(entry.status) && (
+                      {!["done", "absent"].includes(entry.status) && (
                         <button
                           onClick={() => setAbsentConfirm({ open: true, id: entry.id })}
                           className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-xs hover:bg-destructive/10 transition-colors text-destructive"

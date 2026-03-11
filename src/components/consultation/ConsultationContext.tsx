@@ -30,7 +30,7 @@ import {
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
 import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
-import { completeConsultation, startConsultation } from "@/stores/doctorStore";
+import { completeAppointmentConsultation, startAppointmentConsultation, useSharedAppointments } from "@/stores/sharedAppointmentsStore";
 import { createLabDemand } from "@/stores/labStore";
 
 // ── Context type ─────────────────────────────────────────────
