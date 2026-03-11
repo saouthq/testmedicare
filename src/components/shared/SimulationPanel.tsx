@@ -3,11 +3,11 @@
  * Floating button → opens panel with 4 tabs: Cross-rôles, Plan médecin, Spécialités, Navigation.
  */
 import { useState } from "react";
-import { Zap, X, FlaskConical, Pill, Stethoscope, UserX, Crown, Eye, Heart, Ear, Brain, Baby, Bone, Smile, LayoutDashboard, Users, Calendar, FileText, Settings, MessageSquare, ClipboardList, Banknote, Building2, ShieldCheck, BarChart3, Plug, Bot, Clock, Gavel, Flag, CreditCard, ScrollText, Activity } from "lucide-react";
+import { Zap, X, FlaskConical, Pill, Stethoscope, UserX, Crown, Eye, Heart, Ear, Brain, Baby, Bone, Smile, LayoutDashboard, Users, Calendar, FileText, Settings, MessageSquare, ClipboardList, Banknote, Building2, ShieldCheck, BarChart3, Plug, Bot, Clock, Gavel, Flag, CreditCard, ScrollText, Activity, UserCheck, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore";
 import { updateLabDemandStatus, addLabPdf, labStore } from "@/stores/labStore";
-import { completeAppointmentConsultation, markAppointmentAbsent } from "@/stores/sharedAppointmentsStore";
+import { sharedAppointmentsStore, completeAppointmentConsultation, markAppointmentAbsent, sendToWaitingRoom, startAppointmentConsultation, createAppointment, getTodayDate } from "@/stores/sharedAppointmentsStore";
 import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType, type PlanTier } from "@/stores/featureMatrixStore";
@@ -145,6 +145,19 @@ const roleNavGroups: NavGroup[] = [
   },
 ];
 
+/** Resolve role from URL */
+function resolveRole(url: string): string | undefined {
+  if (url.startsWith("/dashboard/pharmacy")) return "pharmacy";
+  if (url.startsWith("/dashboard/laboratory")) return "laboratory";
+  if (url.startsWith("/dashboard/secretary")) return "secretary";
+  if (url.startsWith("/dashboard/doctor")) return "doctor";
+  if (url.startsWith("/dashboard/patient")) return "patient";
+  if (url.startsWith("/dashboard/hospital")) return "hospital";
+  if (url.startsWith("/dashboard/clinic")) return "clinic";
+  if (url.startsWith("/dashboard/admin")) return "admin";
+  return undefined;
+}
+
 const SimulationPanel = () => {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<PanelTab>("navigation");
@@ -186,14 +199,70 @@ const SimulationPanel = () => {
   };
 
   const simulateConsultationEnd = () => {
-    // Use first in_progress appointment
-    completeAppointmentConsultation("apt-1");
-    toast.success("🩺 Consultation terminée.");
+    const apts = sharedAppointmentsStore.read();
+    const inProgress = apts.find(a => a.status === "in_progress");
+    if (!inProgress) {
+      toast.info("Aucune consultation en cours. Envoyez d'abord un patient en consultation.");
+      return;
+    }
+    completeAppointmentConsultation(inProgress.id);
+    toast.success(`🩺 Consultation terminée pour ${inProgress.patient}.`);
   };
 
   const simulateAbsent = () => {
-    markAppointmentAbsent("apt-99");
-    toast.success("❌ Patient marqué absent.");
+    const apts = sharedAppointmentsStore.read();
+    const today = getTodayDate();
+    const target = apts.find(a => a.date === today && (a.status === "confirmed" || a.status === "pending"));
+    if (!target) {
+      toast.info("Aucun RDV confirmé/en attente aujourd'hui.");
+      return;
+    }
+    markAppointmentAbsent(target.id);
+    toast.success(`❌ ${target.patient} marqué absent (${target.startTime}).`);
+  };
+
+  const simulateArrival = () => {
+    const apts = sharedAppointmentsStore.read();
+    const today = getTodayDate();
+    const target = apts.find(a => a.date === today && a.status === "confirmed");
+    if (!target) {
+      toast.info("Aucun RDV confirmé aujourd'hui pour simuler une arrivée.");
+      return;
+    }
+    sendToWaitingRoom(target.id);
+    toast.success(`🏥 ${target.patient} est arrivé et envoyé en salle d'attente.`);
+  };
+
+  const simulateStartConsultation = () => {
+    const apts = sharedAppointmentsStore.read();
+    const today = getTodayDate();
+    const target = apts.find(a => a.date === today && a.status === "in_waiting");
+    if (!target) {
+      toast.info("Aucun patient en salle d'attente.");
+      return;
+    }
+    startAppointmentConsultation(target.id);
+    toast.success(`🩺 Consultation démarrée pour ${target.patient}.`);
+  };
+
+  const simulateNewAppointment = () => {
+    const today = getTodayDate();
+    createAppointment({
+      date: today,
+      startTime: "16:30",
+      duration: 30,
+      patient: "Nouveau Patient Test",
+      patientId: null,
+      avatar: "NP",
+      doctor: "Dr. Bouazizi",
+      type: "Consultation",
+      motif: "Consultation générale",
+      status: "confirmed",
+      phone: "+216 99 999 999",
+      assurance: "Sans assurance",
+      createdBy: "patient",
+    });
+    toast.success("📅 Nouveau RDV créé pour aujourd'hui à 16:30.");
   };
 
   const switchToSpecialty = (config: typeof specialtyConfigs[0]) => {
@@ -203,15 +272,14 @@ const SimulationPanel = () => {
     if (location.pathname.startsWith("/dashboard/doctor")) {
       navigate("/dashboard/doctor/consultation/new?patient=1");
     } else {
+      localStorage.setItem("userRole", "doctor");
       navigate("/dashboard/doctor");
     }
   };
 
   const goTo = (url: string, role?: string) => {
-    // Auto-set role for admin routes
-    if (role === "admin") {
-      localStorage.setItem("userRole", "admin");
-    }
+    const resolved = role || resolveRole(url);
+    if (resolved) localStorage.setItem("userRole", resolved);
     navigate(url);
   };
 
@@ -220,13 +288,7 @@ const SimulationPanel = () => {
   const currentSpecialtyInfo = sub.specialty ? specialtyFeatureHighlights[sub.specialty] : null;
 
   // Detect which role space the user is currently in
-  const currentRole = location.pathname.startsWith("/dashboard/admin") ? "admin"
-    : location.pathname.startsWith("/dashboard/doctor") ? "doctor"
-    : location.pathname.startsWith("/dashboard/patient") ? "patient"
-    : location.pathname.startsWith("/dashboard/pharmacy") ? "pharmacy"
-    : location.pathname.startsWith("/dashboard/laboratory") ? "laboratory"
-    : location.pathname.startsWith("/dashboard/secretary") ? "secretary"
-    : "public";
+  const currentRole = resolveRole(location.pathname) || "public";
 
   if (!open) {
     return (
@@ -324,17 +386,29 @@ const SimulationPanel = () => {
           <>
             <p className="text-[10px] text-muted-foreground">Testez les workflows end-to-end sans backend.</p>
             <div className="space-y-2">
-              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulatePharmacyReady}>
-                <Pill className="h-3.5 w-3.5 mr-2 text-accent" />Simuler réponse pharmacie
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Workflow RDV</p>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateNewAppointment}>
+                <CalendarPlus className="h-3.5 w-3.5 mr-2 text-primary" />Simuler nouveau RDV aujourd'hui
               </Button>
-              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateLabTransmit}>
-                <FlaskConical className="h-3.5 w-3.5 mr-2 text-primary" />Simuler transmission labo
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateArrival}>
+                <UserCheck className="h-3.5 w-3.5 mr-2 text-accent" />Simuler arrivée patient
+              </Button>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateStartConsultation}>
+                <Stethoscope className="h-3.5 w-3.5 mr-2 text-primary" />Simuler début consultation
               </Button>
               <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateConsultationEnd}>
                 <Stethoscope className="h-3.5 w-3.5 mr-2 text-accent" />Simuler fin consultation
               </Button>
               <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateAbsent}>
                 <UserX className="h-3.5 w-3.5 mr-2 text-destructive" />Simuler patient absent
+              </Button>
+
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide pt-2">Cross-rôle</p>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulatePharmacyReady}>
+                <Pill className="h-3.5 w-3.5 mr-2 text-accent" />Simuler réponse pharmacie
+              </Button>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={simulateLabTransmit}>
+                <FlaskConical className="h-3.5 w-3.5 mr-2 text-primary" />Simuler transmission labo
               </Button>
             </div>
             
@@ -343,15 +417,15 @@ const SimulationPanel = () => {
               <p className="text-[10px] text-muted-foreground font-medium">Accès rapide :</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {[
-                  { label: "Patient", url: "/dashboard/patient", color: "text-primary" },
-                  { label: "Médecin", url: "/dashboard/doctor", color: "text-accent" },
-                  { label: "Pharmacie", url: "/dashboard/pharmacy", color: "text-warning" },
-                  { label: "Labo", url: "/dashboard/laboratory", color: "text-primary" },
-                  { label: "Secrétaire", url: "/dashboard/secretary", color: "text-primary" },
-                  { label: "Admin", url: "/dashboard/admin", color: "text-destructive" },
+                  { label: "Patient", url: "/dashboard/patient", role: "patient", color: "text-primary" },
+                  { label: "Médecin", url: "/dashboard/doctor", role: "doctor", color: "text-accent" },
+                  { label: "Pharmacie", url: "/dashboard/pharmacy", role: "pharmacy", color: "text-warning" },
+                  { label: "Labo", url: "/dashboard/laboratory", role: "laboratory", color: "text-primary" },
+                  { label: "Secrétaire", url: "/dashboard/secretary", role: "secretary", color: "text-primary" },
+                  { label: "Admin", url: "/dashboard/admin", role: "admin", color: "text-destructive" },
                 ].map(r => (
                   <button key={r.url}
-                    onClick={() => goTo(r.url, r.label === "Admin" ? "admin" : undefined)}
+                    onClick={() => goTo(r.url, r.role)}
                     className={`rounded-lg border px-2 py-2 text-center text-[10px] font-medium transition-all hover:bg-muted/50 ${
                       location.pathname.startsWith(r.url) ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
                     }`}>
@@ -448,13 +522,13 @@ const SimulationPanel = () => {
 
             <div className="space-y-1.5 border-t pt-2">
               <p className="text-[10px] text-muted-foreground font-medium">Tests rapides :</p>
-              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => navigate("/dashboard/doctor/consultation/new?patient=1")}>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => { localStorage.setItem("userRole", "doctor"); navigate("/dashboard/doctor/consultation/new?patient=1"); }}>
                 <Stethoscope className="h-3.5 w-3.5 mr-2 text-primary" />Ouvrir une consultation
               </Button>
-              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => navigate("/dashboard/doctor")}>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => goTo("/dashboard/doctor")}>
                 <Zap className="h-3.5 w-3.5 mr-2 text-accent" />Dashboard médecin
               </Button>
-              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => navigate("/dashboard/doctor/patients/1")}>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => goTo("/dashboard/doctor/patients/1")}>
                 <Eye className="h-3.5 w-3.5 mr-2 text-primary" />Fiche patient
               </Button>
             </div>

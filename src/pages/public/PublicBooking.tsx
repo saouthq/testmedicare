@@ -1,8 +1,9 @@
 /**
  * Public Booking Page — Workflow complet en 5 étapes
  * Accessible aux visiteurs (OTP) et patients connectés
+ * Slots filtrés par disponibilité médecin + anti-double-booking
  */
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
@@ -10,12 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockDoctorProfile, mockAssurances, mockDoctors } from "@/data/mockData";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
-import { createAppointment } from "@/stores/sharedAppointmentsStore";
+import { createAppointment, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
+import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
 import { toast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar, 
   FileText, Pill, Activity, User, Phone, Loader2, ArrowRight, Upload,
-  CreditCard,
+  CreditCard, Ban,
 } from "lucide-react";
 
 // Build doctor data from URL param
@@ -44,34 +46,36 @@ const buildDoctor = (id: string) => {
   };
 };
 
-const generateSlots = () => {
-  const s: string[] = [];
-  for (let h = 8; h <= 17; h++) { 
-    s.push(`${h.toString().padStart(2, "0")}:00`); 
-    if (h < 17) s.push(`${h.toString().padStart(2, "0")}:30`); 
-  }
-  return s;
-};
+/** Map JS day index (0=Sun) to French day name */
+const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 const generateDays = (weekOffset: number) => {
   const today = new Date();
   const start = new Date(today);
   start.setDate(today.getDate() + (weekOffset * 7));
-  // Start from next available day (skip today if past 4pm)
   if (weekOffset === 0 && today.getHours() >= 16) start.setDate(start.getDate() + 1);
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  const d: { day: number; month: number; year: number; name: string; available: boolean; label: string }[] = [];
+
+  // Read availability to check closed days
+  const availability = sharedAvailabilityStore.read();
+
+  const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string }[] = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
-    const isSunday = date.getDay() === 0;
+    const frDayName = JS_DAY_TO_FR[date.getDay()];
+    const dayConfig = availability.days[frDayName];
+    const isAvailable = dayConfig ? dayConfig.active : false;
+    const dateStr = date.toISOString().slice(0, 10);
     d.push({
       day: date.getDate(),
       month: date.getMonth(),
       year: date.getFullYear(),
       name: dayNames[date.getDay()],
-      available: !isSunday, // Sundays unavailable
+      available: isAvailable,
       label: `${date.getDate()} ${date.toLocaleDateString("fr-FR", { month: "short" })} ${date.getFullYear()}`,
+      dateStr,
+      frDayName,
     });
   }
   return d;
@@ -94,6 +98,8 @@ const PublicBooking = () => {
   const [step, setStep] = useState<Step>("auth");
   const [selectedMotif, setSelectedMotif] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
+  const [selectedDayDateStr, setSelectedDayDateStr] = useState("");
+  const [selectedDayFr, setSelectedDayFr] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
   
   // Patient info
@@ -107,11 +113,46 @@ const PublicBooking = () => {
   const [message, setMessage] = useState("");
 
   const [weekOffset, setWeekOffset] = useState(0);
-  const slots = generateSlots();
   const days = generateDays(weekOffset);
 
-  // Check existing session — only consider "patient" role as logged in for booking
-  // Other roles (doctor, admin, secretary, etc.) should not auto-skip OTP
+  // Generate slots filtered by availability + existing appointments
+  const filteredSlots = useMemo(() => {
+    if (!selectedDayDateStr || !selectedDayFr) return [];
+    
+    const availability = sharedAvailabilityStore.read();
+    const dayConfig = availability.days[selectedDayFr];
+    if (!dayConfig || !dayConfig.active) return [];
+
+    const slotDuration = availability.slotDuration || 30;
+    const startMin = timeToMin(dayConfig.start);
+    const endMin = timeToMin(dayConfig.end);
+    const breakStartMin = dayConfig.breakStart ? timeToMin(dayConfig.breakStart) : -1;
+    const breakEndMin = dayConfig.breakEnd ? timeToMin(dayConfig.breakEnd) : -1;
+
+    // Get existing appointments for this date
+    const existingApts = sharedAppointmentsStore.read()
+      .filter(a => a.date === selectedDayDateStr && !["cancelled", "absent"].includes(a.status));
+
+    const slots: string[] = [];
+    for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
+      // Skip break time
+      if (breakStartMin >= 0 && breakEndMin >= 0 && m >= breakStartMin && m < breakEndMin) continue;
+      
+      const timeStr = minToTime(m);
+      
+      // Check for conflicts with existing appointments
+      const isBooked = existingApts.some(a => {
+        const aptStart = timeToMin(a.startTime);
+        const aptEnd = aptStart + a.duration;
+        return m >= aptStart && m < aptEnd;
+      });
+      
+      if (!isBooked) slots.push(timeStr);
+    }
+    return slots;
+  }, [selectedDayDateStr, selectedDayFr]);
+
+  // Check existing session
   const userRole = localStorage.getItem("userRole");
   const isLoggedIn = userRole === "patient";
   const isGuestSession = !!localStorage.getItem("guestPatientId");
@@ -142,8 +183,16 @@ const PublicBooking = () => {
   };
 
   const selectedMotifData = doctor.motifs.find(m => m.name === selectedMotif);
-  const isTeleconsult = selectedMotif && doctor.teleconsultation; // simplified check
+  const isTeleconsult = selectedMotif && doctor.teleconsultation;
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  const handleSelectDay = (d: typeof days[0]) => {
+    if (!d.available) return;
+    setSelectedDay(d.label);
+    setSelectedDayDateStr(d.dateStr);
+    setSelectedDayFr(d.frDayName);
+    setSelectedSlot(""); // Reset slot when day changes
+  };
 
   const handleGoToPayment = () => {
     if (isTeleconsult && selectedMotifData) {
@@ -162,7 +211,7 @@ const PublicBooking = () => {
   };
 
   const handleConfirmBooking = () => {
-    // Store guest appointment in localStorage (for guest retrieval)
+    // Store guest appointment
     const guestAppointments = JSON.parse(localStorage.getItem("guestAppointments") || "[]");
     guestAppointments.push({
       id: `guest-${Date.now()}`,
@@ -181,27 +230,11 @@ const PublicBooking = () => {
     });
     localStorage.setItem("guestAppointments", JSON.stringify(guestAppointments));
     
-    // Also write to shared appointments store so it appears in doctor/secretary dashboards
-    // TODO BACKEND: POST /api/appointments
-    const today = new Date();
-    const dateStr = (() => {
-      // Parse "12 mars 2026" format to YYYY-MM-DD
-      const months: Record<string, string> = { "janv.": "01", "févr.": "02", "mars": "03", "avr.": "04", "mai": "05", "juin": "06", "juil.": "07", "août": "08", "sept.": "09", "oct.": "10", "nov.": "11", "déc.": "12" };
-      const parts = selectedDay.split(" ");
-      if (parts.length >= 3) {
-        const day = parts[0].padStart(2, "0");
-        const monthKey = parts[1].toLowerCase().replace(".", "");
-        const month = Object.entries(months).find(([k]) => k.replace(".", "").startsWith(monthKey))?.[1] || "01";
-        return `${parts[2]}-${month}-${day}`;
-      }
-      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    })();
-    
-    // Determine patientId: logged-in patient gets ID 1, guest gets null
+    // Write to shared appointments store
     const resolvedPatientId = isLoggedIn ? 1 : null;
     
     createAppointment({
-      date: dateStr,
+      date: selectedDayDateStr,
       startTime: selectedSlot,
       duration: selectedMotifData?.duration ? parseInt(String(selectedMotifData.duration)) || 30 : 30,
       patient: isLoggedIn ? `${localStorage.getItem("patientFirstName") || firstName} ${localStorage.getItem("patientLastName") || lastName}` : `${firstName} ${lastName}`,
@@ -225,7 +258,6 @@ const PublicBooking = () => {
   };
 
   const handleAddDocument = () => {
-    // Mock document upload
     setDocuments([...documents, `Document_${documents.length + 1}.pdf`]);
     toast({ title: "Document ajouté" });
   };
@@ -395,41 +427,55 @@ const PublicBooking = () => {
                   {days.map(d => (
                     <button 
                       key={`${d.day}-${d.month}`} 
-                      onClick={() => d.available && setSelectedDay(d.label)} 
+                      onClick={() => handleSelectDay(d)} 
                       disabled={!d.available}
                       className={`flex flex-col items-center min-w-[3.2rem] rounded-xl border p-2 transition-all ${
                         selectedDay === d.label 
                           ? "border-primary bg-primary/5 ring-1 ring-primary" 
                           : !d.available 
-                            ? "opacity-40 cursor-not-allowed" 
+                            ? "opacity-40 cursor-not-allowed bg-muted/30" 
                             : "hover:border-primary/50"
                       }`}
                     >
                       <span className="text-[10px] text-muted-foreground font-medium">{d.name}</span>
-                      <span className={`text-base font-bold ${selectedDay === d.label ? "text-primary" : "text-foreground"}`}>
+                      <span className={`text-base font-bold ${selectedDay === d.label ? "text-primary" : !d.available ? "text-muted-foreground" : "text-foreground"}`}>
                         {d.day}
                       </span>
+                      {!d.available && <Ban className="h-3 w-3 text-muted-foreground mt-0.5" />}
                     </button>
                   ))}
                 </div>
                 {selectedDay && (
                   <div className="mt-4">
-                    <p className="text-sm font-medium text-foreground mb-2">Créneaux disponibles</p>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                      {slots.map(s => (
-                        <button 
-                          key={s} 
-                          onClick={() => setSelectedSlot(s)} 
-                          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
-                            selectedSlot === s 
-                              ? "border-primary bg-primary text-primary-foreground" 
-                              : "hover:border-primary/50 text-foreground"
-                          }`}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
+                    <p className="text-sm font-medium text-foreground mb-2">
+                      Créneaux disponibles
+                      {filteredSlots.length === 0 && (
+                        <span className="text-xs text-muted-foreground ml-2">— Aucun créneau disponible ce jour</span>
+                      )}
+                    </p>
+                    {filteredSlots.length > 0 ? (
+                      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                        {filteredSlots.map(s => (
+                          <button 
+                            key={s} 
+                            onClick={() => setSelectedSlot(s)} 
+                            className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
+                              selectedSlot === s 
+                                ? "border-primary bg-primary text-primary-foreground" 
+                                : "hover:border-primary/50 text-foreground"
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg bg-muted/50 p-4 text-center">
+                        <Ban className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Tous les créneaux sont pris ou le médecin n'est pas disponible.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Essayez un autre jour.</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -541,7 +587,7 @@ const PublicBooking = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date</span>
-                <span className="font-medium">{selectedDay} Fév 2026 à {selectedSlot}</span>
+                <span className="font-medium">{selectedDay} à {selectedSlot}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Patient</span>
@@ -598,7 +644,7 @@ const PublicBooking = () => {
                   <Video className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-semibold text-foreground">{doctor.name}</p>
-                    <p className="text-xs text-muted-foreground">{selectedMotif} · {selectedDay} Fév à {selectedSlot}</p>
+                    <p className="text-xs text-muted-foreground">{selectedMotif} · {selectedDay} à {selectedSlot}</p>
                   </div>
                 </div>
                 <p className="text-xl font-bold text-primary">{selectedMotifData.price} DT</p>
@@ -643,7 +689,7 @@ const PublicBooking = () => {
               <CheckCircle2 className="h-12 w-12 text-accent mx-auto mb-3" />
               <h3 className="text-xl font-bold text-foreground">Rendez-vous confirmé !</h3>
               <p className="text-muted-foreground mt-2">
-                Votre rendez-vous avec {doctor.name} est prévu le {selectedDay} Février 2026 à {selectedSlot}.
+                Votre rendez-vous avec {doctor.name} est prévu le {selectedDay} à {selectedSlot}.
               </p>
               <p className="text-xs text-muted-foreground mt-1">Un SMS de confirmation a été envoyé.</p>
             </div>
@@ -741,5 +787,16 @@ const PublicBooking = () => {
     </div>
   );
 };
+
+/** Convert "HH:MM" to minutes */
+function timeToMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
+/** Convert minutes to "HH:MM" */
+function minToTime(m: number): string {
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
 
 export default PublicBooking;
