@@ -154,45 +154,49 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: any; onClose: () => void;
   );
 };
 
+const PATIENT_ID = 1; // Current logged-in patient
+
 const PatientAppointments = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("upcoming");
-  const [appointments, setAppointments] = usePatientAppointments();
-  const [cancelledList, setCancelledList] = usePatientCancelled();
-  const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
-  const [drawerApt, setDrawerApt] = useState<number | null>(null);
-  const [showReviewModal, setShowReviewModal] = useState<number | null>(null);
+  const [allAppointments] = useSharedAppointments();
+  const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
+  const [drawerApt, setDrawerApt] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
   const [reviewText, setReviewText] = useState("");
-  const [reviewSent, setReviewSent] = useState<Set<number>>(new Set());
-  const [showReportModal, setShowReportModal] = useState<number | null>(null);
-  const [showReschedule, setShowReschedule] = useState<number | null>(null);
-  const [showPayment, setShowPayment] = useState<number | null>(null);
-  const [paidAppointments, setPaidAppointments] = useState<Set<number>>(new Set());
+  const [reviewSent, setReviewSent] = useState<Set<string>>(new Set());
+  const [showReportModal, setShowReportModal] = useState<string | null>(null);
+  const [showReschedule, setShowReschedule] = useState<string | null>(null);
+  const [showPayment, setShowPayment] = useState<string | null>(null);
+  const [paidAppointments, setPaidAppointments] = useState<Set<string>>(new Set());
 
-  // Separate absent appointments
-  const absentAppointments = initialPastAppointments.filter(a => a.status === "no-show");
-  const completedAppointments = initialPastAppointments.filter(a => a.status !== "no-show");
+  // Derive from shared store
+  const myAppointments = allAppointments.filter(a => a.patientId === PATIENT_ID);
+  const appointments = myAppointments.filter(a => ["pending", "confirmed", "arrived", "in_waiting", "in_progress"].includes(a.status));
+  const completedAppointments = myAppointments.filter(a => a.status === "done");
+  const absentAppointments = myAppointments.filter(a => a.status === "absent");
+  const cancelledList = myAppointments.filter(a => a.status === "cancelled");
 
-  const handleCancel = (id: number) => {
-    cancelAppointment(id);
+  const handleCancel = (id: string) => {
+    sharedCancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);
   };
 
-  const handleReschedule = (id: number, day: string, slot: string) => {
-    rescheduleAppointment(id, day, slot);
+  const handleReschedule = (id: string, day: string, slot: string) => {
+    sharedRescheduleAppointment(id, day, slot);
     setShowReschedule(null);
     setDrawerApt(null);
     toast({ title: "RDV reprogrammé", description: `Nouveau créneau : ${day} à ${slot}.` });
   };
 
-  const handlePaymentComplete = (id: number) => {
+  const handlePaymentComplete = (id: string) => {
     setPaidAppointments(prev => new Set(prev).add(id));
     setShowPayment(null);
   };
 
-  const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
-  const currentPast = drawerApt ? initialPastAppointments.find(a => a.id === drawerApt) : null;
+  const currentApt = drawerApt ? myAppointments.find(a => a.id === drawerApt) : null;
+  const currentPast = drawerApt ? completedAppointments.find(a => a.id === drawerApt) : null;
   const aptForReschedule = showReschedule ? appointments.find(a => a.id === showReschedule) : null;
   const aptForPayment = showPayment ? appointments.find(a => a.id === showPayment) : null;
 

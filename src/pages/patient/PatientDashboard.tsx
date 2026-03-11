@@ -70,7 +70,8 @@ const PatientDashboard = () => {
   // Upcoming vaccination reminder
   const nextVaccination = mockVaccinations.find(v => v.nextDate);
 
-  const handleCancel = (id: number) => {
+  const handleCancel = (id: string) => {
+    const { cancelAppointment } = require("@/stores/sharedAppointmentsStore");
     cancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);

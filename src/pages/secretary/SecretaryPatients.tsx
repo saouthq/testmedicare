@@ -33,19 +33,16 @@ const SecretaryPatients = () => {
   };
 
   const handleSaveEdit = () => {
-    // TODO BACKEND: PUT /api/patients/{id}
     if (editForm) {
-      setPatients(prev => prev.map(p => p.id === editForm.id ? editForm : p));
+      updatePatient(editForm.id, editForm);
       setEditMode(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
   };
 
-  const handleAddPatient = (newP: Omit<typeof mockSecretaryPatientsWithHistory[0], "id" | "history">) => {
-    // TODO BACKEND: POST /api/patients
-    const id = Math.max(...patients.map(p => p.id)) + 1;
-    setPatients(prev => [{ ...newP, id, history: [] }, ...prev]);
+  const handleAddPatient = (newP: Omit<SharedPatient, "id">) => {
+    addPatient(newP);
     setShowNewPatient(false);
   };
 
