@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,16 +10,40 @@ import {
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
-  mockDoctorProfile as doctorData,
+  mockDoctorProfile as defaultProfile,
   mockAvailableSlots as availableSlots,
   mockReviews as reviews,
   mockFaqItems as faqItems,
+  mockDoctors,
 } from "@/data/mockData";
 import { ReportButton } from "@/components/shared/ReportButton";
+
+// Build profile variants for different doctor IDs
+const buildProfileForDoctor = (id: string) => {
+  const numId = parseInt(id);
+  const doctor = mockDoctors.find(d => d.id === numId);
+  if (!doctor || numId === 1) return defaultProfile; // ID 1 = Bouazizi = default
+  // Build a variant profile from the search doctor data
+  return {
+    ...defaultProfile,
+    name: doctor.name,
+    specialty: doctor.specialty,
+    initials: doctor.avatar,
+    address: doctor.address,
+    phone: doctor.phone,
+    reviewCount: doctor.reviewCount,
+    verifiedReviewCount: Math.round(doctor.reviewCount * 0.9),
+    price: `${doctor.price} DT`,
+    priceRange: { ...defaultProfile.priceRange, consultation: doctor.price },
+    languages: doctor.languages || ["Français", "Arabe"],
+    teleconsultation: doctor.teleconsultation,
+  };
+};
 
 const DoctorPublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const doctorData = useMemo(() => buildProfileForDoctor(id || "1"), [id]);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
