@@ -80,7 +80,7 @@ const SecretaryBilling = () => {
       createdBy: "secretary",
     });
     setShowNew(false);
-    setNewPatient(""); setNewActs([{ type: actTypes[0].label, price: actTypes[0].price }]); setNewPayment("—");
+    setNewPatient(""); setNewActs(actTypes.length ? [{ type: actTypes[0].label, price: actTypes[0].price }] : []); setNewPayment("—");
     toast({ title: "Facture créée", description: `${newId} · ${newPatient} · ${total} DT — visible côté médecin.` });
   };
 
