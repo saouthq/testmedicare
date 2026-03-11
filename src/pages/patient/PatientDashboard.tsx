@@ -85,7 +85,7 @@ const PatientDashboard = () => {
     return Math.round((done / total) * 100);
   }, [profile, health]);
 
-  const nextVaccination = mockVaccinations.find(v => v.nextDate);
+  const nextVaccination = health.vaccinations.find(v => v.nextDate);
 
   const handleCancel = (id: string) => {
     const { cancelAppointment } = require("@/stores/sharedAppointmentsStore");

@@ -224,15 +224,18 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
   // Cross-role notifications count
   const { notifications: crossNotifs } = useNotifications(role);
-  const crossUnread = crossNotifs.filter((n) => !n.read).length;
-  const mockUnread = useMemo(() => mockNotifications.filter(n => !n.read).length, []);
-  const unreadCount = crossUnread + mockUnread;
+  const unreadCount = crossNotifs.filter((n) => !n.read).length;
+  const [patients] = useSharedPatients();
 
   const userInitials = useMemo(() => {
-    if (role === "doctor") return mockDoctorProfile.initials;
-    if (role === "patient") return mockPatients[0]?.avatar || "AB";
+    if (role === "doctor") return "AB";
+    if (role === "patient") return patients[0]?.avatar || "AB";
+    if (role === "secretary") return "LH";
+    if (role === "pharmacy") return "PH";
+    if (role === "laboratory") return "LB";
+    if (role === "admin") return "AD";
     return role.slice(0, 2).toUpperCase();
-  }, [role]);
+  }, [role, patients]);
 
   /** Render admin sidebar with grouped sections */
   const renderAdminNav = () => (
