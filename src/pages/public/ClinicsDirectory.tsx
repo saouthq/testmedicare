@@ -13,12 +13,15 @@ const cities = ["Toutes", ...Array.from(new Set(mockClinics.map(c => c.city)))];
 const ClinicsDirectory = () => {
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
+  const [showCount, setShowCount] = useState(10);
 
   const filtered = mockClinics.filter(c => {
     if (city !== "Toutes" && c.city !== city) return false;
     if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.services.some(s => s.toLowerCase().includes(search.toLowerCase()))) return false;
     return true;
   });
+
+  const visible = filtered.slice(0, showCount);
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,10 +44,17 @@ const ClinicsDirectory = () => {
         </div>
         <p className="text-sm text-muted-foreground mb-4">{filtered.length} clinique(s) trouvée(s)</p>
         <div className="grid gap-4 sm:grid-cols-2">
-          {filtered.map(c => (
+          {visible.map(c => (
             <DirectoryCard key={c.id} name={c.name} city={c.city} address={c.address} phone={c.phone} tags={c.services} href={`/clinic/${c.slug}`} badge={`${c.services.length} services`} />
           ))}
         </div>
+        {showCount < filtered.length && (
+          <div className="text-center mt-6">
+            <Button variant="outline" onClick={() => setShowCount(prev => prev + 10)}>
+              Voir plus ({filtered.length - showCount} restant{filtered.length - showCount > 1 ? "s" : ""})
+            </Button>
+          </div>
+        )}
       </div>
       <PublicFooter />
     </div>
