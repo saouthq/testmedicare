@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
-import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
-import { mockLabDemands } from "@/data/mocks/lab";
+import { useSharedLabDemands, type SharedLabDemand } from "@/stores/labStore";
+import { useHealth } from "@/stores/healthStore";
 
 type HealthSection = "menu" | "documents" | "antecedents" | "treatments" | "allergies" | "habits" | "family" | "surgeries" | "vaccinations" | "measures" | "ai";
 
