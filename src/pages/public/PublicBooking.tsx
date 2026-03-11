@@ -165,7 +165,7 @@ const PublicBooking = () => {
     
     toast({ 
       title: "RDV confirmé !", 
-      description: `Votre rendez-vous avec ${doctor.name} est prévu le ${selectedDay} Février 2026 à ${selectedSlot}.` 
+      description: `Votre rendez-vous avec ${doctor.name} est prévu le ${selectedDay} à ${selectedSlot}.` 
     });
     setStep("done");
   };
