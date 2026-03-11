@@ -49,40 +49,38 @@ const PharmacyPrescriptions = () => {
   // Inject shared prescriptions from patients into pharmacy store
   useEffect(() => {
     if (sharedPrescriptions.length === 0) return;
-    const { pharmacyRxStore } = require("@/stores/pharmacyStore");
-    const current = pharmacyRxStore.read();
-    let updated = [...current];
-      let updated = [...prev];
-      for (const sp of sharedPrescriptions) {
-        if (!updated.find((p) => p.id === sp.id)) {
-          // Convert shared prescription to pharmacy format
-          updated = [
-            {
-              id: sp.id,
-              patient: sp.patientName,
-              avatar: sp.patientName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
-              doctor: sp.doctorName,
-              date: sp.date,
-              assurance: sp.assurance,
-              patientPhone: "",
-              urgent: false,
-              total: sp.total,
-              status: "received" as PharmacyPrescriptionStatus,
-              items: sp.items.map((name) => ({
-                name,
-                dosage: "",
-                quantity: 1,
-                availability: "available" as PharmacyItemAvailability,
-                price: "—",
-              })),
-            },
-            ...updated,
-          ];
-        }
+    const currentRx = storeRx;
+    let needsUpdate = false;
+    const newItems: PharmacyPrescription[] = [];
+    for (const sp of sharedPrescriptions) {
+      if (!currentRx.find((p) => p.id === sp.id)) {
+        needsUpdate = true;
+        newItems.push({
+          id: sp.id,
+          patient: sp.patientName,
+          avatar: sp.patientName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+          doctor: sp.doctorName,
+          date: sp.date,
+          assurance: sp.assurance,
+          patientPhone: "",
+          urgent: false,
+          total: sp.total,
+          status: "received" as PharmacyPrescriptionStatus,
+          items: sp.items.map((name) => ({
+            name,
+            dosage: "",
+            quantity: 1,
+            availability: "available" as PharmacyItemAvailability,
+            price: "—",
+          })),
+        });
       }
-      return updated;
-    });
-  }, [sharedPrescriptions]);
+    }
+    if (needsUpdate && newItems.length > 0) {
+      const { pharmacyRxStore } = require("@/stores/pharmacyStore");
+      pharmacyRxStore.set((prev: PharmacyPrescription[]) => [...newItems, ...prev]);
+    }
+  }, [sharedPrescriptions, storeRx]);
 
   const filtered = prescriptions.filter(p => {
     if (filter !== "all" && p.status !== filter) return false;
