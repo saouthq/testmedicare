@@ -630,12 +630,11 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     // 3) Add health document (consultation report) to patient's health record
     if (reportText.trim() || diagnosis.trim()) {
       addHealthDocument({
-        id: `doc-${Date.now()}`,
         name: `Compte-rendu — ${motif || "Consultation"}`,
-        type: "Consultation" as any,
+        type: "Consultation",
         date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
-        doctor: "Dr. Bouazizi",
-        status: "Disponible",
+        source: "Dr. Bouazizi",
+        size: "—",
       });
     }
   };
