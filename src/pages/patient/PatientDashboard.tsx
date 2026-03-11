@@ -20,6 +20,7 @@ import { requestRenewal } from "@/stores/doctorStore";
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<typeof mockHealthDocuments[0] | null>(null);
   const [appointments, setAppointments] = usePatientAppointments();
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
