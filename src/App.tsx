@@ -196,91 +196,91 @@ const App = () => (
           <Route path="/dashboard/patient/booking" element={<Navigate to="/booking/1" replace />} />
 
           {/* Patient */}
-          <Route path="/dashboard/patient" element={<PatientDashboard />} />
-          <Route path="/dashboard/patient/appointments" element={<PatientAppointments />} />
-          <Route path="/dashboard/patient/prescriptions" element={<PatientPrescriptions />} />
-          <Route path="/dashboard/patient/notifications" element={<PatientNotifications />} />
-          <Route path="/dashboard/patient/health" element={<PatientHealth />} />
-          <Route path="/dashboard/patient/settings" element={<PatientSettings />} />
-          <Route path="/dashboard/patient/messages" element={<Messages role="patient" />} />
-          <Route path="/dashboard/patient/teleconsultation" element={<Teleconsultation role="patient" />} />
+          <Route path="/dashboard/patient" element={<AuthGuard allowedRoles={["patient"]}><PatientDashboard /></AuthGuard>} />
+          <Route path="/dashboard/patient/appointments" element={<AuthGuard allowedRoles={["patient"]}><PatientAppointments /></AuthGuard>} />
+          <Route path="/dashboard/patient/prescriptions" element={<AuthGuard allowedRoles={["patient"]}><PatientPrescriptions /></AuthGuard>} />
+          <Route path="/dashboard/patient/notifications" element={<AuthGuard allowedRoles={["patient"]}><PatientNotifications /></AuthGuard>} />
+          <Route path="/dashboard/patient/health" element={<AuthGuard allowedRoles={["patient"]}><PatientHealth /></AuthGuard>} />
+          <Route path="/dashboard/patient/settings" element={<AuthGuard allowedRoles={["patient"]}><PatientSettings /></AuthGuard>} />
+          <Route path="/dashboard/patient/messages" element={<AuthGuard allowedRoles={["patient"]}><Messages role="patient" /></AuthGuard>} />
+          <Route path="/dashboard/patient/teleconsultation" element={<AuthGuard allowedRoles={["patient"]}><Teleconsultation role="patient" /></AuthGuard>} />
           <Route path="/dashboard/patient/profile" element={<Navigate to="/dashboard/patient/settings" replace />} />
           <Route path="/dashboard/patient/records" element={<Navigate to="/dashboard/patient/health" replace />} />
 
           {/* Doctor */}
-          <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
-          <Route path="/dashboard/doctor/onboarding" element={<DoctorOnboarding />} />
-          <Route path="/dashboard/doctor/schedule" element={<DoctorSchedule />} />
-          <Route path="/dashboard/doctor/patients" element={<DoctorPatients />} />
-          <Route path="/dashboard/doctor/patients/:id" element={<DoctorPatientDetail />} />
-          <Route path="/dashboard/doctor/consultations" element={<DoctorConsultations />} />
-          <Route path="/dashboard/doctor/consultation/new" element={<DoctorConsultationDetail />} />
-          <Route path="/dashboard/doctor/prescriptions" element={<DoctorPrescriptions />} />
-          <Route path="/dashboard/doctor/stats" element={<DoctorStats />} />
-          <Route path="/dashboard/doctor/settings" element={<DoctorSettings />} />
-          <Route path="/dashboard/doctor/secretary" element={<DoctorSecretary />} />
+          <Route path="/dashboard/doctor" element={<AuthGuard allowedRoles={["doctor"]}><DoctorDashboard /></AuthGuard>} />
+          <Route path="/dashboard/doctor/onboarding" element={<AuthGuard allowedRoles={["doctor"]}><DoctorOnboarding /></AuthGuard>} />
+          <Route path="/dashboard/doctor/schedule" element={<AuthGuard allowedRoles={["doctor"]}><DoctorSchedule /></AuthGuard>} />
+          <Route path="/dashboard/doctor/patients" element={<AuthGuard allowedRoles={["doctor"]}><DoctorPatients /></AuthGuard>} />
+          <Route path="/dashboard/doctor/patients/:id" element={<AuthGuard allowedRoles={["doctor"]}><DoctorPatientDetail /></AuthGuard>} />
+          <Route path="/dashboard/doctor/consultations" element={<AuthGuard allowedRoles={["doctor"]}><DoctorConsultations /></AuthGuard>} />
+          <Route path="/dashboard/doctor/consultation/new" element={<AuthGuard allowedRoles={["doctor"]}><DoctorConsultationDetail /></AuthGuard>} />
+          <Route path="/dashboard/doctor/prescriptions" element={<AuthGuard allowedRoles={["doctor"]}><DoctorPrescriptions /></AuthGuard>} />
+          <Route path="/dashboard/doctor/stats" element={<AuthGuard allowedRoles={["doctor"]}><DoctorStats /></AuthGuard>} />
+          <Route path="/dashboard/doctor/settings" element={<AuthGuard allowedRoles={["doctor"]}><DoctorSettings /></AuthGuard>} />
+          <Route path="/dashboard/doctor/secretary" element={<AuthGuard allowedRoles={["doctor"]}><DoctorSecretary /></AuthGuard>} />
           <Route path="/dashboard/doctor/subscription" element={<Navigate to="/dashboard/doctor/billing" replace />} />
-          <Route path="/dashboard/doctor/messages" element={<Messages role="doctor" />} />
-          <Route path="/dashboard/doctor/connect" element={<DoctorConnect />} />
-          <Route path="/dashboard/doctor/billing" element={<DoctorBilling />} />
-          <Route path="/dashboard/doctor/ai-assistant" element={<DoctorAIAssistant />} />
-          <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
-          <Route path="/dashboard/doctor/waiting-room" element={<DoctorWaitingRoom />} />
-          <Route path="/dashboard/doctor/protocols" element={<DoctorProtocols />} />
-          <Route path="/dashboard/doctor/leaves" element={<DoctorLeaves />} />
-          <Route path="/dashboard/doctor/documents" element={<DoctorDocuments />} />
-          <Route path="/dashboard/doctor/tarifs" element={<DoctorTarifs />} />
+          <Route path="/dashboard/doctor/messages" element={<AuthGuard allowedRoles={["doctor"]}><Messages role="doctor" /></AuthGuard>} />
+          <Route path="/dashboard/doctor/connect" element={<AuthGuard allowedRoles={["doctor"]}><DoctorConnect /></AuthGuard>} />
+          <Route path="/dashboard/doctor/billing" element={<AuthGuard allowedRoles={["doctor"]}><DoctorBilling /></AuthGuard>} />
+          <Route path="/dashboard/doctor/ai-assistant" element={<AuthGuard allowedRoles={["doctor"]}><DoctorAIAssistant /></AuthGuard>} />
+          <Route path="/dashboard/doctor/teleconsultation" element={<AuthGuard allowedRoles={["doctor"]}><Teleconsultation role="doctor" /></AuthGuard>} />
+          <Route path="/dashboard/doctor/waiting-room" element={<AuthGuard allowedRoles={["doctor"]}><DoctorWaitingRoom /></AuthGuard>} />
+          <Route path="/dashboard/doctor/protocols" element={<AuthGuard allowedRoles={["doctor"]}><DoctorProtocols /></AuthGuard>} />
+          <Route path="/dashboard/doctor/leaves" element={<AuthGuard allowedRoles={["doctor"]}><DoctorLeaves /></AuthGuard>} />
+          <Route path="/dashboard/doctor/documents" element={<AuthGuard allowedRoles={["doctor"]}><DoctorDocuments /></AuthGuard>} />
+          <Route path="/dashboard/doctor/tarifs" element={<AuthGuard allowedRoles={["doctor"]}><DoctorTarifs /></AuthGuard>} />
           {/* duplicate removed */}
 
           {/* Pharmacy */}
-          <Route path="/dashboard/pharmacy" element={<PharmacyDashboard />} />
-          <Route path="/dashboard/pharmacy/prescriptions" element={<PharmacyPrescriptions />} />
-          <Route path="/dashboard/pharmacy/stock" element={<PharmacyStock />} />
-          <Route path="/dashboard/pharmacy/history" element={<PharmacyHistory />} />
-          <Route path="/dashboard/pharmacy/settings" element={<PharmacySettings />} />
-          <Route path="/dashboard/pharmacy/connect" element={<PharmacyConnect />} />
-          <Route path="/dashboard/pharmacy/patients" element={<PharmacyPatients />} />
-          <Route path="/dashboard/pharmacy/messages" element={<Messages role="pharmacy" />} />
+          <Route path="/dashboard/pharmacy" element={<AuthGuard allowedRoles={["pharmacy"]}><PharmacyDashboard /></AuthGuard>} />
+          <Route path="/dashboard/pharmacy/prescriptions" element={<AuthGuard allowedRoles={["pharmacy"]}><PharmacyPrescriptions /></AuthGuard>} />
+          <Route path="/dashboard/pharmacy/stock" element={<AuthGuard allowedRoles={["pharmacy"]}><PharmacyStock /></AuthGuard>} />
+          <Route path="/dashboard/pharmacy/history" element={<AuthGuard allowedRoles={["pharmacy"]}><PharmacyHistory /></AuthGuard>} />
+          <Route path="/dashboard/pharmacy/settings" element={<AuthGuard allowedRoles={["pharmacy"]}><PharmacySettings /></AuthGuard>} />
+          <Route path="/dashboard/pharmacy/connect" element={<AuthGuard allowedRoles={["pharmacy"]}><PharmacyConnect /></AuthGuard>} />
+          <Route path="/dashboard/pharmacy/patients" element={<AuthGuard allowedRoles={["pharmacy"]}><PharmacyPatients /></AuthGuard>} />
+          <Route path="/dashboard/pharmacy/messages" element={<AuthGuard allowedRoles={["pharmacy"]}><Messages role="pharmacy" /></AuthGuard>} />
 
           {/* Laboratory */}
-          <Route path="/dashboard/laboratory" element={<LaboratoryDashboard />} />
-          <Route path="/dashboard/laboratory/analyses" element={<LaboratoryAnalyses />} />
-          <Route path="/dashboard/laboratory/results" element={<LaboratoryResults />} />
-          <Route path="/dashboard/laboratory/patients" element={<LaboratoryPatients />} />
-          <Route path="/dashboard/laboratory/reporting" element={<LaboratoryReporting />} />
-          <Route path="/dashboard/laboratory/quality" element={<LaboratoryQuality />} />
-          <Route path="/dashboard/laboratory/settings" element={<LaboratorySettings />} />
-          <Route path="/dashboard/laboratory/messages" element={<Messages role="laboratory" />} />
+          <Route path="/dashboard/laboratory" element={<AuthGuard allowedRoles={["laboratory"]}><LaboratoryDashboard /></AuthGuard>} />
+          <Route path="/dashboard/laboratory/analyses" element={<AuthGuard allowedRoles={["laboratory"]}><LaboratoryAnalyses /></AuthGuard>} />
+          <Route path="/dashboard/laboratory/results" element={<AuthGuard allowedRoles={["laboratory"]}><LaboratoryResults /></AuthGuard>} />
+          <Route path="/dashboard/laboratory/patients" element={<AuthGuard allowedRoles={["laboratory"]}><LaboratoryPatients /></AuthGuard>} />
+          <Route path="/dashboard/laboratory/reporting" element={<AuthGuard allowedRoles={["laboratory"]}><LaboratoryReporting /></AuthGuard>} />
+          <Route path="/dashboard/laboratory/quality" element={<AuthGuard allowedRoles={["laboratory"]}><LaboratoryQuality /></AuthGuard>} />
+          <Route path="/dashboard/laboratory/settings" element={<AuthGuard allowedRoles={["laboratory"]}><LaboratorySettings /></AuthGuard>} />
+          <Route path="/dashboard/laboratory/messages" element={<AuthGuard allowedRoles={["laboratory"]}><Messages role="laboratory" /></AuthGuard>} />
 
           {/* Secretary */}
-          <Route path="/dashboard/secretary" element={<SecretaryDashboard />} />
-          <Route path="/dashboard/secretary/agenda" element={<SecretaryAgenda />} />
-          <Route path="/dashboard/secretary/patients" element={<SecretaryPatients />} />
-          <Route path="/dashboard/secretary/office" element={<SecretaryOffice />} />
-          <Route path="/dashboard/secretary/documents" element={<SecretaryDocuments />} />
-          <Route path="/dashboard/secretary/billing" element={<SecretaryBilling />} />
-          <Route path="/dashboard/secretary/call-log" element={<SecretaryCallLog />} />
-          <Route path="/dashboard/secretary/stats" element={<SecretaryStats />} />
-          <Route path="/dashboard/secretary/sms" element={<SecretarySMS />} />
-          <Route path="/dashboard/secretary/settings" element={<SecretarySettings />} />
-          <Route path="/dashboard/secretary/messages" element={<Messages role="secretary" />} />
+          <Route path="/dashboard/secretary" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryDashboard /></AuthGuard>} />
+          <Route path="/dashboard/secretary/agenda" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryAgenda /></AuthGuard>} />
+          <Route path="/dashboard/secretary/patients" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryPatients /></AuthGuard>} />
+          <Route path="/dashboard/secretary/office" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryOffice /></AuthGuard>} />
+          <Route path="/dashboard/secretary/documents" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryDocuments /></AuthGuard>} />
+          <Route path="/dashboard/secretary/billing" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryBilling /></AuthGuard>} />
+          <Route path="/dashboard/secretary/call-log" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryCallLog /></AuthGuard>} />
+          <Route path="/dashboard/secretary/stats" element={<AuthGuard allowedRoles={["secretary"]}><SecretaryStats /></AuthGuard>} />
+          <Route path="/dashboard/secretary/sms" element={<AuthGuard allowedRoles={["secretary"]}><SecretarySMS /></AuthGuard>} />
+          <Route path="/dashboard/secretary/settings" element={<AuthGuard allowedRoles={["secretary"]}><SecretarySettings /></AuthGuard>} />
+          <Route path="/dashboard/secretary/messages" element={<AuthGuard allowedRoles={["secretary"]}><Messages role="secretary" /></AuthGuard>} />
 
           {/* Hospital */}
-          <Route path="/dashboard/hospital" element={<HospitalDashboard />} />
-          <Route path="/dashboard/hospital/departments" element={<HospitalDepartments />} />
-          <Route path="/dashboard/hospital/patients" element={<HospitalPatients />} />
-          <Route path="/dashboard/hospital/staff" element={<HospitalStaff />} />
-          <Route path="/dashboard/hospital/equipment" element={<HospitalEquipment />} />
-          <Route path="/dashboard/hospital/settings" element={<HospitalSettings />} />
-          <Route path="/dashboard/hospital/messages" element={<Messages role="hospital" />} />
+          <Route path="/dashboard/hospital" element={<AuthGuard allowedRoles={["hospital"]}><HospitalDashboard /></AuthGuard>} />
+          <Route path="/dashboard/hospital/departments" element={<AuthGuard allowedRoles={["hospital"]}><HospitalDepartments /></AuthGuard>} />
+          <Route path="/dashboard/hospital/patients" element={<AuthGuard allowedRoles={["hospital"]}><HospitalPatients /></AuthGuard>} />
+          <Route path="/dashboard/hospital/staff" element={<AuthGuard allowedRoles={["hospital"]}><HospitalStaff /></AuthGuard>} />
+          <Route path="/dashboard/hospital/equipment" element={<AuthGuard allowedRoles={["hospital"]}><HospitalEquipment /></AuthGuard>} />
+          <Route path="/dashboard/hospital/settings" element={<AuthGuard allowedRoles={["hospital"]}><HospitalSettings /></AuthGuard>} />
+          <Route path="/dashboard/hospital/messages" element={<AuthGuard allowedRoles={["hospital"]}><Messages role="hospital" /></AuthGuard>} />
 
           {/* Clinic */}
-          <Route path="/dashboard/clinic" element={<ClinicDashboard />} />
-          <Route path="/dashboard/clinic/doctors" element={<ClinicDoctors />} />
-          <Route path="/dashboard/clinic/appointments" element={<ClinicAppointments />} />
-          <Route path="/dashboard/clinic/rooms" element={<ClinicRooms />} />
-          <Route path="/dashboard/clinic/settings" element={<ClinicSettings />} />
-          <Route path="/dashboard/clinic/messages" element={<Messages role="clinic" />} />
+          <Route path="/dashboard/clinic" element={<AuthGuard allowedRoles={["clinic"]}><ClinicDashboard /></AuthGuard>} />
+          <Route path="/dashboard/clinic/doctors" element={<AuthGuard allowedRoles={["clinic"]}><ClinicDoctors /></AuthGuard>} />
+          <Route path="/dashboard/clinic/appointments" element={<AuthGuard allowedRoles={["clinic"]}><ClinicAppointments /></AuthGuard>} />
+          <Route path="/dashboard/clinic/rooms" element={<AuthGuard allowedRoles={["clinic"]}><ClinicRooms /></AuthGuard>} />
+          <Route path="/dashboard/clinic/settings" element={<AuthGuard allowedRoles={["clinic"]}><ClinicSettings /></AuthGuard>} />
+          <Route path="/dashboard/clinic/messages" element={<AuthGuard allowedRoles={["clinic"]}><Messages role="clinic" /></AuthGuard>} />
 
           {/* Admin — wrapped in AdminGuard */}
           <Route path="/dashboard/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />

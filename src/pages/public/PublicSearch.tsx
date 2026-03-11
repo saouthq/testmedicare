@@ -214,7 +214,7 @@ const PublicSearch = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4">
+        <div id="search-results" className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground font-medium">
             {filtered.length} résultat{filtered.length > 1 ? "s" : ""}
           </p>
