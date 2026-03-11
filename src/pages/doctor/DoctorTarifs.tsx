@@ -1,6 +1,5 @@
 /**
- * DoctorTarifs — Grille tarifaire du médecin
- * Actes, prix, conventionnement, majorations
+ * DoctorTarifs — Grille tarifaire du médecin (connectée au store partagé)
  * // TODO BACKEND: Persister la grille tarifaire
  */
 import { useState } from "react";
@@ -15,16 +14,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Banknote, Plus, Pencil, Trash2, Moon, Sun, AlertTriangle } from "lucide-react";
-
-interface Acte {
-  id: number;
-  code: string;
-  name: string;
-  price: number;
-  conventionne: boolean;
-  duration: number; // minutes
-  active: boolean;
-}
+import { useSharedTarifs, updateActe, addActe, removeActe, getActiveActes } from "@/stores/sharedTarifsStore";
+import type { SharedActe } from "@/types/appointment";
 
 interface Majoration {
   id: string;
@@ -34,19 +25,6 @@ interface Majoration {
   active: boolean;
 }
 
-const initialActes: Acte[] = [
-  { id: 1, code: "CS", name: "Consultation standard", price: 35, conventionne: true, duration: 30, active: true },
-  { id: 2, code: "CS-P", name: "Première consultation", price: 50, conventionne: true, duration: 45, active: true },
-  { id: 3, code: "CS-S", name: "Consultation de suivi", price: 25, conventionne: true, duration: 20, active: true },
-  { id: 4, code: "TC", name: "Téléconsultation", price: 30, conventionne: false, duration: 20, active: true },
-  { id: 5, code: "CERT", name: "Certificat médical", price: 20, conventionne: false, duration: 15, active: true },
-  { id: 6, code: "ECG", name: "Électrocardiogramme", price: 40, conventionne: true, duration: 20, active: true },
-  { id: 7, code: "ECHO", name: "Échographie abdominale", price: 60, conventionne: true, duration: 30, active: true },
-  { id: 8, code: "VAC", name: "Vaccination", price: 25, conventionne: true, duration: 15, active: true },
-  { id: 9, code: "BIL", name: "Bilan de santé complet", price: 80, conventionne: false, duration: 60, active: true },
-  { id: 10, code: "SPIRO", name: "Spirométrie", price: 45, conventionne: true, duration: 25, active: false },
-];
-
 const initialMajorations: Majoration[] = [
   { id: "nuit", label: "Majoration de nuit (20h-8h)", type: "percentage", value: 50, active: true },
   { id: "dimanche", label: "Dimanche & jours fériés", type: "percentage", value: 100, active: true },
@@ -55,13 +33,13 @@ const initialMajorations: Majoration[] = [
 ];
 
 const DoctorTarifs = () => {
-  const [actes, setActes] = useState<Acte[]>(initialActes);
+  const [allActes] = useSharedTarifs();
   const [majorations, setMajorations] = useState<Majoration[]>(initialMajorations);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editActe, setEditActe] = useState<Acte | null>(null);
+  const [editActe, setEditActe] = useState<SharedActe | null>(null);
   const [form, setForm] = useState({ code: "", name: "", price: "", duration: "", conventionne: true });
 
-  const activeActes = actes.filter(a => a.active);
+  const activeActes = getActiveActes(allActes);
   const avgPrice = activeActes.length ? Math.round(activeActes.reduce((s, a) => s + a.price, 0) / activeActes.length) : 0;
 
   const openNew = () => {
@@ -70,7 +48,7 @@ const DoctorTarifs = () => {
     setDrawerOpen(true);
   };
 
-  const openEdit = (a: Acte) => {
+  const openEdit = (a: SharedActe) => {
     setEditActe(a);
     setForm({ code: a.code, name: a.name, price: String(a.price), duration: String(a.duration), conventionne: a.conventionne });
     setDrawerOpen(true);
@@ -79,17 +57,17 @@ const DoctorTarifs = () => {
   const handleSave = () => {
     if (!form.code || !form.name || !form.price) { toast.error("Champs obligatoires manquants"); return; }
     if (editActe) {
-      setActes(prev => prev.map(a => a.id === editActe.id ? { ...a, code: form.code, name: form.name, price: Number(form.price), duration: Number(form.duration) || 30, conventionne: form.conventionne } : a));
-      toast.success("Acte mis à jour");
+      updateActe(editActe.id, { code: form.code, name: form.name, price: Number(form.price), duration: Number(form.duration) || 30, conventionne: form.conventionne });
+      toast.success("Acte mis à jour — visible dans la facturation");
     } else {
-      setActes(prev => [...prev, { id: Date.now(), code: form.code, name: form.name, price: Number(form.price), duration: Number(form.duration) || 30, conventionne: form.conventionne, active: true }]);
-      toast.success("Acte ajouté");
+      addActe({ code: form.code, name: form.name, price: Number(form.price), duration: Number(form.duration) || 30, conventionne: form.conventionne, active: true });
+      toast.success("Acte ajouté — visible dans la facturation");
     }
     setDrawerOpen(false);
   };
 
-  const toggleActe = (id: number) => setActes(prev => prev.map(a => a.id === id ? { ...a, active: !a.active } : a));
-  const deleteActe = (id: number) => { setActes(prev => prev.filter(a => a.id !== id)); toast.success("Acte supprimé"); };
+  const toggleActe = (id: number) => updateActe(id, { active: !allActes.find(a => a.id === id)?.active });
+  const deleteActe = (id: number) => { removeActe(id); toast.success("Acte supprimé"); };
   const toggleMajoration = (id: string) => setMajorations(prev => prev.map(m => m.id === id ? { ...m, active: !m.active } : m));
 
   return (

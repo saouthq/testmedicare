@@ -45,28 +45,63 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
   upcoming: { label: "À venir", class: "bg-muted/50 text-muted-foreground", icon: Clock },
 };
 
-const quickInvoiceActs = [
-  { name: "Consultation générale", price: 35 },
-  { name: "Suivi maladie chronique", price: 25 },
-  { name: "1ère consultation", price: 50 },
-  { name: "ECG", price: 40 },
-  { name: "Bilan complet", price: 80 },
-  { name: "Certificat médical", price: 20 },
-];
-
-const recentPatients = [
-  { name: "Amine Ben Ali", avatar: "AB", phone: "+216 71 234 567", assurance: "Maghrebia", nextRdv: "28 Fév 14:30", balance: 0 },
-  { name: "Fatma Trabelsi", avatar: "FT", phone: "+216 22 345 678", assurance: "Assurance publique", nextRdv: "25 Fév 10:00", balance: 60 },
-  { name: "Mohamed Sfar", avatar: "MS", phone: "+216 55 456 789", assurance: "Sans assurance", nextRdv: null, balance: 0 },
-  { name: "Nadia Jemni", avatar: "NJ", phone: "+216 98 567 890", assurance: "Assurance publique", nextRdv: "3 Mar 09:00", balance: 25 },
-];
-
 const SecretaryDashboard = () => {
-  // Enriched waiting room with full lifecycle statuses
-  const [waitingRoom, setWaitingRoom] = useState(
-    mockSecretaryWaitingRoom.map(w => ({ ...w, status: w.status as WaitingStatus, internalNote: "" }))
-  );
-  const [appointments, setAppointments] = useState(mockSecretaryAppointments);
+  const [allApts] = useSharedAppointments();
+  const [allTarifs] = useSharedTarifs();
+  const [allPatients] = useSharedPatients();
+
+  const todayStr = "2026-02-20"; // TODO: use real date
+  const todayApts = useMemo(() => getAppointmentsForDate(allApts, todayStr), [allApts]);
+
+  // Build waiting room from today's appointments that have arrived/in_waiting/in_progress status
+  const waitingRoom = useMemo(() => {
+    return todayApts
+      .filter(a => ["arrived", "in_waiting", "in_progress", "confirmed", "pending"].includes(a.status))
+      .map(a => ({
+        id: a.id,
+        patient: a.patient,
+        avatar: a.avatar,
+        doctor: a.doctor,
+        motif: a.motif,
+        appointment: a.startTime,
+        arrivedAt: a.arrivedAt || "—",
+        waitMin: a.waitTime || 0,
+        assurance: a.assurance,
+        status: (
+          a.status === "in_progress" ? "in_consultation" :
+          a.status === "in_waiting" ? "waiting" :
+          a.status === "arrived" ? "arrived" :
+          "upcoming"
+        ) as WaitingStatus,
+        teleconsultation: a.teleconsultation,
+        internalNote: a.notes || "",
+      }));
+  }, [todayApts]);
+
+  // Build appointment list for planning
+  const appointments = useMemo(() => {
+    return todayApts.map(a => ({
+      id: a.id,
+      patient: a.patient,
+      time: a.startTime,
+      type: a.type,
+      doctor: a.doctor,
+      status: a.status === "in_waiting" ? "waiting" : a.status === "in_progress" ? "in_progress" : a.status === "done" ? "done" : "upcoming",
+      amount: `${allTarifs.find(t => t.name.toLowerCase().includes(a.type.toLowerCase()))?.price || 35} DT`,
+      avatar: a.avatar,
+      assurance: a.assurance,
+      teleconsultation: a.teleconsultation,
+    }));
+  }, [todayApts, allTarifs]);
+
+  // Quick invoice acts from shared tarifs
+  const quickInvoiceActs = useMemo(() => getActiveActes(allTarifs).map(a => ({ name: a.name, price: a.price })), [allTarifs]);
+
+  const recentPatients = useMemo(() => allPatients.slice(0, 4).map(p => ({
+    name: p.name, avatar: p.avatar, phone: p.phone, assurance: p.assurance,
+    nextRdv: p.nextAppointment, balance: p.balance,
+  })), [allPatients]);
+
   const [refreshing, setRefreshing] = useState(false);
   const [timeSlot, setTimeSlot] = useState<"morning" | "afternoon">("morning");
   const [activeTab, setActiveTab] = useState<DashTab>("overview");
@@ -80,15 +115,16 @@ const SecretaryDashboard = () => {
 
   // New patient state
   const [showNewPatient, setShowNewPatient] = useState(false);
+  const [newPatientForm, setNewPatientForm] = useState({ prenom: "", nom: "", dob: "", phone: "", email: "", numAssure: "", assurance: "CNAM", doctor: "Dr. Bouazizi", notes: "" });
 
   // Detail drawer
-  const [drawerApt, setDrawerApt] = useState<number | null>(null);
+  const [drawerApt, setDrawerApt] = useState<string | null>(null);
 
   // Search
   const [searchPatient, setSearchPatient] = useState("");
 
   // Internal note modal
-  const [noteTarget, setNoteTarget] = useState<number | null>(null);
+  const [noteTarget, setNoteTarget] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
 
   // ConfirmDialog
