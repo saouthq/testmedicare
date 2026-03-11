@@ -77,8 +77,10 @@ const PublicBooking = () => {
   const slots = generateSlots();
   const days = daysOfMonth();
 
-  // Check existing session
-  const isLoggedIn = !!localStorage.getItem("userRole") && localStorage.getItem("userRole") !== "guest";
+  // Check existing session — only consider "patient" role as logged in for booking
+  // Other roles (doctor, admin, secretary, etc.) should not auto-skip OTP
+  const userRole = localStorage.getItem("userRole");
+  const isLoggedIn = userRole === "patient";
   const isGuestSession = !!localStorage.getItem("guestPatientId");
 
   // OTP handlers
