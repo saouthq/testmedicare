@@ -193,7 +193,7 @@ const DoctorLeaves = () => {
               <Select value={form.replacementDoctor} onValueChange={v => setForm(p => ({ ...p, replacementDoctor: v }))}>
                 <SelectTrigger><SelectValue placeholder="Aucun remplaçant" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {replacementDoctors.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
