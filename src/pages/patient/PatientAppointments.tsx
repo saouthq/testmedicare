@@ -4,7 +4,7 @@ import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, Chec
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
+import StatusBadge from "@/components/shared/StatusBadge";
 import EmptyState from "@/components/shared/EmptyState";
 import JoinTeleconsultButton from "@/components/teleconsultation/JoinTeleconsultButton";
 import { toast } from "@/hooks/use-toast";
@@ -16,17 +16,24 @@ type Tab = "upcoming" | "past" | "cancelled" | "absent";
 import { useSharedAppointments, cancelAppointment as sharedCancelAppointment, rescheduleAppointment as sharedRescheduleAppointment } from "@/stores/sharedAppointmentsStore";
 import type { SharedAppointment } from "@/types/appointment";
 
+// Helper: derive display values from SharedAppointment
+const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" || a.teleconsultation;
+const canModifyApt = (a: SharedAppointment) => ["pending", "confirmed"].includes(a.status);
+const canCancelApt = (a: SharedAppointment) => ["pending", "confirmed"].includes(a.status);
+const getScheduledAt = (a: SharedAppointment) => {
+  try { return new Date(`${a.date}T${a.startTime}:00`).toISOString(); } catch { return new Date().toISOString(); }
+};
+
 // ─── Reschedule Modal ────────────────────────────────────────
-const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () => void; onConfirm: (day: string, slot: string) => void }) => {
+const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: SharedAppointment; onClose: () => void; onConfirm: (day: string, slot: string) => void }) => {
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
   const [weekOffset, setWeekOffset] = useState(0);
   
-  // Dynamic days instead of hardcoded
   const generateDays = (offset: number) => {
     const today = new Date();
     const start = new Date(today);
-    start.setDate(today.getDate() + 1 + (offset * 7)); // Start from tomorrow
+    start.setDate(today.getDate() + 1 + (offset * 7));
     const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
     const days: { day: number; name: string; label: string; available: boolean }[] = [];
     for (let i = 0; i < 5; i++) {
@@ -36,7 +43,7 @@ const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () =>
         day: d.getDate(),
         name: dayNames[d.getDay()],
         label: `${d.getDate()} ${d.toLocaleDateString("fr-FR", { month: "short" })} ${d.getFullYear()}`,
-        available: d.getDay() !== 0, // Sundays unavailable
+        available: d.getDay() !== 0,
       });
     }
     return days;
@@ -53,14 +60,6 @@ const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () =>
           <h3 className="text-lg font-bold text-foreground">Reprogrammer le RDV</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
-        
-        {/* Rules reminder */}
-        {apt.cabinetRules && (
-          <div className="rounded-lg bg-warning/5 border border-warning/20 p-3 mb-4">
-            <p className="text-xs font-medium text-warning flex items-center gap-1"><Info className="h-3 w-3" />Règles de reprogrammation</p>
-            <p className="text-[11px] text-muted-foreground mt-1">Maximum {apt.cabinetRules.maxReschedules} reprogrammation(s) autorisée(s).</p>
-          </div>
-        )}
 
         <p className="text-sm text-muted-foreground mb-1">Choisissez une semaine</p>
         <div className="flex items-center gap-2 mb-3">
@@ -97,16 +96,16 @@ const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () =>
 };
 
 // ─── Payment Modal for Teleconsult ──────────────────────────
-const PaymentModal = ({ apt, onClose, onPaid }: { apt: any; onClose: () => void; onPaid: () => void }) => {
+const PaymentModal = ({ apt, onClose, onPaid }: { apt: SharedAppointment; onClose: () => void; onPaid: () => void }) => {
   const [processing, setProcessing] = useState(false);
+  const amount = "60 DT";
 
   const handlePay = () => {
     setProcessing(true);
-    // TODO BACKEND: POST /api/payments/teleconsult
     setTimeout(() => {
       setProcessing(false);
       onPaid();
-      toast({ title: "Paiement effectué", description: `${apt.amount} DT débité avec succès.` });
+      toast({ title: "Paiement effectué", description: `${amount} débité avec succès.` });
     }, 1500);
   };
 
@@ -124,8 +123,8 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: any; onClose: () => void;
             <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground"><Video className="h-5 w-5" /></div>
             <div>
               <p className="font-semibold text-foreground">{apt.doctor}</p>
-              <p className="text-xs text-primary">{apt.specialty}</p>
-              <p className="text-xs text-muted-foreground">{apt.date} à {apt.time}</p>
+              <p className="text-xs text-primary">{apt.motif}</p>
+              <p className="text-xs text-muted-foreground">{apt.date} à {apt.startTime}</p>
             </div>
           </div>
         </div>
@@ -133,7 +132,7 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: any; onClose: () => void;
         <div className="rounded-lg border p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-muted-foreground">Téléconsultation</span>
-            <span className="text-lg font-bold text-foreground">{apt.amount} DT</span>
+            <span className="text-lg font-bold text-foreground">{amount}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <CreditCard className="h-3.5 w-3.5" />
@@ -146,7 +145,7 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: any; onClose: () => void;
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose}>Annuler</Button>
           <Button onClick={handlePay} disabled={processing} className="flex-1 gradient-primary text-primary-foreground">
-            {processing ? "Traitement..." : `Payer ${apt.amount} DT`}
+            {processing ? "Traitement..." : `Payer ${amount}`}
           </Button>
         </div>
       </div>
@@ -154,7 +153,7 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: any; onClose: () => void;
   );
 };
 
-const PATIENT_ID = 1; // Current logged-in patient
+const PATIENT_ID = 1;
 
 const PatientAppointments = () => {
   const navigate = useNavigate();
@@ -170,7 +169,6 @@ const PatientAppointments = () => {
   const [showPayment, setShowPayment] = useState<string | null>(null);
   const [paidAppointments, setPaidAppointments] = useState<Set<string>>(new Set());
 
-  // Derive from shared store
   const myAppointments = allAppointments.filter(a => a.patientId === PATIENT_ID);
   const appointments = myAppointments.filter(a => ["pending", "confirmed", "arrived", "in_waiting", "in_progress"].includes(a.status));
   const completedAppointments = myAppointments.filter(a => a.status === "done");
@@ -227,11 +225,6 @@ const PatientAppointments = () => {
             {appointments.length === 0 && <EmptyState icon={Calendar} title="Aucun rendez-vous à venir" description="Prenez rendez-vous avec un praticien." actionLabel="Prendre un RDV" actionLink="/search" />}
             {appointments.map(a => (
               <button key={a.id} onClick={() => setDrawerApt(a.id)} className="w-full text-left rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all overflow-hidden">
-                {a.date === "20 Fév 2026" && (
-                  <div className="bg-primary/5 border-b border-primary/10 px-4 py-1.5">
-                    <p className="text-[11px] font-medium text-primary flex items-center gap-1"><Clock className="h-3 w-3" />Aujourd'hui — dans 4 heures</p>
-                  </div>
-                )}
                 <div className="p-3 sm:p-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0">{a.avatar}</div>
@@ -240,23 +233,16 @@ const PatientAppointments = () => {
                         <h3 className="font-semibold text-foreground text-sm truncate">{a.doctor}</h3>
                         <StatusBadge status={a.status} />
                       </div>
-                      <p className="text-[11px] text-primary">{a.specialty}</p>
+                      <p className="text-[11px] text-primary">{a.motif}</p>
                       <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground flex-wrap">
-                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{a.date} à {a.time}</span>
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{a.date} à {a.startTime}</span>
                         <span>·</span>
-                        <span className="flex items-center gap-0.5">{a.type === "teleconsultation" ? <><Video className="h-3 w-3 text-primary" />Téléconsult</> : <><MapPin className="h-3 w-3" /><span className="truncate max-w-[120px] sm:max-w-none">{a.address}</span></>}</span>
-                        {a.hasInsurance && <span className="flex items-center gap-0.5 text-accent"><Shield className="h-3 w-3" />Assuré</span>}
+                        <span className="flex items-center gap-0.5">{isTeleconsult(a) ? <><Video className="h-3 w-3 text-primary" />Téléconsult</> : <><MapPin className="h-3 w-3" /><span className="truncate max-w-[120px] sm:max-w-none">Cabinet</span></>}</span>
+                        {a.assurance && a.assurance !== "Aucune" && <span className="flex items-center gap-0.5 text-accent"><Shield className="h-3 w-3" />Assuré</span>}
                       </div>
-                      {/* Bouton rejoindre inline pour les téléconsultations */}
-                      {a.type === "teleconsultation" && a.scheduledAt && (
+                      {isTeleconsult(a) && (
                         <div className="mt-2" onClick={e => e.stopPropagation()}>
-                          {a.requiresPayment && !paidAppointments.has(a.id) ? (
-                            <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowPayment(a.id)}>
-                              <CreditCard className="h-3.5 w-3.5 mr-1" />Payer {a.amount} DT pour rejoindre
-                            </Button>
-                          ) : (
-                            <JoinTeleconsultButton scheduledAt={a.scheduledAt} sessionId={a.sessionId || "teleconsult-1"} />
-                          )}
+                          <JoinTeleconsultButton scheduledAt={getScheduledAt(a)} sessionId={a.id} />
                         </div>
                       )}
                     </div>
@@ -281,11 +267,7 @@ const PatientAppointments = () => {
                       <h3 className="font-semibold text-foreground text-sm truncate">{a.doctor}</h3>
                       <StatusBadge status={a.status} />
                     </div>
-                    <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
-                    <p className="text-[11px] text-muted-foreground">Motif : {a.motif} · <span className="font-semibold text-foreground">{a.amount}</span></p>
-                    {a.hasCareSheet && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-accent mt-1"><FileText className="h-3 w-3" />Feuille de soins disponible</span>
-                    )}
+                    <p className="text-[11px] text-muted-foreground">{a.motif} · {a.date} à {a.startTime}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                 </div>
@@ -310,7 +292,7 @@ const PatientAppointments = () => {
                   <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive font-semibold text-xs shrink-0">{a.avatar}</div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground text-sm">{a.doctor}</h3>
-                    <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
+                    <p className="text-[11px] text-muted-foreground">{a.motif} · {a.date} à {a.startTime}</p>
                     <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><UserX className="h-3 w-3" />Absence non justifiée</p>
                   </div>
                   <Link to="/search"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre RDV</Button></Link>
@@ -330,8 +312,8 @@ const PatientAppointments = () => {
                   <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive font-semibold text-xs shrink-0">{a.avatar}</div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground text-sm">{a.doctor}</h3>
-                    <p className="text-[11px] text-muted-foreground">{a.specialty} · {a.date} à {a.time}</p>
-                    <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{a.reason}</p>
+                    <p className="text-[11px] text-muted-foreground">{a.motif} · {a.date} à {a.startTime}</p>
+                    <p className="text-[11px] text-destructive/70 mt-0.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{a.notes || "Annulé par le patient"}</p>
                   </div>
                   <Link to="/search"><Button variant="outline" size="sm" className="h-7 text-xs shrink-0"><RefreshCw className="h-3 w-3 mr-1" />Reprendre</Button></Link>
                 </div>
@@ -353,68 +335,25 @@ const PatientAppointments = () => {
                   <h3 className="text-lg font-bold text-foreground">{currentApt.doctor}</h3>
                   <button onClick={() => setDrawerApt(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
                 </div>
-                <p className="text-sm text-primary">{currentApt.specialty}</p>
+                <p className="text-sm text-primary">{currentApt.type}</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Date</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.date} à {currentApt.time}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Date</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.date} à {currentApt.startTime}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Type</p><p className="text-sm font-medium text-foreground mt-0.5 capitalize">{currentApt.type}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Motif</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.motif}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Statut</p><div className="mt-0.5"><StatusBadge status={currentApt.status} /></div></div>
                 </div>
-                
-                {currentApt.address && (
-                  <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                    <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p><button onClick={() => openGoogleMapsDirections(currentApt.address!)} className="text-[10px] text-primary hover:underline mt-1">Voir l'itinéraire →</button></div>
-                  </div>
-                )}
 
-                {/* Cabinet Rules (Doctolib style) */}
-                {currentApt.cabinetRules && (
-                  <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
-                    <p className="text-xs font-semibold text-foreground flex items-center gap-1"><Info className="h-3.5 w-3.5 text-primary" />Règles du cabinet</p>
-                    <div className="space-y-1.5 text-[11px] text-muted-foreground">
-                      <p>• Annulation gratuite jusqu'à <span className="font-medium text-foreground">{currentApt.cabinetRules.cancellationHours}h</span> avant le RDV</p>
-                      <p>• Maximum <span className="font-medium text-foreground">{currentApt.cabinetRules.maxReschedules}</span> reprogrammation(s) autorisée(s)</p>
-                      <p>• Retard : {currentApt.cabinetRules.latePolicy}</p>
-                    </div>
-                  </div>
-                )}
-
-                {currentApt.documents.length > 0 && (
-                  <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                    <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div><p className="text-xs font-medium text-foreground">Documents à apporter</p><ul className="text-xs text-muted-foreground mt-1 space-y-0.5">{currentApt.documents.map(d => <li key={d}>• {d}</li>)}</ul></div>
-                  </div>
-                )}
-                {currentApt.instructions && (
-                  <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                    <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                    <div><p className="text-xs font-medium text-foreground">Consignes</p><p className="text-xs text-muted-foreground">{currentApt.instructions}</p></div>
-                  </div>
-                )}
-                
                 {/* Actions */}
                 <div className="space-y-2">
-                  {/* Bouton teleconsultation avec paiement */}
-                  {currentApt.type === "teleconsultation" && currentApt.scheduledAt && (
-                    currentApt.requiresPayment && !paidAppointments.has(currentApt.id) ? (
-                      <Button className="w-full gradient-primary text-primary-foreground" onClick={() => { setDrawerApt(null); setShowPayment(currentApt.id); }}>
-                        <CreditCard className="h-4 w-4 mr-2" />Payer {currentApt.amount} DT pour rejoindre
-                      </Button>
-                    ) : (
-                      <JoinTeleconsultButton scheduledAt={currentApt.scheduledAt} sessionId={currentApt.sessionId || "teleconsult-1"} fullWidth />
-                    )
-                  )}
-                  {/* Fallback si pas de scheduledAt (ancien mock) */}
-                  {currentApt.type === "teleconsultation" && !currentApt.scheduledAt && (
-                    <JoinTeleconsultButton scheduledAt={new Date(Date.now() + 10 * 60_000).toISOString()} sessionId="teleconsult-1" fullWidth />
+                  {isTeleconsult(currentApt) && (
+                    <JoinTeleconsultButton scheduledAt={getScheduledAt(currentApt)} sessionId={currentApt.id} fullWidth />
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
-                    {currentApt.canModify && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReschedule(currentApt.id); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprogrammer</Button>}
+                    {canModifyApt(currentApt) && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReschedule(currentApt.id); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprogrammer</Button>}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => { downloadCalendarEvent({ title: `RDV ${currentApt.doctor}`, startDate: new Date(currentApt.date + " " + currentApt.time), location: currentApt.address || "" }); toast({ title: "Calendrier", description: "Fichier .ics téléchargé." }); }}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
-                  {currentApt.canCancel && (
+                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => { downloadCalendarEvent({ title: `RDV ${currentApt.doctor}`, startDate: new Date(`${currentApt.date}T${currentApt.startTime}:00`), location: "" }); toast({ title: "Calendrier", description: "Fichier .ics téléchargé." }); }}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                  {canCancelApt(currentApt) && (
                     showCancelConfirm === currentApt.id ? (
                       <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
                         <span className="text-xs text-destructive font-medium flex-1">Confirmer l'annulation ?</span>
@@ -427,7 +366,6 @@ const PatientAppointments = () => {
                       </Button>
                     )
                   )}
-                  {/* Signalement litige */}
                   <ReportButton type="dispute" targetId={String(currentApt.id)} targetName={`RDV ${currentApt.doctor} — ${currentApt.date}`} variant="button" size="sm" />
                 </div>
               </div>
@@ -439,21 +377,14 @@ const PatientAppointments = () => {
                   <h3 className="text-lg font-bold text-foreground">{currentPast.doctor}</h3>
                   <button onClick={() => setDrawerApt(null)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
                 </div>
-                <p className="text-sm text-muted-foreground">{currentPast.specialty} · {currentPast.date} à {currentPast.time}</p>
+                <p className="text-sm text-muted-foreground">{currentPast.motif} · {currentPast.date} à {currentPast.startTime}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Motif</p><p className="text-sm font-medium text-foreground mt-0.5">{currentPast.motif}</p></div>
-                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Montant</p><p className="text-sm font-medium text-foreground mt-0.5">{currentPast.amount}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Type</p><p className="text-sm font-medium text-foreground mt-0.5">{currentPast.type}</p></div>
                 </div>
                 <div className="mt-1"><StatusBadge status={currentPast.status} /></div>
                 <div className="space-y-2">
-                  {currentPast.hasCareSheet && (
-                    <Button variant="outline" className="w-full text-xs">
-                      <Download className="h-3.5 w-3.5 mr-1" />Télécharger la feuille de soins
-                    </Button>
-                  )}
-                  {currentPast.hasReport && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReportModal(currentPast.id); }}>📄 Voir le compte-rendu</Button>}
-                  {currentPast.hasPrescription && <Link to="/dashboard/patient/prescriptions"><Button variant="outline" className="w-full text-xs">💊 Voir l'ordonnance</Button></Link>}
-                  {currentPast.status === "completed" && !reviewSent.has(currentPast.id) && (
+                  {!reviewSent.has(currentPast.id) && (
                     <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); setShowReviewModal(currentPast.id); }}>
                       <MessageSquare className="h-3.5 w-3.5 mr-1" />Laisser un avis
                     </Button>
@@ -462,7 +393,6 @@ const PatientAppointments = () => {
                     <p className="text-xs text-accent flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Avis envoyé</p>
                   )}
                   <Link to="/search"><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Reprendre RDV</Button></Link>
-                  {/* Signalement */}
                   <ReportButton type="appointment" targetId={String(currentPast.id)} targetName={`RDV ${currentPast.doctor} — ${currentPast.date}`} variant="button" size="sm" />
                 </div>
               </div>
@@ -472,9 +402,9 @@ const PatientAppointments = () => {
       )}
     </DashboardLayout>
 
-    {/* Review modal (text only, no stars) */}
+    {/* Review modal */}
     {showReviewModal !== null && (() => {
-      const apt = initialPastAppointments.find(a => a.id === showReviewModal);
+      const apt = completedAppointments.find(a => a.id === showReviewModal);
       if (!apt) return null;
       return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowReviewModal(null)}>
@@ -496,7 +426,6 @@ const PatientAppointments = () => {
               <Button variant="outline" onClick={() => setShowReviewModal(null)}>Annuler</Button>
               <Button 
                 onClick={() => {
-                  // TODO BACKEND: POST /api/reviews
                   setReviewSent(prev => new Set(prev).add(apt.id));
                   setShowReviewModal(null);
                   setReviewText("");
@@ -515,7 +444,7 @@ const PatientAppointments = () => {
 
     {/* Report modal */}
     {showReportModal !== null && (() => {
-      const apt = initialPastAppointments.find(a => a.id === showReportModal);
+      const apt = completedAppointments.find(a => a.id === showReportModal);
       if (!apt) return null;
       return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowReportModal(null)}>
@@ -528,7 +457,7 @@ const PatientAppointments = () => {
             <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
               <p className="text-sm font-medium text-foreground">{apt.doctor} · {apt.date}</p>
               <p className="text-sm text-muted-foreground"><strong>Motif :</strong> {apt.motif}</p>
-              <p className="text-sm text-muted-foreground"><strong>Observations :</strong> Le patient présente un état général satisfaisant. Constantes dans les normes. Examen clinique sans particularité.</p>
+              <p className="text-sm text-muted-foreground"><strong>Observations :</strong> Le patient présente un état général satisfaisant. Constantes dans les normes.</p>
               <p className="text-sm text-muted-foreground"><strong>Conclusion :</strong> Poursuite du traitement habituel. Contrôle prévu dans 3 mois.</p>
             </div>
             <div className="flex gap-2 mt-4">

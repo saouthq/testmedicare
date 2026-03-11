@@ -9,7 +9,7 @@ import {
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
-import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
+import StatusBadge from "@/components/shared/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent } from "@/lib/calendarExport";
 import { usePatientProfile } from "@/stores/patientStore";
@@ -19,6 +19,8 @@ import { requestRenewal } from "@/stores/doctorStore";
 import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
 import type { SharedAppointment } from "@/types/appointment";
 
+const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" || a.teleconsultation;
+
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
@@ -27,7 +29,6 @@ const PatientDashboard = () => {
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
 
-  // Current patient ID = 1 (Amine Ben Ali)
   const PATIENT_ID = 1;
   const appointments = useMemo(() => 
     allAppointments.filter(a => a.patientId === PATIENT_ID && !["done", "cancelled", "absent"].includes(a.status))
@@ -47,13 +48,18 @@ const PatientDashboard = () => {
       pendingResults,
       patientName: `${profile.firstName} ${profile.lastName}`,
       todayCount: todayApts.length,
+      healthSummary: {
+        bloodType: profile.bloodType || "Non renseigné",
+        treatingDoctor: profile.treatingDoctor || "Non renseigné",
+        insurance: profile.insurance || "Aucune",
+        allergies: profile.allergies || [],
+      },
     };
   }, [appointments, profile]);
 
   const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
   const unreadNotifs = crossNotifs.filter(n => !n.read).length;
 
-  // Health completion score
   const healthCompletion = useMemo(() => {
     let total = 8, done = 0;
     if (profile.bloodType) done++;
@@ -67,7 +73,6 @@ const PatientDashboard = () => {
     return Math.round((done / total) * 100);
   }, [profile]);
 
-  // Upcoming vaccination reminder
   const nextVaccination = mockVaccinations.find(v => v.nextDate);
 
   const handleCancel = (id: string) => {
@@ -77,7 +82,6 @@ const PatientDashboard = () => {
     setDrawerApt(null);
   };
 
-  // Prescription renewal — writes to doctor's renewal store
   const handleRenewal = (prescId: string) => {
     const prescription = recentPrescriptions.find(p => p.id === prescId);
     requestRenewal({
@@ -174,9 +178,9 @@ const PatientDashboard = () => {
                           <StatusBadge status={a.status} />
                         </div>
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                          <span>{a.date} à {a.time}</span>
+                          <span>{a.date} à {a.startTime}</span>
                           <span>·</span>
-                          <span className="flex items-center gap-0.5">{a.type === "teleconsultation" ? <><Video className="h-3 w-3 text-primary" />Téléconsult</> : <><MapPin className="h-3 w-3" />{a.address}</>}</span>
+                          <span className="flex items-center gap-0.5">{isTeleconsult(a) ? <><Video className="h-3 w-3 text-primary" />Téléconsult</> : <><MapPin className="h-3 w-3" />Cabinet</>}</span>
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -370,40 +374,21 @@ const PatientDashboard = () => {
                 <h3 className="text-lg font-bold text-foreground">{currentApt.doctor}</h3>
                 <button onClick={() => { setDrawerApt(null); setShowCancelConfirm(null); }} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
               </div>
-              <p className="text-sm text-primary">{currentApt.specialty}</p>
+              <p className="text-sm text-primary">{currentApt.type}</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Date</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.date} à {currentApt.time}</p></div>
+                <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Date</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.date} à {currentApt.startTime}</p></div>
                 <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Type</p><p className="text-sm font-medium text-foreground mt-0.5 capitalize">{currentApt.type}</p></div>
                 <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Motif</p><p className="text-sm font-medium text-foreground mt-0.5">{currentApt.motif}</p></div>
                 <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Statut</p><div className="mt-0.5"><StatusBadge status={currentApt.status} /></div></div>
               </div>
-              {currentApt.address && (
-                <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                  <Navigation className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <div><p className="text-xs font-medium text-foreground">Adresse</p><p className="text-xs text-muted-foreground">{currentApt.address}</p></div>
-                </div>
-              )}
-              {currentApt.documents && currentApt.documents.length > 0 && (
-                <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                  <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <div><p className="text-xs font-medium text-foreground">Documents à apporter</p><ul className="text-xs text-muted-foreground mt-1 space-y-0.5">{currentApt.documents.map(d => <li key={d}>• {d}</li>)}</ul></div>
-                </div>
-              )}
-              {currentApt.instructions && (
-                <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
-                  <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                  <div><p className="text-xs font-medium text-foreground">Consignes</p><p className="text-xs text-muted-foreground">{currentApt.instructions}</p></div>
-                </div>
-              )}
-              <p className="text-[10px] text-muted-foreground">📋 {currentApt.cancellationPolicy}</p>
               <div className="space-y-2">
-                {currentApt.type === "teleconsultation" && <Link to="/dashboard/patient/teleconsultation" className="block"><Button className="w-full gradient-primary text-primary-foreground"><Video className="h-4 w-4 mr-2" />Rejoindre la téléconsultation</Button></Link>}
+                {isTeleconsult(currentApt) && <Link to="/dashboard/patient/teleconsultation" className="block"><Button className="w-full gradient-primary text-primary-foreground"><Video className="h-4 w-4 mr-2" />Rejoindre la téléconsultation</Button></Link>}
                 <div className="grid grid-cols-2 gap-2">
                   <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
-                  {currentApt.canModify && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); toast({ title: "Reprogrammer", description: "Utilisez la page 'Mes rendez-vous' pour reprogrammer ce RDV." }); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button>}
+                  {["pending", "confirmed"].includes(currentApt.status) && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); toast({ title: "Reprogrammer", description: "Utilisez la page 'Mes rendez-vous' pour reprogrammer ce RDV." }); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button>}
                 </div>
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => { downloadCalendarEvent({ title: `RDV ${currentApt.doctor}`, startDate: new Date(currentApt.date + " " + currentApt.time), location: currentApt.address || "" }); toast({ title: "Calendrier", description: "Fichier .ics téléchargé." }); }}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
-                {currentApt.canCancel && (
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => { downloadCalendarEvent({ title: `RDV ${currentApt.doctor}`, startDate: new Date(`${currentApt.date}T${currentApt.startTime}:00`), location: "" }); toast({ title: "Calendrier", description: "Fichier .ics téléchargé." }); }}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
+                {["pending", "confirmed"].includes(currentApt.status) && (
                   showCancelConfirm === currentApt.id ? (
                     <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
                       <span className="text-xs text-destructive font-medium flex-1">Confirmer l'annulation ?</span>
