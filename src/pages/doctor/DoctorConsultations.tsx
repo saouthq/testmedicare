@@ -596,26 +596,31 @@ const DoctorConsultations = () => {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<ConsultStatus | "all">("all");
 
-  const [consultations, setConsultations] = useState<DoctorConsultationUI[]>(() => {
-    const base = mockDoctorConsultations.map((c) => ({
-      ...c,
-      status: (c.status as ConsultStatus) || "completed",
-      email: `${String(c.patient || "patient")
-        .split(" ")[0]
-        .toLowerCase()}@example.tn`,
-      phone: "+216 22 345 678",
-    }));
+  const [allSharedAppointments] = useSharedAppointments();
+  const today = getTodayDate();
 
-    const today = base.filter((c) => c.date === TODAY).sort((a, b) => a.time.localeCompare(b.time));
-    if (today.length >= 2) {
-      today[0].status = "scheduled";
-      today[1].status = "in_progress";
-    } else if (today.length === 1) {
-      today[0].status = "scheduled";
+  // Build week dates (today + 6 days back)
+  const weekDates = useMemo(() => {
+    const dates: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().slice(0, 10));
     }
+    return dates;
+  }, []);
 
-    return base.map((c) => today.find((t) => t.id === c.id) ?? c);
-  });
+  // Derive consultations from shared store
+  const [consultations, setConsultations] = useState<DoctorConsultationUI[]>([]);
+
+  // Sync from shared store
+  useEffect(() => {
+    const doctorApts = allSharedAppointments.filter(a =>
+      a.doctor.includes("Bouazizi") || a.doctor === CURRENT_DOCTOR
+    );
+    const mapped = doctorApts.map((a, i) => mapAppointmentToConsult(a, i));
+    setConsultations(mapped);
+  }, [allSharedAppointments]);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
