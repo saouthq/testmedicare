@@ -2495,7 +2495,7 @@ const DoctorSchedule = () => {
           initTime={blockModal.initTime}
           onClose={() => setBlockModal(null)}
           onBlock={(b) => {
-            setBlocks((p) => [...p, b]);
+            addBlockedSlot({ date: b.date, startTime: b.startTime, duration: b.duration, reason: b.reason, doctor: CURRENT_DOCTOR });
             setBlockModal(null);
           }}
         />
