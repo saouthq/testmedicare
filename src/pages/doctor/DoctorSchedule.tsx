@@ -2231,8 +2231,10 @@ const DoctorSchedule = () => {
 
   const [view, setView] = useState<ViewMode>("week");
   const [current, setCurrent] = useState(() => new Date());
-  const [apts, setApts] = useState<Appt[]>(() => seedAppts(weekStart(new Date())));
-  const [blocks, setBlocks] = useState<BlockedSlot[]>([]);
+  const [allApts] = useSharedAppointments();
+  const [allBlocks] = useSharedBlockedSlots();
+  const apts = useMemo(() => allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
+  const blocks = useMemo(() => allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
   const [typeColors, setTypeColors] = useState<Record<ApptType, ColorKey>>(DEFAULT_TYPE_COLORS);
 
   // Modal state
