@@ -34,7 +34,20 @@ const SecretaryBilling = () => {
   const [allTarifs] = useSharedTarifs();
   const actTypes = useMemo(() => getActiveActes(allTarifs).map(a => ({ label: a.name, price: a.price })), [allTarifs]);
 
-  const [invoices, setInvoices] = useState<Invoice[]>(mockSecretaryBillingInvoices);
+  // Seed billing store with mock data if empty, then use shared store
+  useEffect(() => {
+    const seedData: SharedInvoice[] = mockSecretaryBillingInvoices.map(inv => ({
+      ...inv, status: inv.status as "paid" | "pending" | "overdue", createdBy: "secretary" as const,
+    }));
+    initBillingStoreIfEmpty(seedData);
+  }, []);
+
+  const [sharedInvoices] = useSharedBilling();
+  
+  // Use shared store as primary, fallback to mock if empty
+  const invoices: Invoice[] = sharedInvoices.length > 0 
+    ? sharedInvoices.map(si => ({ id: si.id, patient: si.patient, doctor: si.doctor, date: si.date, amount: si.amount, type: si.type, payment: si.payment, status: si.status, avatar: si.avatar, assurance: si.assurance }))
+    : mockSecretaryBillingInvoices;
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
@@ -71,8 +84,7 @@ const SecretaryBilling = () => {
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
       status, avatar, assurance: newCnam ? "Assurance publique" : "Sans assurance",
     };
-    setInvoices(prev => [newInv, ...prev]);
-    // Sync to cross-role billing store → doctor sees it
+    // Create in shared billing store (single source of truth)
     createInvoice({
       patient: newPatient, avatar, doctor: newDoctor, date: "20 Fév 2026",
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
@@ -86,7 +98,7 @@ const SecretaryBilling = () => {
 
   const handleMarkPaid = (inv: Invoice) => {
     // TODO BACKEND: PATCH /api/invoices/{id} { status: "paid", payment }
-    setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, status: "paid", payment: payMethod } : i));
+    markInvoicePaid(inv.id, payMethod);
     // Sync to cross-role billing store
     markInvoicePaid(inv.id, payMethod);
     setShowPayModal(null);

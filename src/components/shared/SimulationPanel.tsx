@@ -7,7 +7,7 @@ import { Zap, X, FlaskConical, Pill, Stethoscope, UserX, Crown, Eye, Heart, Ear,
 import { Button } from "@/components/ui/button";
 import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore";
 import { updateLabDemandStatus, addLabPdf, labStore, initLabStoreIfEmpty } from "@/stores/labStore";
-import { endConsultation, markPatientAbsent } from "@/stores/appointmentsStore";
+import { completeAppointmentConsultation, markAppointmentAbsent } from "@/stores/sharedAppointmentsStore";
 import { mockLabDemands } from "@/data/mocks/lab";
 import type { SharedLabDemand } from "@/stores/labStore";
 import { toast } from "sonner";
@@ -189,12 +189,13 @@ const SimulationPanel = () => {
   };
 
   const simulateConsultationEnd = () => {
-    endConsultation(1, "Amine Ben Ali", "Dr. Ahmed Bouazizi");
+    // Use first in_progress appointment
+    completeAppointmentConsultation("apt-1");
     toast.success("🩺 Consultation terminée.");
   };
 
   const simulateAbsent = () => {
-    markPatientAbsent(99, "Patient Test", "Dr. Ahmed Bouazizi");
+    markAppointmentAbsent("apt-99");
     toast.success("❌ Patient marqué absent.");
   };
 
@@ -463,20 +464,13 @@ const SimulationPanel = () => {
           </>
         )}
 
-        {/* Reset */}
         <div className="border-t pt-2">
           <Button size="sm" variant="ghost" className="w-full text-[10px] text-destructive" onClick={() => {
-            localStorage.removeItem("medicare_notifications");
-            localStorage.removeItem("medicare_shared_prescriptions");
-            localStorage.removeItem("medicare_lab_demands");
-            localStorage.removeItem("medicare_appointment_events");
-            localStorage.removeItem("doctor_subscription");
-            localStorage.removeItem("doctor_waiting_room");
-            localStorage.removeItem("doctor_consultations");
-            localStorage.removeItem("doctor_renewal_requests");
-            localStorage.removeItem("medicare_admin_modules");
-            localStorage.removeItem("medicare_module_labels");
-            localStorage.removeItem("medicare_health_empty");
+            // Clear ALL shared store localStorage keys
+            const keys = Object.keys(localStorage).filter(k => 
+              k.startsWith("medicare_") || k.startsWith("doctor_") || k.startsWith("guest")
+            );
+            keys.forEach(k => localStorage.removeItem(k));
             window.location.reload();
           }}>
             🗑️ Réinitialiser tous les stores

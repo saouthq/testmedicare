@@ -86,17 +86,29 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { toast } from "@/hooks/use-toast";
-import { mockDoctorConsultations } from "@/data/mockData";
+import { useSharedAppointments, updateAppointmentStatus, cancelAppointment as sharedCancel, markAppointmentAbsent, completeAppointmentConsultation, startAppointmentConsultation, getTodayDate } from "@/stores/sharedAppointmentsStore";
+import type { SharedAppointment } from "@/types/appointment";
 import { cn } from "@/lib/utils";
 
 type ConsultFilter = "today" | "week" | "all";
 type ConsultStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "no_show";
 
-type DoctorConsultationUI = (typeof mockDoctorConsultations)[number] & {
+interface DoctorConsultationUI {
+  id: number;
+  patient: string;
+  date: string;
+  time: string;
+  motif: string;
+  notes: string;
+  prescriptions: number;
+  assurance: string;
+  amount: string;
+  avatar: string;
   status: ConsultStatus;
   email?: string;
   phone?: string;
-};
+  sharedId?: string; // link back to shared store
+}
 
 type GeneratedDocKind = "rx" | "lab" | "report";
 type GeneratedDoc = {
@@ -114,8 +126,36 @@ type LogItem = {
   meta?: string;
 };
 
-const TODAY = "20 Fév 2026";
-const WEEK = ["20 Fév 2026", "18 Fév 2026", "17 Fév 2026", "15 Fév 2026"];
+const CURRENT_DOCTOR = "Dr. Bouazizi";
+
+// Map shared appointment status to local ConsultStatus
+function mapStatus(s: string): ConsultStatus {
+  if (s === "pending" || s === "confirmed" || s === "arrived" || s === "in_waiting") return "scheduled";
+  if (s === "in_progress") return "in_progress";
+  if (s === "done") return "completed";
+  if (s === "cancelled") return "cancelled";
+  if (s === "absent") return "no_show";
+  return "scheduled";
+}
+
+function mapAppointmentToConsult(a: SharedAppointment, idx: number): DoctorConsultationUI {
+  return {
+    id: idx + 1,
+    patient: a.patient,
+    date: a.date,
+    time: a.startTime,
+    motif: a.motif,
+    notes: a.notes || "",
+    prescriptions: 0,
+    assurance: a.assurance,
+    amount: "35 DT",
+    avatar: a.avatar,
+    status: mapStatus(a.status),
+    email: `${a.patient.split(" ")[0].toLowerCase()}@example.tn`,
+    phone: a.phone || "+216 22 345 678",
+    sharedId: a.id,
+  };
+}
 
 const statusMeta: Record<
   ConsultStatus,
@@ -556,26 +596,31 @@ const DoctorConsultations = () => {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<ConsultStatus | "all">("all");
 
-  const [consultations, setConsultations] = useState<DoctorConsultationUI[]>(() => {
-    const base = mockDoctorConsultations.map((c) => ({
-      ...c,
-      status: (c.status as ConsultStatus) || "completed",
-      email: `${String(c.patient || "patient")
-        .split(" ")[0]
-        .toLowerCase()}@example.tn`,
-      phone: "+216 22 345 678",
-    }));
+  const [allSharedAppointments] = useSharedAppointments();
+  const today = getTodayDate();
 
-    const today = base.filter((c) => c.date === TODAY).sort((a, b) => a.time.localeCompare(b.time));
-    if (today.length >= 2) {
-      today[0].status = "scheduled";
-      today[1].status = "in_progress";
-    } else if (today.length === 1) {
-      today[0].status = "scheduled";
+  // Build week dates (today + 6 days back)
+  const weekDates = useMemo(() => {
+    const dates: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().slice(0, 10));
     }
+    return dates;
+  }, []);
 
-    return base.map((c) => today.find((t) => t.id === c.id) ?? c);
-  });
+  // Derive consultations from shared store
+  const [consultations, setConsultations] = useState<DoctorConsultationUI[]>([]);
+
+  // Sync from shared store
+  useEffect(() => {
+    const doctorApts = allSharedAppointments.filter(a =>
+      a.doctor.includes("Bouazizi") || a.doctor === CURRENT_DOCTOR
+    );
+    const mapped = doctorApts.map((a, i) => mapAppointmentToConsult(a, i));
+    setConsultations(mapped);
+  }, [allSharedAppointments]);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -706,8 +751,8 @@ const DoctorConsultations = () => {
 
   const filtered = useMemo(() => {
     const byPeriod = consultations.filter((c) => {
-      if (filter === "today") return c.date === TODAY;
-      if (filter === "week") return WEEK.includes(c.date);
+      if (filter === "today") return c.date === today;
+      if (filter === "week") return weekDates.includes(c.date);
       return true;
     });
 
@@ -733,7 +778,7 @@ const DoctorConsultations = () => {
 
   const isHistoryMode = statusFilter === "completed" || statusFilter === "cancelled" || statusFilter === "no_show";
 
-  const todayAll = useMemo(() => consultations.filter((c) => c.date === TODAY), [consultations]);
+  const todayAll = useMemo(() => consultations.filter((c) => c.date === today), [consultations, today]);
   const todayDone = useMemo(() => todayAll.filter((c) => c.status === "completed").length, [todayAll]);
   const todayNoShow = useMemo(() => todayAll.filter((c) => c.status === "no_show").length, [todayAll]);
   const todayCount = todayAll.length;
