@@ -27,6 +27,9 @@ export interface DoctorProfile {
   horaires: { day: string; hours: string; open: boolean }[];
   motifs: { name: string; duration: string; price: string }[];
   reviewCount: number;
+  actes: string[];
+  memberships: string[];
+  accessInfo: string;
 }
 
 const defaultProfile: DoctorProfile = {

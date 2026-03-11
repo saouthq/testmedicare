@@ -40,7 +40,7 @@ const CareSheetModal = ({
 
   if (!open) return null;
 
-  const doctor = mockDoctorProfile;
+  const doctor = readDoctorProfile();
 
   const handleDownload = () => {
     // TODO BACKEND: Generate actual PDF
