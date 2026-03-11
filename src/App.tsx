@@ -53,6 +53,9 @@ import DoctorConnect from "./pages/doctor/DoctorConnect";
 import DoctorAIAssistant from "./pages/doctor/DoctorAIAssistant";
 import DoctorWaitingRoom from "./pages/doctor/DoctorWaitingRoom";
 import DoctorProtocols from "./pages/doctor/DoctorProtocols";
+import DoctorLeaves from "./pages/doctor/DoctorLeaves";
+import DoctorDocuments from "./pages/doctor/DoctorDocuments";
+import DoctorTarifs from "./pages/doctor/DoctorTarifs";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
