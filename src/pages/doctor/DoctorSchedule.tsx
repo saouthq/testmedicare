@@ -153,15 +153,8 @@ const COLOR_OPTIONS: {
 
 const colorStyle = (key: ColorKey) => COLOR_OPTIONS.find((c) => c.key === key)!;
 
-// Couleurs par défaut par type
-const DEFAULT_TYPE_COLORS: Record<ApptType, ColorKey> = {
-  Consultation: "primary",
-  Suivi: "accent",
-  "Première visite": "warning",
-  Urgence: "destructive",
-  Téléconsultation: "primary",
-  Contrôle: "accent",
-};
+// Couleurs par défaut par type — from shared config
+const DEFAULT_TYPE_COLORS: Record<ApptType, ColorKey> = { ...SHARED_TYPE_COLORS };
 
 // ─── Statuts ──────────────────────────────────────────────────
 const STATUS_LABEL: Record<ApptStatus, string> = {
