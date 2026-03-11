@@ -22,13 +22,29 @@ import { usePatientAppointments, usePatientCancelled, cancelAppointment, resched
 const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () => void; onConfirm: (day: string, slot: string) => void }) => {
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
-  const days = [
-    { day: 24, name: "Lun", available: true },
-    { day: 25, name: "Mar", available: true },
-    { day: 26, name: "Mer", available: false },
-    { day: 27, name: "Jeu", available: true },
-    { day: 28, name: "Ven", available: true },
-  ];
+  const [weekOffset, setWeekOffset] = useState(0);
+  
+  // Dynamic days instead of hardcoded
+  const generateDays = (offset: number) => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() + 1 + (offset * 7)); // Start from tomorrow
+    const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+    const days: { day: number; name: string; label: string; available: boolean }[] = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      days.push({
+        day: d.getDate(),
+        name: dayNames[d.getDay()],
+        label: `${d.getDate()} ${d.toLocaleDateString("fr-FR", { month: "short" })} ${d.getFullYear()}`,
+        available: d.getDay() !== 0, // Sundays unavailable
+      });
+    }
+    return days;
+  };
+  
+  const days = generateDays(weekOffset);
   const slots = ["09:00", "09:30", "10:00", "10:30", "11:00", "14:00", "14:30", "15:00"];
 
   return (
@@ -48,13 +64,18 @@ const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () =>
           </div>
         )}
 
-        <p className="text-sm text-muted-foreground mb-3">Février 2026</p>
+        <p className="text-sm text-muted-foreground mb-1">Choisissez une semaine</p>
+        <div className="flex items-center gap-2 mb-3">
+          <Button variant="ghost" size="sm" onClick={() => setWeekOffset(Math.max(0, weekOffset - 1))} disabled={weekOffset === 0} className="h-7 w-7 p-0">←</Button>
+          <span className="text-xs text-muted-foreground">{days[0]?.label} — {days[4]?.label}</span>
+          <Button variant="ghost" size="sm" onClick={() => setWeekOffset(Math.min(3, weekOffset + 1))} disabled={weekOffset >= 3} className="h-7 w-7 p-0">→</Button>
+        </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {days.map(d => (
-            <button key={d.day} onClick={() => d.available && setSelectedDay(String(d.day))} disabled={!d.available}
-              className={`flex flex-col items-center min-w-[3.2rem] rounded-xl border p-2 transition-all ${selectedDay === String(d.day) ? "border-primary bg-primary/5 ring-1 ring-primary" : !d.available ? "opacity-40 cursor-not-allowed" : "hover:border-primary/50"}`}>
+            <button key={d.label} onClick={() => d.available && setSelectedDay(d.label)} disabled={!d.available}
+              className={`flex flex-col items-center min-w-[3.2rem] rounded-xl border p-2 transition-all ${selectedDay === d.label ? "border-primary bg-primary/5 ring-1 ring-primary" : !d.available ? "opacity-40 cursor-not-allowed" : "hover:border-primary/50"}`}>
               <span className="text-[10px] text-muted-foreground font-medium">{d.name}</span>
-              <span className={`text-base font-bold ${selectedDay === String(d.day) ? "text-primary" : "text-foreground"}`}>{d.day}</span>
+              <span className={`text-base font-bold ${selectedDay === d.label ? "text-primary" : "text-foreground"}`}>{d.day}</span>
             </button>
           ))}
         </div>
@@ -161,10 +182,10 @@ const PatientAppointments = () => {
   };
 
   const handleReschedule = (id: number, day: string, slot: string) => {
-    rescheduleAppointment(id, `${day} Fév 2026`, slot);
+    rescheduleAppointment(id, day, slot);
     setShowReschedule(null);
     setDrawerApt(null);
-    toast({ title: "RDV reprogrammé", description: `Nouveau créneau : ${day} Fév 2026 à ${slot}.` });
+    toast({ title: "RDV reprogrammé", description: `Nouveau créneau : ${day} à ${slot}.` });
   };
 
   const handlePaymentComplete = (id: number) => {

@@ -8,8 +8,9 @@ import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockDoctorProfile, mockAssurances } from "@/data/mockData";
+import { mockDoctorProfile, mockAssurances, mockDoctors } from "@/data/mockData";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
+import { createAppointment } from "@/stores/sharedAppointmentsStore";
 import { toast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar, 
@@ -17,14 +18,30 @@ import {
   CreditCard,
 } from "lucide-react";
 
-const doctor = {
-  id: "1",
-  name: mockDoctorProfile.name,
-  specialty: mockDoctorProfile.specialty,
-  address: mockDoctorProfile.address,
-  initials: mockDoctorProfile.initials,
-  motifs: mockDoctorProfile.motifs.map(m => ({ name: m.name, duration: m.duration, price: parseInt(m.price) })),
-  teleconsultation: mockDoctorProfile.teleconsultation,
+// Build doctor data from URL param
+const buildDoctor = (id: string) => {
+  const numId = parseInt(id);
+  const found = mockDoctors.find(d => d.id === numId);
+  if (found) {
+    return {
+      id: String(found.id),
+      name: found.name,
+      specialty: found.specialty,
+      address: found.address,
+      initials: found.avatar,
+      motifs: mockDoctorProfile.motifs.map(m => ({ name: m.name, duration: m.duration, price: parseInt(m.price) })),
+      teleconsultation: found.teleconsultation,
+    };
+  }
+  return {
+    id: "1",
+    name: mockDoctorProfile.name,
+    specialty: mockDoctorProfile.specialty,
+    address: mockDoctorProfile.address,
+    initials: mockDoctorProfile.initials,
+    motifs: mockDoctorProfile.motifs.map(m => ({ name: m.name, duration: m.duration, price: parseInt(m.price) })),
+    teleconsultation: mockDoctorProfile.teleconsultation,
+  };
 };
 
 const generateSlots = () => {
@@ -65,6 +82,7 @@ type Step = "auth" | "motif" | "info" | "confirm" | "payment" | "done" | "create
 const PublicBooking = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+  const doctor = buildDoctor(doctorId || "1");
   
   // Auth state
   const [phoneInput, setPhoneInput] = useState("");
@@ -144,7 +162,7 @@ const PublicBooking = () => {
   };
 
   const handleConfirmBooking = () => {
-    // Store guest appointment in localStorage
+    // Store guest appointment in localStorage (for guest retrieval)
     const guestAppointments = JSON.parse(localStorage.getItem("guestAppointments") || "[]");
     guestAppointments.push({
       id: `guest-${Date.now()}`,
@@ -162,6 +180,38 @@ const PublicBooking = () => {
       createdAt: new Date().toISOString(),
     });
     localStorage.setItem("guestAppointments", JSON.stringify(guestAppointments));
+    
+    // Also write to shared appointments store so it appears in doctor/secretary dashboards
+    // TODO BACKEND: POST /api/appointments
+    const today = new Date();
+    const dateStr = (() => {
+      // Parse "12 mars 2026" format to YYYY-MM-DD
+      const months: Record<string, string> = { "janv.": "01", "févr.": "02", "mars": "03", "avr.": "04", "mai": "05", "juin": "06", "juil.": "07", "août": "08", "sept.": "09", "oct.": "10", "nov.": "11", "déc.": "12" };
+      const parts = selectedDay.split(" ");
+      if (parts.length >= 3) {
+        const day = parts[0].padStart(2, "0");
+        const monthKey = parts[1].toLowerCase().replace(".", "");
+        const month = Object.entries(months).find(([k]) => k.replace(".", "").startsWith(monthKey))?.[1] || "01";
+        return `${parts[2]}-${month}-${day}`;
+      }
+      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    })();
+    
+    createAppointment({
+      date: dateStr,
+      startTime: selectedSlot,
+      duration: selectedMotifData?.duration ? parseInt(String(selectedMotifData.duration)) || 30 : 30,
+      patient: `${firstName} ${lastName}`,
+      patientId: null,
+      avatar: `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase(),
+      doctor: doctor.name,
+      type: isTeleconsult ? "Téléconsultation" : "Consultation",
+      motif: selectedMotif,
+      status: "confirmed",
+      phone: phone || phoneInput,
+      assurance: mockAssurances.find(a => a.id === assurance)?.name || "Sans assurance",
+      teleconsultation: !!isTeleconsult,
+    });
     
     toast({ 
       title: "RDV confirmé !", 
