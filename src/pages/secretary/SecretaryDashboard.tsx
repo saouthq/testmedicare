@@ -724,8 +724,7 @@ const SecretaryDashboard = () => {
                     variant: "danger",
                     confirmLabel: "Annuler le RDV",
                     onConfirm: () => {
-                      // TODO BACKEND: DELETE /api/appointments/{id}
-                      setAppointments(prev => prev.filter(a => a.id !== selectedApt.id));
+                      cancelAppointment(selectedApt.id);
                       toast({ title: "RDV annulé" });
                       setConfirmAction(prev => ({ ...prev, open: false }));
                       setDrawerApt(null);

@@ -113,7 +113,7 @@ const DoctorTarifs = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {actes.map(a => (
+                {allActes.map(a => (
                   <TableRow key={a.id} className={!a.active ? "opacity-50" : ""}>
                     <TableCell><Badge variant="outline" className="font-mono text-[10px]">{a.code}</Badge></TableCell>
                     <TableCell className="font-medium text-sm">{a.name}</TableCell>
