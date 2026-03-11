@@ -84,7 +84,13 @@ const SecretaryBilling = () => {
       amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
       status, avatar, assurance: newCnam ? "Assurance publique" : "Sans assurance",
     };
-    setInvoices(prev => [newInv, ...prev]);
+    // Create in shared billing store (single source of truth)
+    createInvoice({
+      patient: newPatient, avatar, doctor: newDoctor, date: "20 Fév 2026",
+      amount: total, type: newActs.map(a => a.type).join(", "), payment: newPayment,
+      status: status as "paid" | "pending" | "overdue", assurance: newCnam ? "Assurance publique" : "Sans assurance",
+      createdBy: "secretary",
+    });
     // Sync to cross-role billing store → doctor sees it
     createInvoice({
       patient: newPatient, avatar, doctor: newDoctor, date: "20 Fév 2026",
