@@ -69,11 +69,32 @@ export function useProfileCompletion() { return useStore(profileCompletionStore)
 
 // ─── Actions ─────────────────────────────────────────────────
 
-/** Handle renewal request */
+/** Handle renewal request (approve / reject) */
 export function handleRenewal(id: string, action: "approved" | "rejected") {
+  // TODO BACKEND: PATCH /api/renewals/:id
+  const req = renewalRequestsStore.read().find(r => r.id === id);
   renewalRequestsStore.set(prev => prev.map(r =>
     r.id === id ? { ...r, status: action } : r
   ));
+
+  if (req) {
+    if (action === "approved") {
+      notifyPatient(
+        "Renouvellement accepté",
+        `Votre demande de renouvellement (${req.prescriptionId}) a été acceptée par votre médecin.`,
+        "/dashboard/patient/prescriptions",
+        "renewal_accepted"
+      );
+    } else {
+      notifyPatient(
+        "Renouvellement refusé",
+        `Votre demande de renouvellement (${req.prescriptionId}) a été refusée. Contactez votre médecin.`,
+        "/dashboard/patient/prescriptions",
+        "renewal_rejected"
+      );
+      appendLog("renewal_rejected", "prescription", id, `Renouvellement ${req.prescriptionId} refusé pour ${req.patientName}`);
+    }
+  }
 }
 
 /** Compute profile completion percentage */
