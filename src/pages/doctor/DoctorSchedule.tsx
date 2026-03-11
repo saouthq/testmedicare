@@ -61,37 +61,15 @@ import { pushNotification } from "@/stores/notificationsStore";
 import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey } from "@/types/appointment";
 import { computeEndTime, DEFAULT_TYPE_COLORS as SHARED_TYPE_COLORS, type AppointmentStatus } from "@/types/appointment";
 
-// ─── Types ────────────────────────────────────────────────────
+// ─── Types (aliases to shared types) ──────────────────────────
 type ViewMode = "week" | "day" | "month" | "list";
-type ApptStatus = "pending" | "confirmed" | "arrived" | "in_progress" | "done" | "cancelled" | "absent";
-type ApptType = "Consultation" | "Suivi" | "Première visite" | "Urgence" | "Téléconsultation" | "Contrôle";
-type ColorKey = "primary" | "accent" | "warning" | "destructive" | "secondary" | "muted";
+type ApptStatus = AppointmentStatus;
+type ApptType = AppointmentType;
+type ColorKey = AppointmentColorKey;
+type Appt = SharedAppointment;
+type BlockedSlot = SharedBlockedSlot;
 
-interface Appt {
-  id: string;
-  date: string;
-  startTime: string;
-  duration: number;
-  patient: string;
-  patientId: number | null;
-  avatar: string;
-  phone: string;
-  motif: string;
-  type: ApptType;
-  status: ApptStatus;
-  assurance: string;
-  teleconsultation?: boolean;
-  notes?: string;
-  isNew?: boolean;
-}
-
-interface BlockedSlot {
-  id: string;
-  date: string;
-  startTime: string;
-  duration: number;
-  reason: string;
-}
+const CURRENT_DOCTOR = "Dr. Bouazizi";
 
 interface SlotCtx {
   date: string;
