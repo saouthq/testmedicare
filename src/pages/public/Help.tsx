@@ -127,7 +127,7 @@ const Help = () => {
 
   const handleResendOtp = () => {
     // TODO BACKEND: POST /api/auth/otp/resend
-    toast({ title: "Code renvoyé", description: "Un nouveau code a été envoyé (mock: 123456)." });
+    toast({ title: "Code renvoyé", description: "Un nouveau code de vérification a été envoyé." });
   };
 
   return (

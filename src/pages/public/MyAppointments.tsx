@@ -46,7 +46,7 @@ const MyAppointments = () => {
     const res = await sendOtp(phoneInput);
     setLoading(false);
     if (res.success) {
-      toast({ title: "Code envoyé", description: `OTP envoyé au ${phoneInput} (code: 123456)` });
+      toast({ title: "Code envoyé", description: `Un code de vérification a été envoyé au ${phoneInput}` });
       setOtpSent(true);
     }
   };

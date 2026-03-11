@@ -20,7 +20,6 @@ import PharmaciesDirectory from "./pages/public/PharmaciesDirectory";
 import PharmacyDetail from "./pages/public/PharmacyDetail";
 import MedicinesDirectory from "./pages/public/MedicinesDirectory";
 import MedicineDetail from "./pages/public/MedicineDetail";
-import FindAppointments from "./pages/public/FindAppointments";
 import MyAppointments from "./pages/public/MyAppointments";
 import HowItWorks from "./pages/public/HowItWorks";
 import Help from "./pages/public/Help";
@@ -34,7 +33,7 @@ import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
 import PatientNotifications from "./pages/patient/PatientNotifications";
 import PatientHealth from "./pages/patient/PatientHealth";
 import PatientSettings from "./pages/patient/PatientSettings";
-import PatientBooking from "./pages/patient/PatientBooking";
+
 
 // Doctor
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";

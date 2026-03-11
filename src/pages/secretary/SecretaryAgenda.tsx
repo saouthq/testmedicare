@@ -47,6 +47,10 @@ const SecretaryAgenda = () => {
   const [showReschedule, setShowReschedule] = useState(false);
   const [reschedDate, setReschedDate] = useState("");
   const [reschedTime, setReschedTime] = useState("");
+  const [showEditRdv, setShowEditRdv] = useState(false);
+  const [editMotif, setEditMotif] = useState<AppointmentType>("Consultation");
+  const [editNotes, setEditNotes] = useState("");
+  const [editPhone, setEditPhone] = useState("");
 
   // New RDV form
   const [newRdvPatient, setNewRdvPatient] = useState("");
@@ -143,6 +147,20 @@ const SecretaryAgenda = () => {
     toast({ title: "RDV reporté", description: `${selectedApt.patient} → ${reschedDate} à ${reschedTime}` });
     setShowReschedule(false);
     setReschedDate(""); setReschedTime("");
+  };
+
+  const openEditRdv = (apt: SharedAppointment) => {
+    setEditMotif(apt.type);
+    setEditNotes(apt.notes || "");
+    setEditPhone(apt.phone);
+    setShowEditRdv(true);
+  };
+  const handleEditRdv = () => {
+    if (!selectedApt) return;
+    updateAppointmentStatus(selectedApt.id, selectedApt.status, { type: editMotif, notes: editNotes, phone: editPhone } as Partial<SharedAppointment>);
+    toast({ title: "RDV modifié", description: `${selectedApt.patient} — modifications enregistrées` });
+    setShowEditRdv(false);
+    setSelectedApt({ ...selectedApt, type: editMotif, notes: editNotes, phone: editPhone });
   };
 
   const statusIcon = (status: AppointmentStatus) => {
@@ -401,6 +419,7 @@ const SecretaryAgenda = () => {
                     <div className="flex gap-1.5">
                       <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => { if (selectedApt.phone) window.open(`tel:${selectedApt.phone}`); }}><Phone className="h-3 w-3" />Appeler</Button>
                       <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => handleSmsRappel(selectedApt)}><MessageSquare className="h-3 w-3" />SMS</Button>
+                      <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => openEditRdv(selectedApt)}><Edit className="h-3 w-3" />Modifier</Button>
                       <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => setShowReschedule(true)}><RefreshCw className="h-3 w-3" />Reporter</Button>
                     </div>
                     {!["done", "cancelled", "absent"].includes(selectedApt.status) && (
@@ -520,6 +539,39 @@ const SecretaryAgenda = () => {
           </div>
         )}
       </div>
+
+      {/* Edit RDV modal */}
+      {showEditRdv && selectedApt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm" onClick={() => setShowEditRdv(false)}>
+          <div className="bg-card rounded-2xl border shadow-elevated p-6 w-full max-w-sm animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-foreground">Modifier le RDV</h3>
+              <button onClick={() => setShowEditRdv(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Patient</p>
+                <p className="text-sm font-semibold text-foreground">{selectedApt.patient}</p>
+              </div>
+              <div><Label className="text-xs">Type de consultation</Label>
+                <select value={editMotif} onChange={e => setEditMotif(e.target.value as AppointmentType)} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm">
+                  <option>Consultation</option><option>Suivi</option><option>Contrôle</option><option>Première visite</option><option>Téléconsultation</option><option>Urgence</option>
+                </select>
+              </div>
+              <div><Label className="text-xs">Téléphone</Label>
+                <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} className="mt-1" />
+              </div>
+              <div><Label className="text-xs">Notes</Label>
+                <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none" placeholder="Notes..." />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setShowEditRdv(false)}>Annuler</Button>
+                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleEditRdv}>Enregistrer</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

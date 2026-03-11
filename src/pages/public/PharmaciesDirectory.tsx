@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
 import DirectoryCard from "@/components/public/DirectoryCard";
@@ -11,9 +12,15 @@ import { mockPublicPharmacies } from "@/data/mocks/establishments";
 const cities = ["Toutes", ...Array.from(new Set(mockPublicPharmacies.map(p => p.city)))];
 
 const PharmaciesDirectory = () => {
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
   const [deGarde, setDeGarde] = useState(false);
+
+  // Read ?garde=true from URL
+  useEffect(() => {
+    if (searchParams.get("garde") === "true") setDeGarde(true);
+  }, [searchParams]);
 
   const filtered = mockPublicPharmacies.filter(p => {
     if (city !== "Toutes" && p.city !== city) return false;

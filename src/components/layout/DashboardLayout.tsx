@@ -15,7 +15,7 @@ import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
   FlaskConical, ClipboardList, Clock, UserCircle, Building2, Menu, X,
-  Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel,
+  Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel, Send,
   Video, CalendarDays, FileDown, Key, Star, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Agenda", url: "/dashboard/secretary/agenda", icon: Calendar },
     { title: "Patients", url: "/dashboard/secretary/patients", icon: Users },
     { title: "Journal d'appels", url: "/dashboard/secretary/call-log", icon: Activity },
-    { title: "SMS & Rappels", url: "/dashboard/secretary/sms", icon: MessageSquare },
+    { title: "SMS & Rappels", url: "/dashboard/secretary/sms", icon: Send },
     { title: "Facturation", url: "/dashboard/secretary/billing", icon: CreditCard },
     { title: "Cabinet", url: "/dashboard/secretary/office", icon: Building2 },
     { title: "Documents", url: "/dashboard/secretary/documents", icon: ScrollText },

@@ -23,7 +23,7 @@ const GuestOtpFlow = ({ onVerified }: GuestOtpFlowProps) => {
     const res = await sendOtp(phone);
     setLoading(false);
     if (res.success) {
-      toast({ title: "Code envoyé", description: `OTP envoyé au ${phone} (code: 123456)` });
+      toast({ title: "Code envoyé", description: `Un code de vérification a été envoyé au ${phone}` });
       setStep("code");
     }
   };

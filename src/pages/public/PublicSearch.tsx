@@ -36,6 +36,9 @@ const PublicSearch = () => {
   const [filterTeleconsult, setFilterTeleconsult] = useState(searchParams.get("teleconsult") === "true");
   const [filterToday, setFilterToday] = useState(searchParams.get("today") === "true");
   const [filterAssurance, setFilterAssurance] = useState(searchParams.get("assurance") === "true");
+  const [filterMaxPrice, setFilterMaxPrice] = useState("");
+  const [filterLangue, setFilterLangue] = useState("");
+  const [filterGouvernorat, setFilterGouvernorat] = useState("");
 
   // Apply filters from URL on mount
   useEffect(() => {
@@ -50,6 +53,9 @@ const PublicSearch = () => {
     if (filterTeleconsult && !d.teleconsultation) return false;
     if (filterAssurance && !d.acceptsInsurance) return false;
     if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
+    if (filterMaxPrice && d.price > Number(filterMaxPrice)) return false;
+    if (filterLangue && !d.languages?.includes(filterLangue)) return false;
+    if (filterGouvernorat && !d.address.includes(filterGouvernorat)) return false;
     if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     return true;
   });
@@ -151,17 +157,22 @@ const PublicSearch = () => {
             <div className="mt-3 pt-3 border-t grid gap-3 sm:grid-cols-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">Tarif max (DT)</label>
-                <Input type="number" placeholder="70" className="mt-1 h-9" />
+                <Input type="number" placeholder="70" className="mt-1 h-9" value={filterMaxPrice} onChange={e => setFilterMaxPrice(e.target.value)} />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">Langue</label>
-                <Input placeholder="Français, Arabe..." className="mt-1 h-9" />
+                <select value={filterLangue} onChange={e => setFilterLangue(e.target.value)} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm h-9">
+                  <option value="">Toutes</option>
+                  <option>Français</option>
+                  <option>Arabe</option>
+                  <option>Anglais</option>
+                </select>
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">Gouvernorat</label>
-                <select className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm h-9">
-                  <option>Tous</option>
-                  {gouvernorats.slice(0, 8).map(g => <option key={g}>{g}</option>)}
+                <select value={filterGouvernorat} onChange={e => setFilterGouvernorat(e.target.value)} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm h-9">
+                  <option value="">Tous</option>
+                  {gouvernorats.map(g => <option key={g}>{g}</option>)}
                 </select>
               </div>
             </div>
