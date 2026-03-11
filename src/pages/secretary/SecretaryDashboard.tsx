@@ -12,12 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
-import { mockSecretaryWaitingRoom, mockSecretaryAppointments } from "@/data/mockData";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import ActionPalette, { type ActionItem } from "@/components/shared/ActionPalette";
 import SecretaryTeleconsultPanel from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
-import { markPatientAbsent } from "@/stores/appointmentsStore";
-import { updateWaitingStatus, startConsultation, completeConsultation } from "@/stores/doctorStore";
+import { useSharedAppointments, updateAppointmentStatus, sendToWaitingRoom, startAppointmentConsultation, completeAppointmentConsultation, markAppointmentAbsent, getAppointmentsForDate } from "@/stores/sharedAppointmentsStore";
+import { useSharedTarifs, getActiveActes } from "@/stores/sharedTarifsStore";
+import { useSharedPatients, addPatient } from "@/stores/sharedPatientsStore";
+import { pushNotification } from "@/stores/notificationsStore";
+import type { SharedAppointment, AppointmentStatus } from "@/types/appointment";
+import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
 
 type DashTab = "overview" | "billing" | "patients";
 
