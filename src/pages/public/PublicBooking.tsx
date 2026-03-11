@@ -78,7 +78,7 @@ const buildDoctor = (id: string) => {
   };
 };
 
-// ─── Day Generation ─────────────────────────────────────────
+// ─── Day Generation (checks availability + leaves + blocked slots) ───
 const generateDays = (weekOffset: number) => {
   const today = new Date();
   const start = new Date(today);
@@ -87,15 +87,29 @@ const generateDays = (weekOffset: number) => {
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
   const availability = sharedAvailabilityStore.read();
-  const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string }[] = [];
+  const leaves = sharedLeavesStore.read();
+  const blockedSlots = sharedBlockedSlotsStore.read();
+
+  const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string; leaveReason?: string }[] = [];
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
     const frDayName = JS_DAY_TO_FR[date.getDay()];
     const dayConfig = availability.days[frDayName];
-    const isAvailable = dayConfig ? dayConfig.active : false;
     const dateStr = date.toISOString().slice(0, 10);
+
+    // Check if day is in the past
+    const isPast = dateStr < today.toISOString().slice(0, 10);
+
+    // Check leaves
+    const leave = leaves.find(l => l.status !== "past" && dateStr >= l.startDate && dateStr <= l.endDate);
+
+    // Check full-day blocks (duration >= 480 min = 8h)
+    const fullDayBlock = blockedSlots.find(b => b.date === dateStr && b.duration >= 480);
+
+    const isAvailable = !isPast && (dayConfig ? dayConfig.active : false) && !leave && !fullDayBlock;
+
     d.push({
       day: date.getDate(),
       month: date.getMonth(),
@@ -105,6 +119,7 @@ const generateDays = (weekOffset: number) => {
       label: `${date.getDate()} ${date.toLocaleDateString("fr-FR", { month: "short" })} ${date.getFullYear()}`,
       dateStr,
       frDayName,
+      leaveReason: leave ? leave.motif : fullDayBlock ? fullDayBlock.reason : undefined,
     });
   }
   return d;
