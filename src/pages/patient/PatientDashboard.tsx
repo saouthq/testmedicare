@@ -18,7 +18,7 @@ import { requestRenewal } from "@/stores/doctorStore";
 import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
 import { useHealth } from "@/stores/healthStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
-import { mockFavoriteDoctors as favoriteDoctors } from "@/data/mockData";
+import { useFavoriteDoctors } from "@/stores/favoriteDoctorsStore";
 import type { SharedAppointment } from "@/types/appointment";
 import type { HealthDocument } from "@/types";
 
