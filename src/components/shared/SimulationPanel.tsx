@@ -538,15 +538,11 @@ const SimulationPanel = () => {
 
         <div className="border-t pt-2">
           <Button size="sm" variant="ghost" className="w-full text-[10px] text-destructive" onClick={() => {
-            // Clear ALL shared store localStorage keys + seed date
-            const keys = Object.keys(localStorage).filter(k => 
-              k.startsWith("medicare_") || k.startsWith("doctor_") || k.startsWith("guest")
-            );
-            keys.forEach(k => localStorage.removeItem(k));
-            localStorage.removeItem("medicare_seed_date");
+            resetDemo();
+            toast.success("🔄 Démo réinitialisée avec succès !");
             window.location.reload();
           }}>
-            🗑️ Réinitialiser tous les stores
+            🗑️ Réinitialiser la démo
           </Button>
         </div>
       </div>

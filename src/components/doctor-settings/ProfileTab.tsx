@@ -19,7 +19,7 @@ import ProfileSectionEditor from "./ProfileSectionEditor";
 type EditingSection = null | "identity" | "cabinet" | "specialties" | "tarifs" | "actes" | "languages" | "diplomas" | "affiliations" | "description";
 
 const ProfileTab = () => {
-  const p = mockDoctorProfile;
+  const [p] = useDoctorProfile();
 
   // State
   const [firstName, setFirstName] = useState(p.name.replace("Dr. ", "").split(" ")[0]);
