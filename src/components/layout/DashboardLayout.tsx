@@ -1,9 +1,9 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
+import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
 import AdminSpotlight from "@/components/admin/AdminSpotlight";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
