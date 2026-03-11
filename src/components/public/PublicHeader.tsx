@@ -78,6 +78,8 @@ const PublicHeader = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElem
       )}
     </nav>
   );
-};
+});
+
+PublicHeader.displayName = "PublicHeader";
 
 export default PublicHeader;
