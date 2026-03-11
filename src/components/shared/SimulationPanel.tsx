@@ -288,7 +288,7 @@ const SimulationPanel = () => {
     const apts = sharedAppointmentsStore.read();
     const target = apts.find(a => ["pending", "confirmed"].includes(a.status));
     if (!target) { toast.info("Aucun RDV annulable."); return; }
-    cancelAppointment(target.id, { cancelledBy: "patient", reason: "Test simulation" });
+    cancelAppointment(target.id);
     toast.success(`🚫 RDV ${target.id} annulé — ${target.patient}`);
   };
 
