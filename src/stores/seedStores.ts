@@ -128,6 +128,9 @@ export function seedAllStores() {
 
   // ── Reports / Disputes ──
   seedReportsIfEmpty();
+
+  // ── Messaging ──
+  seedMessagesIfEmpty();
 }
 
 /**

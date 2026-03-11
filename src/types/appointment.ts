@@ -50,6 +50,10 @@ export interface SharedAppointment {
   tags?: ("urgent" | "retard")[];
   internalNote?: string;
   createdBy?: "doctor" | "secretary" | "patient" | "public";
+  /** Payment status for teleconsultations */
+  paymentStatus?: "pending" | "paid" | "refunded";
+  /** Amount paid (DT) */
+  paidAmount?: number;
 }
 
 /** Blocked slot interface */
