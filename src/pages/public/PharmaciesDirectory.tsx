@@ -17,6 +17,7 @@ const PharmaciesDirectory = () => {
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
   const [deGarde, setDeGarde] = useState(false);
+  const [showCount, setShowCount] = useState(10);
 
   // Read ?garde=true from URL
   useEffect(() => {
