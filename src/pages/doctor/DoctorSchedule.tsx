@@ -250,70 +250,7 @@ function monthCells(y: number, m: number): (Date | null)[] {
   return [...Array(pad).fill(null), ...Array.from({ length: total }, (_, i) => new Date(y, m, i + 1))];
 }
 
-// ─── Mock data ────────────────────────────────────────────────
-const PATS = [
-  { name: "Amine Ben Ali", id: 1, avatar: "AB", phone: "+216 22 345 678", assurance: "CNAM" },
-  { name: "Fatma Trabelsi", id: 2, avatar: "FT", phone: "+216 55 987 654", assurance: "CNSS" },
-  { name: "Mohamed Sfar", id: 3, avatar: "MS", phone: "+216 55 456 789", assurance: "STAR" },
-  { name: "Nadia Jemni", id: 4, avatar: "NJ", phone: "+216 98 567 890", assurance: "Publique" },
-  { name: "Sami Ayari", id: 5, avatar: "SA", phone: "+216 29 678 901", assurance: "Publique" },
-  { name: "Rania Meddeb", id: 6, avatar: "RM", phone: "+216 52 789 012", assurance: "Privée" },
-  { name: "Youssef Belhadj", id: 7, avatar: "YB", phone: "+216 98 123 456", assurance: "CNAM" },
-  { name: "Salma Dridi", id: 8, avatar: "SD", phone: "+216 71 345 678", assurance: "MAE" },
-  { name: "Karim Mansour", id: 9, avatar: "KM", phone: "+216 55 234 567", assurance: "CNSS" },
-  { name: "Leila Chahed", id: 10, avatar: "LC", phone: "+216 22 567 890", assurance: "CNAM" },
-];
-type SR = [number, string, number, number, ApptType, string, ApptStatus, boolean?];
-const SEEDS: SR[] = [
-  [0, "09:00", 30, 0, "Consultation", "Suivi diabète type 2", "confirmed"],
-  [0, "09:30", 30, 1, "Suivi", "Contrôle tension artérielle", "confirmed"],
-  [0, "10:00", 60, 2, "Première visite", "Bilan initial complet", "pending"],
-  [0, "11:30", 30, 3, "Contrôle", "Résultats analyses", "confirmed"],
-  [0, "14:00", 30, 4, "Consultation", "Renouvellement ordonnance", "arrived"],
-  [0, "15:00", 30, 5, "Suivi", "Suivi cholestérol", "confirmed"],
-  [0, "16:30", 30, 6, "Consultation", "Douleur épigastrique", "pending"],
-  [1, "08:30", 30, 7, "Consultation", "Check-up annuel", "confirmed"],
-  [1, "09:30", 60, 8, "Première visite", "Douleurs dorsales chroniques", "pending"],
-  [1, "11:00", 30, 9, "Téléconsultation", "Résultats IRM lombaire", "confirmed", true],
-  [1, "14:30", 30, 0, "Suivi", "Suivi grossesse T2", "confirmed"],
-  [1, "15:30", 30, 1, "Consultation", "Fièvre persistante", "confirmed"],
-  [2, "09:00", 30, 2, "Contrôle", "Post-opératoire J+15", "confirmed"],
-  [2, "10:00", 30, 3, "Suivi", "Diabète — HbA1c", "confirmed"],
-  [2, "11:30", 30, 4, "Téléconsultation", "Renouvellement Rx", "confirmed", true],
-  [2, "14:00", 60, 5, "Première visite", "Bilan cardio-vasculaire", "confirmed"],
-  [2, "16:30", 30, 6, "Consultation", "Douleur abdominale", "pending"],
-  [3, "08:00", 30, 7, "Urgence", "Douleur thoracique", "confirmed"],
-  [3, "09:00", 30, 8, "Consultation", "Toux chronique", "pending"],
-  [3, "14:30", 30, 9, "Suivi", "Suivi HTA — 3 mois", "confirmed"],
-  [3, "16:00", 30, 0, "Contrôle", "Glycémie post-jeûne", "confirmed"],
-  [4, "09:30", 30, 1, "Consultation", "Certificat médical sport", "confirmed"],
-  [4, "10:30", 30, 2, "Contrôle", "Rappel vaccinal — DTP", "pending"],
-  [4, "14:00", 30, 3, "Suivi", "Résultats mammographie", "confirmed"],
-  [4, "15:30", 60, 4, "Première visite", "Bilan thyroïdien complet", "confirmed"],
-  [5, "09:00", 30, 5, "Consultation", "Consultation générale", "confirmed"],
-  [5, "10:00", 30, 6, "Suivi", "Suivi post-infarctus", "confirmed"],
-];
-function seedAppts(ws: Date): Appt[] {
-  return SEEDS.map(([d, t, dur, pi, type, motif, status, tele]) => {
-    const date = addDays(ws, d as number),
-      p = PATS[pi as number];
-    return {
-      id: `${fmtDate(date)}-${t}-${p.id}`,
-      date: fmtDate(date),
-      startTime: t as string,
-      duration: dur as number,
-      patient: p.name,
-      patientId: p.id,
-      avatar: p.avatar,
-      phone: p.phone,
-      motif: motif as string,
-      type: type as ApptType,
-      status: status as ApptStatus,
-      assurance: p.assurance,
-      teleconsultation: !!tele,
-    };
-  });
-}
+// ─── Data now comes from shared stores ────────────────────────
 
 // ═══════════════════════════════════════════════════════════════════
 // SUB-COMPONENTS
