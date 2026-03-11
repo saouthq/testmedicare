@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore";
 import { updateLabDemandStatus, addLabPdf, labStore } from "@/stores/labStore";
 import { sharedAppointmentsStore, completeAppointmentConsultation, markAppointmentAbsent, sendToWaitingRoom, startAppointmentConsultation, createAppointment, getTodayDate } from "@/stores/sharedAppointmentsStore";
+import { resetDemo } from "@/stores/seedStores";
 import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType, type PlanTier } from "@/stores/featureMatrixStore";
