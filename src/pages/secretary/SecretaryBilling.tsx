@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,16 +7,15 @@ import {
   Search, Plus, Download, Banknote, FileText, CheckCircle2, Clock,
   AlertCircle, CreditCard, ArrowUpRight, Eye, Printer, Send, Receipt, Shield, X, Save, Trash2
 } from "lucide-react";
-import { mockSecretaryBillingInvoices, mockSecretaryBillingActTypes } from "@/data/mockData";
+import { mockSecretaryBillingInvoices } from "@/data/mockData";
 import { useSharedBilling, initBillingStoreIfEmpty, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
+import { useSharedTarifs, getActiveActes } from "@/stores/sharedTarifsStore";
 import { toast } from "@/hooks/use-toast";
 
 interface Invoice {
   id: string; patient: string; doctor: string; date: string; amount: number;
   type: string; payment: string; status: string; avatar: string; assurance: string;
 }
-
-const actTypes = mockSecretaryBillingActTypes;
 
 const paymentMethods = [
   { method: "Assurance", count: 45, icon: Shield },
@@ -32,6 +31,9 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
 };
 
 const SecretaryBilling = () => {
+  const [allTarifs] = useSharedTarifs();
+  const actTypes = useMemo(() => getActiveActes(allTarifs).map(a => ({ label: a.name, price: a.price })), [allTarifs]);
+
   const [invoices, setInvoices] = useState<Invoice[]>(mockSecretaryBillingInvoices);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -42,7 +44,7 @@ const SecretaryBilling = () => {
   // New invoice form
   const [newPatient, setNewPatient] = useState("");
   const [newDoctor, setNewDoctor] = useState("Dr. Bouazizi");
-  const [newActs, setNewActs] = useState([{ type: actTypes[0].label, price: actTypes[0].price }]);
+  const [newActs, setNewActs] = useState<{type: string; price: number}[]>([]);
   const [newPayment, setNewPayment] = useState("—");
   const [newCnam, setNewCnam] = useState(true);
   const [payMethod, setPayMethod] = useState("Espèces");
@@ -78,7 +80,7 @@ const SecretaryBilling = () => {
       createdBy: "secretary",
     });
     setShowNew(false);
-    setNewPatient(""); setNewActs([{ type: actTypes[0].label, price: actTypes[0].price }]); setNewPayment("—");
+    setNewPatient(""); setNewActs(actTypes.length ? [{ type: actTypes[0].label, price: actTypes[0].price }] : []); setNewPayment("—");
     toast({ title: "Facture créée", description: `${newId} · ${newPatient} · ${total} DT — visible côté médecin.` });
   };
 

@@ -1511,10 +1511,15 @@ function RdvPanel({
                 <Button variant="outline" className="flex-1 h-9 text-xs" onClick={() => setResched((v) => !v)}>
                   <RefreshCw className="h-3.5 w-3.5 mr-1.5 text-warning" /> Reporter
                 </Button>
-                <Button variant="outline" className="flex-1 h-9 text-xs">
-                  <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-primary" /> Message
-                </Button>
-                <Button variant="outline" className="flex-1 h-9 text-xs">
+                <Link to="/dashboard/doctor/messages" className="flex-1">
+                  <Button variant="outline" className="w-full h-9 text-xs">
+                    <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-primary" /> Message
+                  </Button>
+                </Link>
+                <Button variant="outline" className="flex-1 h-9 text-xs" onClick={() => {
+                  toast({ title: "Impression en cours", description: `Fiche RDV de ${apt.patient} — ${apt.date} à ${apt.startTime}` });
+                  window.print();
+                }}>
                   <Printer className="h-3.5 w-3.5 mr-1.5" /> Imprimer
                 </Button>
               </div>
