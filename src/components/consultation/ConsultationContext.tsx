@@ -33,7 +33,7 @@ import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
 import { completeAppointmentConsultation, startAppointmentConsultation, useSharedAppointments, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
 import { createLabDemand } from "@/stores/labStore";
 import { createPrescription } from "@/stores/doctorPrescriptionsStore";
-import { addHealthDocument } from "@/stores/healthStore";
+import { addDocument as addHealthDocument } from "@/stores/healthStore";
 import type { SharedAppointment } from "@/types/appointment";
 
 // ── Context type ─────────────────────────────────────────────
