@@ -3,7 +3,7 @@
  * Accessible via téléphone + OTP
  */
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
