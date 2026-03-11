@@ -17,7 +17,7 @@ export const specialties = [
   "Médecin esthétique",
 ];
 
-export const specialtiesWithAll = ["Tous", ...specialties.slice(0, 9)];
+export const specialtiesWithAll = ["Tous", ...specialties.slice(0, 15)];
 
 export const languages = ["Français", "Arabe", "Anglais", "Allemand", "Italien", "Espagnol"];
 

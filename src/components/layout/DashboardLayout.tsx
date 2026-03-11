@@ -176,6 +176,8 @@ const adminSections: NavSection[] = [
       { title: "RGPD & Conformité", url: "/dashboard/admin/compliance", icon: ShieldCheck },
       { title: "Journal système", url: "/dashboard/admin/logs", icon: Activity },
       { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
+      { title: "API & Partenaires", url: "/dashboard/admin/api-partners", icon: Key },
+      { title: "Rapports & Exports", url: "/dashboard/admin/reports", icon: FileDown },
       { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
     ],
   },

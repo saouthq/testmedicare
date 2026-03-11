@@ -312,6 +312,9 @@ const App = () => (
           <Route path="/dashboard/admin/revenue" element={<AdminGuard><AdminRevenue /></AdminGuard>} />
           <Route path="/dashboard/admin/doctor-performance" element={<AdminGuard><AdminDoctorPerformance /></AdminGuard>} />
           <Route path="/dashboard/admin/content" element={<AdminGuard><AdminContentPages /></AdminGuard>} />
+          <Route path="/dashboard/admin/satisfaction" element={<AdminGuard><AdminSatisfaction /></AdminGuard>} />
+          <Route path="/dashboard/admin/api-partners" element={<AdminGuard><AdminAPIPartners /></AdminGuard>} />
+          <Route path="/dashboard/admin/reports" element={<AdminGuard><AdminReports /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 
