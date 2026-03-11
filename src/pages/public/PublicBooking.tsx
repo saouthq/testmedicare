@@ -483,7 +483,6 @@ const PublicBooking = () => {
                       <span className="text-sm font-medium">{m.name}</span>
                       <span className="text-xs text-muted-foreground">({m.duration} min)</span>
                     </div>
-                    <span className="text-sm font-bold text-primary">{m.price} DT</span>
                   </button>
                 ))}
               </div>
