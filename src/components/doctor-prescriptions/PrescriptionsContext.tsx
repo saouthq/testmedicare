@@ -40,7 +40,7 @@ export function usePrescriptions() {
 }
 
 export function PrescriptionsProvider({ children }: { children: ReactNode }) {
-  const [prescriptions] = useState<Prescription[]>(mockDoctorPrescriptions);
+  const [prescriptions] = useDoctorPrescriptions();
   const [filter, setFilter] = useState<PrescriptionFilter>("all");
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
