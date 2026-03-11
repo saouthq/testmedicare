@@ -2,50 +2,30 @@
  * DoctorSecretary — Gestion des secrétaires du cabinet.
  *
  * Workflow : Invitation → Activation → Suspension/Réactivation
- * Tous les handlers sont balisés // TODO BACKEND pour intégration future.
+ * Data: centralized in cabinetStore (multi-cabinet support).
+ * // TODO BACKEND: Replace with API calls
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import FeatureGate from "@/components/shared/FeatureGate";
 import {
   UserPlus, Mail, Phone, Clock, Edit, Shield,
-  CheckCircle2, PauseCircle, PlayCircle, Trash2,
+  CheckCircle2, PauseCircle, PlayCircle, Trash2, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-
-/* ── Types ── */
-type SecretaryStatus = "invited" | "active" | "suspended";
-
-interface Secretary {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  status: SecretaryStatus;
-  since: string;
-  lastLogin: string | null;
-  permissions: string[];
-}
-
-/* ── Mock initial data ── */
-const initialSecretaries: Secretary[] = [
-  {
-    id: 1, name: "Leila Hammami", email: "leila@cabinet-bouazizi.tn",
-    phone: "+216 71 234 568", status: "active", since: "Jan 2025",
-    lastLogin: "Aujourd'hui 08:30",
-    permissions: ["agenda", "patients", "facturation", "documents"],
-  },
-  {
-    id: 2, name: "Sara Jelassi", email: "sara@cabinet-bouazizi.tn",
-    phone: "+216 55 987 654", status: "active", since: "Mar 2025",
-    lastLogin: "Hier 17:45",
-    permissions: ["agenda", "patients"],
-  },
-];
+import {
+  useCabinetStore,
+  getCabinetsForDoctor,
+  inviteSecretary,
+  updateSecretaryStatus,
+  removeSecretary,
+  type SecretaryStatus,
+  type CabinetSecretary,
+} from "@/stores/cabinetStore";
 
 /* ── Permissions disponibles ── */
 const allPermissions = [
@@ -64,7 +44,13 @@ const statusBadge: Record<SecretaryStatus, { label: string; className: string }>
 };
 
 const DoctorSecretary = () => {
-  const [secretaries, setSecretaries] = useState<Secretary[]>(initialSecretaries);
+  const [cabinetState] = useCabinetStore();
+  const doctorName = "Dr. Bouazizi"; // TODO BACKEND: from auth
+  const doctorCabinets = cabinetState.cabinets.filter(c => c.doctorIds.includes(doctorName));
+  const [selectedCabinetId, setSelectedCabinetId] = useState(doctorCabinets[0]?.id || "");
+  const selectedCabinet = doctorCabinets.find(c => c.id === selectedCabinetId);
+  const secretaries = selectedCabinet?.secretaries || [];
+
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", phone: "" });
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(["agenda", "patients"]);
@@ -88,35 +74,30 @@ const DoctorSecretary = () => {
   /* ── Handlers ── */
 
   const handleAddSecretary = () => {
-    if (!formData.firstName || !formData.lastName || !formData.email) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !selectedCabinetId) {
       toast({ title: "Champs requis", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
       return;
     }
-    // TODO BACKEND: POST /api/secretary/invite — envoyer invitation par email
-    const newSecretary: Secretary = {
-      id: Date.now(),
+    inviteSecretary(selectedCabinetId, {
       name: `${formData.firstName} ${formData.lastName}`,
       email: formData.email,
       phone: formData.phone,
-      status: "invited",
-      since: new Date().toLocaleDateString("fr-FR", { month: "short", year: "numeric" }),
-      lastLogin: null,
       permissions: selectedPermissions,
-    };
-    setSecretaries(prev => [...prev, newSecretary]);
+    }, doctorName);
+
     setShowForm(false);
     setFormData({ firstName: "", lastName: "", email: "", phone: "" });
     setSelectedPermissions(["agenda", "patients"]);
-    toast({ title: "Invitation envoyée", description: `Un email d'invitation a été envoyé à ${newSecretary.email}.` });
+    toast({ title: "Invitation envoyée", description: `Un email d'invitation a été envoyé à ${formData.email}.` });
   };
 
-  const handleActivate = (id: number) => {
-    // TODO BACKEND: PATCH /api/secretary/{id}/activate
-    setSecretaries(prev => prev.map(s => s.id === id ? { ...s, status: "active" as const } : s));
+  const handleActivate = (id: string) => {
+    if (!selectedCabinetId) return;
+    updateSecretaryStatus(selectedCabinetId, id, "active", doctorName);
     toast({ title: "Compte activé", description: "La secrétaire peut maintenant accéder à la plateforme." });
   };
 
-  const handleSuspend = (id: number) => {
+  const handleSuspend = (id: string) => {
     const sec = secretaries.find(s => s.id === id);
     setConfirmAction({
       open: true,
@@ -125,21 +106,20 @@ const DoctorSecretary = () => {
       variant: "warning",
       confirmLabel: "Suspendre",
       onConfirm: () => {
-        // TODO BACKEND: PATCH /api/secretary/{id}/suspend
-        setSecretaries(prev => prev.map(s => s.id === id ? { ...s, status: "suspended" as const } : s));
+        updateSecretaryStatus(selectedCabinetId, id, "suspended", doctorName);
         toast({ title: "Compte suspendu", description: `${sec?.name} ne peut plus accéder à la plateforme.` });
         setConfirmAction(prev => ({ ...prev, open: false }));
       },
     });
   };
 
-  const handleReactivate = (id: number) => {
-    // TODO BACKEND: PATCH /api/secretary/{id}/reactivate
-    setSecretaries(prev => prev.map(s => s.id === id ? { ...s, status: "active" as const } : s));
+  const handleReactivate = (id: string) => {
+    if (!selectedCabinetId) return;
+    updateSecretaryStatus(selectedCabinetId, id, "active", doctorName);
     toast({ title: "Compte réactivé", description: "La secrétaire peut à nouveau accéder à la plateforme." });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     const sec = secretaries.find(s => s.id === id);
     setConfirmAction({
       open: true,
@@ -148,8 +128,7 @@ const DoctorSecretary = () => {
       variant: "danger",
       confirmLabel: "Supprimer",
       onConfirm: () => {
-        // TODO BACKEND: DELETE /api/secretary/{id}
-        setSecretaries(prev => prev.filter(s => s.id !== id));
+        removeSecretary(selectedCabinetId, id, doctorName);
         toast({ title: "Compte supprimé", description: `Le compte de ${sec?.name} a été supprimé.` });
         setConfirmAction(prev => ({ ...prev, open: false }));
       },
@@ -174,10 +153,37 @@ const DoctorSecretary = () => {
           </div>
         </div>
 
+        {/* Cabinet selector (multi-cabinet) */}
+        {doctorCabinets.length > 1 && (
+          <div className="rounded-xl border bg-card p-4 shadow-card">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Building2 className="inline h-3.5 w-3.5 mr-1" />Cabinet
+            </Label>
+            <div className="flex gap-2 mt-2">
+              {doctorCabinets.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedCabinetId(c.id)}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm transition-all ${
+                    selectedCabinetId === c.id
+                      ? "border-primary bg-primary/5 text-primary font-medium"
+                      : "hover:border-primary/30 text-muted-foreground"
+                  }`}
+                >
+                  <p className="font-medium text-foreground">{c.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{c.secretaries.length} secrétaire{c.secretaries.length > 1 ? "s" : ""} · {c.doctorIds.length} médecin{c.doctorIds.length > 1 ? "s" : ""}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Liste des secrétaires */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">Mes secrétaires ({secretaries.length})</h3>
+            <h3 className="font-semibold text-foreground">
+              Secrétaires {selectedCabinet ? `— ${selectedCabinet.name}` : ""} ({secretaries.length})
+            </h3>
             <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setShowForm(!showForm)}>
               <UserPlus className="h-4 w-4 mr-1" />Ajouter une secrétaire
             </Button>
@@ -190,7 +196,6 @@ const DoctorSecretary = () => {
                 <div key={s.id} className="rounded-xl border bg-card p-5 shadow-card">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
-                      {/* Avatar */}
                       <div className="h-12 w-12 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold">
                         {s.name.split(" ").map(n => n[0]).join("")}
                       </div>
@@ -210,7 +215,6 @@ const DoctorSecretary = () => {
                         </div>
                       </div>
                     </div>
-                    {/* Actions contextuelles */}
                     <div className="flex gap-1">
                       {s.status === "invited" && (
                         <Button variant="outline" size="sm" className="h-8 text-xs text-accent" onClick={() => handleActivate(s.id)}>
@@ -227,8 +231,8 @@ const DoctorSecretary = () => {
                           <PlayCircle className="h-3.5 w-3.5 mr-1" />Réactiver
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDelete(s.id)}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Modifier"><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDelete(s.id)} aria-label="Supprimer">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -251,6 +255,22 @@ const DoctorSecretary = () => {
         {showForm && (
           <div className="rounded-xl border bg-card p-6 shadow-card">
             <h3 className="font-semibold text-foreground mb-4">Créer un compte secrétaire</h3>
+
+            {doctorCabinets.length > 1 && (
+              <div className="mb-4">
+                <Label>Cabinet d'affectation</Label>
+                <select
+                  value={selectedCabinetId}
+                  onChange={e => setSelectedCabinetId(e.target.value)}
+                  className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                >
+                  {doctorCabinets.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label>Prénom</Label>
@@ -303,6 +323,7 @@ const DoctorSecretary = () => {
             </div>
             <p className="text-xs text-muted-foreground mt-3">
               Un email d'invitation sera envoyé à la secrétaire avec ses identifiants de connexion.
+              {/* TODO BACKEND: POST /api/secretary/invite — send real email */}
             </p>
           </div>
         )}
