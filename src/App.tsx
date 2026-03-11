@@ -326,6 +326,7 @@ const App = () => (
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
           <Route path="/dashboard/admin/sidebar-config" element={<AdminGuard><AdminSidebarConfig /></AdminGuard>} />
+          <Route path="/dashboard/admin/action-gating" element={<AdminGuard><AdminActionGating /></AdminGuard>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
