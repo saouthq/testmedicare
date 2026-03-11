@@ -47,6 +47,10 @@ const SecretaryAgenda = () => {
   const [showReschedule, setShowReschedule] = useState(false);
   const [reschedDate, setReschedDate] = useState("");
   const [reschedTime, setReschedTime] = useState("");
+  const [showEditRdv, setShowEditRdv] = useState(false);
+  const [editMotif, setEditMotif] = useState<AppointmentType>("Consultation");
+  const [editNotes, setEditNotes] = useState("");
+  const [editPhone, setEditPhone] = useState("");
 
   // New RDV form
   const [newRdvPatient, setNewRdvPatient] = useState("");
