@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Stethoscope, ChevronDown, Menu, X, Calendar } from "lucide-react";
 import { useState } from "react";
 
-import React from "react";
-
-const PublicHeader = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
+const PublicHeader = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [annuaireOpen, setAnnuaireOpen] = useState(false);
 
@@ -78,8 +76,6 @@ const PublicHeader = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElem
       )}
     </nav>
   );
-});
-
-PublicHeader.displayName = "PublicHeader";
+};
 
 export default PublicHeader;
