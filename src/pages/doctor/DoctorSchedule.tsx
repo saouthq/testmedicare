@@ -53,7 +53,6 @@ import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
-import { updateWaitingStatus, waitingRoomStore } from "@/stores/doctorStore";
 import { useSharedAppointments, updateAppointmentStatus, createAppointment as storeCreateAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
 import { useSharedBlockedSlots, addBlockedSlot, updateBlockedSlot as storeUpdateBlock, removeBlockedSlot } from "@/stores/sharedBlockedSlotsStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
@@ -2303,16 +2302,7 @@ const DoctorSchedule = () => {
           if (payload) rescheduleAppointment(id, payload.newDate, payload.newTime);
           break;
       }
-      // Sync waiting room
-      const apt = apts.find((a) => a.id === id);
-      if (apt) {
-        const entry = waitingRoomStore.read().find((e) => e.patient === apt.patient);
-        if (entry) {
-          if (action === "arrived") updateWaitingStatus(entry.id, "arrived");
-          if (action === "start") updateWaitingStatus(entry.id, "in_consultation");
-          if (["done", "cancel", "absent"].includes(action)) updateWaitingStatus(entry.id, "completed");
-        }
-      }
+      // Status is already synced via sharedAppointmentsStore — no need for separate waitingRoom sync
       const MSGS: Record<string, string> = {
         confirm: "RDV confirmé", arrived: "Patient arrivé", start: "Consultation démarrée",
         done: "Consultation terminée", cancel: "RDV annulé", absent: "Patient marqué absent",

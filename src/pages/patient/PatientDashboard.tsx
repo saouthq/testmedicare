@@ -12,20 +12,44 @@ import { useState, useMemo } from "react";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent } from "@/lib/calendarExport";
-import { usePatientAppointments, usePatientProfile, cancelAppointment, getDashboardStats } from "@/stores/patientStore";
+import { usePatientProfile } from "@/stores/patientStore";
 import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors, mockHealthDocuments, mockVaccinations, mockTreatments } from "@/data/mockData";
 import { useNotifications } from "@/stores/notificationsStore";
 import { requestRenewal } from "@/stores/doctorStore";
+import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import type { SharedAppointment } from "@/types/appointment";
 
 const PatientDashboard = () => {
-  const [drawerApt, setDrawerApt] = useState<number | null>(null);
-  const [showCancelConfirm, setShowCancelConfirm] = useState<number | null>(null);
+  const [drawerApt, setDrawerApt] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<typeof mockHealthDocuments[0] | null>(null);
-  const [appointments, setAppointments] = usePatientAppointments();
+  const [allAppointments] = useSharedAppointments();
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
 
-  const stats = useMemo(() => getDashboardStats(), [appointments, profile]);
+  // Current patient ID = 1 (Amine Ben Ali)
+  const PATIENT_ID = 1;
+  const appointments = useMemo(() => 
+    allAppointments.filter(a => a.patientId === PATIENT_ID && !["done", "cancelled", "absent"].includes(a.status))
+      .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)),
+    [allAppointments]
+  );
+
+  const stats = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const todayApts = appointments.filter(a => a.date === today);
+    const activePrescriptions = recentPrescriptions.filter((p: any) => p.status === "active" || true).length;
+    const pendingResults = mockHealthDocuments.filter(d => d.type === "Analyse").length;
+    return {
+      nextApt: appointments.length > 0 ? `${appointments[0].date} ${appointments[0].startTime}` : "Aucun",
+      upcomingCount: appointments.length,
+      activePrescriptions,
+      pendingResults,
+      patientName: `${profile.firstName} ${profile.lastName}`,
+      todayCount: todayApts.length,
+    };
+  }, [appointments, profile]);
+
   const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
   const unreadNotifs = crossNotifs.filter(n => !n.read).length;
 
@@ -46,7 +70,8 @@ const PatientDashboard = () => {
   // Upcoming vaccination reminder
   const nextVaccination = mockVaccinations.find(v => v.nextDate);
 
-  const handleCancel = (id: number) => {
+  const handleCancel = (id: string) => {
+    const { cancelAppointment } = require("@/stores/sharedAppointmentsStore");
     cancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);

@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { mockSecretaryTemplates, mockSecretaryAppointments } from "@/data/mockData";
+import { mockSecretaryTemplates } from "@/data/mockData";
+import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
 
 type SMSTab = "send" | "templates" | "history" | "auto";
 
@@ -45,6 +46,7 @@ const SecretarySMS = () => {
   const [templates, setTemplates] = useState(mockSecretaryTemplates);
   const [history] = useState(mockHistory);
   const [rules, setRules] = useState(autoRules);
+  const [allAppointments] = useSharedAppointments();
 
   // Send tab
   const [recipients, setRecipients] = useState<string[]>([]);
@@ -53,7 +55,11 @@ const SecretarySMS = () => {
   const [scheduleSend, setScheduleSend] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
 
-  const tomorrowAppts = mockSecretaryAppointments.filter(a => a.status === "upcoming");
+  // Tomorrow's appointments from shared store
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+  const tomorrowAppts = allAppointments.filter(a => a.date === tomorrowStr && !["cancelled", "absent", "done"].includes(a.status));
 
   const handleSendBulk = () => {
     if (recipients.length === 0 && !messageText.trim()) return;

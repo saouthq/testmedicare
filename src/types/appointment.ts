@@ -47,6 +47,9 @@ export interface SharedAppointment {
   isNew?: boolean;
   arrivedAt?: string;
   waitTime?: number;
+  tags?: ("urgent" | "retard")[];
+  internalNote?: string;
+  createdBy?: "doctor" | "secretary" | "patient" | "public";
 }
 
 /** Blocked slot interface */

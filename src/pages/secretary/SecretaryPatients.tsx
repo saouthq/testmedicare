@@ -4,18 +4,19 @@ import { Search, Phone, Mail, Plus, ChevronRight, Calendar, Edit, FileText, Cloc
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { mockSecretaryPatientsWithHistory } from "@/data/mockData";
+import { useSharedPatients, addPatient, updatePatient, type SharedPatient } from "@/stores/sharedPatientsStore";
 
 type DetailTab = "info" | "history" | "billing";
 
 const SecretaryPatients = () => {
   const [search, setSearch] = useState("");
   const [showNewPatient, setShowNewPatient] = useState(false);
-  const [patients, setPatients] = useState(mockSecretaryPatientsWithHistory);
+  const [allPatients] = useSharedPatients();
+  const patients = allPatients;
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [detailTab, setDetailTab] = useState<DetailTab>("info");
-  const [editForm, setEditForm] = useState<typeof mockSecretaryPatientsWithHistory[0] | null>(null);
+  const [editForm, setEditForm] = useState<SharedPatient | null>(null);
   const [saved, setSaved] = useState(false);
 
   const selectedPatient = selectedPatientId ? patients.find(p => p.id === selectedPatientId) : null;
@@ -32,19 +33,16 @@ const SecretaryPatients = () => {
   };
 
   const handleSaveEdit = () => {
-    // TODO BACKEND: PUT /api/patients/{id}
     if (editForm) {
-      setPatients(prev => prev.map(p => p.id === editForm.id ? editForm : p));
+      updatePatient(editForm.id, editForm);
       setEditMode(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
   };
 
-  const handleAddPatient = (newP: Omit<typeof mockSecretaryPatientsWithHistory[0], "id" | "history">) => {
-    // TODO BACKEND: POST /api/patients
-    const id = Math.max(...patients.map(p => p.id)) + 1;
-    setPatients(prev => [{ ...newP, id, history: [] }, ...prev]);
+  const handleAddPatient = (newP: Omit<SharedPatient, "id">) => {
+    addPatient(newP);
     setShowNewPatient(false);
   };
 

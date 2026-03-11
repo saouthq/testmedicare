@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { mockAssurances, mockPatientConsents } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { usePatientProfile, updatePatientProfile } from "@/stores/patientStore";
+import { updatePatient } from "@/stores/sharedPatientsStore";
 
 type Tab = "profile" | "notifications" | "security" | "privacy" | "consents";
 
