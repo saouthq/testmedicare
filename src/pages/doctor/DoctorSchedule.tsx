@@ -181,10 +181,12 @@ const STATUS_LEFT: Record<ApptStatus, string> = {
   pending: "border-l-warning",
   confirmed: "border-l-accent",
   arrived: "border-l-primary",
+  in_waiting: "border-l-warning",
   in_progress: "border-l-primary",
   done: "border-l-muted-foreground/30",
   cancelled: "border-l-destructive/40",
   absent: "border-l-destructive/30",
+};
 };
 
 // ─── Layout constants ─────────────────────────────────────────
