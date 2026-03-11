@@ -205,7 +205,7 @@ const PatientDashboard = () => {
                       <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
                       <p className="text-[11px] text-muted-foreground">{d.source} · {d.date}</p>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => toast({ title: "Aperçu", description: d.name })}>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPreviewDoc(d)}>
                       <Eye className="h-3.5 w-3.5" />
                     </Button>
                   </div>
