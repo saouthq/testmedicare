@@ -140,7 +140,7 @@ import AdminSatisfaction from "./pages/admin/AdminSatisfaction";
 import AdminAPIPartners from "./pages/admin/AdminAPIPartners";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminGuard from "./components/admin/AdminGuard";
-import DoctorSubscription from "./pages/doctor/DoctorSubscription";
+// DoctorSubscription removed — route redirects to billing
 
 // Shared
 import Messages from "./pages/messaging/Messages";
@@ -230,7 +230,7 @@ const App = () => (
           <Route path="/dashboard/doctor/leaves" element={<DoctorLeaves />} />
           <Route path="/dashboard/doctor/documents" element={<DoctorDocuments />} />
           <Route path="/dashboard/doctor/tarifs" element={<DoctorTarifs />} />
-          <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
+          {/* duplicate removed */}
 
           {/* Pharmacy */}
           <Route path="/dashboard/pharmacy" element={<PharmacyDashboard />} />
