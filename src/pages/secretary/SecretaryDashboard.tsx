@@ -157,48 +157,32 @@ const SecretaryDashboard = () => {
 
   // Teleconsult panel now reads from shared store — no local filtering needed
 
-  /* ── Waiting room handlers ── */
+  /* ── Waiting room handlers — all write to shared store ── */
 
-  const handleCheckin = (id: number) => {
-    // TODO BACKEND: PATCH /api/appointments/{id}/checkin
-    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "arrived" as WaitingStatus } : w));
+  const handleCheckin = (id: string) => {
+    updateAppointmentStatus(id, "arrived", { arrivedAt: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) });
     const p = waitingRoom.find(w => w.id === id);
-    // Sync to doctor store
-    updateWaitingStatus(id, "arrived");
     toast({ title: "Check-in effectué", description: `${p?.patient} est arrivé(e). Visible côté médecin.` });
   };
 
-  const handleCallPatient = (id: number) => {
-    // TODO BACKEND: PATCH /api/appointments/{id}/call
-    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "called" as WaitingStatus } : w));
-    // Sync to doctor store
-    updateWaitingStatus(id, "waiting");
+  const handleCallPatient = (id: string) => {
+    sendToWaitingRoom(id);
   };
 
-  const handleSendToConsult = (id: number) => {
-    // TODO BACKEND: PATCH /api/appointments/{id}/start-consultation
-    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "in_consultation" as WaitingStatus } : w));
-    setAppointments(prev => prev.map(a => {
-      const wr = waitingRoom.find(w => w.id === id);
-      if (wr && a.patient === wr.patient) return { ...a, status: "in_progress" };
-      return a;
-    }));
-    // Sync to doctor store
+  const handleSendToConsult = (id: string) => {
+    startAppointmentConsultation(id);
     const p = waitingRoom.find(w => w.id === id);
-    if (p) startConsultation(p.patient);
+    pushNotification({ type: "generic", title: "Patient en consultation", message: `${p?.patient} est entré en consultation.`, targetRole: "doctor", actionLink: "/dashboard/doctor/schedule" });
     toast({ title: "Patient envoyé en consultation", description: `${p?.patient} — visible côté médecin.` });
   };
 
-  const handleFinish = (id: number) => {
-    // TODO BACKEND: PATCH /api/appointments/{id}/finish
-    setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "done" as WaitingStatus } : w));
-    // Sync to doctor store
+  const handleFinish = (id: string) => {
+    completeAppointmentConsultation(id);
     const p = waitingRoom.find(w => w.id === id);
-    if (p) completeConsultation(p.patient);
     toast({ title: "Consultation terminée", description: `${p?.patient} — prêt pour facturation.` });
   };
 
-  const handleMarkAbsent = (id: number) => {
+  const handleMarkAbsent = (id: string) => {
     const p = waitingRoom.find(w => w.id === id);
     setConfirmAction({
       open: true,
@@ -207,10 +191,8 @@ const SecretaryDashboard = () => {
       variant: "warning",
       confirmLabel: "Marquer absent",
       onConfirm: () => {
-        // TODO BACKEND: PATCH /api/appointments/{id}/no-show
-        setWaitingRoom(prev => prev.map(w => w.id === id ? { ...w, status: "absent" as WaitingStatus } : w));
-        // Write to cross-role store → patient sees "absent" in their RDV list
-        markPatientAbsent(id, p?.patient || "", "Dr. Ahmed Bouazizi");
+        markAppointmentAbsent(id);
+        pushNotification({ type: "appointment_absent", title: "RDV marqué absent", message: `${p?.patient} — RDV non honoré.`, targetRole: "patient", actionLink: "/dashboard/patient/appointments" });
         toast({ title: "Patient marqué absent", description: `${p?.patient} — RDV non honoré. Notification envoyée au patient.` });
         setConfirmAction(prev => ({ ...prev, open: false }));
       },
@@ -219,8 +201,7 @@ const SecretaryDashboard = () => {
 
   const handleSaveNote = () => {
     if (!noteTarget || !noteText.trim()) return;
-    // TODO BACKEND: POST /api/appointments/{id}/notes
-    setWaitingRoom(prev => prev.map(w => w.id === noteTarget ? { ...w, internalNote: noteText } : w));
+    updateAppointmentStatus(noteTarget, todayApts.find(a => a.id === noteTarget)?.status || "confirmed", { notes: noteText });
     toast({ title: "Note enregistrée" });
     setNoteTarget(null);
     setNoteText("");
