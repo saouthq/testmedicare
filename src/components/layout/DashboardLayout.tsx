@@ -168,6 +168,7 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
       { title: "Config Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
+      { title: "Contrôle Actions", url: "/dashboard/admin/action-gating", icon: ShieldCheck },
       { title: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
       { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
       { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
