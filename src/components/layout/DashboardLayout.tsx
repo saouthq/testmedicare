@@ -16,6 +16,7 @@ import {
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
   FlaskConical, ClipboardList, Clock, UserCircle, Building2, Menu, X,
   Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel,
+  Video, CalendarDays, FileDown, Key, Star, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
