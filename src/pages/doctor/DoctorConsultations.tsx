@@ -86,17 +86,29 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { toast } from "@/hooks/use-toast";
-import { mockDoctorConsultations } from "@/data/mockData";
+import { useSharedAppointments, updateAppointmentStatus, cancelAppointment as sharedCancel, markAppointmentAbsent, completeAppointmentConsultation, startAppointmentConsultation, getTodayDate } from "@/stores/sharedAppointmentsStore";
+import type { SharedAppointment } from "@/types/appointment";
 import { cn } from "@/lib/utils";
 
 type ConsultFilter = "today" | "week" | "all";
 type ConsultStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "no_show";
 
-type DoctorConsultationUI = (typeof mockDoctorConsultations)[number] & {
+interface DoctorConsultationUI {
+  id: number;
+  patient: string;
+  date: string;
+  time: string;
+  motif: string;
+  notes: string;
+  prescriptions: number;
+  assurance: string;
+  amount: string;
+  avatar: string;
   status: ConsultStatus;
   email?: string;
   phone?: string;
-};
+  sharedId?: string; // link back to shared store
+}
 
 type GeneratedDocKind = "rx" | "lab" | "report";
 type GeneratedDoc = {
