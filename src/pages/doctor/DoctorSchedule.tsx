@@ -54,7 +54,12 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 import { updateWaitingStatus, waitingRoomStore } from "@/stores/doctorStore";
-import { mockPatients } from "@/data/mockData";
+import { useSharedAppointments, updateAppointmentStatus, createAppointment as storeCreateAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import { useSharedBlockedSlots, addBlockedSlot, updateBlockedSlot as storeUpdateBlock, removeBlockedSlot } from "@/stores/sharedBlockedSlotsStore";
+import { useSharedPatients } from "@/stores/sharedPatientsStore";
+import { pushNotification } from "@/stores/notificationsStore";
+import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey } from "@/types/appointment";
+import { computeEndTime, DEFAULT_TYPE_COLORS as SHARED_TYPE_COLORS, type AppointmentStatus } from "@/types/appointment";
 
 // ─── Types ────────────────────────────────────────────────────
 type ViewMode = "week" | "day" | "month" | "list";
