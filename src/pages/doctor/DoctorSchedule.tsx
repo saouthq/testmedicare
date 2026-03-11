@@ -2541,7 +2541,15 @@ const DoctorSchedule = () => {
             setDefDate(undefined);
             setDefTime(undefined);
           }}
-          onCreate={(a) => setApts((p) => [...p, a])}
+          onCreate={(a) => {
+            storeCreateAppointment({
+              date: a.date, startTime: a.startTime, duration: a.duration,
+              patient: a.patient, patientId: a.patientId, avatar: a.avatar,
+              phone: a.phone, motif: a.motif, type: a.type, status: a.status,
+              assurance: a.assurance, doctor: CURRENT_DOCTOR,
+              teleconsultation: a.teleconsultation, notes: a.notes, isNew: a.isNew,
+            });
+          }}
         />
       )}
 
