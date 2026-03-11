@@ -56,7 +56,6 @@ const PublicSearch = () => {
     if (filterMaxPrice && d.price > Number(filterMaxPrice)) return false;
     if (filterLangue && !d.languages?.includes(filterLangue)) return false;
     if (filterGouvernorat && !d.address.includes(filterGouvernorat)) return false;
-    if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     return true;
   });
   
