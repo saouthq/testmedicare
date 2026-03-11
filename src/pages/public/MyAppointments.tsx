@@ -248,13 +248,18 @@ const MyAppointments = () => {
                   </div>
                 </div>
 
-                {canCancel(selectedAppointment) && (
+                {canCancelApt(selectedAppointment) && (
                   <div className="pt-2">
                     {showCancelConfirm ? (
                       <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-3">
                         <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                        <span className="text-xs text-destructive font-medium flex-1">Confirmer l'annulation de ce rendez-vous ?</span>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => handleCancel(selectedAppointment.id)}>Oui, annuler</Button>
+                        <span className="text-xs text-destructive font-medium flex-1">
+                          {checkCanCancel(selectedAppointment).penalty
+                            ? "Annulation tardive (< 24h). Des frais peuvent s'appliquer. Confirmer ?"
+                            : "Confirmer l'annulation de ce rendez-vous ?"
+                          }
+                        </span>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => handleCancel(selectedAppointment)}>Oui, annuler</Button>
                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowCancelConfirm(false)}>Non</Button>
                       </div>
                     ) : (
