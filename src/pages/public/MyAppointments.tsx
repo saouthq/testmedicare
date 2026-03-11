@@ -69,9 +69,17 @@ const MyAppointments = () => {
     }
   };
 
-  const handleCancel = (id: string) => {
-    // TODO BACKEND: Check 24h cancellation policy
-    cancelAppointment(id);
+  const handleCancel = (apt: SharedAppointment) => {
+    const check = checkCanCancel(apt);
+    if (!check.allowed) {
+      toast({ title: "Annulation impossible", description: check.reason, variant: "destructive" });
+      return;
+    }
+    if (check.penalty) {
+      // Still allow but warn
+      toast({ title: "Annulation tardive", description: check.reason, variant: "destructive" });
+    }
+    cancelAppointment(apt.id);
     setShowCancelConfirm(false);
     setSelectedAppointment(null);
     toast({ title: "RDV annulé", description: "Votre rendez-vous a été annulé avec succès." });
