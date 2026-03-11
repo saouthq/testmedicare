@@ -56,10 +56,17 @@ const PharmaciesDirectory = () => {
         </div>
         <p className="text-sm text-muted-foreground mb-4">{filtered.length} pharmacie(s) trouvée(s)</p>
         <div className="grid gap-4 sm:grid-cols-2">
-          {filtered.map(p => (
+          {filtered.slice(0, showCount).map(p => (
             <DirectoryCard key={p.id} name={p.name} city={p.city} address={p.address} phone={p.phone} tags={[p.horaires]} href={`/pharmacy/${p.slug}`} badge={p.deGarde ? "🌙 De garde" : undefined} badgeColor="bg-accent/10 text-accent" />
           ))}
         </div>
+        {showCount < filtered.length && (
+          <div className="text-center mt-6">
+            <Button variant="outline" onClick={() => setShowCount(prev => prev + 10)}>
+              Voir plus ({filtered.length - showCount} restant{filtered.length - showCount > 1 ? "s" : ""})
+            </Button>
+          </div>
+        )}
       </div>
       <PublicFooter />
     </div>
