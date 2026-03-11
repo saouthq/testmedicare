@@ -171,6 +171,7 @@ const STATUS_CLS: Record<ApptStatus, string> = {
   pending: "bg-warning/10 text-warning border-warning/20",
   confirmed: "bg-accent/10 text-accent border-accent/20",
   arrived: "bg-primary/10 text-primary border-primary/20",
+  in_waiting: "bg-warning/10 text-warning border-warning/20",
   in_progress: "bg-primary/10 text-primary border-primary/20",
   done: "bg-muted text-muted-foreground border-border",
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
