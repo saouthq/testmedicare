@@ -7,8 +7,7 @@ import {
   Search, Plus, Download, Banknote, FileText, CheckCircle2, Clock,
   AlertCircle, CreditCard, ArrowUpRight, Eye, Printer, Send, Receipt, Shield, X, Save, Trash2
 } from "lucide-react";
-import { mockSecretaryBillingInvoices } from "@/data/mockData";
-import { useSharedBilling, initBillingStoreIfEmpty, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
+import { useSharedBilling, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
 import { useSharedTarifs, getActiveActes } from "@/stores/sharedTarifsStore";
 import { toast } from "@/hooks/use-toast";
 
