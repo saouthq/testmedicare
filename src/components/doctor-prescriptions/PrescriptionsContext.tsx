@@ -4,7 +4,7 @@
  * // TODO BACKEND: Remplacer mockDoctorPrescriptions par GET /api/prescriptions
  */
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { mockDoctorPrescriptions } from "@/data/mockData";
+import { useDoctorPrescriptions, markPrescriptionSent, duplicatePrescription } from "@/stores/doctorPrescriptionsStore";
 import type { Prescription } from "@/types";
 import type { PrescriptionFilter } from "./types";
 import { toast } from "@/hooks/use-toast";
