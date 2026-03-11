@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { requestRenewal } from "@/stores/doctorStore";
 
-import { mockPatientPrescriptions as initialPrescriptions, mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
+import { mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
+import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useSharedPrescriptions, sendPrescriptionToPharmacies } from "@/stores/prescriptionsStore";
 
 const MAX_PHARMACIES = 6;
