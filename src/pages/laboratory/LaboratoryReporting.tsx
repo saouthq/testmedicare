@@ -51,7 +51,7 @@ type Period = "week" | "month" | "year";
 const LaboratoryReporting = () => {
   const [period, setPeriod] = useState<Period>("week");
 
-  useEffect(() => { initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]); }, []);
+  // Store already seeded centrally by seedStores
   const [demands] = useSharedLabDemands();
 
   // Compute exam type distribution from actual store data

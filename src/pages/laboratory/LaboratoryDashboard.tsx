@@ -23,10 +23,7 @@ const statusConfig: Record<string, { label: string; cls: string; icon: any }> = 
 };
 
 const LaboratoryDashboard = () => {
-  // Use cross-role store for real-time data
-  useEffect(() => {
-    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
-  }, []);
+  // Store already seeded centrally by seedStores
 
   const [demands] = useSharedLabDemands();
   const [search, setSearch] = useState("");
