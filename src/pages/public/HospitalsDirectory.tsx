@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
 import DirectoryCard from "@/components/public/DirectoryCard";
@@ -13,12 +14,15 @@ const cities = ["Toutes", ...Array.from(new Set(mockHospitals.map(h => h.city)))
 const HospitalsDirectory = () => {
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
+  const [showCount, setShowCount] = useState(10);
 
   const filtered = mockHospitals.filter(h => {
     if (city !== "Toutes" && h.city !== city) return false;
     if (search && !h.name.toLowerCase().includes(search.toLowerCase()) && !h.services.some(s => s.toLowerCase().includes(search.toLowerCase()))) return false;
     return true;
   });
+
+  const visible = filtered.slice(0, showCount);
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,10 +45,17 @@ const HospitalsDirectory = () => {
         </div>
         <p className="text-sm text-muted-foreground mb-4">{filtered.length} hôpital(aux) trouvé(s)</p>
         <div className="grid gap-4 sm:grid-cols-2">
-          {filtered.map(h => (
+          {visible.map(h => (
             <DirectoryCard key={h.id} name={h.name} city={h.city} address={h.address} phone={h.phone} tags={h.services} href={`/hospital/${h.slug}`} badge={h.urgences ? "🚨 Urgences" : undefined} badgeColor="bg-destructive/10 text-destructive" />
           ))}
         </div>
+        {showCount < filtered.length && (
+          <div className="text-center mt-6">
+            <Button variant="outline" onClick={() => setShowCount(prev => prev + 10)}>
+              Voir plus ({filtered.length - showCount} restant{filtered.length - showCount > 1 ? "s" : ""})
+            </Button>
+          </div>
+        )}
       </div>
       <PublicFooter />
     </div>
