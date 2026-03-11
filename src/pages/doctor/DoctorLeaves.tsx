@@ -1,11 +1,11 @@
 /**
  * DoctorLeaves — Gestion des congés et absences du médecin
- * Calendrier visuel, formulaire, historique, notifications patients
- * // TODO BACKEND: Persister les congés, notifier les patients, gérer les remplacements
+ * Connected to sharedLeavesStore → auto-generates blocked slots in agenda
+ * // TODO BACKEND: Persister les congés, notifier les patients
  */
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,55 +16,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CalendarDays, Plus, Trash2, Bell, UserCheck, Clock, Calendar, AlertTriangle } from "lucide-react";
-
-interface Leave {
-  id: number;
-  startDate: string;
-  endDate: string;
-  motif: string;
-  type: "conge" | "formation" | "maladie" | "personnel";
-  replacementDoctor: string;
-  notifyPatients: boolean;
-  status: "upcoming" | "active" | "past";
-  affectedAppointments: number;
-}
+import { useSharedLeaves, createLeave, deleteLeave } from "@/stores/sharedLeavesStore";
 
 const typeLabels: Record<string, string> = {
-  conge: "Congé annuel",
-  formation: "Formation",
-  maladie: "Arrêt maladie",
-  personnel: "Motif personnel",
+  conge: "Congé annuel", formation: "Formation", maladie: "Arrêt maladie", personnel: "Motif personnel",
 };
-
 const typeColors: Record<string, string> = {
-  conge: "bg-primary/10 text-primary",
-  formation: "bg-accent/10 text-accent-foreground",
-  maladie: "bg-destructive/10 text-destructive",
-  personnel: "bg-muted text-muted-foreground",
+  conge: "bg-primary/10 text-primary", formation: "bg-accent/10 text-accent-foreground",
+  maladie: "bg-destructive/10 text-destructive", personnel: "bg-muted text-muted-foreground",
 };
-
-const initialLeaves: Leave[] = [
-  { id: 1, startDate: "2026-03-15", endDate: "2026-03-22", motif: "Vacances de printemps", type: "conge", replacementDoctor: "Dr. Sonia Gharbi", notifyPatients: true, status: "upcoming", affectedAppointments: 12 },
-  { id: 2, startDate: "2026-04-10", endDate: "2026-04-11", motif: "Congrès cardiologie Sousse", type: "formation", replacementDoctor: "", notifyPatients: true, status: "upcoming", affectedAppointments: 4 },
-  { id: 3, startDate: "2026-02-01", endDate: "2026-02-03", motif: "Grippe", type: "maladie", replacementDoctor: "", notifyPatients: true, status: "past", affectedAppointments: 6 },
-  { id: 4, startDate: "2026-01-15", endDate: "2026-01-20", motif: "Congé familial", type: "personnel", replacementDoctor: "Dr. Khaled Hammami", notifyPatients: true, status: "past", affectedAppointments: 8 },
-];
-
 const replacementDoctors = ["Dr. Sonia Gharbi", "Dr. Khaled Hammami", "Dr. Leila Chebbi", "Dr. Nabil Karray"];
 
 const DoctorLeaves = () => {
-  const [leaves, setLeaves] = useState<Leave[]>(initialLeaves);
+  const [leaves] = useSharedLeaves();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
   const [form, setForm] = useState({
-    startDate: "", endDate: "", motif: "", type: "conge" as Leave["type"],
+    startDate: "", endDate: "", motif: "", type: "conge" as "conge" | "formation" | "maladie" | "personnel",
     replacementDoctor: "", notifyPatients: true,
   });
 
   const filtered = leaves.filter(l => filter === "all" || l.status === filter);
   const totalDaysThisYear = leaves.filter(l => l.startDate.startsWith("2026")).reduce((sum, l) => {
-    const start = new Date(l.startDate);
-    const end = new Date(l.endDate);
+    const start = new Date(l.startDate), end = new Date(l.endDate);
     return sum + Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   }, 0);
   const nextLeave = leaves.find(l => l.status === "upcoming");
@@ -72,26 +46,24 @@ const DoctorLeaves = () => {
 
   const handleSubmit = () => {
     if (!form.startDate || !form.endDate || !form.motif) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
-      return;
+      toast.error("Veuillez remplir tous les champs obligatoires"); return;
     }
-    const newLeave: Leave = {
-      id: Date.now(),
+    createLeave({
       ...form,
       status: "upcoming",
       affectedAppointments: Math.floor(Math.random() * 10) + 2,
-    };
-    setLeaves(prev => [newLeave, ...prev]);
+      doctor: "Dr. Ahmed Bouazizi",
+    });
     setDrawerOpen(false);
     setForm({ startDate: "", endDate: "", motif: "", type: "conge", replacementDoctor: "", notifyPatients: true });
-    toast.success("Absence enregistrée", {
+    toast.success("Absence enregistrée — créneaux bloqués dans l'agenda", {
       description: form.notifyPatients ? "Les patients concernés seront notifiés." : undefined,
     });
   };
 
   const handleDelete = (id: number) => {
-    setLeaves(prev => prev.filter(l => l.id !== id));
-    toast.success("Absence supprimée");
+    deleteLeave(id);
+    toast.success("Absence supprimée — créneaux débloqués");
   };
 
   const getDuration = (start: string, end: string) => {
@@ -101,7 +73,6 @@ const DoctorLeaves = () => {
 
   return (
     <DashboardLayout role="doctor" title="Congés & Absences">
-      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><CalendarDays className="h-5 w-5 text-primary" /></div>
@@ -121,7 +92,6 @@ const DoctorLeaves = () => {
         </CardContent></Card>
       </div>
 
-      {/* Actions bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex gap-2">
           {(["all", "upcoming", "past"] as const).map(f => (
@@ -133,7 +103,6 @@ const DoctorLeaves = () => {
         <Button size="sm" onClick={() => setDrawerOpen(true)}><Plus className="h-4 w-4 mr-1" />Déclarer une absence</Button>
       </div>
 
-      {/* List */}
       <div className="space-y-3">
         {filtered.map(leave => (
           <Card key={leave.id} className={leave.status === "past" ? "opacity-60" : ""}>
@@ -148,9 +117,7 @@ const DoctorLeaves = () => {
                   {new Date(leave.startDate).toLocaleDateString("fr-FR")} → {new Date(leave.endDate).toLocaleDateString("fr-FR")} · {getDuration(leave.startDate, leave.endDate)}
                 </p>
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                  {leave.replacementDoctor && (
-                    <span className="flex items-center gap-1"><UserCheck className="h-3 w-3" />{leave.replacementDoctor}</span>
-                  )}
+                  {leave.replacementDoctor && <span className="flex items-center gap-1"><UserCheck className="h-3 w-3" />{leave.replacementDoctor}</span>}
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{leave.affectedAppointments} RDV impactés</span>
                   {leave.notifyPatients && <span className="flex items-center gap-1"><Bell className="h-3 w-3" />Patients notifiés</span>}
                 </div>
@@ -171,7 +138,6 @@ const DoctorLeaves = () => {
         )}
       </div>
 
-      {/* Drawer */}
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Déclarer une absence</SheetTitle></SheetHeader>
@@ -181,11 +147,9 @@ const DoctorLeaves = () => {
               <div><Label>Date de fin *</Label><Input type="date" value={form.endDate} onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))} /></div>
             </div>
             <div><Label>Type d'absence</Label>
-              <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v as Leave["type"] }))}>
+              <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v as typeof form.type }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(typeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{Object.entries(typeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Motif *</Label><Textarea value={form.motif} onChange={e => setForm(p => ({ ...p, motif: e.target.value }))} placeholder="Ex: Vacances, formation, etc." /></div>
@@ -199,10 +163,7 @@ const DoctorLeaves = () => {
               </Select>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Notifier les patients</p>
-                <p className="text-xs text-muted-foreground">Envoyer un SMS aux patients ayant un RDV</p>
-              </div>
+              <div><p className="text-sm font-medium">Notifier les patients</p><p className="text-xs text-muted-foreground">Envoyer un SMS aux patients ayant un RDV</p></div>
               <Switch checked={form.notifyPatients} onCheckedChange={v => setForm(p => ({ ...p, notifyPatients: v }))} />
             </div>
             <Button className="w-full" onClick={handleSubmit}>Enregistrer l'absence</Button>
