@@ -100,9 +100,10 @@ const PharmacyPrescriptions = () => {
     setItemAvail(avail);
   };
 
-  /* ── Save item changes to state ── */
+  /* ── Save item changes to pharmacy store ── */
   const saveItems = (id: string) => {
-    setPrescriptions(prev => prev.map(p => {
+    const { pharmacyRxStore } = require("@/stores/pharmacyStore");
+    pharmacyRxStore.set((prev: PharmacyPrescription[]) => prev.map((p: PharmacyPrescription) => {
       if (p.id !== id) return p;
       return {
         ...p,
