@@ -375,7 +375,7 @@ const PatientDashboard = () => {
                 {currentApt.type === "teleconsultation" && <Link to="/dashboard/patient/teleconsultation" className="block"><Button className="w-full gradient-primary text-primary-foreground"><Video className="h-4 w-4 mr-2" />Rejoindre la téléconsultation</Button></Link>}
                 <div className="grid grid-cols-2 gap-2">
                   <Link to="/dashboard/patient/messages"><Button variant="outline" className="w-full text-xs"><MessageSquare className="h-3.5 w-3.5 mr-1" />Contacter</Button></Link>
-                  {currentApt.canModify && <Link to={`/booking/${currentApt.doctorId || 1}`}><Button variant="outline" className="w-full text-xs"><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button></Link>}
+                  {currentApt.canModify && <Button variant="outline" className="w-full text-xs" onClick={() => { setDrawerApt(null); toast({ title: "Reprogrammer", description: "Utilisez la page 'Mes rendez-vous' pour reprogrammer ce RDV." }); }}><RefreshCw className="h-3.5 w-3.5 mr-1" />Déplacer</Button>}
                 </div>
                 <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => { downloadCalendarEvent({ title: `RDV ${currentApt.doctor}`, startDate: new Date(currentApt.date + " " + currentApt.time), location: currentApt.address || "" }); toast({ title: "Calendrier", description: "Fichier .ics téléchargé." }); }}><CalendarPlus className="h-3.5 w-3.5 mr-1" />Ajouter au calendrier</Button>
                 {currentApt.canCancel && (
