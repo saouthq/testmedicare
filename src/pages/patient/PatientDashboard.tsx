@@ -78,12 +78,12 @@ const PatientDashboard = () => {
     if (profile.treatingDoctor) done++;
     if (profile.insurance && profile.insurance !== "none") done++;
     if (profile.allergies.length > 0) done++;
-    if (mockVaccinations.length > 0) done++;
-    if (mockTreatments.length > 0) done++;
-    if (mockHealthDocuments.length > 0) done++;
+    if (health.vaccinations.length > 0) done++;
+    if (health.treatments.length > 0) done++;
+    if (health.documents.length > 0) done++;
     if (profile.dob) done++;
     return Math.round((done / total) * 100);
-  }, [profile]);
+  }, [profile, health]);
 
   const nextVaccination = mockVaccinations.find(v => v.nextDate);
 
