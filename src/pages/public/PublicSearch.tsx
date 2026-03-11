@@ -36,6 +36,9 @@ const PublicSearch = () => {
   const [filterTeleconsult, setFilterTeleconsult] = useState(searchParams.get("teleconsult") === "true");
   const [filterToday, setFilterToday] = useState(searchParams.get("today") === "true");
   const [filterAssurance, setFilterAssurance] = useState(searchParams.get("assurance") === "true");
+  const [filterMaxPrice, setFilterMaxPrice] = useState("");
+  const [filterLangue, setFilterLangue] = useState("");
+  const [filterGouvernorat, setFilterGouvernorat] = useState("");
 
   // Apply filters from URL on mount
   useEffect(() => {
