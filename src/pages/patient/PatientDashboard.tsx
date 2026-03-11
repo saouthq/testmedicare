@@ -41,11 +41,18 @@ const PatientDashboard = () => {
     [allAppointments]
   );
 
+  const recentPrescriptions = useMemo(() =>
+    doctorRx.filter(rx => rx.status === "active").slice(0, 3).map(rx => ({
+      id: rx.id, doctor: rx.doctor, date: rx.date, items: rx.items.length, status: rx.status,
+    })),
+    [doctorRx]
+  );
+
   const stats = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
     const todayApts = appointments.filter(a => a.date === today);
-    const activePrescriptions = recentPrescriptions.filter((p: any) => p.status === "active" || true).length;
-    const pendingResults = mockHealthDocuments.filter(d => d.type === "Analyse").length;
+    const activePrescriptions = recentPrescriptions.length;
+    const pendingResults = health.documents.filter(d => d.type === "Analyse").length;
     return {
       nextApt: appointments.length > 0 ? `${appointments[0].date} ${appointments[0].startTime}` : "Aucun",
       upcomingCount: appointments.length,
@@ -60,7 +67,7 @@ const PatientDashboard = () => {
         allergies: profile.allergies || [],
       },
     };
-  }, [appointments, profile]);
+  }, [appointments, profile, recentPrescriptions, health]);
 
   const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
   const unreadNotifs = crossNotifs.filter(n => !n.read).length;
