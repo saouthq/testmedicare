@@ -53,6 +53,9 @@ import DoctorConnect from "./pages/doctor/DoctorConnect";
 import DoctorAIAssistant from "./pages/doctor/DoctorAIAssistant";
 import DoctorWaitingRoom from "./pages/doctor/DoctorWaitingRoom";
 import DoctorProtocols from "./pages/doctor/DoctorProtocols";
+import DoctorLeaves from "./pages/doctor/DoctorLeaves";
+import DoctorDocuments from "./pages/doctor/DoctorDocuments";
+import DoctorTarifs from "./pages/doctor/DoctorTarifs";
 
 // Pharmacy
 import PharmacyDashboard from "./pages/pharmacy/PharmacyDashboard";
@@ -133,6 +136,9 @@ import AdminOnboarding from "./pages/admin/AdminOnboarding";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminDoctorPerformance from "./pages/admin/AdminDoctorPerformance";
 import AdminContentPages from "./pages/admin/AdminContentPages";
+import AdminSatisfaction from "./pages/admin/AdminSatisfaction";
+import AdminAPIPartners from "./pages/admin/AdminAPIPartners";
+import AdminReports from "./pages/admin/AdminReports";
 import AdminGuard from "./components/admin/AdminGuard";
 import DoctorSubscription from "./pages/doctor/DoctorSubscription";
 
@@ -219,6 +225,10 @@ const App = () => (
           <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
           <Route path="/dashboard/doctor/waiting-room" element={<DoctorWaitingRoom />} />
           <Route path="/dashboard/doctor/protocols" element={<DoctorProtocols />} />
+          <Route path="/dashboard/doctor/leaves" element={<DoctorLeaves />} />
+          <Route path="/dashboard/doctor/documents" element={<DoctorDocuments />} />
+          <Route path="/dashboard/doctor/tarifs" element={<DoctorTarifs />} />
+          <Route path="/dashboard/doctor/teleconsultation" element={<Teleconsultation role="doctor" />} />
 
           {/* Pharmacy */}
           <Route path="/dashboard/pharmacy" element={<PharmacyDashboard />} />
@@ -302,6 +312,9 @@ const App = () => (
           <Route path="/dashboard/admin/revenue" element={<AdminGuard><AdminRevenue /></AdminGuard>} />
           <Route path="/dashboard/admin/doctor-performance" element={<AdminGuard><AdminDoctorPerformance /></AdminGuard>} />
           <Route path="/dashboard/admin/content" element={<AdminGuard><AdminContentPages /></AdminGuard>} />
+          <Route path="/dashboard/admin/satisfaction" element={<AdminGuard><AdminSatisfaction /></AdminGuard>} />
+          <Route path="/dashboard/admin/api-partners" element={<AdminGuard><AdminAPIPartners /></AdminGuard>} />
+          <Route path="/dashboard/admin/reports" element={<AdminGuard><AdminReports /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
 

@@ -5,10 +5,19 @@
 export const specialties = [
   "Médecin généraliste", "Dentiste", "Cardiologue", "Dermatologue",
   "Ophtalmologue", "Pédiatre", "Gynécologue", "ORL", "Kinésithérapeute",
-  "Psychiatre", "Rhumatologue", "Chirurgien",
+  "Psychiatre", "Rhumatologue", "Chirurgien", "Neurologue", "Pneumologue",
+  "Gastro-entérologue", "Urologue", "Néphrologue", "Endocrinologue",
+  "Oncologue", "Hématologue", "Allergologue", "Infectiologue",
+  "Médecin du sport", "Médecin du travail", "Gériatre", "Médecin légiste",
+  "Chirurgien-dentiste", "Orthodontiste", "Ostéopathe", "Podologue",
+  "Orthophoniste", "Psychologue", "Nutritionniste", "Diététicien",
+  "Sage-femme", "Radiologue", "Anesthésiste-réanimateur",
+  "Chirurgien orthopédiste", "Chirurgien plastique", "Chirurgien vasculaire",
+  "Médecin interniste", "Rééducateur fonctionnel", "Phlébologue",
+  "Médecin esthétique",
 ];
 
-export const specialtiesWithAll = ["Tous", ...specialties.slice(0, 9)];
+export const specialtiesWithAll = ["Tous", ...specialties.slice(0, 15)];
 
 export const languages = ["Français", "Arabe", "Anglais", "Allemand", "Italien", "Espagnol"];
 

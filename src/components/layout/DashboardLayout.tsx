@@ -16,6 +16,7 @@ import {
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
   FlaskConical, ClipboardList, Clock, UserCircle, Building2, Menu, X,
   Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel,
+  Video, CalendarDays, FileDown, Key, Star, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -60,6 +61,11 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Messagerie", url: "/dashboard/doctor/messages", icon: MessageSquare },
     { title: "Connect", url: "/dashboard/doctor/connect", icon: Plug },
     { title: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
+    { title: "Protocoles", url: "/dashboard/doctor/protocols", icon: BookOpen },
+    { title: "Documents", url: "/dashboard/doctor/documents", icon: FileText },
+    { title: "Tarifs & Actes", url: "/dashboard/doctor/tarifs", icon: Banknote },
+    { title: "Congés", url: "/dashboard/doctor/leaves", icon: CalendarDays },
+    { title: "Téléconsultation", url: "/dashboard/doctor/teleconsultation", icon: Video },
     { title: "Secrétaires", url: "/dashboard/doctor/secretary", icon: Building2 },
     { title: "Statistiques", url: "/dashboard/doctor/stats", icon: BarChart3 },
   ],
@@ -141,6 +147,7 @@ const adminSections: NavSection[] = [
       { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
       { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
       { title: "Performance médecins", url: "/dashboard/admin/doctor-performance", icon: Activity },
+      { title: "Satisfaction & NPS", url: "/dashboard/admin/satisfaction", icon: Star },
     ],
   },
   {
@@ -169,6 +176,8 @@ const adminSections: NavSection[] = [
       { title: "RGPD & Conformité", url: "/dashboard/admin/compliance", icon: ShieldCheck },
       { title: "Journal système", url: "/dashboard/admin/logs", icon: Activity },
       { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
+      { title: "API & Partenaires", url: "/dashboard/admin/api-partners", icon: Key },
+      { title: "Rapports & Exports", url: "/dashboard/admin/reports", icon: FileDown },
       { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
     ],
   },
