@@ -273,7 +273,8 @@ const SimulationPanel = () => {
     if (location.pathname.startsWith("/dashboard/doctor")) {
       navigate("/dashboard/doctor/consultation/new?patient=1");
     } else {
-      localStorage.setItem("userRole", "doctor");
+      const { switchDemoRole } = require("@/stores/authStore");
+      switchDemoRole("doctor");
       navigate("/dashboard/doctor");
     }
   };
