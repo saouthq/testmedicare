@@ -126,8 +126,36 @@ type LogItem = {
   meta?: string;
 };
 
-const TODAY = "20 Fév 2026";
-const WEEK = ["20 Fév 2026", "18 Fév 2026", "17 Fév 2026", "15 Fév 2026"];
+const CURRENT_DOCTOR = "Dr. Bouazizi";
+
+// Map shared appointment status to local ConsultStatus
+function mapStatus(s: string): ConsultStatus {
+  if (s === "pending" || s === "confirmed" || s === "arrived" || s === "in_waiting") return "scheduled";
+  if (s === "in_progress") return "in_progress";
+  if (s === "done") return "completed";
+  if (s === "cancelled") return "cancelled";
+  if (s === "absent") return "no_show";
+  return "scheduled";
+}
+
+function mapAppointmentToConsult(a: SharedAppointment, idx: number): DoctorConsultationUI {
+  return {
+    id: idx + 1,
+    patient: a.patient,
+    date: a.date,
+    time: a.startTime,
+    motif: a.motif,
+    notes: a.notes || "",
+    prescriptions: 0,
+    assurance: a.assurance,
+    amount: "35 DT",
+    avatar: a.avatar,
+    status: mapStatus(a.status),
+    email: `${a.patient.split(" ")[0].toLowerCase()}@example.tn`,
+    phone: a.phone || "+216 22 345 678",
+    sharedId: a.id,
+  };
+}
 
 const statusMeta: Record<
   ConsultStatus,
