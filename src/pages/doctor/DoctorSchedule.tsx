@@ -1583,7 +1583,7 @@ function CreateModal({
 }) {
   const [mode, setMode] = useState<"registered" | "new">("registered");
   const [q, setQ] = useState("");
-  const [patient, setPatient] = useState<(typeof PATS)[0] | null>(null);
+  const [patient, setPatient] = useState<{ name: string; id: number | null; avatar: string; phone: string; assurance: string } | null>(null);
   // Nouveau patient
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
