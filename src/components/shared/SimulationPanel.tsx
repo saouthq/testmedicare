@@ -171,7 +171,6 @@ const SimulationPanel = () => {
 
   const simulateLabTransmit = () => {
     const demands = labStore.read();
-    const demands = labStore.read();
     const ready = demands.find((d) => d.status === "results_ready");
     const inProgress = demands.find((d) => d.status === "in_progress");
     const target = ready || inProgress;
