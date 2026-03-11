@@ -419,6 +419,7 @@ const SecretaryAgenda = () => {
                     <div className="flex gap-1.5">
                       <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => { if (selectedApt.phone) window.open(`tel:${selectedApt.phone}`); }}><Phone className="h-3 w-3" />Appeler</Button>
                       <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => handleSmsRappel(selectedApt)}><MessageSquare className="h-3 w-3" />SMS</Button>
+                      <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => openEditRdv(selectedApt)}><Edit className="h-3 w-3" />Modifier</Button>
                       <Button size="sm" variant="ghost" className="flex-1 text-[10px] gap-1" onClick={() => setShowReschedule(true)}><RefreshCw className="h-3 w-3" />Reporter</Button>
                     </div>
                     {!["done", "cancelled", "absent"].includes(selectedApt.status) && (
