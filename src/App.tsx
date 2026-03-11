@@ -33,7 +33,7 @@ import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
 import PatientNotifications from "./pages/patient/PatientNotifications";
 import PatientHealth from "./pages/patient/PatientHealth";
 import PatientSettings from "./pages/patient/PatientSettings";
-import PatientBooking from "./pages/patient/PatientBooking";
+
 
 // Doctor
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
