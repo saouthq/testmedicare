@@ -147,6 +147,7 @@ import Teleconsultation from "./pages/teleconsultation/Teleconsultation";
 import SimulationPanel from "./components/shared/SimulationPanel";
 import ScrollToTop from "./components/shared/ScrollToTop";
 import { RouteModuleGate } from "./components/shared/ModuleGate";
+import AuthGuard from "./components/shared/AuthGuard";
 
 const queryClient = new QueryClient();
 
