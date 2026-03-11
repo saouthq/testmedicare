@@ -197,12 +197,15 @@ const PublicBooking = () => {
       return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     })();
     
+    // Determine patientId: logged-in patient gets ID 1, guest gets null
+    const resolvedPatientId = isLoggedIn ? 1 : null;
+    
     createAppointment({
       date: dateStr,
       startTime: selectedSlot,
       duration: selectedMotifData?.duration ? parseInt(String(selectedMotifData.duration)) || 30 : 30,
-      patient: `${firstName} ${lastName}`,
-      patientId: null,
+      patient: isLoggedIn ? `${localStorage.getItem("patientFirstName") || firstName} ${localStorage.getItem("patientLastName") || lastName}` : `${firstName} ${lastName}`,
+      patientId: resolvedPatientId,
       avatar: `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase(),
       doctor: doctor.name,
       type: isTeleconsult ? "Téléconsultation" : "Consultation",
@@ -211,6 +214,7 @@ const PublicBooking = () => {
       phone: phone || phoneInput,
       assurance: mockAssurances.find(a => a.id === assurance)?.name || "Sans assurance",
       teleconsultation: !!isTeleconsult,
+      createdBy: isLoggedIn ? "patient" : "public",
     });
     
     toast({ 
