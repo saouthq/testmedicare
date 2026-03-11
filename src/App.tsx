@@ -142,6 +142,7 @@ import AdminContentPages from "./pages/admin/AdminContentPages";
 import AdminSatisfaction from "./pages/admin/AdminSatisfaction";
 import AdminAPIPartners from "./pages/admin/AdminAPIPartners";
 import AdminReports from "./pages/admin/AdminReports";
+import AdminSidebarConfig from "./pages/admin/AdminSidebarConfig";
 import AdminGuard from "./components/admin/AdminGuard";
 // DoctorSubscription removed — route redirects to billing
 
