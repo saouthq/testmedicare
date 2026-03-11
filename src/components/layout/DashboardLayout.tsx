@@ -92,7 +92,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Agenda", url: "/dashboard/secretary/agenda", icon: Calendar },
     { title: "Patients", url: "/dashboard/secretary/patients", icon: Users },
     { title: "Journal d'appels", url: "/dashboard/secretary/call-log", icon: Activity },
-    { title: "SMS & Rappels", url: "/dashboard/secretary/sms", icon: MessageSquare },
+    { title: "SMS & Rappels", url: "/dashboard/secretary/sms", icon: Send },
     { title: "Facturation", url: "/dashboard/secretary/billing", icon: CreditCard },
     { title: "Cabinet", url: "/dashboard/secretary/office", icon: Building2 },
     { title: "Documents", url: "/dashboard/secretary/documents", icon: ScrollText },
