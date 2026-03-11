@@ -39,11 +39,10 @@ const PatientHealth = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>(aiInitial);
   const [aiInput, setAiInput] = useState("");
+  const [aiIdx, setAiIdx] = useState(0);
 
   // Use centralized health store
   const [healthData, setHealthData] = useHealth();
-  const [aiInput, setAiInput] = useState("");
-  const [aiIdx, setAiIdx] = useState(0);
   
   // "Declared empty" state per section
   const [declaredEmpty, setDeclaredEmpty] = useState<Record<string, boolean>>(() => {
