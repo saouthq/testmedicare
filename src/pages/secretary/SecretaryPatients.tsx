@@ -4,7 +4,7 @@ import { Search, Phone, Mail, Plus, ChevronRight, Calendar, Edit, FileText, Cloc
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { mockSecretaryPatientsWithHistory } from "@/data/mockData";
+import { useSharedPatients, addPatient, updatePatient, type SharedPatient } from "@/stores/sharedPatientsStore";
 
 type DetailTab = "info" | "history" | "billing";
 
