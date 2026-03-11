@@ -82,6 +82,7 @@ type Step = "auth" | "motif" | "info" | "confirm" | "payment" | "done" | "create
 const PublicBooking = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+  const doctor = buildDoctor(doctorId || "1");
   
   // Auth state
   const [phoneInput, setPhoneInput] = useState("");
