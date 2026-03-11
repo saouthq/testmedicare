@@ -1599,16 +1599,16 @@ function CreateModal({
   const [tele, setTele] = useState(false);
   const [showDrop, setShowDrop] = useState(false);
 
+  const [sharedPats] = useSharedPatients();
   const allPats = useMemo(() => {
-    const extra = mockPatients.map((p) => ({
+    return sharedPats.map(p => ({
       name: p.name,
       id: p.id,
-      avatar: typeof p.avatar === "string" ? p.avatar : p.name.slice(0, 2).toUpperCase(),
-      phone: p.phone ?? "",
-      assurance: p.mutuelle ?? "—",
+      avatar: p.avatar,
+      phone: p.phone,
+      assurance: p.assurance,
     }));
-    return [...PATS, ...extra].filter((p, i, a) => a.findIndex((x) => x.id === p.id) === i);
-  }, []);
+  }, [sharedPats]);
 
   const filtered =
     q.length > 0 ? allPats.filter((p) => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6) : [];
