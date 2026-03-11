@@ -31,6 +31,9 @@ const statusConfig: Record<string, { label: string; class: string; icon: any }> 
 };
 
 const SecretaryBilling = () => {
+  const [allTarifs] = useSharedTarifs();
+  const actTypes = useMemo(() => getActiveActes(allTarifs).map(a => ({ label: a.name, price: a.price })), [allTarifs]);
+
   const [invoices, setInvoices] = useState<Invoice[]>(mockSecretaryBillingInvoices);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -41,7 +44,10 @@ const SecretaryBilling = () => {
   // New invoice form
   const [newPatient, setNewPatient] = useState("");
   const [newDoctor, setNewDoctor] = useState("Dr. Bouazizi");
-  const [newActs, setNewActs] = useState([{ type: actTypes[0].label, price: actTypes[0].price }]);
+  const [newActs, setNewActs] = useState<{type: string; price: number}[]>([]);
+  const [newPayment, setNewPayment] = useState("—");
+  const [newCnam, setNewCnam] = useState(true);
+  const [payMethod, setPayMethod] = useState("Espèces");
   const [newPayment, setNewPayment] = useState("—");
   const [newCnam, setNewCnam] = useState(true);
   const [payMethod, setPayMethod] = useState("Espèces");
