@@ -27,10 +27,12 @@ const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
-  const [previewDoc, setPreviewDoc] = useState<typeof mockHealthDocuments[0] | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<HealthDocument | null>(null);
   const [allAppointments] = useSharedAppointments();
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
+  const [health] = useHealth();
+  const [doctorRx] = useDoctorPrescriptions();
 
   const PATIENT_ID = 1;
   const appointments = useMemo(() => 
