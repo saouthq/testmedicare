@@ -8,8 +8,9 @@ import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockDoctorProfile, mockAssurances } from "@/data/mockData";
+import { mockDoctorProfile, mockAssurances, mockDoctors } from "@/data/mockData";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
+import { createAppointment } from "@/stores/sharedAppointmentsStore";
 import { toast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar, 
