@@ -5,8 +5,8 @@
  * // TODO BACKEND: Replace with real-time API + WebSocket subscriptions.
  */
 import { createStore, useStore } from "./crossRoleStore";
-
-// ─── Types ───────────────────────────────────────────────────
+import { notifyPatient, notifyDoctor } from "./notificationsStore";
+import { appendLog } from "@/services/admin/adminAuditService";
 export interface RenewalRequest {
   id: string;
   patientName: string;
