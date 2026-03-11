@@ -187,7 +187,6 @@ const STATUS_LEFT: Record<ApptStatus, string> = {
   cancelled: "border-l-destructive/40",
   absent: "border-l-destructive/30",
 };
-};
 
 // ─── Layout constants ─────────────────────────────────────────
 const DAY_START = 8 * 60;
