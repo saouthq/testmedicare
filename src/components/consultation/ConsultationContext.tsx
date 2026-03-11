@@ -604,18 +604,16 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
       completeAppointmentConsultation(aptId);
     } else {
       // Fallback: find the in_progress appointment for this patient today
-      const { sharedAppointmentsStore } = require("@/stores/sharedAppointmentsStore");
-      const allApts = sharedAppointmentsStore.read() as SharedAppointment[];
+      const allApts = sharedAppointmentsStore.read();
       const today = new Date().toISOString().slice(0, 10);
       const match = allApts.find(
-        (a: SharedAppointment) => a.patient === patient.name && a.status === "in_progress" && a.date === today
+        (a) => a.patient === patient.name && a.status === "in_progress" && a.date === today
       );
       if (match) completeAppointmentConsultation(match.id);
     }
 
     // 2) Write prescription to shared store if items exist
     if (rxItems.filter(r => r.medication.trim()).length > 0) {
-      const { createPrescription } = require("@/stores/doctorPrescriptionsStore");
       createPrescription({
         doctor: "Dr. Bouazizi",
         patient: patient.name,
@@ -631,17 +629,14 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
 
     // 3) Add health document (consultation report) to patient's health record
     if (reportText.trim() || diagnosis.trim()) {
-      const { addHealthDocument } = require("@/stores/healthStore");
-      if (typeof addHealthDocument === "function") {
-        addHealthDocument({
-          id: `doc-${Date.now()}`,
-          name: `Compte-rendu — ${motif || "Consultation"}`,
-          type: "Consultation" as any,
-          date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
-          doctor: "Dr. Bouazizi",
-          status: "Disponible",
-        });
-      }
+      addHealthDocument({
+        id: `doc-${Date.now()}`,
+        name: `Compte-rendu — ${motif || "Consultation"}`,
+        type: "Consultation" as any,
+        date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
+        doctor: "Dr. Bouazizi",
+        status: "Disponible",
+      });
     }
   };
 
