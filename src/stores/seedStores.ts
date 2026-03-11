@@ -21,6 +21,7 @@ import { sharedLeavesStore } from "./sharedLeavesStore";
 import { sharedTarifsStore } from "./sharedTarifsStore";
 import { doctorProfileStore } from "./doctorProfileStore";
 import { reportsStore, seedReportsIfEmpty } from "./reportsStore";
+import { threadsStore, messagesItemsStore, seedMessagesIfEmpty } from "./messagesStore";
 
 // Mock data imports (used only for seeding)
 import {
