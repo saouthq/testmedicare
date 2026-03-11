@@ -73,6 +73,9 @@ const defaultProfile: DoctorProfile = {
     { name: "ECG", duration: "20 min", price: "40 DT" },
   ],
   reviewCount: 127,
+  actes: ["ECG", "Échographie abdominale", "Spirométrie", "Tests rapides (glycémie, CRP)", "Vaccinations", "Petite chirurgie"],
+  memberships: ["Ordre National des Médecins de Tunisie", "Société Tunisienne de Médecine Générale", "Association Tunisienne de Diabétologie"],
+  accessInfo: { parking: true, handicap: true, elevator: true, publicTransport: "Métro ligne 1 - Station El Manar (200m)" },
 };
 
 const store = createStore<DoctorProfile>("medicare_doctor_profile", defaultProfile);
