@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import ActionPalette, { type ActionItem } from "@/components/shared/ActionPalette";
 import SecretaryTeleconsultPanel from "@/components/secretary-teleconsult/SecretaryTeleconsultPanel";
-import { useSharedAppointments, updateAppointmentStatus, sendToWaitingRoom, startAppointmentConsultation, completeAppointmentConsultation, markAppointmentAbsent, getAppointmentsForDate } from "@/stores/sharedAppointmentsStore";
+import { useSharedAppointments, updateAppointmentStatus, sendToWaitingRoom, startAppointmentConsultation, completeAppointmentConsultation, markAppointmentAbsent, cancelAppointment, getAppointmentsForDate } from "@/stores/sharedAppointmentsStore";
 import { useSharedTarifs, getActiveActes } from "@/stores/sharedTarifsStore";
 import { useSharedPatients, addPatient } from "@/stores/sharedPatientsStore";
 import { pushNotification } from "@/stores/notificationsStore";
