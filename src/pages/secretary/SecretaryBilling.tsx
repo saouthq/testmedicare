@@ -48,9 +48,6 @@ const SecretaryBilling = () => {
   const [newPayment, setNewPayment] = useState("—");
   const [newCnam, setNewCnam] = useState(true);
   const [payMethod, setPayMethod] = useState("Espèces");
-  const [newPayment, setNewPayment] = useState("—");
-  const [newCnam, setNewCnam] = useState(true);
-  const [payMethod, setPayMethod] = useState("Espèces");
 
   const filtered = invoices.filter(i => {
     if (filter !== "all" && i.status !== filter) return false;
