@@ -2507,11 +2507,11 @@ const DoctorSchedule = () => {
           block={editBlock}
           onClose={() => setEditBlock(null)}
           onUpdate={(b) => {
-            setBlocks((p) => p.map((x) => (x.id === b.id ? b : x)));
+            storeUpdateBlock(b.id, { date: b.date, startTime: b.startTime, duration: b.duration, reason: b.reason });
             setEditBlock(null);
           }}
           onDelete={(id) => {
-            setBlocks((p) => p.filter((x) => x.id !== id));
+            removeBlockedSlot(id);
             setEditBlock(null);
           }}
         />
