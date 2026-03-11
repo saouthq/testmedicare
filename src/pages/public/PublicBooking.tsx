@@ -16,6 +16,8 @@ import { mockDoctors } from "@/data/mocks/doctor";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
 import { bookAppointment, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
 import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
+import { sharedBlockedSlotsStore } from "@/stores/sharedBlockedSlotsStore";
+import { sharedLeavesStore } from "@/stores/sharedLeavesStore";
 import { doctorProfileStore, readDoctorProfile } from "@/stores/doctorProfileStore";
 import { validateBooking } from "@/lib/appointmentRules";
 import { getCurrentRole, readAuthUser } from "@/stores/authStore";
