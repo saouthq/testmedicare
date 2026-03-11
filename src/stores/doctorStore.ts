@@ -110,6 +110,7 @@ export function requestRenewal(data: {
   prescriptionId: string;
   items: string[];
 }) {
+  // TODO BACKEND: POST /api/renewals
   const id = `ren-${Date.now()}`;
   renewalRequestsStore.set(prev => [
     {
@@ -123,5 +124,14 @@ export function requestRenewal(data: {
     },
     ...prev,
   ]);
+
+  // Notify doctor
+  notifyDoctor(
+    "Demande de renouvellement",
+    `${data.patientName} demande le renouvellement de l'ordonnance ${data.prescriptionId}.`,
+    "/dashboard/doctor/prescriptions",
+    "generic"
+  );
+
   return id;
 }
