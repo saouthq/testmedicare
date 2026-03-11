@@ -15,7 +15,7 @@ import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
   Calendar, Users, Search, FileText, Settings, LogOut, Bell, Pill,
   FlaskConical, ClipboardList, Clock, UserCircle, Building2, Menu, X,
-  Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel,
+  Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel, Send,
   Video, CalendarDays, FileDown, Key, Star, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
