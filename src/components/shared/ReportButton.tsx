@@ -1,28 +1,23 @@
 /**
  * ReportButton — Bouton de signalement pour litiges, abus, commentaires.
- * Utilisable depuis patient, médecin ou tout espace.
- * Alimente les litiges admin (AdminDisputes).
+ * Now uses reportsStore instead of raw localStorage.
  */
 import { useState } from "react";
 import { Flag, Send, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { submitReport, type ReportType } from "@/stores/reportsStore";
+import { getCurrentRole } from "@/stores/authStore";
 
-export type ReportType = "dispute" | "comment" | "doctor" | "patient" | "appointment" | "other";
+export type { ReportType };
 
 interface ReportButtonProps {
-  /** What is being reported */
   type: ReportType;
-  /** ID of the target (doctor, comment, appointment) */
   targetId: string;
-  /** Display name of the target */
   targetName: string;
-  /** Variant: icon-only or full button */
   variant?: "icon" | "button" | "menu-item";
-  /** Custom label */
   label?: string;
-  /** Size */
   size?: "sm" | "default";
 }
 
@@ -50,7 +45,6 @@ export function ReportButton({ type, targetId, targetName, variant = "button", l
   const [details, setDetails] = useState("");
   const [sent, setSent] = useState(false);
 
-  // Check if dispute reporting is enabled
   const isEnabled = () => {
     try {
       const flags = JSON.parse(localStorage.getItem("medicare_admin_features") || "{}");
@@ -64,22 +58,17 @@ export function ReportButton({ type, targetId, targetName, variant = "button", l
 
   const handleSubmit = () => {
     if (!reason) return;
-    // Store report in localStorage (mock — TODO BACKEND: POST /api/reports)
-    try {
-      const reports = JSON.parse(localStorage.getItem("medicare_reports") || "[]");
-      reports.push({
-        id: `report-${Date.now()}`,
-        type,
-        targetId,
-        targetName,
-        reason,
-        details,
-        reporter: localStorage.getItem("userRole") || "unknown",
-        createdAt: new Date().toISOString(),
-        status: "pending",
-      });
-      localStorage.setItem("medicare_reports", JSON.stringify(reports));
-    } catch {}
+    const role = getCurrentRole() || "unknown";
+    // TODO BACKEND: POST /api/reports
+    submitReport({
+      type,
+      targetId,
+      targetName,
+      reason,
+      details,
+      reporter: role === "patient" ? "Patient" : role === "doctor" ? "Médecin" : role,
+      reporterRole: role,
+    });
     toast({ title: "Signalement envoyé", description: "Votre signalement sera traité par l'équipe de modération." });
     setSent(true);
     setTimeout(() => { setOpen(false); setSent(false); setReason(""); setDetails(""); }, 1500);
@@ -91,7 +80,7 @@ export function ReportButton({ type, targetId, targetName, variant = "button", l
   return (
     <>
       {variant === "icon" && (
-        <button onClick={() => setOpen(true)} className="text-muted-foreground hover:text-destructive transition-colors" title={displayLabel}>
+        <button onClick={() => setOpen(true)} className="text-muted-foreground hover:text-destructive transition-colors" title={displayLabel} aria-label={displayLabel}>
           <Flag className={`${size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"}`} />
         </button>
       )}
@@ -123,7 +112,7 @@ export function ReportButton({ type, targetId, targetName, variant = "button", l
                   <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <Flag className="h-5 w-5 text-destructive" />{displayLabel}
                   </h3>
-                  <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+                  <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground" aria-label="Fermer"><X className="h-5 w-5" /></button>
                 </div>
 
                 <div className="rounded-lg bg-muted/50 p-3 mb-4">
