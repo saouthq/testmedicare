@@ -136,6 +136,9 @@ import AdminOnboarding from "./pages/admin/AdminOnboarding";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminDoctorPerformance from "./pages/admin/AdminDoctorPerformance";
 import AdminContentPages from "./pages/admin/AdminContentPages";
+import AdminSatisfaction from "./pages/admin/AdminSatisfaction";
+import AdminAPIPartners from "./pages/admin/AdminAPIPartners";
+import AdminReports from "./pages/admin/AdminReports";
 import AdminGuard from "./components/admin/AdminGuard";
 import DoctorSubscription from "./pages/doctor/DoctorSubscription";
 
