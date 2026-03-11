@@ -45,6 +45,11 @@ const DoctorPublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const doctorData = useMemo(() => buildProfileForDoctor(id || "1"), [id]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
+  const [openSection, setOpenSection] = useState<string | null>("presentation");
+  const isMobile = useIsMobile();
   
   // 404 fallback: if doctor not found for the given ID
   const numId = parseInt(id || "1");
@@ -67,11 +72,6 @@ const DoctorPublicProfile = () => {
       </div>
     );
   }
-  const [showAllReviews, setShowAllReviews] = useState(false);
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
-  const [openSection, setOpenSection] = useState<string | null>("presentation");
-  const isMobile = useIsMobile();
 
   const displayReviews = showAllReviews ? reviews : reviews.slice(0, 3);
   const verifiedCount = reviews.filter(r => r.verified).length;
