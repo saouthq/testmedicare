@@ -91,7 +91,7 @@ const MyAppointments = () => {
     return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${config.className}`}>{config.label}</span>;
   };
 
-  const canCancel = (apt: SharedAppointment) => ["pending", "confirmed"].includes(apt.status);
+  const canCancelApt = (apt: SharedAppointment) => checkCanCancel(apt).allowed;
 
   return (
     <div className="min-h-screen bg-background">
