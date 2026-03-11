@@ -464,20 +464,13 @@ const SimulationPanel = () => {
           </>
         )}
 
-        {/* Reset */}
         <div className="border-t pt-2">
           <Button size="sm" variant="ghost" className="w-full text-[10px] text-destructive" onClick={() => {
-            localStorage.removeItem("medicare_notifications");
-            localStorage.removeItem("medicare_shared_prescriptions");
-            localStorage.removeItem("medicare_lab_demands");
-            localStorage.removeItem("medicare_appointment_events");
-            localStorage.removeItem("doctor_subscription");
-            localStorage.removeItem("doctor_waiting_room");
-            localStorage.removeItem("doctor_consultations");
-            localStorage.removeItem("doctor_renewal_requests");
-            localStorage.removeItem("medicare_admin_modules");
-            localStorage.removeItem("medicare_module_labels");
-            localStorage.removeItem("medicare_health_empty");
+            // Clear ALL shared store localStorage keys
+            const keys = Object.keys(localStorage).filter(k => 
+              k.startsWith("medicare_") || k.startsWith("doctor_") || k.startsWith("guest")
+            );
+            keys.forEach(k => localStorage.removeItem(k));
             window.location.reload();
           }}>
             🗑️ Réinitialiser tous les stores
