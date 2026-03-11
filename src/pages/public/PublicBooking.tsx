@@ -153,7 +153,7 @@ const PublicBooking = () => {
       lastName,
       doctor: doctor.name,
       specialty: doctor.specialty,
-      date: `${selectedDay} Fév 2026`,
+      date: selectedDay,
       time: selectedSlot,
       motif: selectedMotif,
       assurance: mockAssurances.find(a => a.id === assurance)?.name || "Sans assurance",
