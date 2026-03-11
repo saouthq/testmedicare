@@ -772,10 +772,14 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     ).slice(0, 8);
   }, [paletteActions, paletteQuery]);
 
-  // Mark patient as in_consultation in waiting room on mount
+  // Mark patient as in_progress in shared appointments store on mount
   useEffect(() => {
-    startConsultation(patient.name);
-  }, [patient.name]);
+    const searchParams2 = new URLSearchParams(window.location.search);
+    const aptId = searchParams2.get("aptId");
+    if (aptId) {
+      startAppointmentConsultation(aptId);
+    }
+  }, []);
 
   // Keyboard
   useEffect(() => {
