@@ -60,7 +60,7 @@ const PatientHealth = () => {
   };
 
   // Cross-role: lab results
-  useEffect(() => { initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]); }, []);
+  const [labDemands] = useSharedLabDemands();
   const [labDemands] = useSharedLabDemands();
   const transmittedLabResults = labDemands
     .filter(d => d.status === "transmitted" && d.pdfs.length > 0)
