@@ -13,10 +13,8 @@ import { ReportButton } from "@/components/shared/ReportButton";
 
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
-import { 
-  mockPastAppointments as initialPastAppointments,
-} from "@/data/mockData";
-import { usePatientAppointments, usePatientCancelled, cancelAppointment, rescheduleAppointment } from "@/stores/patientStore";
+import { useSharedAppointments, cancelAppointment as sharedCancelAppointment, rescheduleAppointment as sharedRescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import type { SharedAppointment } from "@/types/appointment";
 
 // ─── Reschedule Modal ────────────────────────────────────────
 const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () => void; onConfirm: (day: string, slot: string) => void }) => {
