@@ -82,16 +82,16 @@ const PatientHealth = () => {
   const measures = healthData.measures;
   const documents = healthData.documents;
 
-  // Setters that update the store
-  const setHabits = (v: typeof habits) => setHealthData(prev => ({ ...prev, habits: typeof v === 'function' ? (v as any)(prev.habits) : v }));
-  const setAntecedents = (v: typeof antecedents) => setHealthData(prev => ({ ...prev, antecedents: typeof v === 'function' ? (v as any)(prev.antecedents) : v }));
-  const setTreatments = (v: typeof treatments) => setHealthData(prev => ({ ...prev, treatments: typeof v === 'function' ? (v as any)(prev.treatments) : v }));
-  const setAllergies = (v: typeof allergies) => setHealthData(prev => ({ ...prev, allergies: typeof v === 'function' ? (v as any)(prev.allergies) : v }));
-  const setFamily = (v: typeof family) => setHealthData(prev => ({ ...prev, familyHistory: typeof v === 'function' ? (v as any)(prev.familyHistory) : v }));
-  const setSurgeries = (v: typeof surgeries) => setHealthData(prev => ({ ...prev, surgeries: typeof v === 'function' ? (v as any)(prev.surgeries) : v }));
-  const setVaccinations = (v: typeof vaccinations) => setHealthData(prev => ({ ...prev, vaccinations: typeof v === 'function' ? (v as any)(prev.vaccinations) : v }));
-  const setMeasures = (v: typeof measures) => setHealthData(prev => ({ ...prev, measures: typeof v === 'function' ? (v as any)(prev.measures) : v }));
-  const setDocuments = (v: typeof documents) => setHealthData(prev => ({ ...prev, documents: typeof v === 'function' ? (v as any)(prev.documents) : v }));
+  // Setters that update the store (support both direct value and updater function)
+  const setHabits = (v: any) => setHealthData(prev => ({ ...prev, habits: typeof v === 'function' ? v(prev.habits) : v }));
+  const setAntecedents = (v: any) => setHealthData(prev => ({ ...prev, antecedents: typeof v === 'function' ? v(prev.antecedents) : v }));
+  const setTreatments = (v: any) => setHealthData(prev => ({ ...prev, treatments: typeof v === 'function' ? v(prev.treatments) : v }));
+  const setAllergies = (v: any) => setHealthData(prev => ({ ...prev, allergies: typeof v === 'function' ? v(prev.allergies) : v }));
+  const setFamily = (v: any) => setHealthData(prev => ({ ...prev, familyHistory: typeof v === 'function' ? v(prev.familyHistory) : v }));
+  const setSurgeries = (v: any) => setHealthData(prev => ({ ...prev, surgeries: typeof v === 'function' ? v(prev.surgeries) : v }));
+  const setVaccinations = (v: any) => setHealthData(prev => ({ ...prev, vaccinations: typeof v === 'function' ? v(prev.vaccinations) : v }));
+  const setMeasures = (v: any) => setHealthData(prev => ({ ...prev, measures: typeof v === 'function' ? v(prev.measures) : v }));
+  const setDocuments = (v: any) => setHealthData(prev => ({ ...prev, documents: typeof v === 'function' ? v(prev.documents) : v }));
 
   // Dynamic counts for menu
   const countMap: Record<string, number> = {

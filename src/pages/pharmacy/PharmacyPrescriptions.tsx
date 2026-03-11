@@ -46,10 +46,12 @@ const PharmacyPrescriptions = () => {
   const [comment, setComment] = useState("");
   const [itemAvail, setItemAvail] = useState<Record<number, { availability: PharmacyItemAvailability; alternative: string }>>({});
 
-  // Inject shared prescriptions from patients into local list
+  // Inject shared prescriptions from patients into pharmacy store
   useEffect(() => {
     if (sharedPrescriptions.length === 0) return;
-    setPrescriptions((prev) => {
+    const { pharmacyRxStore } = require("@/stores/pharmacyStore");
+    const current = pharmacyRxStore.read();
+    let updated = [...current];
       let updated = [...prev];
       for (const sp of sharedPrescriptions) {
         if (!updated.find((p) => p.id === sp.id)) {
