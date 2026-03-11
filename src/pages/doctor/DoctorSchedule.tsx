@@ -2281,29 +2281,19 @@ const DoctorSchedule = () => {
 
   const handleAction = useCallback(
     (action: string, id: string, payload?: Record<string, string>) => {
-      setApts((prev) =>
-        prev.map((a) => {
-          if (a.id !== id) return a;
-          switch (action) {
-            case "confirm":
-              return { ...a, status: "confirmed" };
-            case "arrived":
-              return { ...a, status: "arrived" };
-            case "start":
-              return { ...a, status: "in_progress" };
-            case "done":
-              return { ...a, status: "done" };
-            case "cancel":
-              return { ...a, status: "cancelled" };
-            case "absent":
-              return { ...a, status: "absent" };
-            case "reschedule":
-              return payload ? { ...a, date: payload.newDate, startTime: payload.newTime } : a;
-            default:
-              return a;
-          }
-        }),
-      );
+      // Write to shared store
+      switch (action) {
+        case "confirm": updateAppointmentStatus(id, "confirmed"); break;
+        case "arrived": updateAppointmentStatus(id, "arrived"); break;
+        case "start": updateAppointmentStatus(id, "in_progress"); break;
+        case "done": updateAppointmentStatus(id, "done"); break;
+        case "cancel": updateAppointmentStatus(id, "cancelled"); break;
+        case "absent": updateAppointmentStatus(id, "absent"); break;
+        case "reschedule":
+          if (payload) rescheduleAppointment(id, payload.newDate, payload.newTime);
+          break;
+      }
+      // Sync waiting room
       const apt = apts.find((a) => a.id === id);
       if (apt) {
         const entry = waitingRoomStore.read().find((e) => e.patient === apt.patient);
@@ -2314,17 +2304,13 @@ const DoctorSchedule = () => {
         }
       }
       const MSGS: Record<string, string> = {
-        confirm: "RDV confirmé",
-        arrived: "Patient arrivé",
-        start: "Consultation démarrée",
-        done: "Consultation terminée",
-        cancel: "RDV annulé",
-        absent: "Patient marqué absent",
+        confirm: "RDV confirmé", arrived: "Patient arrivé", start: "Consultation démarrée",
+        done: "Consultation terminée", cancel: "RDV annulé", absent: "Patient marqué absent",
         reschedule: "RDV reporté",
       };
       toast({ title: MSGS[action] ?? "Mise à jour" });
       if (action === "reschedule" && payload)
-        setSelApt((p) => (p ? { ...p, date: payload.newDate, startTime: payload.newTime } : p));
+        setSelApt((p) => (p ? { ...p, date: payload.newDate, startTime: payload.newTime, endTime: computeEndTime(payload.newTime, p.duration) } : p));
     },
     [apts],
   );
