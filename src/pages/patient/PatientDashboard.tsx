@@ -12,10 +12,12 @@ import { useState, useMemo } from "react";
 import StatusBadge, { type AppointmentStatus } from "@/components/shared/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent } from "@/lib/calendarExport";
-import { usePatientAppointments, usePatientProfile, cancelAppointment, getDashboardStats } from "@/stores/patientStore";
+import { usePatientProfile } from "@/stores/patientStore";
 import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors, mockHealthDocuments, mockVaccinations, mockTreatments } from "@/data/mockData";
 import { useNotifications } from "@/stores/notificationsStore";
 import { requestRenewal } from "@/stores/doctorStore";
+import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import type { SharedAppointment } from "@/types/appointment";
 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<number | null>(null);
