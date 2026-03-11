@@ -22,13 +22,29 @@ import { usePatientAppointments, usePatientCancelled, cancelAppointment, resched
 const RescheduleModal = ({ apt, onClose, onConfirm }: { apt: any; onClose: () => void; onConfirm: (day: string, slot: string) => void }) => {
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
-  const days = [
-    { day: 24, name: "Lun", available: true },
-    { day: 25, name: "Mar", available: true },
-    { day: 26, name: "Mer", available: false },
-    { day: 27, name: "Jeu", available: true },
-    { day: 28, name: "Ven", available: true },
-  ];
+  const [weekOffset, setWeekOffset] = useState(0);
+  
+  // Dynamic days instead of hardcoded
+  const generateDays = (offset: number) => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() + 1 + (offset * 7)); // Start from tomorrow
+    const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+    const days: { day: number; name: string; label: string; available: boolean }[] = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      days.push({
+        day: d.getDate(),
+        name: dayNames[d.getDay()],
+        label: `${d.getDate()} ${d.toLocaleDateString("fr-FR", { month: "short" })} ${d.getFullYear()}`,
+        available: d.getDay() !== 0, // Sundays unavailable
+      });
+    }
+    return days;
+  };
+  
+  const days = generateDays(weekOffset);
   const slots = ["09:00", "09:30", "10:00", "10:30", "11:00", "14:00", "14:30", "15:00"];
 
   return (
