@@ -147,6 +147,7 @@ const adminSections: NavSection[] = [
       { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
       { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
       { title: "Performance médecins", url: "/dashboard/admin/doctor-performance", icon: Activity },
+      { title: "Satisfaction & NPS", url: "/dashboard/admin/satisfaction", icon: Star },
     ],
   },
   {
