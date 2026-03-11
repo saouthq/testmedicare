@@ -28,7 +28,7 @@ export function createPrescription(rx: Omit<Prescription, "id">) {
 
   // Notify patient
   pushNotification({
-    type: "prescription",
+    type: "prescription_sent",
     title: "Nouvelle ordonnance",
     message: `${rx.doctor} vous a prescrit une ordonnance (${rx.items.length} médicament${rx.items.length > 1 ? "s" : ""}).`,
     targetRole: "patient",
