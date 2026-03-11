@@ -30,8 +30,11 @@ import {
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
 import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
-import { completeAppointmentConsultation, startAppointmentConsultation, useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import { completeAppointmentConsultation, startAppointmentConsultation, useSharedAppointments, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
 import { createLabDemand } from "@/stores/labStore";
+import { createPrescription } from "@/stores/doctorPrescriptionsStore";
+import { addHealthDocument } from "@/stores/healthStore";
+import type { SharedAppointment } from "@/types/appointment";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
