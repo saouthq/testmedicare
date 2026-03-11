@@ -127,6 +127,20 @@ export function markAppointmentAbsent(id: string) {
   updateAppointmentStatus(id, "absent");
 }
 
+/** Toggle tag on appointment (urgent / retard) */
+export function toggleAppointmentTag(id: string, tag: "urgent" | "retard") {
+  store.set(prev => prev.map(a => {
+    if (a.id !== id) return a;
+    const tags = a.tags || [];
+    return { ...a, tags: tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag] };
+  }));
+}
+
+/** Save internal note on appointment */
+export function saveAppointmentNote(id: string, note: string) {
+  store.set(prev => prev.map(a => a.id === id ? { ...a, internalNote: note } : a));
+}
+
 /** Get appointments for a specific date */
 export function getAppointmentsForDate(appointments: SharedAppointment[], date: string) {
   return appointments.filter(a => a.date === date);
@@ -135,4 +149,14 @@ export function getAppointmentsForDate(appointments: SharedAppointment[], date: 
 /** Get appointments for a doctor */
 export function getAppointmentsForDoctor(appointments: SharedAppointment[], doctor: string) {
   return doctor === "Tous" ? appointments : appointments.filter(a => a.doctor === doctor);
+}
+
+/** Get today's date as YYYY-MM-DD */
+export function getTodayDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Get appointments for a patient by patientId */
+export function getAppointmentsForPatient(appointments: SharedAppointment[], patientId: number) {
+  return appointments.filter(a => a.patientId === patientId);
 }
