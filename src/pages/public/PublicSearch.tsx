@@ -50,7 +50,6 @@ const PublicSearch = () => {
     if (filterTeleconsult && !d.teleconsultation) return false;
     if (filterAssurance && !d.acceptsInsurance) return false;
     if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
-    if (filterToday && !d.availAM[0] && !d.availPM[0]) return false;
     return true;
   });
   
