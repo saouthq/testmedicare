@@ -280,7 +280,10 @@ const SimulationPanel = () => {
 
   const goTo = (url: string, role?: string) => {
     const resolved = role || resolveRole(url);
-    if (resolved) localStorage.setItem("userRole", resolved);
+    if (resolved) {
+      const { switchDemoRole } = require("@/stores/authStore");
+      switchDemoRole(resolved);
+    }
     navigate(url);
   };
 
