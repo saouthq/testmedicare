@@ -149,6 +149,20 @@ const SecretaryAgenda = () => {
     setReschedDate(""); setReschedTime("");
   };
 
+  const openEditRdv = (apt: SharedAppointment) => {
+    setEditMotif(apt.type);
+    setEditNotes(apt.notes || "");
+    setEditPhone(apt.phone);
+    setShowEditRdv(true);
+  };
+  const handleEditRdv = () => {
+    if (!selectedApt) return;
+    updateAppointmentStatus(selectedApt.id, selectedApt.status, { type: editMotif, notes: editNotes, phone: editPhone } as Partial<SharedAppointment>);
+    toast({ title: "RDV modifié", description: `${selectedApt.patient} — modifications enregistrées` });
+    setShowEditRdv(false);
+    setSelectedApt({ ...selectedApt, type: editMotif, notes: editNotes, phone: editPhone });
+  };
+
   const statusIcon = (status: AppointmentStatus) => {
     const map: Record<string, any> = { done: CheckCircle2, in_progress: Stethoscope, in_waiting: Clock, confirmed: CheckCircle2, pending: CalendarDays, cancelled: X, absent: AlertCircle };
     return map[status] || CalendarDays;
