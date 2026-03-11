@@ -1,48 +1,12 @@
 /**
- * doctorStore.ts — Shared doctor state for cross-page sync.
- * Manages: waiting room entries, consultation status, profile completion, renewal requests.
+ * doctorStore.ts — Doctor-specific state (renewal requests, profile completion).
+ * Waiting room and consultations are now managed via sharedAppointmentsStore.
  *
  * // TODO BACKEND: Replace with real-time API + WebSocket subscriptions.
  */
 import { createStore, useStore } from "./crossRoleStore";
-import { mockTodaySchedule, mockDoctorProfile, mockDoctorConsultations } from "@/data/mockData";
 
 // ─── Types ───────────────────────────────────────────────────
-export type WaitingStatus = "scheduled" | "arrived" | "waiting" | "in_consultation" | "completed" | "absent";
-
-export interface WaitingEntry {
-  id: number;
-  patient: string;
-  avatar: string;
-  time: string;
-  motif: string;
-  type: string;
-  duration: string;
-  status: WaitingStatus;
-  arrivedAt?: string;
-  phone?: string;
-  assurance?: boolean;
-  teleconsultation?: boolean;
-  internalNote?: string;
-  tags?: ("urgent" | "retard")[];
-}
-
-export type ConsultStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "no_show";
-
-export interface DoctorConsultEntry {
-  id: number;
-  patient: string;
-  date: string;
-  time: string;
-  motif: string;
-  notes: string;
-  prescriptions: number;
-  assurance: string;
-  amount: string;
-  avatar: string;
-  status: ConsultStatus;
-}
-
 export interface RenewalRequest {
   id: string;
   patientName: string;
@@ -64,28 +28,6 @@ export interface DoctorProfileCompletion {
 }
 
 // ─── Initial data ────────────────────────────────────────────
-const initialWaiting: WaitingEntry[] = mockTodaySchedule.map((s, i) => ({
-  id: i + 1,
-  patient: s.patient,
-  avatar: s.avatar,
-  time: s.time,
-  motif: s.motif,
-  type: s.type,
-  duration: s.duration,
-  status: s.status === "done" ? "completed" : s.status === "current" ? "in_consultation" : "scheduled",
-  arrivedAt: s.status === "done" ? s.time : s.status === "current" ? s.time : undefined,
-  phone: s.phone,
-  assurance: !!s.assurance,
-  teleconsultation: s.teleconsultation,
-  internalNote: "",
-  tags: [],
-}));
-
-const initialConsultations: DoctorConsultEntry[] = mockDoctorConsultations.map(c => ({
-  ...c,
-  status: (c.status === "Terminée" ? "completed" : c.status === "Annulée" ? "cancelled" : "scheduled") as ConsultStatus,
-}));
-
 const initialRenewals: RenewalRequest[] = [
   {
     id: "ren-1",
@@ -118,69 +60,20 @@ const initialProfileCompletion: DoctorProfileCompletion = {
 };
 
 // ─── Stores ──────────────────────────────────────────────────
-export const waitingRoomStore = createStore<WaitingEntry[]>("doctor_waiting_room", initialWaiting);
-export const consultationsStore = createStore<DoctorConsultEntry[]>("doctor_consultations", initialConsultations);
 export const renewalRequestsStore = createStore<RenewalRequest[]>("doctor_renewal_requests", initialRenewals);
 export const profileCompletionStore = createStore<DoctorProfileCompletion>("doctor_profile_completion", initialProfileCompletion);
 
 // ─── Hooks ───────────────────────────────────────────────────
-export function useWaitingRoom() { return useStore(waitingRoomStore); }
-export function useDoctorConsultations() { return useStore(consultationsStore); }
 export function useRenewalRequests() { return useStore(renewalRequestsStore); }
 export function useProfileCompletion() { return useStore(profileCompletionStore); }
 
 // ─── Actions ─────────────────────────────────────────────────
-
-/** Update waiting room entry status */
-export function updateWaitingStatus(id: number, newStatus: WaitingStatus) {
-  waitingRoomStore.set(prev => prev.map(e => {
-    if (e.id !== id) return e;
-    const updated = { ...e, status: newStatus };
-    if (newStatus === "arrived" && !e.arrivedAt) {
-      updated.arrivedAt = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    }
-    return updated;
-  }));
-}
-
-/** Mark consultation complete — also updates waiting room */
-export function completeConsultation(patientName: string) {
-  // Update consultation store
-  consultationsStore.set(prev => prev.map(c =>
-    c.patient === patientName && c.status !== "completed" ? { ...c, status: "completed" } : c
-  ));
-  // Update waiting room
-  waitingRoomStore.set(prev => prev.map(e =>
-    e.patient === patientName && e.status === "in_consultation" ? { ...e, status: "completed" } : e
-  ));
-}
-
-/** Start consultation — mark in_consultation in waiting room */
-export function startConsultation(patientName: string) {
-  waitingRoomStore.set(prev => prev.map(e =>
-    e.patient === patientName ? { ...e, status: "in_consultation", arrivedAt: e.arrivedAt || new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) } : e
-  ));
-}
 
 /** Handle renewal request */
 export function handleRenewal(id: string, action: "approved" | "rejected") {
   renewalRequestsStore.set(prev => prev.map(r =>
     r.id === id ? { ...r, status: action } : r
   ));
-}
-
-/** Toggle waiting room tag */
-export function toggleWaitingTag(id: number, tag: "urgent" | "retard") {
-  waitingRoomStore.set(prev => prev.map(e => {
-    if (e.id !== id) return e;
-    const tags = e.tags || [];
-    return { ...e, tags: tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag] };
-  }));
-}
-
-/** Save internal note on waiting entry */
-export function saveWaitingNote(id: number, note: string) {
-  waitingRoomStore.set(prev => prev.map(e => e.id === id ? { ...e, internalNote: note } : e));
 }
 
 /** Compute profile completion percentage */

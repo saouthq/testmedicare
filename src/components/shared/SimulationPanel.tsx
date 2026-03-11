@@ -7,7 +7,7 @@ import { Zap, X, FlaskConical, Pill, Stethoscope, UserX, Crown, Eye, Heart, Ear,
 import { Button } from "@/components/ui/button";
 import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore";
 import { updateLabDemandStatus, addLabPdf, labStore, initLabStoreIfEmpty } from "@/stores/labStore";
-import { endConsultation, markPatientAbsent } from "@/stores/appointmentsStore";
+import { completeAppointmentConsultation, markAppointmentAbsent } from "@/stores/sharedAppointmentsStore";
 import { mockLabDemands } from "@/data/mocks/lab";
 import type { SharedLabDemand } from "@/stores/labStore";
 import { toast } from "sonner";
