@@ -30,8 +30,11 @@ import {
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
 import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
-import { completeAppointmentConsultation, startAppointmentConsultation, useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import { completeAppointmentConsultation, startAppointmentConsultation, useSharedAppointments, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
 import { createLabDemand } from "@/stores/labStore";
+import { createPrescription } from "@/stores/doctorPrescriptionsStore";
+import { addDocument as addHealthDocument } from "@/stores/healthStore";
+import type { SharedAppointment } from "@/types/appointment";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
@@ -584,7 +587,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Close
+  // Close — full cross-role sync
   const handleClose = () => {
     setClosed(true);
     setShowCloseModal(false);
@@ -593,18 +596,46 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     } catch {
       /* no-op */
     }
-    // Sync with shared appointments store — mark appointment completed
-    // Find the appointment for this patient that is in_progress today
-    const allApts = (window as any).__sharedAppointments || [];
-    // Use the store directly
+
+    // 1) Mark appointment as completed
     const searchParams2 = new URLSearchParams(window.location.search);
     const aptId = searchParams2.get("aptId");
     if (aptId) {
       completeAppointmentConsultation(aptId);
     } else {
-      // Fallback: find by patient name
-      // The completeAppointmentConsultation needs an ID, so we search for the in_progress one
-      // This is a simplified approach — in production, pass apt ID through URL
+      // Fallback: find the in_progress appointment for this patient today
+      const allApts = sharedAppointmentsStore.read();
+      const today = new Date().toISOString().slice(0, 10);
+      const match = allApts.find(
+        (a) => a.patient === patient.name && a.status === "in_progress" && a.date === today
+      );
+      if (match) completeAppointmentConsultation(match.id);
+    }
+
+    // 2) Write prescription to shared store if items exist
+    if (rxItems.filter(r => r.medication.trim()).length > 0) {
+      createPrescription({
+        doctor: "Dr. Bouazizi",
+        patient: patient.name,
+        date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
+        items: rxItems.filter(r => r.medication.trim()).map(r => `${r.medication} — ${r.dosage} · ${r.duration}`),
+        status: "active" as const,
+        total: `${consultAmount} DT`,
+        assurance: "",
+        pharmacy: null,
+        sent: false,
+      });
+    }
+
+    // 3) Add health document (consultation report) to patient's health record
+    if (reportText.trim() || diagnosis.trim()) {
+      addHealthDocument({
+        name: `Compte-rendu — ${motif || "Consultation"}`,
+        type: "Consultation",
+        date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }),
+        source: "Dr. Bouazizi",
+        size: "—",
+      });
     }
   };
 

@@ -2,6 +2,8 @@
  * sharedAppointmentsStore.ts — Single source of truth for ALL appointments.
  * Used by: DoctorSchedule, SecretaryAgenda, SecretaryDashboard, PublicBooking
  *
+ * Dates are generated dynamically relative to today so the demo always looks current.
+ *
  * // TODO BACKEND: Replace with API + real-time subscriptions
  */
 import { createStore, useStore } from "./crossRoleStore";
@@ -9,50 +11,92 @@ import { pushNotification } from "./notificationsStore";
 import type { SharedAppointment, AppointmentStatus, AppointmentType } from "@/types/appointment";
 import { computeEndTime } from "@/types/appointment";
 
-// ─── Seed data — single set of appointments ─────────────────
+// ─── Helper: generate YYYY-MM-DD relative to today ──────────
+function relDate(offset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0, 10);
+}
+
+const TODAY = relDate(0);
+
+// ─── Seed data — dates relative to today ─────────────────────
 const SEED_APPOINTMENTS: SharedAppointment[] = [
-  { id: "apt-001", date: "2026-02-20", startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi diabète", status: "done", phone: "+216 71 111 111", assurance: "Assurance publique", notes: "Glycémie stable" },
-  { id: "apt-002", date: "2026-02-20", startTime: "08:30", endTime: "09:00", duration: 30, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Gharbi", type: "Suivi", motif: "Tension artérielle", status: "done", phone: "+216 71 222 222", assurance: "CNRPS" },
-  { id: "apt-003", date: "2026-02-20", startTime: "09:00", endTime: "09:30", duration: 30, patient: "Hana Kammoun", patientId: null, avatar: "HK", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Douleurs dorsales", status: "done", phone: "+216 71 333 333", assurance: "Assurance publique" },
-  { id: "apt-004", date: "2026-02-20", startTime: "09:30", endTime: "10:00", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Suivi diabète", status: "in_progress", phone: "+216 71 234 567", assurance: "Maghrebia", arrivedAt: "09:15" },
-  { id: "apt-005", date: "2026-02-20", startTime: "09:45", endTime: "10:15", duration: 30, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Gharbi", type: "Suivi", motif: "Cardio - ECG", status: "in_waiting", phone: "+216 22 345 678", assurance: "Assurance publique", arrivedAt: "09:20", waitTime: 25 },
-  { id: "apt-006", date: "2026-02-20", startTime: "10:00", endTime: "10:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Post-opératoire", status: "in_waiting", phone: "+216 55 456 789", assurance: "Sans assurance", arrivedAt: "09:40", waitTime: 15 },
-  { id: "apt-007", date: "2026-02-20", startTime: "10:30", endTime: "11:00", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Hammami", type: "Première visite", motif: "Consultation dermatologique", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
-  { id: "apt-008", date: "2026-02-20", startTime: "11:00", endTime: "11:30", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Bilan complet", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
-  { id: "apt-009", date: "2026-02-20", startTime: "11:30", endTime: "12:00", duration: 30, patient: "Bilel Nasri", patientId: null, avatar: "BN", doctor: "Dr. Gharbi", type: "Suivi", motif: "Hypertension", status: "pending", phone: "+216 50 789 012", assurance: "STAR Assurances" },
-  { id: "apt-010", date: "2026-02-20", startTime: "14:00", endTime: "14:30", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Renouvellement ordonnance", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
-  { id: "apt-011", date: "2026-02-20", startTime: "14:30", endTime: "15:00", duration: 30, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Hammami", type: "Consultation", motif: "Acné sévère", status: "pending", phone: "+216 71 901 234", assurance: "Assurance publique" },
-  { id: "apt-012", date: "2026-02-20", startTime: "15:00", endTime: "15:30", duration: 30, patient: "Olfa Ben Salah", patientId: null, avatar: "OB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Fatigue chronique", status: "pending", phone: "+216 55 012 345", assurance: "GAT Assurances" },
-  { id: "apt-013", date: "2026-02-20", startTime: "15:30", endTime: "16:00", duration: 30, patient: "Rania Meddeb", patientId: 6, avatar: "RM", doctor: "Dr. Gharbi", type: "Contrôle", motif: "ECG de contrôle", status: "cancelled", phone: "+216 71 123 456", assurance: "CNRPS" },
-  { id: "apt-014", date: "2026-02-20", startTime: "16:00", endTime: "16:30", duration: 30, patient: "Imen Bouhlel", patientId: null, avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "pending", phone: "+216 50 234 567", assurance: "Assurance publique" },
-  { id: "apt-015", date: "2026-02-20", startTime: "16:30", endTime: "17:00", duration: 30, patient: "Walid Jlassi", patientId: null, avatar: "WJ", doctor: "Dr. Hammami", type: "Consultation", motif: "Eczéma", status: "pending", phone: "+216 22 345 678", assurance: "Sans assurance" },
-  // Additional days for week view
-  { id: "apt-016", date: "2026-02-21", startTime: "09:00", endTime: "09:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Contrôle glycémie", status: "confirmed", phone: "+216 71 234 567", assurance: "Maghrebia" },
-  { id: "apt-017", date: "2026-02-21", startTime: "10:00", endTime: "11:00", duration: 60, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Gharbi", type: "Première visite", motif: "Bilan cardio complet", status: "confirmed", phone: "+216 22 345 678", assurance: "Assurance publique" },
-  { id: "apt-018", date: "2026-02-21", startTime: "14:30", endTime: "15:00", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Résultats analyses", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
-  { id: "apt-019", date: "2026-02-22", startTime: "09:00", endTime: "09:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Post-opératoire J+30", status: "confirmed", phone: "+216 55 456 789", assurance: "Sans assurance" },
-  { id: "apt-020", date: "2026-02-22", startTime: "10:00", endTime: "10:30", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Gharbi", type: "Suivi", motif: "Suivi tension", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
-  { id: "apt-021", date: "2026-02-23", startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "confirmed", phone: "+216 71 111 111", assurance: "Assurance publique" },
-  { id: "apt-022", date: "2026-02-23", startTime: "14:30", endTime: "15:00", duration: 30, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Résultats mammographie", status: "confirmed", phone: "+216 71 222 222", assurance: "CNRPS" },
-  { id: "apt-023", date: "2026-02-24", startTime: "09:30", endTime: "10:00", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Suivi Rx", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
-  { id: "apt-024", date: "2026-02-24", startTime: "14:00", endTime: "15:00", duration: 60, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Bilan thyroïdien", status: "confirmed", phone: "+216 71 901 234", assurance: "Assurance publique" },
-  { id: "apt-025", date: "2026-02-25", startTime: "09:00", endTime: "09:30", duration: 30, patient: "Rania Meddeb", patientId: 6, avatar: "RM", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Consultation générale", status: "confirmed", phone: "+216 71 123 456", assurance: "CNRPS" },
-  // Week 2 (Feb 26 - Mar 1)
-  { id: "apt-026", date: "2026-02-26", startTime: "09:00", endTime: "09:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi HbA1c", status: "confirmed", phone: "+216 71 234 567", assurance: "Maghrebia" },
-  { id: "apt-027", date: "2026-02-26", startTime: "10:00", endTime: "10:30", duration: 30, patient: "Hana Kammoun", patientId: null, avatar: "HK", doctor: "Dr. Gharbi", type: "Suivi", motif: "ECG de contrôle", status: "confirmed", phone: "+216 71 333 333", assurance: "Assurance publique" },
-  { id: "apt-028", date: "2026-02-26", startTime: "14:00", endTime: "14:30", duration: 30, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan lipidique", status: "confirmed", phone: "+216 22 345 678", assurance: "Assurance publique" },
-  { id: "apt-029", date: "2026-02-27", startTime: "08:30", endTime: "09:00", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Check-up annuel", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
-  { id: "apt-030", date: "2026-02-27", startTime: "11:00", endTime: "11:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Hammami", type: "Consultation", motif: "Suivi dermatologique", status: "confirmed", phone: "+216 55 456 789", assurance: "Sans assurance" },
-  { id: "apt-031", date: "2026-02-28", startTime: "09:00", endTime: "09:30", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Résultats thyroïde", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
-  { id: "apt-032", date: "2026-02-28", startTime: "15:00", endTime: "15:30", duration: 30, patient: "Olfa Ben Salah", patientId: null, avatar: "OB", doctor: "Dr. Gharbi", type: "Téléconsultation", motif: "Renouvellement traitement", status: "confirmed", phone: "+216 55 012 345", assurance: "GAT Assurances", teleconsultation: true },
-  // Week 3 (Mar 2 - Mar 6)
-  { id: "apt-033", date: "2026-03-02", startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi diabète mensuel", status: "confirmed", phone: "+216 71 111 111", assurance: "Assurance publique" },
-  { id: "apt-034", date: "2026-03-02", startTime: "10:00", endTime: "10:30", duration: 30, patient: "Bilel Nasri", patientId: null, avatar: "BN", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Consultation initiale", status: "confirmed", phone: "+216 50 789 012", assurance: "STAR Assurances" },
-  { id: "apt-035", date: "2026-03-03", startTime: "09:30", endTime: "10:00", duration: 30, patient: "Walid Jlassi", patientId: null, avatar: "WJ", doctor: "Dr. Hammami", type: "Suivi", motif: "Eczéma — évolution", status: "confirmed", phone: "+216 22 345 678", assurance: "Sans assurance" },
-  { id: "apt-036", date: "2026-03-03", startTime: "14:00", endTime: "15:00", duration: 60, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan complet annuel", status: "confirmed", phone: "+216 71 222 222", assurance: "CNRPS" },
-  { id: "apt-037", date: "2026-03-04", startTime: "09:00", endTime: "09:30", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Suivi traitement", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
-  { id: "apt-038", date: "2026-03-05", startTime: "10:00", endTime: "10:30", duration: 30, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Gharbi", type: "Suivi", motif: "Cardio — résultats", status: "confirmed", phone: "+216 71 901 234", assurance: "Assurance publique" },
-  { id: "apt-039", date: "2026-03-06", startTime: "08:30", endTime: "09:00", duration: 30, patient: "Imen Bouhlel", patientId: null, avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Céphalées sévères", status: "confirmed", phone: "+216 50 234 567", assurance: "Assurance publique" },
+  // ── Today (offset 0) ──────────────────────────────
+  { id: "apt-001", date: TODAY, startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi diabète", status: "done", phone: "+216 71 111 111", assurance: "Assurance publique", notes: "Glycémie stable" },
+  { id: "apt-002", date: TODAY, startTime: "08:30", endTime: "09:00", duration: 30, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Gharbi", type: "Suivi", motif: "Tension artérielle", status: "done", phone: "+216 71 222 222", assurance: "CNRPS" },
+  { id: "apt-003", date: TODAY, startTime: "09:00", endTime: "09:30", duration: 30, patient: "Hana Kammoun", patientId: null, avatar: "HK", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Douleurs dorsales", status: "done", phone: "+216 71 333 333", assurance: "Assurance publique" },
+  { id: "apt-004", date: TODAY, startTime: "09:30", endTime: "10:00", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Suivi diabète", status: "in_progress", phone: "+216 71 234 567", assurance: "Maghrebia", arrivedAt: "09:15" },
+  { id: "apt-005", date: TODAY, startTime: "09:45", endTime: "10:15", duration: 30, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Gharbi", type: "Suivi", motif: "Cardio - ECG", status: "in_waiting", phone: "+216 22 345 678", assurance: "Assurance publique", arrivedAt: "09:20", waitTime: 25 },
+  { id: "apt-006", date: TODAY, startTime: "10:00", endTime: "10:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Post-opératoire", status: "in_waiting", phone: "+216 55 456 789", assurance: "Sans assurance", arrivedAt: "09:40", waitTime: 15 },
+  { id: "apt-007", date: TODAY, startTime: "10:30", endTime: "11:00", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Hammami", type: "Première visite", motif: "Consultation dermatologique", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
+  { id: "apt-008", date: TODAY, startTime: "11:00", endTime: "11:30", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Bilan complet", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
+  { id: "apt-009", date: TODAY, startTime: "11:30", endTime: "12:00", duration: 30, patient: "Bilel Nasri", patientId: null, avatar: "BN", doctor: "Dr. Gharbi", type: "Suivi", motif: "Hypertension", status: "pending", phone: "+216 50 789 012", assurance: "STAR Assurances" },
+  { id: "apt-010", date: TODAY, startTime: "14:00", endTime: "14:30", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Renouvellement ordonnance", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
+  { id: "apt-011", date: TODAY, startTime: "14:30", endTime: "15:00", duration: 30, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Hammami", type: "Consultation", motif: "Acné sévère", status: "pending", phone: "+216 71 901 234", assurance: "Assurance publique" },
+  { id: "apt-012", date: TODAY, startTime: "15:00", endTime: "15:30", duration: 30, patient: "Olfa Ben Salah", patientId: null, avatar: "OB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Fatigue chronique", status: "pending", phone: "+216 55 012 345", assurance: "GAT Assurances" },
+  { id: "apt-013", date: TODAY, startTime: "15:30", endTime: "16:00", duration: 30, patient: "Rania Meddeb", patientId: 6, avatar: "RM", doctor: "Dr. Gharbi", type: "Contrôle", motif: "ECG de contrôle", status: "cancelled", phone: "+216 71 123 456", assurance: "CNRPS" },
+  { id: "apt-014", date: TODAY, startTime: "16:00", endTime: "16:30", duration: 30, patient: "Imen Bouhlel", patientId: null, avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "pending", phone: "+216 50 234 567", assurance: "Assurance publique" },
+  { id: "apt-015", date: TODAY, startTime: "16:30", endTime: "17:00", duration: 30, patient: "Walid Jlassi", patientId: null, avatar: "WJ", doctor: "Dr. Hammami", type: "Consultation", motif: "Eczéma", status: "pending", phone: "+216 22 345 678", assurance: "Sans assurance" },
+
+  // ── Tomorrow (+1) ──────────────────────────────
+  { id: "apt-016", date: relDate(1), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Contrôle glycémie", status: "confirmed", phone: "+216 71 234 567", assurance: "Maghrebia" },
+  { id: "apt-017", date: relDate(1), startTime: "10:00", endTime: "11:00", duration: 60, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Gharbi", type: "Première visite", motif: "Bilan cardio complet", status: "confirmed", phone: "+216 22 345 678", assurance: "Assurance publique" },
+  { id: "apt-018", date: relDate(1), startTime: "14:30", endTime: "15:00", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Résultats analyses", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
+
+  // ── Day +2 ──────────────────────────────
+  { id: "apt-019", date: relDate(2), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Post-opératoire J+30", status: "confirmed", phone: "+216 55 456 789", assurance: "Sans assurance" },
+  { id: "apt-020", date: relDate(2), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Gharbi", type: "Suivi", motif: "Suivi tension", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
+
+  // ── Day +3 ──────────────────────────────
+  { id: "apt-021", date: relDate(3), startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "confirmed", phone: "+216 71 111 111", assurance: "Assurance publique" },
+  { id: "apt-022", date: relDate(3), startTime: "14:30", endTime: "15:00", duration: 30, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Résultats mammographie", status: "confirmed", phone: "+216 71 222 222", assurance: "CNRPS" },
+
+  // ── Day +4 ──────────────────────────────
+  { id: "apt-023", date: relDate(4), startTime: "09:30", endTime: "10:00", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Suivi Rx", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
+  { id: "apt-024", date: relDate(4), startTime: "14:00", endTime: "15:00", duration: 60, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Bilan thyroïdien", status: "confirmed", phone: "+216 71 901 234", assurance: "Assurance publique" },
+
+  // ── Day +5 ──────────────────────────────
+  { id: "apt-025", date: relDate(5), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Rania Meddeb", patientId: 6, avatar: "RM", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Consultation générale", status: "confirmed", phone: "+216 71 123 456", assurance: "CNRPS" },
+
+  // ── Day +6 ──────────────────────────────
+  { id: "apt-026", date: relDate(6), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi HbA1c", status: "confirmed", phone: "+216 71 234 567", assurance: "Maghrebia" },
+  { id: "apt-027", date: relDate(6), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Hana Kammoun", patientId: null, avatar: "HK", doctor: "Dr. Gharbi", type: "Suivi", motif: "ECG de contrôle", status: "confirmed", phone: "+216 71 333 333", assurance: "Assurance publique" },
+  { id: "apt-028", date: relDate(6), startTime: "14:00", endTime: "14:30", duration: 30, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan lipidique", status: "confirmed", phone: "+216 22 345 678", assurance: "Assurance publique" },
+
+  // ── Day +7 ──────────────────────────────
+  { id: "apt-029", date: relDate(7), startTime: "08:30", endTime: "09:00", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Check-up annuel", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
+  { id: "apt-030", date: relDate(7), startTime: "11:00", endTime: "11:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Hammami", type: "Consultation", motif: "Suivi dermatologique", status: "confirmed", phone: "+216 55 456 789", assurance: "Sans assurance" },
+
+  // ── Day +8 ──────────────────────────────
+  { id: "apt-031", date: relDate(8), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Résultats thyroïde", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
+  { id: "apt-032", date: relDate(8), startTime: "15:00", endTime: "15:30", duration: 30, patient: "Olfa Ben Salah", patientId: null, avatar: "OB", doctor: "Dr. Gharbi", type: "Téléconsultation", motif: "Renouvellement traitement", status: "confirmed", phone: "+216 55 012 345", assurance: "GAT Assurances", teleconsultation: true },
+
+  // ── Day +10 ──────────────────────────────
+  { id: "apt-033", date: relDate(10), startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi diabète mensuel", status: "confirmed", phone: "+216 71 111 111", assurance: "Assurance publique" },
+  { id: "apt-034", date: relDate(10), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Bilel Nasri", patientId: null, avatar: "BN", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Consultation initiale", status: "confirmed", phone: "+216 50 789 012", assurance: "STAR Assurances" },
+
+  // ── Day +11 ──────────────────────────────
+  { id: "apt-035", date: relDate(11), startTime: "09:30", endTime: "10:00", duration: 30, patient: "Walid Jlassi", patientId: null, avatar: "WJ", doctor: "Dr. Hammami", type: "Suivi", motif: "Eczéma — évolution", status: "confirmed", phone: "+216 22 345 678", assurance: "Sans assurance" },
+  { id: "apt-036", date: relDate(11), startTime: "14:00", endTime: "15:00", duration: 60, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan complet annuel", status: "confirmed", phone: "+216 71 222 222", assurance: "CNRPS" },
+
+  // ── Day +12 ──────────────────────────────
+  { id: "apt-037", date: relDate(12), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Suivi traitement", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
+
+  // ── Day +13 ──────────────────────────────
+  { id: "apt-038", date: relDate(13), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Gharbi", type: "Suivi", motif: "Cardio — résultats", status: "confirmed", phone: "+216 71 901 234", assurance: "Assurance publique" },
+
+  // ── Day +14 ──────────────────────────────
+  { id: "apt-039", date: relDate(14), startTime: "08:30", endTime: "09:00", duration: 30, patient: "Imen Bouhlel", patientId: null, avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Céphalées sévères", status: "confirmed", phone: "+216 50 234 567", assurance: "Assurance publique" },
+
+  // ── Past days (history) ──────────────────────────────
+  { id: "apt-040", date: relDate(-1), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Suivi diabète", status: "done", phone: "+216 71 234 567", assurance: "Maghrebia" },
+  { id: "apt-041", date: relDate(-2), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Gharbi", type: "Suivi", motif: "ECG de contrôle", status: "done", phone: "+216 22 345 678", assurance: "Assurance publique" },
+  { id: "apt-042", date: relDate(-3), startTime: "14:00", endTime: "14:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Résultats analyses", status: "done", phone: "+216 71 234 567", assurance: "Maghrebia" },
+  { id: "apt-043", date: relDate(-5), startTime: "09:30", endTime: "10:00", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan thyroïdien", status: "done", phone: "+216 98 567 890", assurance: "Assurance publique" },
+  { id: "apt-044", date: relDate(-7), startTime: "11:00", endTime: "11:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan initial", status: "done", phone: "+216 71 234 567", assurance: "Maghrebia" },
+  { id: "apt-045", date: relDate(-4), startTime: "15:00", endTime: "15:30", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Check-up", status: "absent", phone: "+216 29 678 901", assurance: "Assurance publique" },
+  { id: "apt-046", date: relDate(-6), startTime: "16:00", endTime: "16:30", duration: 30, patient: "Rania Meddeb", patientId: 6, avatar: "RM", doctor: "Dr. Gharbi", type: "Suivi", motif: "Contrôle ECG", status: "cancelled", phone: "+216 71 123 456", assurance: "CNRPS" },
 ];
 
 const store = createStore<SharedAppointment[]>("medicare_shared_appointments", SEED_APPOINTMENTS);
@@ -75,13 +119,22 @@ export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">
   const newApt: SharedAppointment = { ...apt, id, endTime };
   store.set(prev => [...prev, newApt].sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)));
 
-  // Notify doctor if created by secretary
+  // Notify doctor
   pushNotification({
-    type: "generic",
+    type: "appointment_booked",
     title: "Nouveau RDV",
     message: `${apt.patient} · ${apt.date} à ${apt.startTime} avec ${apt.doctor}`,
     targetRole: "doctor",
     actionLink: "/dashboard/doctor/schedule",
+  });
+
+  // Notify secretary
+  pushNotification({
+    type: "appointment_booked",
+    title: "Nouveau RDV ajouté",
+    message: `${apt.patient} — ${apt.type} avec ${apt.doctor} le ${apt.date} à ${apt.startTime}`,
+    targetRole: "secretary",
+    actionLink: "/dashboard/secretary/agenda",
   });
 
   return id;
@@ -89,15 +142,64 @@ export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">
 
 /** Reschedule an appointment */
 export function rescheduleAppointment(id: string, newDate: string, newTime: string) {
+  const apt = store.read().find(a => a.id === id);
   store.set(prev => prev.map(a => {
     if (a.id !== id) return a;
     return { ...a, date: newDate, startTime: newTime, endTime: computeEndTime(newTime, a.duration) };
   }));
+
+  if (apt) {
+    // Notify doctor
+    pushNotification({
+      type: "appointment_rescheduled",
+      title: "RDV reprogrammé",
+      message: `${apt.patient} : reprogrammé au ${newDate} à ${newTime}`,
+      targetRole: "doctor",
+      actionLink: "/dashboard/doctor/schedule",
+    });
+    // Notify patient if they have an ID
+    if (apt.patientId) {
+      pushNotification({
+        type: "appointment_rescheduled",
+        title: "RDV reprogrammé",
+        message: `Votre RDV avec ${apt.doctor} a été déplacé au ${newDate} à ${newTime}.`,
+        targetRole: "patient",
+        actionLink: "/dashboard/patient/appointments",
+      });
+    }
+  }
 }
 
 /** Cancel an appointment */
 export function cancelAppointment(id: string) {
+  const apt = store.read().find(a => a.id === id);
   updateAppointmentStatus(id, "cancelled");
+
+  if (apt) {
+    pushNotification({
+      type: "generic",
+      title: "RDV annulé",
+      message: `Le RDV de ${apt.patient} (${apt.date} à ${apt.startTime}) a été annulé.`,
+      targetRole: "doctor",
+      actionLink: "/dashboard/doctor/schedule",
+    });
+    pushNotification({
+      type: "generic",
+      title: "RDV annulé",
+      message: `Le RDV de ${apt.patient} (${apt.date} à ${apt.startTime}) a été annulé.`,
+      targetRole: "secretary",
+      actionLink: "/dashboard/secretary/agenda",
+    });
+    if (apt.patientId) {
+      pushNotification({
+        type: "generic",
+        title: "RDV annulé",
+        message: `Votre RDV avec ${apt.doctor} le ${apt.date} à ${apt.startTime} a été annulé.`,
+        targetRole: "patient",
+        actionLink: "/dashboard/patient/appointments",
+      });
+    }
+  }
 }
 
 /** Mark patient as arrived */
@@ -120,11 +222,33 @@ export function startAppointmentConsultation(id: string) {
 /** Complete consultation */
 export function completeAppointmentConsultation(id: string) {
   updateAppointmentStatus(id, "done");
+
+  const apt = store.read().find(a => a.id === id);
+  if (apt?.patientId) {
+    pushNotification({
+      type: "care_sheet",
+      title: "Consultation terminée",
+      message: `Votre consultation avec ${apt.doctor} est terminée. Consultez votre dossier médical.`,
+      targetRole: "patient",
+      actionLink: "/dashboard/patient/health",
+    });
+  }
 }
 
 /** Mark absent */
 export function markAppointmentAbsent(id: string) {
+  const apt = store.read().find(a => a.id === id);
   updateAppointmentStatus(id, "absent");
+
+  if (apt?.patientId) {
+    pushNotification({
+      type: "appointment_absent",
+      title: "Absence enregistrée",
+      message: `Vous avez été marqué absent pour votre RDV du ${apt.date} à ${apt.startTime} avec ${apt.doctor}.`,
+      targetRole: "patient",
+      actionLink: "/dashboard/patient/appointments",
+    });
+  }
 }
 
 /** Toggle tag on appointment (urgent / retard) */

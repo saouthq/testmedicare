@@ -50,7 +50,7 @@ const SecretaryDashboard = () => {
   const [allTarifs] = useSharedTarifs();
   const [allPatients] = useSharedPatients();
 
-  const todayStr = "2026-02-20"; // TODO: use real date
+  const todayStr = new Date().toISOString().slice(0, 10);
   const todayApts = useMemo(() => getAppointmentsForDate(allApts, todayStr), [allApts]);
 
   // Build waiting room from today's appointments that have arrived/in_waiting/in_progress status
