@@ -90,7 +90,7 @@ const PublicBooking = () => {
     const res = await sendOtp(phoneInput);
     setOtpLoading(false);
     if (res.success) {
-      toast({ title: "Code envoyé", description: `OTP envoyé au ${phoneInput} (code: 123456)` });
+      toast({ title: "Code envoyé", description: `Un code de vérification a été envoyé au ${phoneInput}` });
       setOtpSent(true);
       setPhone(phoneInput);
     }
