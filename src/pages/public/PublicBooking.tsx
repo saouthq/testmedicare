@@ -36,12 +36,26 @@ const generateSlots = () => {
   return s;
 };
 
-const daysOfMonth = () => {
-  const d: { day: number; name: string; available: boolean }[] = [];
+const generateDays = (weekOffset: number) => {
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(today.getDate() + (weekOffset * 7));
+  // Start from next available day (skip today if past 4pm)
+  if (weekOffset === 0 && today.getHours() >= 16) start.setDate(start.getDate() + 1);
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  for (let i = 21; i <= 28; i++) {
-    const date = new Date(2026, 1, i);
-    d.push({ day: i, name: dayNames[date.getDay()], available: i !== 22 && i !== 25 });
+  const d: { day: number; month: number; year: number; name: string; available: boolean; label: string }[] = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    const isSunday = date.getDay() === 0;
+    d.push({
+      day: date.getDate(),
+      month: date.getMonth(),
+      year: date.getFullYear(),
+      name: dayNames[date.getDay()],
+      available: !isSunday, // Sundays unavailable
+      label: `${date.getDate()} ${date.toLocaleDateString("fr-FR", { month: "short" })} ${date.getFullYear()}`,
+    });
   }
   return d;
 };
