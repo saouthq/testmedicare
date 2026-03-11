@@ -762,12 +762,7 @@ const PublicBooking = () => {
                 <span className="text-muted-foreground">Assurance</span>
                 <span className="font-medium">{mockAssurances.find(a => a.id === assurance)?.name}</span>
               </div>
-              {selectedMotifData && (
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-muted-foreground font-medium">Tarif</span>
-                  <span className="font-bold text-primary">{selectedMotifData.price} DT</span>
-                </div>
-              )}
+              {/* Prices hidden by default in booking flow — only show in recap for teleconsult payment */}
             </div>
 
             {isTeleconsult && (

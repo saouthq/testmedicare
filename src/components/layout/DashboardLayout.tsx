@@ -56,7 +56,6 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Salle d'attente", url: "/dashboard/doctor/waiting-room", icon: Clock },
     { title: "Mes patients", url: "/dashboard/doctor/patients", icon: Users },
     { title: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
-    { title: "Ordonnances", url: "/dashboard/doctor/prescriptions", icon: FileText },
     // ── Cabinet ──
     { title: "Facturation", url: "/dashboard/doctor/billing", icon: Banknote },
     { title: "Tarifs & Actes", url: "/dashboard/doctor/tarifs", icon: CreditCard },
