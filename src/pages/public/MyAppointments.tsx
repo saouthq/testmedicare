@@ -32,12 +32,6 @@ interface GuestAppointment {
 }
 
 const MyAppointments = () => {
-  // Redirect logged-in patients to their dashboard appointments
-  const userRole = localStorage.getItem("userRole");
-  if (userRole === "patient") {
-    return <Navigate to="/dashboard/patient/appointments" replace />;
-  }
-
   const [phoneInput, setPhoneInput] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -45,6 +39,12 @@ const MyAppointments = () => {
   const [verified, setVerified] = useState(false);
   const [appointments, setAppointments] = useState<GuestAppointment[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<GuestAppointment | null>(null);
+
+  // Redirect logged-in patients to their dashboard appointments
+  const userRole = localStorage.getItem("userRole");
+  if (userRole === "patient") {
+    return <Navigate to="/dashboard/patient/appointments" replace />;
+  }
 
   const handleSendOtp = async () => {
     if (!phoneInput || phoneInput.length < 8) return;
