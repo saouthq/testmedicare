@@ -32,9 +32,11 @@ const Register = () => {
 
   const handleChange = (field: string, value: string) => setFormData(prev => ({ ...prev, [field]: value }));
 
-  const passwordValid = formData.password.length >= 8;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+  const phoneValid = /^(\+216)?[0-9\s]{8,}$/.test(formData.phone.replace(/\s/g, ""));
+  const passwordValid = formData.password.length >= 8 && /[A-Z]/.test(formData.password) && /[0-9]/.test(formData.password);
   const passwordsMatch = formData.password === formData.confirmPassword;
-  const formValid = formData.firstName && formData.lastName && formData.email && formData.phone && passwordValid && passwordsMatch;
+  const formValid = formData.firstName.length >= 2 && formData.lastName.length >= 2 && emailValid && phoneValid && passwordValid && passwordsMatch;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
