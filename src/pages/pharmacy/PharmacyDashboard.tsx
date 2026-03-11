@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { mockPharmacyPrescriptions } from "@/data/mocks/pharmacy";
+import { usePharmacyPrescriptions } from "@/stores/pharmacyStore";
 
 const statusCfg: Record<string, { label: string; cls: string }> = {
   received:     { label: "Reçue",              cls: "bg-warning/10 text-warning" },
@@ -21,7 +21,8 @@ const statusCfg: Record<string, { label: string; cls: string }> = {
 };
 
 const PharmacyDashboard = () => {
-  const rx = mockPharmacyPrescriptions;
+  const [allRx] = usePharmacyPrescriptions();
+  const rx = allRx;
   const received  = rx.filter(p => p.status === "received").length;
   const preparing = rx.filter(p => p.status === "preparing").length;
   const ready     = rx.filter(p => p.status === "ready_pickup").length;

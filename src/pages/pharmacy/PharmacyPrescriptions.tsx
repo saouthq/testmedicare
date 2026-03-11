@@ -30,11 +30,13 @@ const statusCfg: Record<string, { label: string; cls: string; icon: any }> = {
 };
 
 const PharmacyPrescriptions = () => {
+  // Use centralized pharmacy store
+  const [storeRx] = usePharmacyPrescriptions();
   // Merge local mock prescriptions with any sent via cross-role store
   const [sharedPrescriptions] = useSharedPrescriptions();
   const { notifications: pharmNotifs } = useNotifications("pharmacy");
 
-  const [prescriptions, setPrescriptions] = useState<PharmacyPrescription[]>(mockPharmacyPrescriptions);
+  const prescriptions = storeRx;
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PharmacyPrescription | null>(null);

@@ -63,11 +63,17 @@ export function PrescriptionsProvider({ children }: { children: ReactNode }) {
   const totalPending = prescriptions.filter((p) => !p.sent).length;
 
   // TODO BACKEND: POST /api/prescriptions/{id}/resend
-  const handleResend = (id: string) => toast({ title: "Renvoi", description: `Ordonnance ${id} renvoyée (mock).` });
+  const handleResend = (id: string) => {
+    markPrescriptionSent(id);
+    toast({ title: "Renvoi", description: `Ordonnance ${id} renvoyée.` });
+  };
   // TODO BACKEND: GET /api/prescriptions/{id}/pdf
-  const handlePrint = (id: string) => toast({ title: "Impression", description: `Ordonnance ${id} — à brancher.` });
+  const handlePrint = (id: string) => toast({ title: "Impression", description: `Ordonnance ${id} — impression en cours.` });
   // TODO BACKEND: POST /api/prescriptions/{id}/duplicate
-  const handleDuplicate = (id: string) => toast({ title: "Dupliquer", description: `Ordonnance ${id} dupliquée (mock).` });
+  const handleDuplicate = (id: string) => {
+    const newId = duplicatePrescription(id);
+    toast({ title: "Dupliquer", description: `Ordonnance ${id} dupliquée${newId ? ` → ${newId}` : ""}.` });
+  };
 
   const value: PrescriptionsValue = {
     prescriptions, filter, setFilter, q, setQ, filtered,

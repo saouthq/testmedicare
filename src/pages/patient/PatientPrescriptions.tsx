@@ -24,7 +24,15 @@ const statusConfig: Record<PharmacyResponse["status"], { label: string; class: s
 
 const PatientPrescriptions = () => {
   const [filter, setFilter] = useState("all");
-  const [prescriptions] = useState<PrescriptionWithPharmacies[]>(initialPrescriptions);
+  const [doctorRx] = useDoctorPrescriptions();
+  
+  // Build prescriptions from doctor prescriptions store
+  const prescriptions: PrescriptionWithPharmacies[] = doctorRx.map(rx => ({
+    ...rx,
+    patient: rx.patient || "",
+    sent: rx.sent,
+    sentToPharmacies: [],
+  }));
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sendingToPharmacy, setSendingToPharmacy] = useState<string | null>(null);
   const [pharmacySearch, setPharmacySearch] = useState("");

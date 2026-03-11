@@ -61,8 +61,8 @@ const PatientHealth = () => {
 
   // Cross-role: lab results
   const [labDemands] = useSharedLabDemands();
-  const [labDemands] = useSharedLabDemands();
-  const transmittedLabResults = labDemands
+  const [labDemandsList] = useSharedLabDemands();
+  const transmittedLabResults = labDemandsList
     .filter(d => d.status === "transmitted" && d.pdfs.length > 0)
     .flatMap(d => d.pdfs.map(pdf => ({
       name: pdf.name,
@@ -72,16 +72,27 @@ const PatientHealth = () => {
       source: `Labo · ${d.examens.join(", ")}`,
     })));
 
-  // Editable lists
-  const [habits, setHabits] = useState(initialHabits);
-  const [antecedents, setAntecedents] = useState(initialAntecedents);
-  const [treatments, setTreatments] = useState(initialTreatments);
-  const [allergies, setAllergies] = useState(initialAllergies);
-  const [family, setFamily] = useState(initialFamily);
-  const [surgeries, setSurgeries] = useState(initialSurgeries);
-  const [vaccinations, setVaccinations] = useState(initialVaccinations);
-  const [measures, setMeasures] = useState(initialMeasures);
-  const [documents, setDocuments] = useState(initialDocuments);
+  // Editable lists — backed by centralized health store
+  const habits = healthData.habits;
+  const antecedents = healthData.antecedents;
+  const treatments = healthData.treatments;
+  const allergies = healthData.allergies;
+  const family = healthData.familyHistory;
+  const surgeries = healthData.surgeries;
+  const vaccinations = healthData.vaccinations;
+  const measures = healthData.measures;
+  const documents = healthData.documents;
+
+  // Setters that update the store
+  const setHabits = (v: typeof habits) => setHealthData(prev => ({ ...prev, habits: typeof v === 'function' ? (v as any)(prev.habits) : v }));
+  const setAntecedents = (v: typeof antecedents) => setHealthData(prev => ({ ...prev, antecedents: typeof v === 'function' ? (v as any)(prev.antecedents) : v }));
+  const setTreatments = (v: typeof treatments) => setHealthData(prev => ({ ...prev, treatments: typeof v === 'function' ? (v as any)(prev.treatments) : v }));
+  const setAllergies = (v: typeof allergies) => setHealthData(prev => ({ ...prev, allergies: typeof v === 'function' ? (v as any)(prev.allergies) : v }));
+  const setFamily = (v: typeof family) => setHealthData(prev => ({ ...prev, familyHistory: typeof v === 'function' ? (v as any)(prev.familyHistory) : v }));
+  const setSurgeries = (v: typeof surgeries) => setHealthData(prev => ({ ...prev, surgeries: typeof v === 'function' ? (v as any)(prev.surgeries) : v }));
+  const setVaccinations = (v: typeof vaccinations) => setHealthData(prev => ({ ...prev, vaccinations: typeof v === 'function' ? (v as any)(prev.vaccinations) : v }));
+  const setMeasures = (v: typeof measures) => setHealthData(prev => ({ ...prev, measures: typeof v === 'function' ? (v as any)(prev.measures) : v }));
+  const setDocuments = (v: typeof documents) => setHealthData(prev => ({ ...prev, documents: typeof v === 'function' ? (v as any)(prev.documents) : v }));
 
   // Dynamic counts for menu
   const countMap: Record<string, number> = {

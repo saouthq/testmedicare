@@ -28,15 +28,20 @@ const availConfig: Record<Availability, { label: string; cls: string }> = {
 };
 
 const PharmacyStock = () => {
-  const [meds, setMeds] = useState<MedItem[]>(
-    mockPharmacyStock.map(s => ({
+  const [stockItems] = usePharmacyStock();
+  const [meds, setMeds] = useState<MedItem[]>([]);
+  
+  // Sync from store
+  useState(() => {
+    const mapped = stockItems.map(s => ({
       id: s.id,
       name: s.name,
       category: s.category,
       availability: s.status === "critical" ? "unavailable" as Availability : s.status === "low" ? "partial" as Availability : "available" as Availability,
       price: s.price,
-    }))
-  );
+    }));
+    if (mapped.length > 0) setMeds(mapped);
+  });
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [filterAvail, setFilterAvail] = useState<Availability | "all">("all");
