@@ -189,12 +189,13 @@ const SimulationPanel = () => {
   };
 
   const simulateConsultationEnd = () => {
-    endConsultation(1, "Amine Ben Ali", "Dr. Ahmed Bouazizi");
+    // Use first in_progress appointment
+    completeAppointmentConsultation("apt-1");
     toast.success("🩺 Consultation terminée.");
   };
 
   const simulateAbsent = () => {
-    markPatientAbsent(99, "Patient Test", "Dr. Ahmed Bouazizi");
+    markAppointmentAbsent("apt-99");
     toast.success("❌ Patient marqué absent.");
   };
 
