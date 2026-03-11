@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Search, Pill, CheckCircle2, AlertTriangle, X, ToggleLeft, ToggleRight, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockPharmacyStock, mockPharmacyCategories } from "@/data/mockData";
+import { usePharmacyStock, PHARMACY_CATEGORIES } from "@/stores/pharmacyStore";
 import { toast } from "@/hooks/use-toast";
 
 type Availability = "available" | "partial" | "unavailable";
@@ -28,15 +28,20 @@ const availConfig: Record<Availability, { label: string; cls: string }> = {
 };
 
 const PharmacyStock = () => {
-  const [meds, setMeds] = useState<MedItem[]>(
-    mockPharmacyStock.map(s => ({
+  const [stockItems] = usePharmacyStock();
+  const [meds, setMeds] = useState<MedItem[]>([]);
+  
+  // Sync from store
+  useState(() => {
+    const mapped = stockItems.map(s => ({
       id: s.id,
       name: s.name,
       category: s.category,
       availability: s.status === "critical" ? "unavailable" as Availability : s.status === "low" ? "partial" as Availability : "available" as Availability,
       price: s.price,
-    }))
-  );
+    }));
+    if (mapped.length > 0) setMeds(mapped);
+  });
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [filterAvail, setFilterAvail] = useState<Availability | "all">("all");
@@ -96,7 +101,7 @@ const PharmacyStock = () => {
 
         {/* Categories */}
         <div className="flex flex-wrap gap-2">
-          {mockPharmacyCategories.map(c => (
+          {PHARMACY_CATEGORIES.map(c => (
             <button key={c} onClick={() => setSelectedCategory(c)}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${selectedCategory === c ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
               {c}

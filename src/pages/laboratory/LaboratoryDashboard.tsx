@@ -13,8 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { mockLabDemands } from "@/data/mocks/lab";
-import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
+import { useSharedLabDemands } from "@/stores/labStore";
 
 const statusConfig: Record<string, { label: string; cls: string; icon: any }> = {
   received:       { label: "Reçue",          cls: "bg-warning/10 text-warning border-warning/30", icon: Inbox },
@@ -24,10 +23,7 @@ const statusConfig: Record<string, { label: string; cls: string; icon: any }> = 
 };
 
 const LaboratoryDashboard = () => {
-  // Use cross-role store for real-time data
-  useEffect(() => {
-    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
-  }, []);
+  // Store already seeded centrally by seedStores
 
   const [demands] = useSharedLabDemands();
   const [search, setSearch] = useState("");

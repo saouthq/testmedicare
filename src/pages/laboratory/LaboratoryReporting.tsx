@@ -14,8 +14,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   AreaChart, Area, PieChart as RPieChart, Pie, Cell,
 } from "recharts";
-import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
-import { mockLabDemands } from "@/data/mocks/lab";
+import { useSharedLabDemands } from "@/stores/labStore";
 import { toast } from "@/hooks/use-toast";
 
 // Mock daily volume data
@@ -52,7 +51,7 @@ type Period = "week" | "month" | "year";
 const LaboratoryReporting = () => {
   const [period, setPeriod] = useState<Period>("week");
 
-  useEffect(() => { initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]); }, []);
+  // Store already seeded centrally by seedStores
   const [demands] = useSharedLabDemands();
 
   // Compute exam type distribution from actual store data

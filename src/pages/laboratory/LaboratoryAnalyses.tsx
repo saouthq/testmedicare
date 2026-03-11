@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { mockLabDemands, type LabDemandStatus, type LabPdf } from "@/data/mocks/lab";
 import { toast } from "sonner";
 import {
-  useSharedLabDemands, initLabStoreIfEmpty,
+  useSharedLabDemands,
   updateLabDemandStatus, addLabPdf, removeLabPdf,
   type SharedLabDemand,
 } from "@/stores/labStore";
@@ -27,10 +27,7 @@ const statusConfig: Record<string, { label: string; cls: string; icon: any }> = 
 };
 
 const LaboratoryAnalyses = () => {
-  // Initialize store with mock data on first load
-  useEffect(() => {
-    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
-  }, []);
+  // Store already seeded centrally by seedStores
 
   const [demands, setDemands] = useSharedLabDemands();
   const [filter, setFilter] = useState("all");

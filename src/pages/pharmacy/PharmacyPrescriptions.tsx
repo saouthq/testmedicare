@@ -11,9 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  mockPharmacyPrescriptions, mockPickupTimePresets,
-} from "@/data/mocks/pharmacy";
+import { mockPickupTimePresets } from "@/data/mocks/pharmacy";
+import { usePharmacyPrescriptions, updatePharmacyRxStatus, updatePharmacyRxItemAvailability } from "@/stores/pharmacyStore";
 import type {
   PharmacyPrescription, PharmacyPrescriptionStatus, PharmacyItemAvailability,
 } from "@/types";
@@ -31,11 +30,13 @@ const statusCfg: Record<string, { label: string; cls: string; icon: any }> = {
 };
 
 const PharmacyPrescriptions = () => {
+  // Use centralized pharmacy store
+  const [storeRx] = usePharmacyPrescriptions();
   // Merge local mock prescriptions with any sent via cross-role store
   const [sharedPrescriptions] = useSharedPrescriptions();
   const { notifications: pharmNotifs } = useNotifications("pharmacy");
 
-  const [prescriptions, setPrescriptions] = useState<PharmacyPrescription[]>(mockPharmacyPrescriptions);
+  const prescriptions = storeRx;
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PharmacyPrescription | null>(null);
@@ -45,41 +46,41 @@ const PharmacyPrescriptions = () => {
   const [comment, setComment] = useState("");
   const [itemAvail, setItemAvail] = useState<Record<number, { availability: PharmacyItemAvailability; alternative: string }>>({});
 
-  // Inject shared prescriptions from patients into local list
+  // Inject shared prescriptions from patients into pharmacy store
   useEffect(() => {
     if (sharedPrescriptions.length === 0) return;
-    setPrescriptions((prev) => {
-      let updated = [...prev];
-      for (const sp of sharedPrescriptions) {
-        if (!updated.find((p) => p.id === sp.id)) {
-          // Convert shared prescription to pharmacy format
-          updated = [
-            {
-              id: sp.id,
-              patient: sp.patientName,
-              avatar: sp.patientName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
-              doctor: sp.doctorName,
-              date: sp.date,
-              assurance: sp.assurance,
-              patientPhone: "",
-              urgent: false,
-              total: sp.total,
-              status: "received" as PharmacyPrescriptionStatus,
-              items: sp.items.map((name) => ({
-                name,
-                dosage: "",
-                quantity: 1,
-                availability: "available" as PharmacyItemAvailability,
-                price: "—",
-              })),
-            },
-            ...updated,
-          ];
-        }
+    const currentRx = storeRx;
+    let needsUpdate = false;
+    const newItems: PharmacyPrescription[] = [];
+    for (const sp of sharedPrescriptions) {
+      if (!currentRx.find((p) => p.id === sp.id)) {
+        needsUpdate = true;
+        newItems.push({
+          id: sp.id,
+          patient: sp.patientName,
+          avatar: sp.patientName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+          doctor: sp.doctorName,
+          date: sp.date,
+          assurance: sp.assurance,
+          patientPhone: "",
+          urgent: false,
+          total: sp.total,
+          status: "received" as PharmacyPrescriptionStatus,
+          items: sp.items.map((name) => ({
+            name,
+            dosage: "",
+            quantity: 1,
+            availability: "available" as PharmacyItemAvailability,
+            price: "—",
+          })),
+        });
       }
-      return updated;
-    });
-  }, [sharedPrescriptions]);
+    }
+    if (needsUpdate && newItems.length > 0) {
+      const { pharmacyRxStore } = require("@/stores/pharmacyStore");
+      pharmacyRxStore.set((prev: PharmacyPrescription[]) => [...newItems, ...prev]);
+    }
+  }, [sharedPrescriptions, storeRx]);
 
   const filtered = prescriptions.filter(p => {
     if (filter !== "all" && p.status !== filter) return false;
@@ -99,9 +100,10 @@ const PharmacyPrescriptions = () => {
     setItemAvail(avail);
   };
 
-  /* ── Save item changes to state ── */
+  /* ── Save item changes to pharmacy store ── */
   const saveItems = (id: string) => {
-    setPrescriptions(prev => prev.map(p => {
+    const { pharmacyRxStore } = require("@/stores/pharmacyStore");
+    pharmacyRxStore.set((prev: PharmacyPrescription[]) => prev.map((p: PharmacyPrescription) => {
       if (p.id !== id) return p;
       return {
         ...p,
@@ -123,7 +125,7 @@ const PharmacyPrescriptions = () => {
       return;
     }
     saveItems(id);
-    setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, status, pickupTime: pickupTime || p.pickupTime, comment } : p));
+    updatePharmacyRxStatus(id, status, { pickupTime: pickupTime || undefined, comment: comment || undefined });
     toast.success(`Ordonnance ${id} → ${statusCfg[status].label}`);
 
     // Write response to cross-role store so patient sees it

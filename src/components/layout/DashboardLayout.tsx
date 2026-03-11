@@ -1,9 +1,9 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { mockNotifications, mockDoctorProfile, mockPatients } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
+import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
 import AdminSpotlight from "@/components/admin/AdminSpotlight";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
@@ -224,15 +224,18 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
 
   // Cross-role notifications count
   const { notifications: crossNotifs } = useNotifications(role);
-  const crossUnread = crossNotifs.filter((n) => !n.read).length;
-  const mockUnread = useMemo(() => mockNotifications.filter(n => !n.read).length, []);
-  const unreadCount = crossUnread + mockUnread;
+  const unreadCount = crossNotifs.filter((n) => !n.read).length;
+  const [patients] = useSharedPatients();
 
   const userInitials = useMemo(() => {
-    if (role === "doctor") return mockDoctorProfile.initials;
-    if (role === "patient") return mockPatients[0]?.avatar || "AB";
+    if (role === "doctor") return "AB";
+    if (role === "patient") return patients[0]?.avatar || "AB";
+    if (role === "secretary") return "LH";
+    if (role === "pharmacy") return "PH";
+    if (role === "laboratory") return "LB";
+    if (role === "admin") return "AD";
     return role.slice(0, 2).toUpperCase();
-  }, [role]);
+  }, [role, patients]);
 
   /** Render admin sidebar with grouped sections */
   const renderAdminNav = () => (

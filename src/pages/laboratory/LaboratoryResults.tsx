@@ -7,18 +7,14 @@ import { useState, useEffect } from "react";
 import { FileText, Download, Send, Eye, Shield, User, Calendar, Search, CheckCircle2, Stethoscope, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockLabDemands } from "@/data/mocks/lab";
-import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
+import { useSharedLabDemands, type SharedLabDemand } from "@/stores/labStore";
 import { toast } from "sonner";
 
 const LaboratoryResults = () => {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "results_ready" | "transmitted">("all");
 
-  // Initialize store with mock data on first load
-  useEffect(() => {
-    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
-  }, []);
+  // Store already seeded centrally by seedStores
 
   const [demands] = useSharedLabDemands();
 

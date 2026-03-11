@@ -13,21 +13,26 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent } from "@/lib/calendarExport";
 import { usePatientProfile } from "@/stores/patientStore";
-import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors, mockHealthDocuments, mockVaccinations, mockTreatments } from "@/data/mockData";
 import { useNotifications } from "@/stores/notificationsStore";
 import { requestRenewal } from "@/stores/doctorStore";
 import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import { useHealth } from "@/stores/healthStore";
+import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
+import { mockFavoriteDoctors as favoriteDoctors } from "@/data/mockData";
 import type { SharedAppointment } from "@/types/appointment";
+import type { HealthDocument } from "@/types";
 
 const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" || a.teleconsultation;
 
 const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
-  const [previewDoc, setPreviewDoc] = useState<typeof mockHealthDocuments[0] | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<HealthDocument | null>(null);
   const [allAppointments] = useSharedAppointments();
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
+  const [health] = useHealth();
+  const [doctorRx] = useDoctorPrescriptions();
 
   const PATIENT_ID = 1;
   const appointments = useMemo(() => 
@@ -36,11 +41,18 @@ const PatientDashboard = () => {
     [allAppointments]
   );
 
+  const recentPrescriptions = useMemo(() =>
+    doctorRx.filter(rx => rx.status === "active").slice(0, 3).map(rx => ({
+      id: rx.id, doctor: rx.doctor, date: rx.date, items: rx.items.length, status: rx.status,
+    })),
+    [doctorRx]
+  );
+
   const stats = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
     const todayApts = appointments.filter(a => a.date === today);
-    const activePrescriptions = recentPrescriptions.filter((p: any) => p.status === "active" || true).length;
-    const pendingResults = mockHealthDocuments.filter(d => d.type === "Analyse").length;
+    const activePrescriptions = recentPrescriptions.length;
+    const pendingResults = health.documents.filter(d => d.type === "Analyse").length;
     return {
       nextApt: appointments.length > 0 ? `${appointments[0].date} ${appointments[0].startTime}` : "Aucun",
       upcomingCount: appointments.length,
@@ -55,7 +67,7 @@ const PatientDashboard = () => {
         allergies: profile.allergies || [],
       },
     };
-  }, [appointments, profile]);
+  }, [appointments, profile, recentPrescriptions, health]);
 
   const currentApt = drawerApt ? appointments.find(a => a.id === drawerApt) : null;
   const unreadNotifs = crossNotifs.filter(n => !n.read).length;
@@ -66,14 +78,14 @@ const PatientDashboard = () => {
     if (profile.treatingDoctor) done++;
     if (profile.insurance && profile.insurance !== "none") done++;
     if (profile.allergies.length > 0) done++;
-    if (mockVaccinations.length > 0) done++;
-    if (mockTreatments.length > 0) done++;
-    if (mockHealthDocuments.length > 0) done++;
+    if (health.vaccinations.length > 0) done++;
+    if (health.treatments.length > 0) done++;
+    if (health.documents.length > 0) done++;
     if (profile.dob) done++;
     return Math.round((done / total) * 100);
-  }, [profile]);
+  }, [profile, health]);
 
-  const nextVaccination = mockVaccinations.find(v => v.nextDate);
+  const nextVaccination = health.vaccinations.find(v => v.nextDate);
 
   const handleCancel = (id: string) => {
     const { cancelAppointment } = require("@/stores/sharedAppointmentsStore");
@@ -226,7 +238,7 @@ const PatientDashboard = () => {
                 <Link to="/dashboard/patient/health" className="text-xs text-primary hover:underline flex items-center gap-1">Voir tout <ChevronRight className="h-3.5 w-3.5" /></Link>
               </div>
               <div className="divide-y">
-                {mockHealthDocuments.slice(0, 3).map((d, i) => (
+                {health.documents.slice(0, 3).map((d, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
                     <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : "bg-muted"}`}>
                       <FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : "text-muted-foreground"}`} />
@@ -307,7 +319,7 @@ const PatientDashboard = () => {
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Médecin traitant</span><span className="font-medium text-foreground text-xs">{stats.healthSummary.treatingDoctor}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Assurance</span><span className="flex items-center gap-1 text-primary text-xs font-medium"><Shield className="h-3 w-3" />{stats.healthSummary.insurance}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Allergies</span><span className="flex items-center gap-1 text-destructive text-xs font-medium"><AlertTriangle className="h-3 w-3" />{stats.healthSummary.allergies.join(", ") || "Aucune"}</span></div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Traitements</span><span className="text-xs font-medium text-foreground">{mockTreatments.length} en cours</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground text-xs">Traitements</span><span className="text-xs font-medium text-foreground">{health.treatments.length} en cours</span></div>
               </div>
               <div className="pt-3 mt-3 border-t">
                 <Link to="/dashboard/patient/health"><Button variant="outline" size="sm" className="w-full text-xs">Voir mon dossier <ArrowRight className="h-3 w-3 ml-1" /></Button></Link>

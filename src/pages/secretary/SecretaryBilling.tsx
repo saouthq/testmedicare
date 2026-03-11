@@ -7,8 +7,7 @@ import {
   Search, Plus, Download, Banknote, FileText, CheckCircle2, Clock,
   AlertCircle, CreditCard, ArrowUpRight, Eye, Printer, Send, Receipt, Shield, X, Save, Trash2
 } from "lucide-react";
-import { mockSecretaryBillingInvoices } from "@/data/mockData";
-import { useSharedBilling, initBillingStoreIfEmpty, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
+import { useSharedBilling, createInvoice, markInvoicePaid, type SharedInvoice } from "@/stores/billingStore";
 import { useSharedTarifs, getActiveActes } from "@/stores/sharedTarifsStore";
 import { toast } from "@/hooks/use-toast";
 
@@ -34,20 +33,13 @@ const SecretaryBilling = () => {
   const [allTarifs] = useSharedTarifs();
   const actTypes = useMemo(() => getActiveActes(allTarifs).map(a => ({ label: a.name, price: a.price })), [allTarifs]);
 
-  // Seed billing store with mock data if empty, then use shared store
-  useEffect(() => {
-    const seedData: SharedInvoice[] = mockSecretaryBillingInvoices.map(inv => ({
-      ...inv, status: inv.status as "paid" | "pending" | "overdue", createdBy: "secretary" as const,
-    }));
-    initBillingStoreIfEmpty(seedData);
-  }, []);
-
   const [sharedInvoices] = useSharedBilling();
   
-  // Use shared store as primary, fallback to mock if empty
-  const invoices: Invoice[] = sharedInvoices.length > 0 
-    ? sharedInvoices.map(si => ({ id: si.id, patient: si.patient, doctor: si.doctor, date: si.date, amount: si.amount, type: si.type, payment: si.payment, status: si.status, avatar: si.avatar, assurance: si.assurance }))
-    : mockSecretaryBillingInvoices;
+  // Use shared store as single source of truth
+  const invoices: Invoice[] = sharedInvoices.map(si => ({
+    id: si.id, patient: si.patient, doctor: si.doctor, date: si.date, amount: si.amount,
+    type: si.type, payment: si.payment, status: si.status, avatar: si.avatar, assurance: si.assurance,
+  }));
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
