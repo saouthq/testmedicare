@@ -295,6 +295,23 @@ export function getAppointmentsForPatient(appointments: SharedAppointment[], pat
 }
 
 /**
+ * Check if teleconsultation payment is completed.
+ * // TODO BACKEND: Verify payment status server-side
+ */
+export function isTeleconsultPaid(appointment: SharedAppointment): boolean {
+  if (!appointment.teleconsultation) return true; // Non-teleconsult don't need payment
+  return appointment.paymentStatus === "paid";
+}
+
+/**
+ * Mark appointment as paid (mock payment).
+ * // TODO BACKEND: POST /api/payments/:appointmentId/confirm
+ */
+export function markAppointmentPaid(id: string, amount: number) {
+  store.set(prev => prev.map(a => a.id === id ? { ...a, paymentStatus: "paid" as const, paidAmount: amount } : a));
+}
+
+/**
  * Book an appointment — high-level business action.
  * Validates no double-booking, creates the appointment, notifies all roles.
  * // TODO BACKEND: POST /api/appointments

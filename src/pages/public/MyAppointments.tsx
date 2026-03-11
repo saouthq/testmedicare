@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
 import { toast } from "@/hooks/use-toast";
 import { useSharedAppointments, cancelAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import { canCancel as checkCanCancel } from "@/lib/appointmentRules";
 import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
 import type { SharedAppointment } from "@/types/appointment";
 import { getCurrentRole } from "@/stores/authStore";
@@ -68,9 +69,17 @@ const MyAppointments = () => {
     }
   };
 
-  const handleCancel = (id: string) => {
-    // TODO BACKEND: Check 24h cancellation policy
-    cancelAppointment(id);
+  const handleCancel = (apt: SharedAppointment) => {
+    const check = checkCanCancel(apt);
+    if (!check.allowed) {
+      toast({ title: "Annulation impossible", description: check.reason, variant: "destructive" });
+      return;
+    }
+    if (check.penalty) {
+      // Still allow but warn
+      toast({ title: "Annulation tardive", description: check.reason, variant: "destructive" });
+    }
+    cancelAppointment(apt.id);
     setShowCancelConfirm(false);
     setSelectedAppointment(null);
     toast({ title: "RDV annulé", description: "Votre rendez-vous a été annulé avec succès." });
@@ -82,7 +91,7 @@ const MyAppointments = () => {
     return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${config.className}`}>{config.label}</span>;
   };
 
-  const canCancel = (apt: SharedAppointment) => ["pending", "confirmed"].includes(apt.status);
+  const canCancelApt = (apt: SharedAppointment) => checkCanCancel(apt).allowed;
 
   return (
     <div className="min-h-screen bg-background">
@@ -239,13 +248,18 @@ const MyAppointments = () => {
                   </div>
                 </div>
 
-                {canCancel(selectedAppointment) && (
+                {canCancelApt(selectedAppointment) && (
                   <div className="pt-2">
                     {showCancelConfirm ? (
                       <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-3">
                         <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                        <span className="text-xs text-destructive font-medium flex-1">Confirmer l'annulation de ce rendez-vous ?</span>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => handleCancel(selectedAppointment.id)}>Oui, annuler</Button>
+                        <span className="text-xs text-destructive font-medium flex-1">
+                          {checkCanCancel(selectedAppointment).penalty
+                            ? "Annulation tardive (< 24h). Des frais peuvent s'appliquer. Confirmer ?"
+                            : "Confirmer l'annulation de ce rendez-vous ?"
+                          }
+                        </span>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => handleCancel(selectedAppointment)}>Oui, annuler</Button>
                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowCancelConfirm(false)}>Non</Button>
                       </div>
                     ) : (

@@ -1,44 +1,102 @@
+/**
+ * Messages — Cross-role messaging page.
+ * Now uses messagesStore instead of direct mock imports.
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, Send, Paperclip, Phone, Video, ChevronLeft, Building2, Users, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockMessagingContacts, mockConversationMessages, mockSecretaryCabinetContacts, mockSecretaryCabinetMessages, ChatMessage, ChatContact } from "@/data/mockData";
+import {
+  useChatThreads, useChatMessages, sendMessage, markThreadRead,
+  getThreadsForUser, getMessagesForThread, getUnreadCount,
+  type ChatThread, type ChatMessage,
+} from "@/stores/messagesStore";
+import { readAuthUser } from "@/stores/authStore";
 
 type MessagingTab = "messages" | "cabinet";
 
 const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "hospital" | "clinic" }) => {
   const hasCabinetChat = role === "secretary";
+  const authUser = readAuthUser();
+  const userId = authUser?.id || `demo-${role}-1`;
 
   const [tab, setTab] = useState<MessagingTab>("messages");
-  const [selectedContact, setSelectedContact] = useState<string | null>("1");
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({
-    ...mockConversationMessages,
-    ...mockSecretaryCabinetMessages,
-  });
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
-  const contacts: (ChatContact & { acceptsMessages?: boolean })[] = tab === "cabinet" ? mockSecretaryCabinetContacts : mockMessagingContacts;
-  const contact = contacts.find(c => c.id === selectedContact);
-  const currentMessages = selectedContact ? (messages[selectedContact] || []) : [];
+  const [allThreads] = useChatThreads();
+  const [allMessages] = useChatMessages();
 
-  // Check if doctor accepts messages (patient role only)
-  const canSendMessage = role !== "patient" || !contact || (contact as any).acceptsMessages !== false;
+  // Filter threads for current user + tab
+  const threads = useMemo(() => {
+    const category = tab === "cabinet" ? "cabinet" : "messages";
+    return getThreadsForUser(allThreads, userId, category)
+      .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
+  }, [allThreads, userId, tab]);
+
+  const filteredThreads = useMemo(() => {
+    if (!searchQuery) return threads;
+    const q = searchQuery.toLowerCase();
+    return threads.filter(t => {
+      const other = t.participantA.id === userId ? t.participantB : t.participantA;
+      return other.name.toLowerCase().includes(q);
+    });
+  }, [threads, searchQuery, userId]);
+
+  // Auto-select first thread
+  const activeThreadId = selectedThreadId && threads.some(t => t.id === selectedThreadId) ? selectedThreadId : threads[0]?.id || null;
+  const activeThread = threads.find(t => t.id === activeThreadId);
+
+  const currentMessages = useMemo(() => {
+    if (!activeThreadId) return [];
+    return getMessagesForThread(allMessages, activeThreadId);
+  }, [allMessages, activeThreadId]);
+
+  // Get contact info from thread
+  const getContact = (thread: ChatThread) => {
+    return thread.participantA.id === userId ? thread.participantB : thread.participantA;
+  };
+
+  const getUnread = (thread: ChatThread) => {
+    return thread.participantA.id === userId ? thread.unreadA : thread.unreadB;
+  };
+
+  const contact = activeThread ? getContact(activeThread) : null;
+  const canSendMessage = !activeThread || activeThread.acceptsMessages || role !== "patient";
+
+  const cabinetUnread = useMemo(() => getUnreadCount(allThreads, userId, "cabinet"), [allThreads, userId]);
 
   const handleTabChange = (newTab: MessagingTab) => {
     setTab(newTab);
-    const defaultContact = newTab === "cabinet" ? mockSecretaryCabinetContacts[0]?.id : mockMessagingContacts[0]?.id;
-    setSelectedContact(defaultContact || null);
+    setSelectedThreadId(null);
     setMobileShowChat(false);
   };
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !selectedContact || !canSendMessage) return;
-    const msg: ChatMessage = { id: Date.now().toString(), sender: "me", text: newMessage, time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) };
-    setMessages(prev => ({ ...prev, [selectedContact]: [...(prev[selectedContact] || []), msg] }));
+  const handleSelectThread = (threadId: string) => {
+    setSelectedThreadId(threadId);
+    setMobileShowChat(true);
+    markThreadRead(threadId, userId);
+  };
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !activeThreadId || !canSendMessage) return;
+    const name = authUser ? `${authUser.firstName} ${authUser.lastName}` : undefined;
+    sendMessage(activeThreadId, userId, newMessage, name);
     setNewMessage("");
+  };
+
+  const formatTime = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const diffH = (now.getTime() - d.getTime()) / 3600000;
+      if (diffH < 24) return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      if (diffH < 48) return "Hier";
+      return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    } catch { return ""; }
   };
 
   return (
@@ -56,9 +114,9 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
                 <button onClick={() => handleTabChange("cabinet")}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors ${tab === "cabinet" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}>
                   <Building2 className="h-3.5 w-3.5" />Cabinet
-                  {mockSecretaryCabinetContacts.reduce((acc, c) => acc + c.unread, 0) > 0 && (
+                  {cabinetUnread > 0 && (
                     <span className="h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
-                      {mockSecretaryCabinetContacts.reduce((acc, c) => acc + c.unread, 0)}
+                      {cabinetUnread}
                     </span>
                   )}
                 </button>
@@ -69,59 +127,62 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
               <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Rechercher..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" /></div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {contacts.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(c => (
-                <button key={c.id} onClick={() => { setSelectedContact(c.id); setMobileShowChat(true); }}
-                  className={`w-full flex items-center gap-3 p-3 text-left hover:bg-muted/50 transition-colors ${selectedContact === c.id ? "bg-primary/5 border-r-2 border-r-primary" : ""}`}>
-                  <div className="relative shrink-0">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium ${tab === "cabinet" ? "bg-accent/10 text-accent" : "gradient-primary text-primary-foreground"}`}>{c.avatar}</div>
-                    {c.online && <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent border-2 border-card" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                      <span className="text-xs text-muted-foreground shrink-0">{c.time}</span>
+              {filteredThreads.map(t => {
+                const c = getContact(t);
+                const unread = getUnread(t);
+                return (
+                  <button key={t.id} onClick={() => handleSelectThread(t.id)}
+                    className={`w-full flex items-center gap-3 p-3 text-left hover:bg-muted/50 transition-colors ${activeThreadId === t.id ? "bg-primary/5 border-r-2 border-r-primary" : ""}`}>
+                    <div className="relative shrink-0">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium ${tab === "cabinet" ? "bg-accent/10 text-accent" : "gradient-primary text-primary-foreground"}`}>{c.avatar}</div>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{c.lastMessage}</p>
-                    {/* Show indicator if doctor doesn't accept messages */}
-                    {role === "patient" && (c as any).acceptsMessages === false && (
-                      <p className="text-[10px] text-warning flex items-center gap-0.5 mt-0.5"><AlertCircle className="h-3 w-3" />Lecture seule</p>
-                    )}
-                  </div>
-                  {c.unread > 0 && <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center shrink-0">{c.unread}</span>}
-                </button>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                        <span className="text-xs text-muted-foreground shrink-0">{formatTime(t.lastMessageAt)}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{t.lastMessage}</p>
+                      {role === "patient" && !t.acceptsMessages && (
+                        <p className="text-[10px] text-warning flex items-center gap-0.5 mt-0.5"><AlertCircle className="h-3 w-3" />Lecture seule</p>
+                      )}
+                    </div>
+                    {unread > 0 && <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center shrink-0">{unread}</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className={`flex-1 flex flex-col ${!mobileShowChat ? "hidden sm:flex" : "flex"}`}>
-            {contact ? (
+            {contact && activeThread ? (
               <>
                 <div className="flex items-center justify-between border-b p-3">
                   <div className="flex items-center gap-3">
-                    <button className="sm:hidden" onClick={() => setMobileShowChat(false)}><ChevronLeft className="h-5 w-5 text-muted-foreground" /></button>
+                    <button className="sm:hidden" onClick={() => setMobileShowChat(false)} aria-label="Retour à la liste"><ChevronLeft className="h-5 w-5 text-muted-foreground" /></button>
                     <div className="relative">
                       <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-medium ${tab === "cabinet" ? "bg-accent/10 text-accent" : "gradient-primary text-primary-foreground"}`}>{contact.avatar}</div>
-                      {contact.online && <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-accent border-2 border-card" />}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-foreground">{contact.name}</p>
-                      <p className="text-xs text-muted-foreground">{contact.online ? "En ligne" : "Hors ligne"}</p>
+                      <p className="text-xs text-muted-foreground">{contact.role}</p>
                     </div>
                   </div>
                   {tab === "messages" && (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><Phone className="h-4 w-4 text-muted-foreground" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><Video className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Appeler"><Phone className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Appel vidéo"><Video className="h-4 w-4 text-muted-foreground" /></Button>
                     </div>
                   )}
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {currentMessages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${msg.sender === "me" ? "gradient-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm"}`}>
-                        {msg.senderName && <p className="text-[10px] font-semibold mb-1 opacity-70">{msg.senderName}</p>}
+                    <div key={msg.id} className={`flex ${msg.senderId === userId ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${msg.senderId === userId ? "gradient-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm"}`}>
+                        {msg.senderName && msg.senderId !== userId && <p className="text-[10px] font-semibold mb-1 opacity-70">{msg.senderName}</p>}
                         <p className="text-sm">{msg.text}</p>
-                        <p className={`text-[10px] mt-1 ${msg.sender === "me" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{msg.time}</p>
+                        <p className={`text-[10px] mt-1 ${msg.senderId === userId ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          {formatTime(msg.createdAt)}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -129,9 +190,9 @@ const Messages = ({ role = "patient" }: { role?: "patient" | "doctor" | "pharmac
                 <div className="border-t p-3">
                   {canSendMessage ? (
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0"><Paperclip className="h-4 w-4 text-muted-foreground" /></Button>
-                      <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} className="flex-1" />
-                      <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendMessage} disabled={!newMessage.trim()}><Send className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Joindre un fichier"><Paperclip className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} className="flex-1" />
+                      <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={handleSendMessage} disabled={!newMessage.trim()} aria-label="Envoyer"><Send className="h-4 w-4" /></Button>
                     </div>
                   ) : (
                     <div className="rounded-lg bg-warning/10 border border-warning/20 p-3">

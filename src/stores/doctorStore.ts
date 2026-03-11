@@ -5,8 +5,8 @@
  * // TODO BACKEND: Replace with real-time API + WebSocket subscriptions.
  */
 import { createStore, useStore } from "./crossRoleStore";
-
-// ─── Types ───────────────────────────────────────────────────
+import { notifyPatient, notifyDoctor } from "./notificationsStore";
+import { appendLog } from "@/services/admin/adminAuditService";
 export interface RenewalRequest {
   id: string;
   patientName: string;
@@ -69,11 +69,32 @@ export function useProfileCompletion() { return useStore(profileCompletionStore)
 
 // ─── Actions ─────────────────────────────────────────────────
 
-/** Handle renewal request */
+/** Handle renewal request (approve / reject) */
 export function handleRenewal(id: string, action: "approved" | "rejected") {
+  // TODO BACKEND: PATCH /api/renewals/:id
+  const req = renewalRequestsStore.read().find(r => r.id === id);
   renewalRequestsStore.set(prev => prev.map(r =>
     r.id === id ? { ...r, status: action } : r
   ));
+
+  if (req) {
+    if (action === "approved") {
+      notifyPatient(
+        "Renouvellement accepté",
+        `Votre demande de renouvellement (${req.prescriptionId}) a été acceptée par votre médecin.`,
+        "/dashboard/patient/prescriptions",
+        "renewal_accepted"
+      );
+    } else {
+      notifyPatient(
+        "Renouvellement refusé",
+        `Votre demande de renouvellement (${req.prescriptionId}) a été refusée. Contactez votre médecin.`,
+        "/dashboard/patient/prescriptions",
+        "renewal_rejected"
+      );
+      appendLog("renewal_rejected", "prescription", id, `Renouvellement ${req.prescriptionId} refusé pour ${req.patientName}`);
+    }
+  }
 }
 
 /** Compute profile completion percentage */
@@ -89,6 +110,7 @@ export function requestRenewal(data: {
   prescriptionId: string;
   items: string[];
 }) {
+  // TODO BACKEND: POST /api/renewals
   const id = `ren-${Date.now()}`;
   renewalRequestsStore.set(prev => [
     {
@@ -102,5 +124,14 @@ export function requestRenewal(data: {
     },
     ...prev,
   ]);
+
+  // Notify doctor
+  notifyDoctor(
+    "Demande de renouvellement",
+    `${data.patientName} demande le renouvellement de l'ordonnance ${data.prescriptionId}.`,
+    "/dashboard/doctor/prescriptions",
+    "generic"
+  );
+
   return id;
 }
