@@ -20,6 +20,7 @@ import { sharedBlockedSlotsStore } from "./sharedBlockedSlotsStore";
 import { sharedLeavesStore } from "./sharedLeavesStore";
 import { sharedTarifsStore } from "./sharedTarifsStore";
 import { doctorProfileStore } from "./doctorProfileStore";
+import { reportsStore, seedReportsIfEmpty } from "./reportsStore";
 
 // Mock data imports (used only for seeding)
 import {
@@ -45,6 +46,7 @@ const ALL_STORES = [
   sharedTarifsStore,
   notificationsStore,
   doctorProfileStore,
+  reportsStore,
 ];
 
 const ALL_STORAGE_KEYS = [
@@ -63,6 +65,7 @@ const ALL_STORAGE_KEYS = [
   "medicare_billing",
   "medicare_lab_demands",
   "medicare_shared_prescriptions",
+  "medicare_reports",
   "doctor_renewal_requests",
   "doctor_profile_completion",
   "medicare_patient_profile",
@@ -117,6 +120,9 @@ export function seedAllStores() {
 
   // ── Notifications ──
   seedNotificationsIfEmpty();
+
+  // ── Reports / Disputes ──
+  seedReportsIfEmpty();
 }
 
 /**

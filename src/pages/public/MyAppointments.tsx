@@ -1,6 +1,6 @@
 /**
  * My Appointments Page — Retrouver mes RDV sans compte
- * Accessible via téléphone + OTP
+ * Now reads from sharedAppointmentsStore instead of separate localStorage.
  */
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
@@ -11,25 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
 import { toast } from "@/hooks/use-toast";
+import { useSharedAppointments, cancelAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
+import type { SharedAppointment } from "@/types/appointment";
+import { getCurrentRole } from "@/stores/authStore";
 import {
   Phone, Loader2, ArrowRight, CheckCircle2, Calendar, Clock, MapPin,
-  User, ChevronRight, Search,
+  User, ChevronRight, Search, X, Video, Shield, RefreshCw, AlertTriangle,
 } from "lucide-react";
-
-interface GuestAppointment {
-  id: string;
-  phone: string;
-  firstName?: string;
-  lastName?: string;
-  doctor: string;
-  specialty: string;
-  date: string;
-  time: string;
-  motif: string;
-  assurance?: string;
-  status: string;
-  createdAt: string;
-}
 
 const MyAppointments = () => {
   const [phoneInput, setPhoneInput] = useState("");
@@ -37,14 +26,24 @@ const MyAppointments = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
-  const [appointments, setAppointments] = useState<GuestAppointment[]>([]);
-  const [selectedAppointment, setSelectedAppointment] = useState<GuestAppointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<SharedAppointment | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [allAppointments] = useSharedAppointments();
 
   // Redirect logged-in patients to their dashboard appointments
-  const userRole = localStorage.getItem("userRole");
+  const userRole = getCurrentRole();
   if (userRole === "patient") {
     return <Navigate to="/dashboard/patient/appointments" replace />;
   }
+
+  // After OTP verification, filter appointments by phone number
+  const matchedAppointments = verified
+    ? allAppointments.filter(a => {
+        const normalizedInput = phoneInput.replace(/\s/g, "");
+        const normalizedPhone = (a.phone || "").replace(/\s/g, "");
+        return normalizedPhone.includes(normalizedInput) || normalizedInput.includes(normalizedPhone);
+      }).sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime))
+    : [];
 
   const handleSendOtp = async () => {
     if (!phoneInput || phoneInput.length < 8) return;
@@ -62,10 +61,6 @@ const MyAppointments = () => {
     const res = await verifyOtp(phoneInput, otpCode);
     setLoading(false);
     if (res.success) {
-      // Get appointments from localStorage
-      const allAppointments: GuestAppointment[] = JSON.parse(localStorage.getItem("guestAppointments") || "[]");
-      const userAppointments = allAppointments.filter(a => a.phone === phoneInput);
-      setAppointments(userAppointments);
       setVerified(true);
       toast({ title: "Numéro vérifié !" });
     } else {
@@ -73,18 +68,21 @@ const MyAppointments = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">Confirmé</span>;
-      case "pending":
-        return <span className="text-xs bg-warning/10 text-warning px-2 py-0.5 rounded-full font-medium">En attente</span>;
-      case "cancelled":
-        return <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full font-medium">Annulé</span>;
-      default:
-        return null;
-    }
+  const handleCancel = (id: string) => {
+    // TODO BACKEND: Check 24h cancellation policy
+    cancelAppointment(id);
+    setShowCancelConfirm(false);
+    setSelectedAppointment(null);
+    toast({ title: "RDV annulé", description: "Votre rendez-vous a été annulé avec succès." });
   };
+
+  const getStatusBadge = (status: string) => {
+    const config = APPOINTMENT_STATUS_CONFIG[status as keyof typeof APPOINTMENT_STATUS_CONFIG];
+    if (!config) return null;
+    return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${config.className}`}>{config.label}</span>;
+  };
+
+  const canCancel = (apt: SharedAppointment) => ["pending", "confirmed"].includes(apt.status);
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,6 +99,13 @@ const MyAppointments = () => {
         <p className="text-muted-foreground mb-6">
           Accédez à vos rendez-vous en vérifiant votre numéro de téléphone.
         </p>
+
+        {/* Demo banner */}
+        <div className="rounded-lg bg-warning/5 border border-warning/20 p-3 mb-6">
+          <p className="text-[11px] text-muted-foreground text-center">
+            🔒 <span className="font-medium text-foreground">Mode démo</span> — Code OTP : <span className="font-mono font-bold text-foreground">123456</span>. Aucune donnée réelle transmise.
+          </p>
+        </div>
 
         {!verified ? (
           <div className="rounded-xl border bg-card p-5 shadow-card space-y-4">
@@ -164,10 +169,10 @@ const MyAppointments = () => {
             )}
           </div>
         ) : selectedAppointment ? (
-          // Appointment detail
+          /* Appointment detail */
           <div className="space-y-4">
             <button 
-              onClick={() => setSelectedAppointment(null)}
+              onClick={() => { setSelectedAppointment(null); setShowCancelConfirm(false); }}
               className="flex items-center gap-1 text-sm text-primary hover:underline"
             >
               ← Retour à la liste
@@ -182,11 +187,11 @@ const MyAppointments = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
                   <div className="h-12 w-12 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold">
-                    {selectedAppointment.doctor.split(" ").slice(-1)[0]?.slice(0, 2) || "DR"}
+                    {selectedAppointment.avatar}
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{selectedAppointment.doctor}</p>
-                    <p className="text-xs text-primary">{selectedAppointment.specialty}</p>
+                    <p className="text-xs text-primary">{selectedAppointment.type}</p>
                   </div>
                 </div>
 
@@ -203,50 +208,70 @@ const MyAppointments = () => {
                       <Clock className="h-3.5 w-3.5" />
                       <span className="text-xs">Heure</span>
                     </div>
-                    <p className="font-medium text-foreground">{selectedAppointment.time}</p>
+                    <p className="font-medium text-foreground">{selectedAppointment.startTime} — {selectedAppointment.endTime}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between py-2 border-b">
                     <span className="text-muted-foreground">Motif</span>
-                    <span className="font-medium">{selectedAppointment.motif}</span>
+                    <span className="font-medium text-foreground">{selectedAppointment.motif}</span>
                   </div>
-                  {selectedAppointment.firstName && (
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-muted-foreground">Patient</span>
-                      <span className="font-medium">{selectedAppointment.firstName} {selectedAppointment.lastName}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Patient</span>
+                    <span className="font-medium text-foreground">{selectedAppointment.patient}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Type</span>
+                    <span className="font-medium text-foreground flex items-center gap-1">
+                      {selectedAppointment.teleconsultation ? <><Video className="h-3.5 w-3.5 text-primary" />Téléconsultation</> : <><MapPin className="h-3.5 w-3.5" />Cabinet</>}
+                    </span>
+                  </div>
                   {selectedAppointment.assurance && (
                     <div className="flex justify-between py-2 border-b">
                       <span className="text-muted-foreground">Assurance</span>
-                      <span className="font-medium">{selectedAppointment.assurance}</span>
+                      <span className="font-medium text-foreground flex items-center gap-1"><Shield className="h-3.5 w-3.5 text-accent" />{selectedAppointment.assurance}</span>
                     </div>
                   )}
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Durée</span>
+                    <span className="font-medium text-foreground">{selectedAppointment.duration} min</span>
+                  </div>
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" className="flex-1">Annuler le RDV</Button>
-                  <Button variant="outline" className="flex-1">Modifier</Button>
-                </div>
+                {canCancel(selectedAppointment) && (
+                  <div className="pt-2">
+                    {showCancelConfirm ? (
+                      <div className="flex items-center gap-2 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-3">
+                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                        <span className="text-xs text-destructive font-medium flex-1">Confirmer l'annulation de ce rendez-vous ?</span>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => handleCancel(selectedAppointment.id)}>Oui, annuler</Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowCancelConfirm(false)}>Non</Button>
+                      </div>
+                    ) : (
+                      <Button variant="outline" className="w-full text-xs text-destructive border-destructive/30 hover:bg-destructive/5" onClick={() => setShowCancelConfirm(true)}>
+                        <X className="h-3.5 w-3.5 mr-1" />Annuler ce rendez-vous
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         ) : (
-          // Appointments list
+          /* Appointments list */
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 <CheckCircle2 className="h-4 w-4 text-accent inline mr-1" />
-                {appointments.length} rendez-vous trouvé(s) pour {phoneInput}
+                {matchedAppointments.length} rendez-vous trouvé(s) pour {phoneInput}
               </p>
-              <Button variant="ghost" size="sm" onClick={() => setVerified(false)} className="text-xs">
+              <Button variant="ghost" size="sm" onClick={() => { setVerified(false); setOtpSent(false); setOtpCode(""); }} className="text-xs">
                 Changer de numéro
               </Button>
             </div>
 
-            {appointments.length === 0 ? (
+            {matchedAppointments.length === 0 ? (
               <div className="rounded-xl border bg-card p-8 text-center">
                 <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground font-medium">Aucun rendez-vous trouvé</p>
@@ -261,7 +286,7 @@ const MyAppointments = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {appointments.map(apt => (
+                {matchedAppointments.map(apt => (
                   <button
                     key={apt.id}
                     onClick={() => setSelectedAppointment(apt)}
@@ -270,22 +295,23 @@ const MyAppointments = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-                          {apt.doctor.split(" ").slice(-1)[0]?.slice(0, 2) || "DR"}
+                          {apt.avatar}
                         </div>
                         <div>
                           <p className="font-semibold text-foreground text-sm">{apt.doctor}</p>
-                          <p className="text-xs text-primary">{apt.specialty}</p>
+                          <p className="text-xs text-primary">{apt.type}</p>
                         </div>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />{apt.date}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />{apt.time}
+                        <Clock className="h-3 w-3" />{apt.startTime}
                       </span>
+                      <span className="text-muted-foreground">{apt.motif}</span>
                       {getStatusBadge(apt.status)}
                     </div>
                   </button>
@@ -302,7 +328,7 @@ const MyAppointments = () => {
         )}
 
         {/* Create account prompt */}
-        {verified && appointments.length > 0 && !selectedAppointment && (
+        {verified && matchedAppointments.length > 0 && !selectedAppointment && (
           <div className="mt-6 rounded-xl border bg-primary/5 border-primary/20 p-4">
             <div className="flex items-center gap-3">
               <User className="h-8 w-8 text-primary" />
