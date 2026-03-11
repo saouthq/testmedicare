@@ -297,6 +297,8 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
         const isActive = location.pathname === item.url;
         // Admin module gating — hide sidebar items for disabled modules
         if (role !== "admin" && !isSidebarUrlEnabled(item.url)) return null;
+        // Admin sidebar visibility gating — hide items disabled by admin
+        if (role !== "admin" && !isSidebarItemVisible(role, item.url, role === "doctor" ? doctorSub.specialty : undefined)) return null;
         // Specialty-specific hidden items
         if (role === "doctor" && specConfig?.sidebarHidden?.includes(item.url)) return null;
         // Feature gating for doctor subscription
