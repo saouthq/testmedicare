@@ -10,6 +10,7 @@ import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
 import { getEnabledFeatures } from "@/stores/featureMatrixStore";
 import { useAdminModules, isSidebarUrlEnabled, getDisabledModuleForRoute } from "@/stores/adminModulesStore";
+import { isSidebarItemVisible } from "@/stores/sidebarVisibilityStore";
 import { Lock, Power, Crown, UserCog, Flag as FlagIcon, Zap } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
