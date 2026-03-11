@@ -11,9 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  mockPharmacyPrescriptions, mockPickupTimePresets,
-} from "@/data/mocks/pharmacy";
+import { mockPickupTimePresets } from "@/data/mocks/pharmacy";
+import { usePharmacyPrescriptions, updatePharmacyRxStatus, updatePharmacyRxItemAvailability } from "@/stores/pharmacyStore";
 import type {
   PharmacyPrescription, PharmacyPrescriptionStatus, PharmacyItemAvailability,
 } from "@/types";
