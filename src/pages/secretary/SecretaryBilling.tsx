@@ -105,7 +105,7 @@ const SecretaryBilling = () => {
 
   const handleMarkPaid = (inv: Invoice) => {
     // TODO BACKEND: PATCH /api/invoices/{id} { status: "paid", payment }
-    setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, status: "paid", payment: payMethod } : i));
+    markInvoicePaid(inv.id, payMethod);
     // Sync to cross-role billing store
     markInvoicePaid(inv.id, payMethod);
     setShowPayModal(null);
