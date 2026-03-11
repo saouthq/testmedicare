@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
 import { toast } from "@/hooks/use-toast";
 import { useSharedAppointments, cancelAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import { canCancel as checkCanCancel } from "@/lib/appointmentRules";
 import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
 import type { SharedAppointment } from "@/types/appointment";
 import { getCurrentRole } from "@/stores/authStore";
