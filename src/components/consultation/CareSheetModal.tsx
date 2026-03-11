@@ -8,7 +8,7 @@ import { useState } from "react";
 import { FileText, Download, Send, Printer, X, CheckCircle2, User, Calendar, Stethoscope, CreditCard, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { mockDoctorProfile } from "@/data/mockData";
+import { readDoctorProfile } from "@/stores/doctorProfileStore";
 
 interface CareSheetModalProps {
   open: boolean;
@@ -40,7 +40,7 @@ const CareSheetModal = ({
 
   if (!open) return null;
 
-  const doctor = mockDoctorProfile;
+  const doctor = readDoctorProfile();
 
   const handleDownload = () => {
     // TODO BACKEND: Generate actual PDF

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore";
 import { updateLabDemandStatus, addLabPdf, labStore } from "@/stores/labStore";
 import { sharedAppointmentsStore, completeAppointmentConsultation, markAppointmentAbsent, sendToWaitingRoom, startAppointmentConsultation, createAppointment, getTodayDate } from "@/stores/sharedAppointmentsStore";
+import { resetDemo } from "@/stores/seedStores";
 import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType, type PlanTier } from "@/stores/featureMatrixStore";
@@ -537,15 +538,11 @@ const SimulationPanel = () => {
 
         <div className="border-t pt-2">
           <Button size="sm" variant="ghost" className="w-full text-[10px] text-destructive" onClick={() => {
-            // Clear ALL shared store localStorage keys + seed date
-            const keys = Object.keys(localStorage).filter(k => 
-              k.startsWith("medicare_") || k.startsWith("doctor_") || k.startsWith("guest")
-            );
-            keys.forEach(k => localStorage.removeItem(k));
-            localStorage.removeItem("medicare_seed_date");
+            resetDemo();
+            toast.success("🔄 Démo réinitialisée avec succès !");
             window.location.reload();
           }}>
-            🗑️ Réinitialiser tous les stores
+            🗑️ Réinitialiser la démo
           </Button>
         </div>
       </div>

@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockLabDemands, type LabDemandStatus, type LabPdf } from "@/data/mocks/lab";
+import type { LabDemandStatus } from "@/stores/labStore";
+import type { LabPdfItem as LabPdf } from "@/stores/labStore";
 import { toast } from "sonner";
 import {
   useSharedLabDemands,

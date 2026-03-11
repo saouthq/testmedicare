@@ -294,6 +294,45 @@ export function getAppointmentsForPatient(appointments: SharedAppointment[], pat
   return appointments.filter(a => a.patientId === patientId);
 }
 
+/**
+ * Book an appointment — high-level business action.
+ * Validates no double-booking, creates the appointment, notifies all roles.
+ * // TODO BACKEND: POST /api/appointments
+ */
+export function bookAppointment(payload: {
+  date: string;
+  startTime: string;
+  duration: number;
+  patient: string;
+  patientId: number | null;
+  avatar: string;
+  phone: string;
+  motif: string;
+  type: AppointmentType;
+  doctor: string;
+  assurance: string;
+  teleconsultation?: boolean;
+  createdBy?: "doctor" | "secretary" | "patient" | "public";
+}): { success: boolean; id?: string; error?: string } {
+  const booked = getBookedSlotsForDate(payload.date, payload.doctor);
+  if (booked.includes(payload.startTime)) {
+    return { success: false, error: "Ce créneau est déjà pris." };
+  }
+  const id = createAppointment({
+    ...payload,
+    status: "confirmed",
+  });
+  return { success: true, id };
+}
+
+/**
+ * Block a time slot on the schedule (not an appointment — just a blocked period).
+ * Delegates to sharedBlockedSlotsStore for actual storage.
+ * // TODO BACKEND: POST /api/schedule/block
+ */
+export { addBlockedSlot as blockSlot } from "./sharedBlockedSlotsStore";
+
+
 /** Get booked slots for a given date and doctor (for booking conflict check) */
 export function getBookedSlotsForDate(date: string, doctor?: string): string[] {
   const apts = store.read().filter(a => 
