@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save } from "lucide-react";
+import { Save, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useSharedAvailability, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
+import { sharedAppointmentsStore, cancelConflictingAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
 
 const AvailabilityTab = () => {
   const [config, setConfig] = useSharedAvailability();
+  const [conflictWarning, setConflictWarning] = useState<{ count: number; dayName: string } | null>(null);
 
   const handleToggleDay = (day: string) => {
     setConfig(prev => ({
@@ -22,8 +25,72 @@ const AvailabilityTab = () => {
     }));
   };
 
+  /** Check for conflicting appointments before saving */
+  const checkConflicts = (): number => {
+    const allApts = sharedAppointmentsStore.read();
+    const today = getTodayDate();
+    const dayMap: Record<string, number> = { "Dimanche": 0, "Lundi": 1, "Mardi": 2, "Mercredi": 3, "Jeudi": 4, "Vendredi": 5, "Samedi": 6 };
+    
+    let totalConflicts = 0;
+    
+    WEEK_DAYS.forEach(dayName => {
+      const d = config.days[dayName];
+      if (!d) return;
+      const jsDay = dayMap[dayName];
+      
+      const futureApts = allApts.filter(a => {
+        if (["cancelled", "absent", "done"].includes(a.status)) return false;
+        if (a.date < today) return false;
+        const aptDate = new Date(a.date + "T00:00:00");
+        return aptDate.getDay() === jsDay;
+      });
+
+      futureApts.forEach(apt => {
+        if (!d.active) { totalConflicts++; return; }
+        const aptStartMin = timeToMin(apt.startTime);
+        const aptEndMin = aptStartMin + apt.duration;
+        const dayStartMin = timeToMin(d.start);
+        const dayEndMin = timeToMin(d.end);
+        if (aptStartMin < dayStartMin || aptEndMin > dayEndMin) { totalConflicts++; return; }
+        if (d.breakStart && d.breakEnd) {
+          const bsMin = timeToMin(d.breakStart);
+          const beMin = timeToMin(d.breakEnd);
+          if (aptStartMin < beMin && aptEndMin > bsMin) { totalConflicts++; return; }
+        }
+      });
+    });
+    
+    return totalConflicts;
+  };
+
   const handleSave = () => {
-    // TODO BACKEND: PUT /api/doctor/availability
+    const conflicts = checkConflicts();
+    if (conflicts > 0) {
+      setConflictWarning({ count: conflicts, dayName: "tous les jours" });
+    } else {
+      doSave();
+    }
+  };
+
+  const doSave = (cancelConflicts = false) => {
+    if (cancelConflicts) {
+      // Cancel all conflicting appointments
+      let totalCancelled = 0;
+      WEEK_DAYS.forEach(dayName => {
+        const d = config.days[dayName];
+        if (!d) return;
+        if (!d.active) {
+          // Cancel all future appointments on this day
+          totalCancelled += cancelConflictingAppointments(dayName, "00:00", "00:00");
+        } else {
+          totalCancelled += cancelConflictingAppointments(dayName, d.start, d.end, d.breakStart || undefined, d.breakEnd || undefined);
+        }
+      });
+      if (totalCancelled > 0) {
+        toast({ title: `${totalCancelled} RDV annulé(s)`, description: "Les patients concernés ont été notifiés." });
+      }
+    }
+    setConflictWarning(null);
     toast({ title: "Enregistré", description: "Vos disponibilités sont mises à jour partout (agenda, secrétaire, prise de RDV)." });
   };
 
@@ -31,6 +98,35 @@ const AvailabilityTab = () => {
     <div className="rounded-xl border bg-card p-6 shadow-card">
       <h3 className="font-semibold text-foreground mb-1">Horaires d'ouverture</h3>
       <p className="text-xs text-muted-foreground mb-4">Ces horaires sont visibles par la secrétaire et les patients lors de la prise de RDV.</p>
+      
+      {/* Conflict warning */}
+      {conflictWarning && (
+        <div className="mb-4 rounded-lg bg-warning/10 border border-warning/30 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">
+                {conflictWarning.count} rendez-vous en conflit
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Les nouveaux horaires entrent en conflit avec des RDV existants. Voulez-vous les annuler automatiquement ? Les patients seront notifiés.
+              </p>
+              <div className="flex gap-2 mt-3">
+                <Button size="sm" variant="destructive" onClick={() => doSave(true)} className="text-xs">
+                  Annuler les {conflictWarning.count} RDV et sauvegarder
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => doSave(false)} className="text-xs">
+                  Sauvegarder sans annuler
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setConflictWarning(null)} className="text-xs">
+                  Revenir
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         {WEEK_DAYS.map(day => {
           const d = config.days[day];
@@ -72,5 +168,10 @@ const AvailabilityTab = () => {
     </div>
   );
 };
+
+function timeToMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
 
 export default AvailabilityTab;

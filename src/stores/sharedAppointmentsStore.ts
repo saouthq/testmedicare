@@ -137,6 +137,17 @@ export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">
     actionLink: "/dashboard/secretary/agenda",
   });
 
+  // Notify patient if they have an ID
+  if (apt.patientId) {
+    pushNotification({
+      type: "appointment_booked",
+      title: "RDV confirmé",
+      message: `Votre RDV avec ${apt.doctor} est confirmé le ${apt.date} à ${apt.startTime}.`,
+      targetRole: "patient",
+      actionLink: "/dashboard/patient/appointments",
+    });
+  }
+
   return id;
 }
 
@@ -149,7 +160,6 @@ export function rescheduleAppointment(id: string, newDate: string, newTime: stri
   }));
 
   if (apt) {
-    // Notify doctor
     pushNotification({
       type: "appointment_rescheduled",
       title: "RDV reprogrammé",
@@ -157,7 +167,6 @@ export function rescheduleAppointment(id: string, newDate: string, newTime: stri
       targetRole: "doctor",
       actionLink: "/dashboard/doctor/schedule",
     });
-    // Notify patient if they have an ID
     if (apt.patientId) {
       pushNotification({
         type: "appointment_rescheduled",
@@ -283,4 +292,61 @@ export function getTodayDate(): string {
 /** Get appointments for a patient by patientId */
 export function getAppointmentsForPatient(appointments: SharedAppointment[], patientId: number) {
   return appointments.filter(a => a.patientId === patientId);
+}
+
+/** Get booked slots for a given date and doctor (for booking conflict check) */
+export function getBookedSlotsForDate(date: string, doctor?: string): string[] {
+  const apts = store.read().filter(a => 
+    a.date === date && 
+    !["cancelled", "absent"].includes(a.status) &&
+    (!doctor || a.doctor === doctor)
+  );
+  return apts.map(a => a.startTime);
+}
+
+/** Cancel appointments that conflict with new availability (break times / closed hours) */
+export function cancelConflictingAppointments(dayName: string, newStart: string, newEnd: string, breakStart?: string, breakEnd?: string): number {
+  const dayMap: Record<string, number> = { "Dimanche": 0, "Lundi": 1, "Mardi": 2, "Mercredi": 3, "Jeudi": 4, "Vendredi": 5, "Samedi": 6 };
+  const jsDay = dayMap[dayName];
+  if (jsDay === undefined) return 0;
+
+  const apts = store.read();
+  let cancelledCount = 0;
+
+  const toCancel = apts.filter(a => {
+    if (["cancelled", "absent", "done"].includes(a.status)) return false;
+    const aptDate = new Date(a.date + "T00:00:00");
+    if (aptDate.getDay() !== jsDay) return false;
+    // Only future appointments
+    if (a.date < getTodayDate()) return false;
+
+    const aptStartMin = timeToMin(a.startTime);
+    const aptEndMin = aptStartMin + a.duration;
+    const dayStartMin = timeToMin(newStart);
+    const dayEndMin = timeToMin(newEnd);
+
+    // Outside working hours
+    if (aptStartMin < dayStartMin || aptEndMin > dayEndMin) return true;
+
+    // During break
+    if (breakStart && breakEnd) {
+      const bsMin = timeToMin(breakStart);
+      const beMin = timeToMin(breakEnd);
+      if (aptStartMin < beMin && aptEndMin > bsMin) return true;
+    }
+
+    return false;
+  });
+
+  toCancel.forEach(apt => {
+    cancelAppointment(apt.id);
+    cancelledCount++;
+  });
+
+  return cancelledCount;
+}
+
+function timeToMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
 }
