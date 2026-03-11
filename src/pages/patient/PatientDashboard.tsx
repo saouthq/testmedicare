@@ -238,7 +238,7 @@ const PatientDashboard = () => {
                 <Link to="/dashboard/patient/health" className="text-xs text-primary hover:underline flex items-center gap-1">Voir tout <ChevronRight className="h-3.5 w-3.5" /></Link>
               </div>
               <div className="divide-y">
-                {mockHealthDocuments.slice(0, 3).map((d, i) => (
+                {health.documents.slice(0, 3).map((d, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
                     <div className={`p-2 rounded-lg ${d.type === "Analyse" ? "bg-accent/10" : d.type === "Ordonnance" ? "bg-primary/10" : "bg-muted"}`}>
                       <FileText className={`h-4 w-4 ${d.type === "Analyse" ? "text-accent" : d.type === "Ordonnance" ? "text-primary" : "text-muted-foreground"}`} />
