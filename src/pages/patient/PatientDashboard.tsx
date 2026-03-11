@@ -13,11 +13,14 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { downloadCalendarEvent } from "@/lib/calendarExport";
 import { usePatientProfile } from "@/stores/patientStore";
-import { mockRecentPrescriptions as recentPrescriptions, mockFavoriteDoctors as favoriteDoctors, mockHealthDocuments, mockVaccinations, mockTreatments } from "@/data/mockData";
 import { useNotifications } from "@/stores/notificationsStore";
 import { requestRenewal } from "@/stores/doctorStore";
 import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import { useHealth } from "@/stores/healthStore";
+import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
+import { mockFavoriteDoctors as favoriteDoctors } from "@/data/mockData";
 import type { SharedAppointment } from "@/types/appointment";
+import type { HealthDocument } from "@/types";
 
 const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" || a.teleconsultation;
 
