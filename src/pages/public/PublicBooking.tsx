@@ -88,8 +88,9 @@ const PublicBooking = () => {
   const [documents, setDocuments] = useState<string[]>([]);
   const [message, setMessage] = useState("");
 
+  const [weekOffset, setWeekOffset] = useState(0);
   const slots = generateSlots();
-  const days = daysOfMonth();
+  const days = generateDays(weekOffset);
 
   // Check existing session — only consider "patient" role as logged in for booking
   // Other roles (doctor, admin, secretary, etc.) should not auto-skip OTP
