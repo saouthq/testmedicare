@@ -9,7 +9,6 @@ import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore
 import { updateLabDemandStatus, addLabPdf, labStore } from "@/stores/labStore";
 import { completeAppointmentConsultation, markAppointmentAbsent } from "@/stores/sharedAppointmentsStore";
 import { toast } from "sonner";
-import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType, type PlanTier } from "@/stores/featureMatrixStore";
 import { useNavigate, useLocation } from "react-router-dom";
