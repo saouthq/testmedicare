@@ -175,12 +175,17 @@ const PublicBooking = () => {
   const isTeleconsult = consultType === "teleconsultation";
   const selectedMotifData = doctor.motifs.find(m => m.name === selectedMotif);
 
-  // Generate filtered slots
+  // Generate filtered slots (checks availability + blocked + leaves + existing apts)
   const filteredSlots = useMemo(() => {
     if (!selectedDayDateStr || !selectedDayFr) return [];
     const availability = sharedAvailabilityStore.read();
     const dayConfig = availability.days[selectedDayFr];
     if (!dayConfig || !dayConfig.active) return [];
+
+    // Check leaves
+    const leaves = sharedLeavesStore.read();
+    const isOnLeave = leaves.some(l => l.status !== "past" && selectedDayDateStr >= l.startDate && selectedDayDateStr <= l.endDate);
+    if (isOnLeave) return [];
 
     const slotDuration = selectedMotifData?.duration || availability.slotDuration || 30;
     const startMin = timeToMin(dayConfig.start);
@@ -188,23 +193,49 @@ const PublicBooking = () => {
     const breakStartMin = dayConfig.breakStart ? timeToMin(dayConfig.breakStart) : -1;
     const breakEndMin = dayConfig.breakEnd ? timeToMin(dayConfig.breakEnd) : -1;
 
+    // Existing appointments
     const existingApts = sharedAppointmentsStore.read()
       .filter(a => a.date === selectedDayDateStr && !["cancelled", "absent"].includes(a.status) && a.doctor === doctor.doctorRef);
 
+    // Blocked slots for this date
+    const blockedSlots = sharedBlockedSlotsStore.read()
+      .filter(b => b.date === selectedDayDateStr);
+
     const slots: string[] = [];
+    const now = new Date();
+    const isToday = selectedDayDateStr === now.toISOString().slice(0, 10);
+
     for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
+      // Skip break time
       if (breakStartMin >= 0 && breakEndMin >= 0 && m >= breakStartMin && m < breakEndMin) continue;
 
+      // Skip past slots if today
+      if (isToday) {
+        const slotHour = Math.floor(m / 60);
+        const slotMin = m % 60;
+        if (slotHour < now.getHours() || (slotHour === now.getHours() && slotMin <= now.getMinutes())) continue;
+      }
+
+      // Check overlap with existing appointments
       const isBooked = existingApts.some(a => {
         const aptStart = timeToMin(a.startTime);
         const aptEnd = aptStart + a.duration;
         return m < aptEnd && (m + slotDuration) > aptStart;
       });
+      if (isBooked) continue;
 
-      if (!isBooked) slots.push(minToTime(m));
+      // Check overlap with blocked slots
+      const isBlocked = blockedSlots.some(b => {
+        const bStart = timeToMin(b.startTime);
+        const bEnd = bStart + b.duration;
+        return m < bEnd && (m + slotDuration) > bStart;
+      });
+      if (isBlocked) continue;
+
+      slots.push(minToTime(m));
     }
     return slots;
-  }, [selectedDayDateStr, selectedDayFr, selectedMotifData]);
+  }, [selectedDayDateStr, selectedDayFr, selectedMotifData, doctor.doctorRef]);
 
   // ─── Handlers ─────────────────────────────────────────────
 
