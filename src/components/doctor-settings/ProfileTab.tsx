@@ -9,7 +9,7 @@ import { Award, Briefcase, Camera, CreditCard, Globe, GraduationCap, MapPin, Nav
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { mockDoctorProfile } from "@/data/mockData";
+import { useDoctorProfile, updateDoctorProfile } from "@/stores/doctorProfileStore";
 import { toast } from "@/hooks/use-toast";
 import ProfileCompletionBar, { type CompletionItem } from "./ProfileCompletionBar";
 import ProfilePreview from "./ProfilePreview";
