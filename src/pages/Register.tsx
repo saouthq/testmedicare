@@ -175,7 +175,7 @@ const Register = () => {
                         </button>
                       </div>
                       {formData.password && !passwordValid && (
-                        <p className="text-xs text-destructive mt-1">Minimum 8 caractères</p>
+                        <p className="text-xs text-destructive mt-1">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
                       )}
                     </div>
                     <div className="mt-3"><Label>Confirmer le mot de passe *</Label>

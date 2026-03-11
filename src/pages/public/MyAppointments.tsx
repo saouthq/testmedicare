@@ -32,6 +32,12 @@ interface GuestAppointment {
 }
 
 const MyAppointments = () => {
+  // Redirect logged-in patients to their dashboard appointments
+  const userRole = localStorage.getItem("userRole");
+  if (userRole === "patient") {
+    return <Navigate to="/dashboard/patient/appointments" replace />;
+  }
+
   const [phoneInput, setPhoneInput] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
