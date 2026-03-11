@@ -8,8 +8,8 @@ import { useState, useEffect } from "react";
 import { Search, User, FlaskConical, Phone, Shield, FileText, Download, Send, Lock, Activity, Inbox, CheckCircle2, Calendar, Eye, Stethoscope } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockLabPatients, mockLabDemands } from "@/data/mocks/lab";
-import { useSharedLabDemands, initLabStoreIfEmpty, type SharedLabDemand } from "@/stores/labStore";
+import { mockLabPatients } from "@/data/mocks/lab";
+import { useSharedLabDemands, type SharedLabDemand } from "@/stores/labStore";
 import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; cls: string; icon: any }> = {

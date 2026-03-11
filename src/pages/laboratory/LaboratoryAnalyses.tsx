@@ -27,10 +27,7 @@ const statusConfig: Record<string, { label: string; cls: string; icon: any }> = 
 };
 
 const LaboratoryAnalyses = () => {
-  // Initialize store with mock data on first load
-  useEffect(() => {
-    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
-  }, []);
+  // Store already seeded centrally by seedStores
 
   const [demands, setDemands] = useSharedLabDemands();
   const [filter, setFilter] = useState("all");
