@@ -527,7 +527,7 @@ const SimulationPanel = () => {
 
             <div className="space-y-1.5 border-t pt-2">
               <p className="text-[10px] text-muted-foreground font-medium">Tests rapides :</p>
-              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => { localStorage.setItem("userRole", "doctor"); navigate("/dashboard/doctor/consultation/new?patient=1"); }}>
+              <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => { const { switchDemoRole } = require("@/stores/authStore"); switchDemoRole("doctor"); navigate("/dashboard/doctor/consultation/new?patient=1"); }}>
                 <Stethoscope className="h-3.5 w-3.5 mr-2 text-primary" />Ouvrir une consultation
               </Button>
               <Button size="sm" variant="outline" className="w-full text-xs justify-start" onClick={() => goTo("/dashboard/doctor")}>
