@@ -182,10 +182,10 @@ const PatientAppointments = () => {
   };
 
   const handleReschedule = (id: number, day: string, slot: string) => {
-    rescheduleAppointment(id, `${day} Fév 2026`, slot);
+    rescheduleAppointment(id, day, slot);
     setShowReschedule(null);
     setDrawerApt(null);
-    toast({ title: "RDV reprogrammé", description: `Nouveau créneau : ${day} Fév 2026 à ${slot}.` });
+    toast({ title: "RDV reprogrammé", description: `Nouveau créneau : ${day} à ${slot}.` });
   };
 
   const handlePaymentComplete = (id: number) => {

@@ -18,14 +18,30 @@ import {
   CreditCard,
 } from "lucide-react";
 
-const doctor = {
-  id: "1",
-  name: mockDoctorProfile.name,
-  specialty: mockDoctorProfile.specialty,
-  address: mockDoctorProfile.address,
-  initials: mockDoctorProfile.initials,
-  motifs: mockDoctorProfile.motifs.map(m => ({ name: m.name, duration: m.duration, price: parseInt(m.price) })),
-  teleconsultation: mockDoctorProfile.teleconsultation,
+// Build doctor data from URL param
+const buildDoctor = (id: string) => {
+  const numId = parseInt(id);
+  const found = mockDoctors.find(d => d.id === numId);
+  if (found) {
+    return {
+      id: String(found.id),
+      name: found.name,
+      specialty: found.specialty,
+      address: found.address,
+      initials: found.avatar,
+      motifs: mockDoctorProfile.motifs.map(m => ({ name: m.name, duration: m.duration, price: parseInt(m.price) })),
+      teleconsultation: found.teleconsultation,
+    };
+  }
+  return {
+    id: "1",
+    name: mockDoctorProfile.name,
+    specialty: mockDoctorProfile.specialty,
+    address: mockDoctorProfile.address,
+    initials: mockDoctorProfile.initials,
+    motifs: mockDoctorProfile.motifs.map(m => ({ name: m.name, duration: m.duration, price: parseInt(m.price) })),
+    teleconsultation: mockDoctorProfile.teleconsultation,
+  };
 };
 
 const generateSlots = () => {
