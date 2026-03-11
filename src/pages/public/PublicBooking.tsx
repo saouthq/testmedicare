@@ -326,15 +326,25 @@ const PublicBooking = () => {
             {selectedMotif && (
               <div className="rounded-xl border bg-card p-5 shadow-card">
                 <h3 className="font-semibold text-foreground mb-3">Date et horaire</h3>
-                <p className="text-sm text-muted-foreground mb-3">Février 2026</p>
+                <div className="flex items-center justify-between mb-3">
+                  <Button variant="ghost" size="sm" onClick={() => setWeekOffset(Math.max(0, weekOffset - 1))} disabled={weekOffset === 0} className="h-8 w-8 p-0">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    {days[0]?.label} — {days[6]?.label}
+                  </p>
+                  <Button variant="ghost" size="sm" onClick={() => setWeekOffset(Math.min(4, weekOffset + 1))} disabled={weekOffset >= 4} className="h-8 w-8 p-0">
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {days.map(d => (
                     <button 
-                      key={d.day} 
-                      onClick={() => d.available && setSelectedDay(String(d.day))} 
+                      key={`${d.day}-${d.month}`} 
+                      onClick={() => d.available && setSelectedDay(d.label)} 
                       disabled={!d.available}
                       className={`flex flex-col items-center min-w-[3.2rem] rounded-xl border p-2 transition-all ${
-                        selectedDay === String(d.day) 
+                        selectedDay === d.label 
                           ? "border-primary bg-primary/5 ring-1 ring-primary" 
                           : !d.available 
                             ? "opacity-40 cursor-not-allowed" 
@@ -342,7 +352,7 @@ const PublicBooking = () => {
                       }`}
                     >
                       <span className="text-[10px] text-muted-foreground font-medium">{d.name}</span>
-                      <span className={`text-base font-bold ${selectedDay === String(d.day) ? "text-primary" : "text-foreground"}`}>
+                      <span className={`text-base font-bold ${selectedDay === d.label ? "text-primary" : "text-foreground"}`}>
                         {d.day}
                       </span>
                     </button>

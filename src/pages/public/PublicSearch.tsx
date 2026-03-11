@@ -97,7 +97,10 @@ const PublicSearch = () => {
                 className="pl-10 h-10" 
               />
             </div>
-            <Button className="gradient-primary text-primary-foreground h-10 px-5">
+            <Button className="gradient-primary text-primary-foreground h-10 px-5" onClick={() => {
+              const el = document.getElementById("search-results");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}>
               <Search className="h-4 w-4 mr-1.5" />Rechercher
             </Button>
           </div>

@@ -17,6 +17,7 @@ import {
   mockDoctors,
 } from "@/data/mockData";
 import { ReportButton } from "@/components/shared/ReportButton";
+import PublicHeader from "@/components/public/PublicHeader";
 
 // Build profile variants for different doctor IDs
 const buildProfileForDoctor = (id: string) => {
