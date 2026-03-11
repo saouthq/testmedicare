@@ -23,10 +23,7 @@ const LaboratoryPatients = () => {
   const [search, setSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<typeof mockLabPatients[0] | null>(null);
 
-  // Use cross-role store for real-time demand data
-  useEffect(() => {
-    initLabStoreIfEmpty(mockLabDemands as SharedLabDemand[]);
-  }, []);
+  // Store already seeded centrally by seedStores
 
   const [demands] = useSharedLabDemands();
 
