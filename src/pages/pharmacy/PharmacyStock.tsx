@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Search, Pill, CheckCircle2, AlertTriangle, X, ToggleLeft, ToggleRight, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockPharmacyStock, mockPharmacyCategories } from "@/data/mockData";
+import { usePharmacyStock, PHARMACY_CATEGORIES } from "@/stores/pharmacyStore";
 import { toast } from "@/hooks/use-toast";
 
 type Availability = "available" | "partial" | "unavailable";
