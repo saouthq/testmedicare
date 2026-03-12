@@ -94,7 +94,7 @@ const AdminUsers = () => {
       appendLog("password_reset", "user", userId, `Réinitialisation MDP de ${userName} — Motif : ${motif}`);
       toast({ title: `Lien de réinitialisation envoyé à ${userName}` });
     } else if (type === "force_disconnect") {
-      appendLog("force_disconnect", "user", String(userId), `Déconnexion forcée de ${userName} — Motif : ${motif}`);
+      appendLog("force_disconnect", "user", userId, `Déconnexion forcée de ${userName} — Motif : ${motif}`);
       toast({ title: `${userName} déconnecté de force` });
     } else if (type === "bulk_suspend") {
       const ids = Array.from(selectedIds);
