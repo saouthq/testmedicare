@@ -1,33 +1,21 @@
 /**
- * AdminOnboarding — Suivi du funnel d'inscription partenaires avec étapes et taux de conversion
- * TODO BACKEND: Replace with real API
+ * AdminOnboarding — Funnel tracking, connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
 import {
-  UserPlus, ArrowRight, CheckCircle, Clock, XCircle, TrendingUp,
-  BarChart3, Eye, Filter, ChevronDown,
+  UserPlus, CheckCircle, Clock, TrendingUp,
+  BarChart3, Eye, Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { useAdminOnboarding } from "@/stores/adminStore";
+import type { OnboardingApplication, OnboardingStep } from "@/types/admin";
 
-type FunnelStep = "started" | "profile_filled" | "docs_uploaded" | "plan_chosen" | "kyc_submitted" | "activated";
-
-interface OnboardingRecord {
-  id: string;
-  name: string;
-  type: "doctor" | "pharmacy" | "lab";
-  email: string;
-  currentStep: FunnelStep;
-  startedAt: string;
-  lastActivity: string;
-  stuckDays: number;
-}
-
-const stepLabels: Record<FunnelStep, string> = {
+const stepLabels: Record<OnboardingStep, string> = {
   started: "Inscription démarrée",
   profile_filled: "Profil rempli",
   docs_uploaded: "Documents uploadés",
@@ -36,7 +24,7 @@ const stepLabels: Record<FunnelStep, string> = {
   activated: "Activé",
 };
 
-const stepColors: Record<FunnelStep, string> = {
+const stepColors: Record<OnboardingStep, string> = {
   started: "bg-muted text-muted-foreground",
   profile_filled: "bg-primary/10 text-primary",
   docs_uploaded: "bg-warning/10 text-warning",
@@ -45,50 +33,40 @@ const stepColors: Record<FunnelStep, string> = {
   activated: "bg-accent/10 text-accent",
 };
 
-const mockRecords: OnboardingRecord[] = [
-  { id: "ob-1", name: "Dr. Salah Zouari", type: "doctor", email: "salah@email.tn", currentStep: "docs_uploaded", startedAt: "2026-03-05", lastActivity: "2026-03-07", stuckDays: 3 },
-  { id: "ob-2", name: "Pharmacie Riadh", type: "pharmacy", email: "riadh@pharmacy.tn", currentStep: "plan_chosen", startedAt: "2026-03-06", lastActivity: "2026-03-08", stuckDays: 2 },
-  { id: "ob-3", name: "Dr. Leila Mansouri", type: "doctor", email: "leila@email.tn", currentStep: "started", startedAt: "2026-03-08", lastActivity: "2026-03-08", stuckDays: 2 },
-  { id: "ob-4", name: "Labo Pasteur", type: "lab", email: "pasteur@lab.tn", currentStep: "kyc_submitted", startedAt: "2026-03-04", lastActivity: "2026-03-09", stuckDays: 1 },
-  { id: "ob-5", name: "Dr. Karim Nasri", type: "doctor", email: "karim.n@email.tn", currentStep: "profile_filled", startedAt: "2026-03-07", lastActivity: "2026-03-07", stuckDays: 3 },
-  { id: "ob-6", name: "Pharmacie Ben Ali", type: "pharmacy", email: "benali@pharmacy.tn", currentStep: "activated", startedAt: "2026-03-01", lastActivity: "2026-03-03", stuckDays: 0 },
-  { id: "ob-7", name: "Dr. Amira Kouki", type: "doctor", email: "amira@email.tn", currentStep: "activated", startedAt: "2026-02-28", lastActivity: "2026-03-02", stuckDays: 0 },
-];
-
-const funnelData = [
-  { step: "Inscription", count: 45, fill: "hsl(var(--primary))" },
-  { step: "Profil", count: 38, fill: "hsl(var(--primary))" },
-  { step: "Documents", count: 28, fill: "hsl(var(--warning))" },
-  { step: "Plan", count: 22, fill: "hsl(var(--accent))" },
-  { step: "KYC", count: 18, fill: "hsl(var(--primary))" },
-  { step: "Activé", count: 14, fill: "hsl(var(--accent))" },
-];
-
 const typeLabels: Record<string, string> = { doctor: "Médecin", pharmacy: "Pharmacie", lab: "Laboratoire" };
 const typeColors: Record<string, string> = { doctor: "bg-primary/10 text-primary", pharmacy: "bg-warning/10 text-warning", lab: "bg-accent/10 text-accent" };
 
 const AdminOnboarding = () => {
-  const [records] = useState(mockRecords);
+  const { applications: records } = useAdminOnboarding();
   const [search, setSearch] = useState("");
   const [filterStep, setFilterStep] = useState<string>("all");
-  const [selected, setSelected] = useState<OnboardingRecord | null>(null);
+  const [selected, setSelected] = useState<OnboardingApplication | null>(null);
 
   const filtered = useMemo(() => records.filter(r => {
     if (filterStep !== "all" && r.currentStep !== filterStep) return false;
     if (search) {
       const q = search.toLowerCase();
-      return r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q);
+      return r.entityName.toLowerCase().includes(q) || r.email.toLowerCase().includes(q);
     }
     return true;
   }), [records, search, filterStep]);
 
   const stuckCount = records.filter(r => r.stuckDays >= 3 && r.currentStep !== "activated").length;
-  const conversionRate = Math.round((records.filter(r => r.currentStep === "activated").length / records.length) * 100);
+  const conversionRate = records.length > 0 ? Math.round((records.filter(r => r.currentStep === "activated").length / records.length) * 100) : 0;
+
+  const funnelData = useMemo(() => {
+    const steps: OnboardingStep[] = ["started", "profile_filled", "docs_uploaded", "plan_chosen", "kyc_submitted", "activated"];
+    const stepOrder = Object.fromEntries(steps.map((s, i) => [s, i]));
+    return steps.map((step, i) => ({
+      step: stepLabels[step].split(" ")[0],
+      count: records.filter(r => stepOrder[r.currentStep] >= i).length,
+      fill: i < 2 ? "hsl(var(--primary))" : i < 4 ? "hsl(var(--warning))" : "hsl(var(--accent))",
+    }));
+  }, [records]);
 
   return (
     <DashboardLayout role="admin" title="Suivi Onboarding Partenaires">
       <div className="space-y-6">
-        {/* Stats */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border bg-card p-5 shadow-card">
             <UserPlus className="h-5 w-5 text-primary mb-2" />
@@ -112,10 +90,9 @@ const AdminOnboarding = () => {
           </div>
         </div>
 
-        {/* Funnel chart */}
         <div className="rounded-xl border bg-card p-6 shadow-card">
           <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4">
-            <BarChart3 className="h-4 w-4 text-primary" />Funnel d'inscription (30 derniers jours)
+            <BarChart3 className="h-4 w-4 text-primary" />Funnel d'inscription
           </h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
@@ -131,7 +108,6 @@ const AdminOnboarding = () => {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -143,28 +119,28 @@ const AdminOnboarding = () => {
           </select>
         </div>
 
-        {/* Table */}
         <div className="rounded-xl border bg-card shadow-card overflow-hidden">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/30">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Partenaire</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Étape actuelle</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Jours bloqué</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Dernière activité</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
+            <thead><tr className="border-b bg-muted/30">
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Partenaire</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Étape actuelle</th>
+              <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Jours bloqué</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Dernière activité</th>
+              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
+            </tr></thead>
             <tbody>
+              {filtered.length === 0 && (
+                <tr><td colSpan={6} className="text-center py-12 text-muted-foreground">Aucun enregistrement</td></tr>
+              )}
               {filtered.map(r => (
                 <tr key={r.id} className={`border-b last:border-0 hover:bg-muted/20 ${r.stuckDays >= 3 && r.currentStep !== "activated" ? "bg-destructive/5" : ""}`}>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-foreground">{r.name}</p>
+                    <p className="font-medium text-foreground">{r.entityName}</p>
                     <p className="text-xs text-muted-foreground">{r.email}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeColors[r.type]}`}>{typeLabels[r.type]}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeColors[r.entityType]}`}>{typeLabels[r.entityType]}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${stepColors[r.currentStep]}`}>{stepLabels[r.currentStep]}</span>
@@ -189,13 +165,12 @@ const AdminOnboarding = () => {
         </div>
       </div>
 
-      {/* Detail sheet */}
       <Sheet open={!!selected} onOpenChange={v => !v && setSelected(null)}>
         <SheetContent className="sm:max-w-md flex flex-col p-0">
           {selected && (
             <>
               <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-                <SheetTitle>{selected.name}</SheetTitle>
+                <SheetTitle>{selected.entityName}</SheetTitle>
                 <SheetDescription className="sr-only">Détail onboarding</SheetDescription>
               </SheetHeader>
               <ScrollArea className="flex-1 px-6 py-4">
@@ -203,8 +178,10 @@ const AdminOnboarding = () => {
                   <div className="rounded-lg border p-4 space-y-3">
                     {[
                       ["Email", selected.email],
-                      ["Type", typeLabels[selected.type]],
-                      ["Inscription", selected.startedAt],
+                      ["Type", typeLabels[selected.entityType]],
+                      ["Spécialité", selected.specialty],
+                      ["Ville", selected.city],
+                      ["Inscription", selected.submittedAt.split("T")[0]],
                       ["Dernière activité", selected.lastActivity],
                     ].map(([l, v]) => (
                       <div key={l} className="flex justify-between text-sm">
@@ -212,14 +189,19 @@ const AdminOnboarding = () => {
                         <span className="font-medium text-foreground">{v}</span>
                       </div>
                     ))}
+                    {selected.plan && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Plan choisi</span>
+                        <span className="font-medium text-primary">{selected.plan} — {selected.planPrice} DT</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Progress steps */}
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Progression</p>
                     <div className="space-y-2">
-                      {(Object.entries(stepLabels) as [FunnelStep, string][]).map(([step, label], i) => {
-                        const steps = Object.keys(stepLabels) as FunnelStep[];
+                      {(Object.entries(stepLabels) as [OnboardingStep, string][]).map(([step, label]) => {
+                        const steps = Object.keys(stepLabels) as OnboardingStep[];
                         const currentIdx = steps.indexOf(selected.currentStep);
                         const stepIdx = steps.indexOf(step);
                         const isDone = stepIdx <= currentIdx;

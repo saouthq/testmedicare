@@ -1,10 +1,10 @@
 /**
- * Admin Organizations — Cabinets, labs, pharmacies with create/edit + secretary attach
- * TODO BACKEND: Replace mock data with real API
+ * Admin Organizations — Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
-import { Search, Building2, Eye, Ban, UserCheck, X, Link2, Users, Plus, Pencil, MapPin, Phone, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, Building2, Eye, Ban, UserCheck, X, Link2, Users, Plus, Pencil, MapPin, Phone, Mail, CreditCard, FileText, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -13,32 +13,10 @@ import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-
-type OrgType = "cabinet" | "clinic" | "hospital" | "lab" | "pharmacy";
-
-interface Org {
-  id: number;
-  type: OrgType;
-  name: string;
-  city: string;
-  address: string;
-  phone: string;
-  email: string;
-  status: string;
-  membersCount: number;
-  secretaries: string[];
-  createdAt: string;
-}
-
-const initialOrgs: Org[] = [
-  { id: 1, type: "cabinet", name: "Cabinet Dr. Bouazizi", city: "Tunis", address: "12 Rue de la Liberté", phone: "+216 71 234 567", email: "bouazizi@cabinet.tn", status: "active", membersCount: 3, secretaries: ["Sonia Gharbi"], createdAt: "Jan 2025" },
-  { id: 2, type: "clinic", name: "Clinique El Manar", city: "Tunis", address: "Av. de la Clinique, El Manar", phone: "+216 71 890 123", email: "contact@elmanar.tn", status: "active", membersCount: 45, secretaries: ["Amira Bouzid"], createdAt: "Mar 2024" },
-  { id: 3, type: "hospital", name: "Hôpital Charles Nicolle", city: "Tunis", address: "Bab Souika", phone: "+216 71 578 000", email: "info@charles-nicolle.tn", status: "active", membersCount: 320, secretaries: [], createdAt: "Jan 2020" },
-  { id: 4, type: "lab", name: "Labo BioSanté", city: "Sousse", address: "45 Av. Bourguiba", phone: "+216 73 456 789", email: "contact@biosante.tn", status: "active", membersCount: 12, secretaries: [], createdAt: "Jun 2025" },
-  { id: 5, type: "pharmacy", name: "Pharmacie El Amal", city: "Sousse", address: "Rue de la Pharmacie", phone: "+216 73 111 222", email: "elamal@pharmacy.tn", status: "pending", membersCount: 4, secretaries: [], createdAt: "Fév 2026" },
-  { id: 6, type: "cabinet", name: "Cabinet Dr. Gharbi", city: "Ariana", address: "15 Rue des Roses", phone: "+216 71 333 444", email: "gharbi@cabinet.tn", status: "suspended", membersCount: 2, secretaries: [], createdAt: "Sep 2025" },
-];
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAdminOrganizations, useAdminLookups } from "@/stores/adminStore";
+import type { AdminOrganization, OrgType, OrgStatus } from "@/types/admin";
 
 const availableSecretaries = ["Sonia Gharbi", "Amira Bouzid", "Mariem Kaabi"];
 
@@ -49,16 +27,17 @@ const statusColors: Record<string, string> = { active: "bg-accent/10 text-accent
 
 const AdminOrganizations = () => {
   const [search, setSearch] = useState("");
-  const [orgs, setOrgs] = useState<Org[]>(initialOrgs);
+  const { organizations: orgs, setOrganizations: setOrgs } = useAdminOrganizations();
+  const lookups = useAdminLookups();
   const [typeFilter, setTypeFilter] = useState("all");
-  const [selected, setSelected] = useState<Org | null>(null);
-  const [motifOpen, setMotifOpen] = useState<{ id: number; action: "suspend" | "activate" } | null>(null);
-  const [attachOpen, setAttachOpen] = useState<number | null>(null);
+  const [selected, setSelected] = useState<AdminOrganization | null>(null);
+  const [motifOpen, setMotifOpen] = useState<{ id: string; action: "suspend" | "activate" } | null>(null);
+  const [attachOpen, setAttachOpen] = useState<string | null>(null);
   const [selectedSecretary, setSelectedSecretary] = useState("");
 
   // Create/Edit
   const [editOpen, setEditOpen] = useState(false);
-  const [editOrg, setEditOrg] = useState<Org | null>(null);
+  const [editOrg, setEditOrg] = useState<AdminOrganization | null>(null);
   const [formName, setFormName] = useState("");
   const [formType, setFormType] = useState<OrgType>("cabinet");
   const [formCity, setFormCity] = useState("");
@@ -78,7 +57,7 @@ const AdminOrganizations = () => {
     setEditOpen(true);
   };
 
-  const openEdit = (o: Org) => {
+  const openEdit = (o: AdminOrganization) => {
     setEditOrg(o);
     setFormName(o.name); setFormType(o.type); setFormCity(o.city); setFormAddress(o.address); setFormPhone(o.phone); setFormEmail(o.email);
     setEditOpen(true);
@@ -91,16 +70,17 @@ const AdminOrganizations = () => {
     }
     if (editOrg) {
       setOrgs(prev => prev.map(o => o.id === editOrg.id ? { ...o, name: formName, type: formType, city: formCity, address: formAddress, phone: formPhone, email: formEmail } : o));
-      appendLog("org_updated", "organization", String(editOrg.id), `Organisation "${formName}" modifiée`);
+      appendLog("org_updated", "organization", editOrg.id, `Organisation "${formName}" modifiée`);
       toast({ title: "Organisation modifiée" });
     } else {
-      const newOrg: Org = {
-        id: Date.now(), type: formType, name: formName, city: formCity, address: formAddress,
-        phone: formPhone, email: formEmail, status: "active", membersCount: 0, secretaries: [],
-        createdAt: new Date().toLocaleDateString("fr-TN", { month: "short", year: "numeric" }),
+      const newOrg: AdminOrganization = {
+        id: `org-${Date.now()}`, type: formType, name: formName, city: formCity, address: formAddress,
+        phone: formPhone, email: formEmail, status: "active", memberIds: [], secretaryNames: [],
+        membersCount: 0, createdAt: new Date().toLocaleDateString("fr-TN", { month: "short", year: "numeric" }),
+        internalNotes: [],
       };
       setOrgs(prev => [newOrg, ...prev]);
-      appendLog("org_created", "organization", String(newOrg.id), `Organisation "${formName}" créée`);
+      appendLog("org_created", "organization", newOrg.id, `Organisation "${formName}" créée`);
       toast({ title: "Organisation créée" });
     }
     setEditOpen(false);
@@ -110,22 +90,27 @@ const AdminOrganizations = () => {
     if (!motifOpen) return;
     const o = orgs.find(x => x.id === motifOpen.id);
     if (!o) return;
-    const newStatus = motifOpen.action === "suspend" ? "suspended" : "active";
+    const newStatus: OrgStatus = motifOpen.action === "suspend" ? "suspended" : "active";
     setOrgs(prev => prev.map(x => x.id === motifOpen.id ? { ...x, status: newStatus } : x));
-    appendLog("org_status_change", "organization", String(motifOpen.id), `${o.name} — ${newStatus} — Motif : ${motif}`);
+    appendLog("org_status_change", "organization", motifOpen.id, `${o.name} — ${newStatus} — Motif : ${motif}`);
     toast({ title: newStatus === "active" ? "Organisation activée" : "Organisation suspendue" });
     setMotifOpen(null);
   };
 
   const handleAttachSecretary = () => {
     if (!attachOpen || !selectedSecretary) return;
-    setOrgs(prev => prev.map(o => o.id === attachOpen ? { ...o, secretaries: [...o.secretaries, selectedSecretary] } : o));
+    setOrgs(prev => prev.map(o => o.id === attachOpen ? { ...o, secretaryNames: [...o.secretaryNames, selectedSecretary] } : o));
     const o = orgs.find(x => x.id === attachOpen);
-    appendLog("secretary_attached", "organization", String(attachOpen), `${selectedSecretary} rattachée à ${o?.name}`);
+    appendLog("secretary_attached", "organization", attachOpen, `${selectedSecretary} rattachée à ${o?.name}`);
     toast({ title: `${selectedSecretary} rattachée` });
     setSelectedSecretary("");
     setAttachOpen(null);
   };
+
+  // 360 view data for selected org
+  const selectedSub = selected?.subscriptionId ? lookups.getSubById(selected.subscriptionId) : selected?.id ? lookups.getSubByOrgId(selected.id) : undefined;
+  const selectedMembers = selected ? lookups.getMembersByOrgId(selected.id) : [];
+  const selectedPayments = selected ? lookups.getPaymentsByOrgId(selected.id) : [];
 
   return (
     <DashboardLayout role="admin" title="Organisations">
@@ -170,6 +155,12 @@ const AdminOrganizations = () => {
                 <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
               </tr></thead>
               <tbody>
+                {filtered.length === 0 && (
+                  <tr><td colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <Building2 className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                    <p>Aucune organisation trouvée</p>
+                  </td></tr>
+                )}
                 {filtered.map(o => (
                   <tr key={o.id} className={`border-b last:border-0 hover:bg-muted/20 cursor-pointer ${selected?.id === o.id ? "bg-primary/5" : ""}`} onClick={() => setSelected(o)}>
                     <td className="px-4 py-3 font-medium text-foreground">{o.name}</td>
@@ -194,40 +185,112 @@ const AdminOrganizations = () => {
             </table>
           </div>
 
-          {/* Detail drawer (desktop) */}
+          {/* 360 Detail panel */}
           {selected && (
-            <div className="w-80 rounded-xl border bg-card shadow-card p-5 space-y-4 shrink-0 hidden lg:block">
-              <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-foreground text-sm">Détail</h4>
-                <button onClick={() => setSelected(null)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
-              </div>
-              <div className="text-center">
-                <div className="h-12 w-12 mx-auto rounded-lg bg-muted flex items-center justify-center"><Building2 className="h-6 w-6 text-primary" /></div>
-                <h3 className="font-bold text-foreground mt-2 text-sm">{selected.name}</h3>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeColors[selected.type]}`}>{typeLabels[selected.type]}</span>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-3.5 w-3.5 shrink-0" /><span>{selected.address}, {selected.city}</span></div>
-                <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /><span>{selected.phone}</span></div>
-                <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5 shrink-0" /><span>{selected.email}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Membres</span><span className="text-foreground font-medium">{selected.membersCount}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Créé</span><span className="text-foreground">{selected.createdAt}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Statut</span><span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[selected.status]}`}>{statusLabels[selected.status]}</span></div>
-              </div>
-              {selected.secretaries.length > 0 && (
-                <div className="pt-3 border-t">
-                  <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1"><Users className="h-3 w-3" />Secrétaires</p>
-                  {selected.secretaries.map((s, i) => (
-                    <p key={i} className="text-xs text-foreground">{s}</p>
-                  ))}
-                </div>
-              )}
-              <div className="pt-3 border-t flex gap-2">
-                <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => openEdit(selected)}>
-                  <Pencil className="h-3 w-3 mr-1" />Modifier
-                </Button>
-              </div>
-            </div>
+            <Sheet open={!!selected} onOpenChange={v => !v && setSelected(null)}>
+              <SheetContent className="sm:max-w-md flex flex-col p-0">
+                <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+                  <SheetTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" />{selected.name}
+                  </SheetTitle>
+                  <SheetDescription className="sr-only">Fiche organisation</SheetDescription>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeColors[selected.type]}`}>{typeLabels[selected.type]}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[selected.status]}`}>{statusLabels[selected.status]}</span>
+                  </div>
+                </SheetHeader>
+                <ScrollArea className="flex-1 px-6 py-4">
+                  <div className="space-y-5">
+                    {/* Info */}
+                    <div className="rounded-lg border p-4 space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-3.5 w-3.5 shrink-0" /><span>{selected.address}, {selected.city}</span></div>
+                      <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /><span>{selected.phone}</span></div>
+                      <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5 shrink-0" /><span>{selected.email}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Membres</span><span className="text-foreground font-medium">{selected.membersCount}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Créé</span><span className="text-foreground">{selected.createdAt}</span></div>
+                    </div>
+
+                    {/* Owner */}
+                    {selected.ownerId && (() => {
+                      const owner = lookups.getUserById(selected.ownerId!);
+                      return owner ? (
+                        <div className="rounded-lg border p-4">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2">Propriétaire</p>
+                          <Link to="/dashboard/admin/users" className="flex items-center gap-2 text-sm text-primary hover:underline">
+                            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">{owner.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</div>
+                            {owner.name}
+                          </Link>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Members */}
+                    {selectedMembers.length > 0 && (
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><Users className="h-3 w-3" />Membres ({selectedMembers.length})</p>
+                        <div className="space-y-1">
+                          {selectedMembers.map(m => (
+                            <p key={m.id} className="text-xs text-foreground">{m.name} <span className="text-muted-foreground">({m.role})</span></p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Secretaries */}
+                    {selected.secretaryNames.length > 0 && (
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1"><Users className="h-3 w-3" />Secrétaires</p>
+                        {selected.secretaryNames.map((s, i) => <p key={i} className="text-xs text-foreground">{s}</p>)}
+                      </div>
+                    )}
+
+                    {/* Subscription */}
+                    {selectedSub && (
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><CreditCard className="h-3 w-3" />Abonnement</p>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between"><span className="text-muted-foreground">Plan</span><span className="text-foreground font-medium">{selectedSub.plan}</span></div>
+                          <div className="flex justify-between"><span className="text-muted-foreground">Prix</span><span className="text-foreground">{selectedSub.monthlyPrice} DT/mois</span></div>
+                          <div className="flex justify-between"><span className="text-muted-foreground">Statut</span><span className="text-foreground">{selectedSub.status}</span></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Payments */}
+                    {selectedPayments.length > 0 && (
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><FileText className="h-3 w-3" />Derniers paiements</p>
+                        {selectedPayments.slice(0, 3).map(p => (
+                          <div key={p.id} className="flex justify-between text-xs py-1 border-b last:border-0">
+                            <span className="text-foreground">{p.amount} {p.currency}</span>
+                            <span className="text-muted-foreground">{p.createdAt}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Internal notes */}
+                    {selected.internalNotes.length > 0 && (
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><MessageSquare className="h-3 w-3" />Notes internes</p>
+                        {selected.internalNotes.map(n => (
+                          <div key={n.id} className="text-xs text-foreground py-1 border-b last:border-0">
+                            <span className="text-muted-foreground">{n.author} · {new Date(n.createdAt).toLocaleDateString("fr-TN")}</span>
+                            <p>{n.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => { setSelected(null); openEdit(selected); }}>
+                        <Pencil className="h-3 w-3 mr-1" />Modifier
+                      </Button>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
           )}
         </div>
       </div>
@@ -240,56 +303,33 @@ const AdminOrganizations = () => {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label className="text-xs">Nom *</Label>
-                <Input className="mt-1" value={formName} onChange={e => setFormName(e.target.value)} placeholder="Cabinet Dr. ..." />
-              </div>
+              <div><Label className="text-xs">Nom *</Label><Input className="mt-1" value={formName} onChange={e => setFormName(e.target.value)} placeholder="Cabinet Dr. ..." /></div>
               <div>
                 <Label className="text-xs">Type *</Label>
                 <Select value={formType} onValueChange={v => setFormType(v as OrgType)}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(typeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{Object.entries(typeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label className="text-xs">Ville *</Label>
-                <Input className="mt-1" value={formCity} onChange={e => setFormCity(e.target.value)} placeholder="Tunis" />
-              </div>
-              <div>
-                <Label className="text-xs">Adresse</Label>
-                <Input className="mt-1" value={formAddress} onChange={e => setFormAddress(e.target.value)} placeholder="12 Rue..." />
-              </div>
+              <div><Label className="text-xs">Ville *</Label><Input className="mt-1" value={formCity} onChange={e => setFormCity(e.target.value)} placeholder="Tunis" /></div>
+              <div><Label className="text-xs">Adresse</Label><Input className="mt-1" value={formAddress} onChange={e => setFormAddress(e.target.value)} placeholder="12 Rue..." /></div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label className="text-xs">Téléphone</Label>
-                <Input className="mt-1" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="+216 71..." />
-              </div>
-              <div>
-                <Label className="text-xs">Email</Label>
-                <Input className="mt-1" type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="contact@..." />
-              </div>
+              <div><Label className="text-xs">Téléphone</Label><Input className="mt-1" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="+216 71..." /></div>
+              <div><Label className="text-xs">Email</Label><Input className="mt-1" type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="contact@..." /></div>
             </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>Annuler</Button>
-            <Button className="gradient-primary text-primary-foreground" onClick={handleSaveOrg}>
-              {editOrg ? "Enregistrer" : "Créer"}
-            </Button>
+            <Button className="gradient-primary text-primary-foreground" onClick={handleSaveOrg}>{editOrg ? "Enregistrer" : "Créer"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Motif dialog */}
       {motifOpen && (
-        <MotifDialog
-          open={!!motifOpen}
-          onClose={() => setMotifOpen(null)}
-          onConfirm={handleMotifConfirm}
+        <MotifDialog open={!!motifOpen} onClose={() => setMotifOpen(null)} onConfirm={handleMotifConfirm}
           title={motifOpen.action === "suspend" ? "Suspendre l'organisation" : "Activer l'organisation"}
           description={orgs.find(o => o.id === motifOpen.id)?.name || ""}
           confirmLabel={motifOpen.action === "suspend" ? "Suspendre" : "Activer"}
@@ -297,7 +337,6 @@ const AdminOrganizations = () => {
         />
       )}
 
-      {/* Attach secretary dialog */}
       <Dialog open={attachOpen !== null} onOpenChange={() => setAttachOpen(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader><DialogTitle>Rattacher une secrétaire</DialogTitle></DialogHeader>
@@ -308,8 +347,8 @@ const AdminOrganizations = () => {
             </SelectContent>
           </Select>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setAttachOpen(null)}>Annuler</Button>
-            <Button size="sm" className="gradient-primary text-primary-foreground" disabled={!selectedSecretary} onClick={handleAttachSecretary}>Rattacher</Button>
+            <Button variant="outline" onClick={() => setAttachOpen(null)}>Annuler</Button>
+            <Button className="gradient-primary text-primary-foreground" onClick={handleAttachSecretary} disabled={!selectedSecretary}>Rattacher</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

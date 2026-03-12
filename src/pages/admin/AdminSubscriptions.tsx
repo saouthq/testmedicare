@@ -12,7 +12,6 @@ import {
   AlertTriangle, CalendarPlus, DollarSign,
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { mockAdminRevenue } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,16 +20,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getDoctorSubscriptions } from "@/services/admin/adminPromotionsService";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
-import { subscriptionStatusConfig, type SubscriptionStatus } from "@/stores/entitlementStore";
-import { getPlansByRole, type AdminPlan } from "@/stores/adminPlanStore";
-import type { DoctorSubscription } from "@/types/promotion";
+import { useAdminSubscriptions } from "@/stores/adminStore";
+import type { AdminSubscription, SubscriptionStatus } from "@/types/admin";
 
-// Extended status config (merge with entitlementStore)
-type ExtendedStatus = SubscriptionStatus;
+// Status config
 const statusConfig: Record<string, { label: string; color: string }> = {
   trial: { label: "Essai", color: "bg-warning/10 text-warning border-warning/20" },
   active: { label: "Actif", color: "bg-accent/10 text-accent border-accent/20" },
@@ -42,26 +38,24 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 
 const PLAN_PRICES: Record<string, number> = { "Basic": 39, "Pro": 129, "Essentiel": 49, "Cabinet+": 299 };
 
+const revenueChartData = [
+  { month: "Oct", value: 28000 }, { month: "Nov", value: 31000 },
+  { month: "Déc", value: 34000 }, { month: "Jan", value: 37500 },
+  { month: "Fév", value: 41200 }, { month: "Mar", value: 44800 },
+];
+
 const AdminSubscriptions = () => {
-  const [subs, setSubs] = useState<DoctorSubscription[]>(() => {
-    const stored = getDoctorSubscriptions();
-    // Enrich with extra statuses for demo
-    return stored.map((s, i) => {
-      if (i === 3 && s.status === "active") return { ...s, status: "expired" as any };
-      return s;
-    });
-  });
+  const { subscriptions: subs, setSubscriptions: setSubs } = useAdminSubscriptions();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | string>("all");
   const [filterPlan, setFilterPlan] = useState<"all" | string>("all");
-  const [detailSub, setDetailSub] = useState<DoctorSubscription | null>(null);
+  const [detailSub, setDetailSub] = useState<AdminSubscription | null>(null);
 
   // Plan change
-  const [changePlanSub, setChangePlanSub] = useState<DoctorSubscription | null>(null);
+  const [changePlanSub, setChangePlanSub] = useState<AdminSubscription | null>(null);
   const [newPlan, setNewPlan] = useState<string>("Pro");
 
-  // Extend dialog
-  const [extendSub, setExtendSub] = useState<DoctorSubscription | null>(null);
+  const [extendSub, setExtendSub] = useState<AdminSubscription | null>(null);
   const [extendDays, setExtendDays] = useState(30);
 
   // Motif
@@ -84,12 +78,12 @@ const AdminSubscriptions = () => {
     totalRev: subs.filter(s => s.status === "active").reduce((sum, s) => sum + s.monthlyPrice, 0),
     active: subs.filter(s => s.status === "active").length,
     trial: subs.filter(s => s.status === "trial").length,
-    unpaid: subs.filter(s => (s.status as string) === "unpaid").length,
-    suspended: subs.filter(s => (s.status as string) === "suspended").length,
+    unpaid: subs.filter(s => s.status === "unpaid").length,
+    suspended: subs.filter(s => s.status === "suspended").length,
     expired: subs.filter(s => s.status === "expired").length,
   }), [subs]);
 
-  const openChangePlan = (sub: DoctorSubscription) => {
+  const openChangePlan = (sub: AdminSubscription) => {
     setChangePlanSub(sub);
     setNewPlan(sub.plan === "Basic" ? "Pro" : "Basic");
   };
@@ -100,9 +94,9 @@ const AdminSubscriptions = () => {
     setChangePlanSub(null);
   };
 
-  const handleSuspend = (sub: DoctorSubscription) => setMotifAction({ type: "suspend", subId: sub.id });
-  const handleReactivate = (sub: DoctorSubscription) => setMotifAction({ type: "reactivate", subId: sub.id });
-  const handleMarkUnpaid = (sub: DoctorSubscription) => setMotifAction({ type: "mark_unpaid", subId: sub.id });
+  const handleSuspend = (sub: AdminSubscription) => setMotifAction({ type: "suspend", subId: sub.id });
+  const handleReactivate = (sub: AdminSubscription) => setMotifAction({ type: "reactivate", subId: sub.id });
+  const handleMarkUnpaid = (sub: AdminSubscription) => setMotifAction({ type: "mark_unpaid", subId: sub.id });
 
   const handleExtendConfirm = () => {
     if (!extendSub) return;
@@ -123,25 +117,25 @@ const AdminSubscriptions = () => {
         const event = `Plan changé de ${oldPlan} → ${np} — Motif : ${motif}`;
         appendLog("subscription_plan_changed", "subscription", subId, `${s.doctorName}: ${event}`);
         toast({ title: `Plan changé → ${np}`, description: s.doctorName });
-        return { ...s, plan: np as any, monthlyPrice: PLAN_PRICES[np] || s.monthlyPrice, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event }] };
+        return { ...s, plan: np, monthlyPrice: PLAN_PRICES[np] || s.monthlyPrice, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event }] };
       }
 
       if (type === "suspend") {
         appendLog("subscription_suspended", "subscription", subId, `${s.doctorName} suspendu — ${motif}`);
         toast({ title: "Abonnement suspendu", description: s.doctorName });
-        return { ...s, status: "suspended" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Suspendu — ${motif}` }] };
+        return { ...s, status: "suspended" as SubscriptionStatus, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Suspendu — ${motif}` }] };
       }
 
       if (type === "reactivate") {
         appendLog("subscription_reactivated", "subscription", subId, `${s.doctorName} réactivé — ${motif}`);
         toast({ title: "Abonnement réactivé", description: s.doctorName });
-        return { ...s, status: "active" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Réactivé — ${motif}` }] };
+        return { ...s, status: "active" as SubscriptionStatus, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Réactivé — ${motif}` }] };
       }
 
       if (type === "mark_unpaid") {
         appendLog("subscription_unpaid", "subscription", subId, `${s.doctorName} marqué impayé — ${motif}`);
         toast({ title: "Marqué comme impayé", description: s.doctorName });
-        return { ...s, status: "unpaid" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Marqué impayé — ${motif}` }] };
+        return { ...s, status: "unpaid" as SubscriptionStatus, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Marqué impayé — ${motif}` }] };
       }
 
       if (type === "extend") {
@@ -199,7 +193,7 @@ const AdminSubscriptions = () => {
           <h3 className="font-semibold text-foreground mb-4">Évolution des revenus</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockAdminRevenue}>
+              <AreaChart data={revenueChartData}>
                 <defs>
                   <linearGradient id="subRevGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />

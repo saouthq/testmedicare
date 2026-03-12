@@ -1,10 +1,8 @@
 /**
- * Admin System Settings — Platform config, subscriptions, notifications, security, maintenance
- * No commission/teleconsult fees — doctors set their own prices. Revenue = subscriptions only.
- * TODO BACKEND: Replace with real API
+ * Admin System Settings — Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle,
   Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound,
@@ -18,66 +16,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
+import { useAdminSettings } from "@/stores/adminStore";
 
 type SettingsTab = "general" | "features" | "notifications" | "security" | "maintenance";
 
 const AdminSettings = () => {
   const [tab, setTab] = useState<SettingsTab>("general");
   const [saved, setSaved] = useState(false);
+  const { settings, setSettings } = useAdminSettings();
 
-  // General
-  const [platformName, setPlatformName] = useState("Medicare.tn");
-  const [supportEmail, setSupportEmail] = useState("support@medicare.tn");
-  const [supportPhone, setSupportPhone] = useState("+216 71 000 000");
-  const [maxFileSize, setMaxFileSize] = useState("10");
-  const [autoApprovePatients, setAutoApprovePatients] = useState(true);
-  const [defaultLanguage, setDefaultLanguage] = useState("fr");
-  const [timezone, setTimezone] = useState("Africa/Tunis");
-  const [termsUrl, setTermsUrl] = useState("https://medicare.tn/legal/cgu");
-  const [privacyUrl, setPrivacyUrl] = useState("https://medicare.tn/legal/privacy");
+  // Derived local state from store settings
+  const { platformName, supportEmail, supportPhone, maxFileSize, autoApprovePatients,
+    defaultLanguage, timezone, termsUrl, privacyUrl, features, notifConfig, security,
+    maintenanceMode, maintenanceMessage } = settings;
 
-  // Feature flags (granular cross-space controls)
-  const [features, setFeatures] = useState({
-    teleconsultation: true,
-    aiAssistant: true,
-    pharmacyGuard: true,
-    labDemands: true,
-    prescriptionSendPharmacy: true,
-    prescriptionSendLab: true,
-    patientMessaging: false,
-    textReviews: true,
-    medicinesDirectory: true,
-    patientChat: false,
-    onlinePayment: true,
-    appointmentReminder: true,
-    disputeReporting: true,
-    commentReporting: true,
-  });
+  const update = useCallback((patch: Partial<typeof settings>) => {
+    setSettings(prev => ({ ...prev, ...patch }));
+  }, [setSettings]);
 
-  // Notifications
-  const [notifConfig, setNotifConfig] = useState({
-    rdvReminder: true, rdvReminderDelay: "24",
-    rdvConfirmation: true,
-    prescriptionReady: true,
-    labResultReady: true,
-    accountApproved: true,
-    paymentReceipt: true,
-    weeklyReport: false,
-    marketingConsent: true,
-  });
-
-  // Security / OTP
-  const [otpCooldown, setOtpCooldown] = useState("60");
-  const [otpMaxRetries, setOtpMaxRetries] = useState("5");
-  const [sessionTimeout, setSessionTimeout] = useState("30");
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [passwordMinLength, setPasswordMinLength] = useState("8");
-  const [loginAttempts, setLoginAttempts] = useState("5");
-  const [lockoutDuration, setLockoutDuration] = useState("15");
-
-  // Maintenance
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState("La plateforme est en maintenance. Nous serons de retour très bientôt.");
   const [maintenanceMotifOpen, setMaintenanceMotifOpen] = useState(false);
 
   const Toggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
@@ -87,8 +43,6 @@ const AdminSettings = () => {
   );
 
   const handleSave = () => {
-    // Persist feature flags to localStorage for cross-space usage
-    try { localStorage.setItem("medicare_admin_features", JSON.stringify(features)); } catch {}
     appendLog("settings_updated", "system", "settings", `Paramètres système mis à jour (onglet: ${tab})`);
     setSaved(true);
     toast({ title: "Paramètres sauvegardés" });
@@ -99,25 +53,23 @@ const AdminSettings = () => {
     if (!maintenanceMode) {
       setMaintenanceMotifOpen(true);
     } else {
-      setMaintenanceMode(false);
+      update({ maintenanceMode: false });
       appendLog("maintenance_disabled", "system", "maintenance", "Mode maintenance désactivé");
       toast({ title: "Mode maintenance désactivé" });
     }
   };
 
   const handleMaintenanceConfirm = (motif: string) => {
-    setMaintenanceMode(true);
+    update({ maintenanceMode: true });
     appendLog("maintenance_enabled", "system", "maintenance", `Mode maintenance activé — Motif : ${motif}`);
     toast({ title: "Mode maintenance activé", variant: "destructive" });
     setMaintenanceMotifOpen(false);
   };
 
-  const toggleFeature = (key: keyof typeof features) => {
-    setFeatures(prev => {
-      const newVal = !prev[key];
-      appendLog("feature_flag_changed", "system", key, `Feature "${key}" → ${newVal ? "activé" : "désactivé"}`);
-      return { ...prev, [key]: newVal };
-    });
+  const toggleFeature = (key: string) => {
+    const newVal = !features[key];
+    update({ features: { ...features, [key]: newVal } });
+    appendLog("feature_flag_changed", "system", key, `Feature "${key}" → ${newVal ? "activé" : "désactivé"}`);
   };
 
   const tabs = [
@@ -165,14 +117,14 @@ const AdminSettings = () => {
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-5">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Informations plateforme</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label className="text-xs">Nom de la plateforme</Label><Input value={platformName} onChange={e => setPlatformName(e.target.value)} className="mt-1" /></div>
-                <div><Label className="text-xs">Email support</Label><Input value={supportEmail} onChange={e => setSupportEmail(e.target.value)} className="mt-1" /></div>
-                <div><Label className="text-xs">Téléphone support</Label><Input value={supportPhone} onChange={e => setSupportPhone(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">Nom de la plateforme</Label><Input value={platformName} onChange={e => update({ platformName: e.target.value })} className="mt-1" /></div>
+                <div><Label className="text-xs">Email support</Label><Input value={supportEmail} onChange={e => update({ supportEmail: e.target.value })} className="mt-1" /></div>
+                <div><Label className="text-xs">Téléphone support</Label><Input value={supportPhone} onChange={e => update({ supportPhone: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Devise</Label><Input value="Dinar Tunisien (DT)" disabled className="mt-1 bg-muted/50" /></div>
-                <div><Label className="text-xs">Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => setMaxFileSize(e.target.value)} type="number" className="mt-1" /></div>
+                <div><Label className="text-xs">Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => update({ maxFileSize: e.target.value })} type="number" className="mt-1" /></div>
                 <div>
                   <Label className="text-xs">Langue par défaut</Label>
-                  <Select value={defaultLanguage} onValueChange={setDefaultLanguage}>
+                  <Select value={defaultLanguage} onValueChange={v => update({ defaultLanguage: v })}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="fr">Français</SelectItem>
@@ -188,8 +140,8 @@ const AdminSettings = () => {
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Pages légales</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label className="text-xs">URL CGU</Label><Input value={termsUrl} onChange={e => setTermsUrl(e.target.value)} className="mt-1" /></div>
-                <div><Label className="text-xs">URL Politique de confidentialité</Label><Input value={privacyUrl} onChange={e => setPrivacyUrl(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">URL CGU</Label><Input value={termsUrl} onChange={e => update({ termsUrl: e.target.value })} className="mt-1" /></div>
+                <div><Label className="text-xs">URL Politique de confidentialité</Label><Input value={privacyUrl} onChange={e => update({ privacyUrl: e.target.value })} className="mt-1" /></div>
               </div>
             </div>
 
@@ -200,7 +152,7 @@ const AdminSettings = () => {
                   <p className="text-sm font-medium text-foreground">Approbation auto des patients</p>
                   <p className="text-xs text-muted-foreground">Les patients sont activés sans validation manuelle</p>
                 </div>
-                <Toggle enabled={autoApprovePatients} onToggle={() => setAutoApprovePatients(!autoApprovePatients)} />
+                <Toggle enabled={autoApprovePatients} onToggle={() => update({ autoApprovePatients: !autoApprovePatients })} />
               </div>
               <div className="flex items-center justify-between py-3">
                 <div>
@@ -241,7 +193,7 @@ const AdminSettings = () => {
                       <p className="text-sm font-medium text-foreground">{label}</p>
                       <p className="text-xs text-muted-foreground">{desc}</p>
                     </div>
-                    <Toggle enabled={features[key as keyof typeof features]} onToggle={() => toggleFeature(key as keyof typeof features)} />
+                    <Toggle enabled={!!features[key]} onToggle={() => toggleFeature(key)} />
                   </div>
                 ))}
               </div>
@@ -271,8 +223,8 @@ const AdminSettings = () => {
                     <p className="text-xs text-muted-foreground">{n.desc}</p>
                   </div>
                   <Toggle
-                    enabled={notifConfig[n.key as keyof typeof notifConfig] as boolean}
-                    onToggle={() => setNotifConfig(prev => ({ ...prev, [n.key]: !prev[n.key as keyof typeof notifConfig] }))}
+                    enabled={!!(notifConfig as Record<string, boolean | string>)[n.key]}
+                    onToggle={() => update({ notifConfig: { ...notifConfig, [n.key]: !(notifConfig as Record<string, boolean | string>)[n.key] } })}
                   />
                 </div>
               ))}
@@ -282,7 +234,7 @@ const AdminSettings = () => {
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Clock className="h-4 w-4 text-primary" />Délai de rappel RDV</h3>
               <div className="max-w-xs">
                 <Label className="text-xs">Heures avant le RDV</Label>
-                <Input value={notifConfig.rdvReminderDelay} onChange={e => setNotifConfig(prev => ({ ...prev, rdvReminderDelay: e.target.value }))} type="number" className="mt-1" />
+                <Input value={notifConfig.rdvReminderDelay as string} onChange={e => update({ notifConfig: { ...notifConfig, rdvReminderDelay: e.target.value } })} type="number" className="mt-1" />
                 <p className="text-[10px] text-muted-foreground mt-1">Le rappel sera envoyé {notifConfig.rdvReminderDelay}h avant le RDV</p>
               </div>
             </div>
@@ -299,26 +251,26 @@ const AdminSettings = () => {
                   <p className="text-sm font-medium text-foreground">2FA admin obligatoire</p>
                   <p className="text-xs text-muted-foreground">Exiger le 2FA pour les admins</p>
                 </div>
-                <Toggle enabled={twoFactor} onToggle={() => setTwoFactor(!twoFactor)} />
+                <Toggle enabled={security.twoFactor} onToggle={() => update({ security: { ...security, twoFactor: !security.twoFactor } })} />
               </div>
               <div className="grid gap-4 sm:grid-cols-3 pt-2">
                 <div>
                   <Label className="text-xs">Timeout session (min)</Label>
-                  <Input value={sessionTimeout} onChange={e => setSessionTimeout(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.sessionTimeout} onChange={e => update({ security: { ...security, sessionTimeout: e.target.value } })} type="number" className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-xs">Longueur min MDP</Label>
-                  <Input value={passwordMinLength} onChange={e => setPasswordMinLength(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.passwordMinLength} onChange={e => update({ security: { ...security, passwordMinLength: e.target.value } })} type="number" className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-xs">Tentatives connexion max</Label>
-                  <Input value={loginAttempts} onChange={e => setLoginAttempts(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.loginAttempts} onChange={e => update({ security: { ...security, loginAttempts: e.target.value } })} type="number" className="mt-1" />
                 </div>
               </div>
               <div className="max-w-xs">
                 <Label className="text-xs">Durée verrouillage (min)</Label>
-                <Input value={lockoutDuration} onChange={e => setLockoutDuration(e.target.value)} type="number" className="mt-1" />
-                <p className="text-[10px] text-muted-foreground mt-1">Après {loginAttempts} échecs, le compte est bloqué {lockoutDuration} min</p>
+                <Input value={security.lockoutDuration} onChange={e => update({ security: { ...security, lockoutDuration: e.target.value } })} type="number" className="mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Après {security.loginAttempts} échecs, le compte est bloqué {security.lockoutDuration} min</p>
               </div>
             </div>
 
@@ -328,11 +280,11 @@ const AdminSettings = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="text-xs">Cooldown entre envois (sec)</Label>
-                  <Input value={otpCooldown} onChange={e => setOtpCooldown(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.otpCooldown} onChange={e => update({ security: { ...security, otpCooldown: e.target.value } })} type="number" className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-xs">Max tentatives</Label>
-                  <Input value={otpMaxRetries} onChange={e => setOtpMaxRetries(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.otpMaxRetries} onChange={e => update({ security: { ...security, otpMaxRetries: e.target.value } })} type="number" className="mt-1" />
                 </div>
               </div>
             </div>
@@ -358,8 +310,8 @@ const AdminSettings = () => {
                     <p className="text-sm text-destructive font-medium flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Plateforme en maintenance</p>
                   </div>
                   <div>
-                    <Label className="text-xs">Message affiché aux utilisateurs</Label>
-                    <Textarea value={maintenanceMessage} onChange={e => setMaintenanceMessage(e.target.value)} className="mt-1" rows={2} />
+                   <Label className="text-xs">Message affiché aux utilisateurs</Label>
+                    <Textarea value={maintenanceMessage} onChange={e => update({ maintenanceMessage: e.target.value })} className="mt-1" rows={2} />
                   </div>
                 </div>
               )}
