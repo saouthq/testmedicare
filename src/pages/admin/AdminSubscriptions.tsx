@@ -52,11 +52,10 @@ const AdminSubscriptions = () => {
   const [detailSub, setDetailSub] = useState<AdminSubscription | null>(null);
 
   // Plan change
-  const [changePlanSub, setChangePlanSub] = useState<DoctorSubscription | null>(null);
+  const [changePlanSub, setChangePlanSub] = useState<AdminSubscription | null>(null);
   const [newPlan, setNewPlan] = useState<string>("Pro");
 
-  // Extend dialog
-  const [extendSub, setExtendSub] = useState<DoctorSubscription | null>(null);
+  const [extendSub, setExtendSub] = useState<AdminSubscription | null>(null);
   const [extendDays, setExtendDays] = useState(30);
 
   // Motif
