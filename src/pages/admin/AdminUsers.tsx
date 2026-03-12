@@ -1,13 +1,14 @@
 /**
  * Admin Users — Full user management with bulk actions, CSV export, motif-required sensitive actions
- * TODO BACKEND: Replace with real API calls
+ * Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
 import { Search, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, X, RotateCcw, KeyRound, Download, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockAdminUsers } from "@/data/mockData";
+import { useAdminUsers } from "@/stores/adminStore";
+import type { AdminUser } from "@/types/admin";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
@@ -21,17 +22,17 @@ const roleColors: Record<string, string> = { doctor: "bg-primary/10 text-primary
 const statusColors: Record<string, string> = { active: "bg-accent/10 text-accent", pending: "bg-warning/10 text-warning", suspended: "bg-destructive/10 text-destructive" };
 const statusLabels: Record<string, string> = { active: "Actif", pending: "En attente", suspended: "Suspendu" };
 
-type MotifAction = { type: "suspend" | "reactivate" | "reject" | "reset_password" | "force_disconnect" | "bulk_suspend"; userId: number; userName: string } | null;
+type MotifAction = { type: "suspend" | "reactivate" | "reject" | "reset_password" | "force_disconnect" | "bulk_suspend"; userId: string; userName: string } | null;
 
 const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserFilter>("all");
-  const [users, setUsers] = useState(mockAdminUsers);
-  const [selectedUser, setSelectedUser] = useState<typeof mockAdminUsers[0] | null>(null);
+  const { users, setUsers } = useAdminUsers();
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "joined">("joined");
   const [motifAction, setMotifAction] = useState<MotifAction>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => users
     .filter(u => {
