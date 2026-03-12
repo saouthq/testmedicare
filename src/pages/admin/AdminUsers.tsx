@@ -1,14 +1,17 @@
 /**
  * Admin Users — Full user management with 360° view, bulk actions, CSV export
- * Connected to central admin store with cross-entity lookups
+ * + inline edit (role/plan), create user, send email
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
-import { Search, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, X, RotateCcw, KeyRound, Download, LogOut, Building2, CreditCard, MessageSquare, Gavel, FileText, ExternalLink, Inbox } from "lucide-react";
+import { Search, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, X, RotateCcw, KeyRound, Download, LogOut, Building2, CreditCard, MessageSquare, Gavel, FileText, ExternalLink, Inbox, Plus, Pencil, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAdminUsers, useAdminLookups } from "@/stores/adminStore";
-import type { AdminUser } from "@/types/admin";
+import type { AdminUser, UserRole } from "@/types/admin";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
@@ -25,7 +28,7 @@ const roleColors: Record<string, string> = { doctor: "bg-primary/10 text-primary
 const statusColors: Record<string, string> = { active: "bg-accent/10 text-accent", pending: "bg-warning/10 text-warning", suspended: "bg-destructive/10 text-destructive" };
 const statusLabels: Record<string, string> = { active: "Actif", pending: "En attente", suspended: "Suspendu" };
 
-type MotifAction = { type: "suspend" | "reactivate" | "reject" | "reset_password" | "force_disconnect" | "bulk_suspend"; userId: string; userName: string } | null;
+type MotifAction = { type: "suspend" | "reactivate" | "reject" | "reset_password" | "force_disconnect" | "bulk_suspend" | "edit_user"; userId: string; userName: string } | null;
 
 const AdminUsers = () => {
   const navigate = useNavigate();
@@ -38,6 +41,20 @@ const AdminUsers = () => {
   const [sortBy, setSortBy] = useState<"name" | "joined">("joined");
   const [motifAction, setMotifAction] = useState<MotifAction>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Create user dialog
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: "", email: "", phone: "", role: "patient" as UserRole, status: "active" as "active" | "pending" });
+
+  // Edit user dialog
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", role: "patient" as UserRole, subscription: "" });
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+
+  // Send email dialog
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailForm, setEmailForm] = useState({ subject: "", body: "" });
+  const [emailTarget, setEmailTarget] = useState<AdminUser | null>(null);
 
   const filtered = useMemo(() => users
     .filter(u => {
@@ -62,11 +79,8 @@ const AdminUsers = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === filtered.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filtered.map(u => u.id)));
-    }
+    if (selectedIds.size === filtered.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filtered.map(u => u.id)));
   };
 
   const handleApprove = (id: string) => {
@@ -107,8 +121,66 @@ const AdminUsers = () => {
       appendLog("bulk_suspend", "user", ids.join(","), `Suspension en masse de ${ids.length} utilisateurs — Motif : ${motif}`);
       toast({ title: `${ids.length} utilisateur(s) suspendu(s)` });
       setSelectedIds(new Set());
+    } else if (type === "edit_user" && editUserId) {
+      setUsers(prev => prev.map(u => u.id === editUserId ? { ...u, name: editForm.name, email: editForm.email, phone: editForm.phone, role: editForm.role, subscription: editForm.subscription } : u));
+      appendLog("user_edited", "user", editUserId, `Profil de ${editForm.name} modifié — Motif : ${motif}`);
+      toast({ title: `${editForm.name} mis à jour` });
+      setEditOpen(false);
+      // Refresh drawer
+      if (selectedUser?.id === editUserId) {
+        setSelectedUser(prev => prev ? { ...prev, name: editForm.name, email: editForm.email, phone: editForm.phone, role: editForm.role, subscription: editForm.subscription } : prev);
+      }
     }
     setMotifAction(null);
+  };
+
+  // Create user
+  const handleCreateUser = () => {
+    if (!createForm.name || !createForm.email) { toast({ title: "Nom et email requis", variant: "destructive" }); return; }
+    const newUser: AdminUser = {
+      id: `user-${Date.now()}`,
+      name: createForm.name,
+      email: createForm.email,
+      phone: createForm.phone || "+216 00 000 000",
+      role: createForm.role,
+      status: createForm.status,
+      subscription: "—",
+      joined: new Date().toISOString().split("T")[0],
+      lastLogin: "—",
+      verified: createForm.status === "active",
+      internalNotes: [],
+    };
+    setUsers(prev => [newUser, ...prev]);
+    appendLog("user_created", "user", newUser.id, `Utilisateur ${newUser.name} (${roleLabels[newUser.role]}) créé manuellement`);
+    toast({ title: `${newUser.name} créé`, description: roleLabels[newUser.role] });
+    setCreateOpen(false);
+    setCreateForm({ name: "", email: "", phone: "", role: "patient", status: "active" });
+  };
+
+  // Open edit
+  const openEditDialog = (u: AdminUser) => {
+    setEditUserId(u.id);
+    setEditForm({ name: u.name, email: u.email, phone: u.phone, role: u.role, subscription: u.subscription });
+    setEditOpen(true);
+  };
+
+  const handleEditSave = () => {
+    if (!editForm.name || !editForm.email) { toast({ title: "Nom et email requis", variant: "destructive" }); return; }
+    setMotifAction({ type: "edit_user", userId: editUserId || "", userName: editForm.name });
+  };
+
+  // Send email
+  const openSendEmail = (u: AdminUser) => {
+    setEmailTarget(u);
+    setEmailForm({ subject: "", body: "" });
+    setEmailOpen(true);
+  };
+
+  const handleSendEmail = () => {
+    if (!emailForm.subject) { toast({ title: "Sujet requis", variant: "destructive" }); return; }
+    appendLog("email_sent", "user", emailTarget?.id || "", `Email envoyé à ${emailTarget?.name} — Sujet: ${emailForm.subject}`);
+    toast({ title: "Email envoyé (mock)", description: `À : ${emailTarget?.email}` });
+    setEmailOpen(false);
   };
 
   /** Export CSV */
@@ -136,6 +208,7 @@ const AdminUsers = () => {
     reset_password: { title: "Réinitialiser le mot de passe", desc: "Un lien de réinitialisation sera envoyé.", label: "Réinitialiser", destructive: false },
     force_disconnect: { title: "Forcer la déconnexion", desc: "L'utilisateur sera déconnecté de toutes ses sessions.", label: "Déconnecter", destructive: true },
     bulk_suspend: { title: "Suspendre en masse", desc: `${selectedIds.size} utilisateur(s) sélectionné(s) seront suspendus.`, label: "Suspendre tous", destructive: true },
+    edit_user: { title: "Modifier le profil", desc: "La modification sera enregistrée dans les audit logs.", label: "Enregistrer", destructive: false },
   };
   const currentMotifConfig = motifAction ? motifDialogConfig[motifAction.type] : null;
 
@@ -148,21 +221,25 @@ const AdminUsers = () => {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Rechercher par nom, email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
           </div>
-          <div className="flex gap-1 rounded-lg border bg-card p-0.5 overflow-x-auto">
-            {([
-              { key: "all" as UserFilter, label: "Tous", count: users.length },
-              { key: "doctors" as UserFilter, label: "Médecins", count: users.filter(u => u.role === "doctor").length },
-              { key: "patients" as UserFilter, label: "Patients", count: users.filter(u => u.role === "patient").length },
-              { key: "secretaries" as UserFilter, label: "Secrétaires", count: users.filter(u => u.role === "secretary").length },
-              { key: "pharmacies" as UserFilter, label: "Pharmacies", count: users.filter(u => u.role === "pharmacy").length },
-              { key: "laboratories" as UserFilter, label: "Labos", count: users.filter(u => u.role === "laboratory").length },
-              { key: "pending" as UserFilter, label: "En attente", count: users.filter(u => u.status === "pending").length },
-            ]).map(f => (
-              <button key={f.key} onClick={() => setFilter(f.key)} className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                {f.label} <span className="opacity-70">({f.count})</span>
-              </button>
-            ))}
-          </div>
+          <Button onClick={() => setCreateOpen(true)} className="gradient-primary text-primary-foreground shadow-primary-glow shrink-0">
+            <Plus className="h-4 w-4 mr-1" />Créer un utilisateur
+          </Button>
+        </div>
+
+        <div className="flex gap-1 rounded-lg border bg-card p-0.5 overflow-x-auto">
+          {([
+            { key: "all" as UserFilter, label: "Tous", count: users.length },
+            { key: "doctors" as UserFilter, label: "Médecins", count: users.filter(u => u.role === "doctor").length },
+            { key: "patients" as UserFilter, label: "Patients", count: users.filter(u => u.role === "patient").length },
+            { key: "secretaries" as UserFilter, label: "Secrétaires", count: users.filter(u => u.role === "secretary").length },
+            { key: "pharmacies" as UserFilter, label: "Pharmacies", count: users.filter(u => u.role === "pharmacy").length },
+            { key: "laboratories" as UserFilter, label: "Labos", count: users.filter(u => u.role === "laboratory").length },
+            { key: "pending" as UserFilter, label: "En attente", count: users.filter(u => u.status === "pending").length },
+          ]).map(f => (
+            <button key={f.key} onClick={() => setFilter(f.key)} className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              {f.label} <span className="opacity-70">({f.count})</span>
+            </button>
+          ))}
         </div>
 
         {/* Stats */}
@@ -262,12 +339,11 @@ const AdminUsers = () => {
                           </>
                         )}
                         {u.status === "active" && (
-                          <>
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-warning hover:text-warning" title="Suspendre" onClick={() => setMotifAction({ type: "suspend", userId: u.id, userName: u.name })}><Ban className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Reset MDP" onClick={() => setMotifAction({ type: "reset_password", userId: u.id, userName: u.name })}><KeyRound className="h-4 w-4" /></Button>
-                          </>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-warning hover:text-warning" title="Suspendre" onClick={() => setMotifAction({ type: "suspend", userId: u.id, userName: u.name })}><Ban className="h-4 w-4" /></Button>
                         )}
                         {u.status === "suspended" && <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-accent hover:text-accent" title="Réactiver" onClick={() => setMotifAction({ type: "reactivate", userId: u.id, userName: u.name })}><RotateCcw className="h-4 w-4" /></Button>}
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Modifier" onClick={() => openEditDialog(u)}><Pencil className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Email" onClick={() => openSendEmail(u)}><Mail className="h-4 w-4" /></Button>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Voir" onClick={() => openUserDrawer(u)}><Eye className="h-4 w-4" /></Button>
                       </div>
                     </td>
@@ -319,7 +395,6 @@ const AdminUsers = () => {
                 </TabsList>
 
                 <ScrollArea className="flex-1 px-6 py-4">
-                  {/* ── PROFIL TAB ── */}
                   <TabsContent value="info" className="mt-0 space-y-4">
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4 shrink-0" /><span className="truncate">{selectedUser.email}</span></div>
@@ -328,7 +403,6 @@ const AdminUsers = () => {
                       <div className="flex items-center gap-2 text-muted-foreground"><Shield className="h-4 w-4 shrink-0" /><span>Dernière connexion : {selectedUser.lastLogin}</span></div>
                     </div>
 
-                    {/* Organisation */}
                     {org && (
                       <div className="pt-3 border-t">
                         <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />Organisation</p>
@@ -344,7 +418,6 @@ const AdminUsers = () => {
                       </div>
                     )}
 
-                    {/* Abonnement */}
                     <div className="pt-3 border-t">
                       <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><CreditCard className="h-3.5 w-3.5" />Abonnement</p>
                       {sub ? (
@@ -362,7 +435,6 @@ const AdminUsers = () => {
                       )}
                     </div>
 
-                    {/* KYC */}
                     {onboarding && (
                       <div className="pt-3 border-t">
                         <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><FileText className="h-3.5 w-3.5" />Onboarding KYC</p>
@@ -373,7 +445,6 @@ const AdminUsers = () => {
                       </div>
                     )}
 
-                    {/* Notes internes */}
                     {selectedUser.internalNotes.length > 0 && (
                       <div className="pt-3 border-t">
                         <p className="text-xs font-semibold text-muted-foreground mb-2">Notes internes</p>
@@ -387,7 +458,6 @@ const AdminUsers = () => {
                     )}
                   </TabsContent>
 
-                  {/* ── FACTURATION TAB ── */}
                   <TabsContent value="billing" className="mt-0 space-y-4">
                     {payments.length === 0 ? (
                       <EmptyState icon={CreditCard} title="Aucun paiement" description="Cet utilisateur n'a aucun paiement enregistré." compact />
@@ -407,7 +477,6 @@ const AdminUsers = () => {
                     )}
                   </TabsContent>
 
-                  {/* ── SUPPORT TAB ── */}
                   <TabsContent value="support" className="mt-0 space-y-4">
                     {tickets.length > 0 && (
                       <div>
@@ -438,8 +507,16 @@ const AdminUsers = () => {
                 </ScrollArea>
               </Tabs>
 
-              {/* Actions */}
+              {/* Drawer Actions */}
               <div className="border-t px-6 py-4 space-y-2 shrink-0">
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => { setDrawerOpen(false); openEditDialog(selectedUser); }}>
+                    <Pencil className="h-3.5 w-3.5 mr-1" />Modifier
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => { setDrawerOpen(false); openSendEmail(selectedUser); }}>
+                    <Send className="h-3.5 w-3.5 mr-1" />Email
+                  </Button>
+                </div>
                 {selectedUser.status === "pending" && (
                   <>
                     <Button size="sm" className="w-full gradient-primary text-primary-foreground" onClick={() => handleApprove(selectedUser.id)}>
@@ -458,9 +535,6 @@ const AdminUsers = () => {
                     <Button size="sm" variant="outline" className="w-full" onClick={() => setMotifAction({ type: "reset_password", userId: selectedUser.id, userName: selectedUser.name })}>
                       <KeyRound className="h-4 w-4 mr-1" />Réinitialiser MDP
                     </Button>
-                    <Button size="sm" variant="outline" className="w-full text-destructive" onClick={() => setMotifAction({ type: "force_disconnect", userId: selectedUser.id, userName: selectedUser.name })}>
-                      <LogOut className="h-4 w-4 mr-1" />Forcer déconnexion
-                    </Button>
                   </>
                 )}
                 {selectedUser.status === "suspended" && (
@@ -473,6 +547,103 @@ const AdminUsers = () => {
           })()}
         </SheetContent>
       </Sheet>
+
+      {/* Create User Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Créer un utilisateur</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div><Label className="text-xs">Nom complet *</Label><Input className="mt-1" value={createForm.name} onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))} placeholder="Dr. Ahmed Ben..." /></div>
+            <div><Label className="text-xs">Email *</Label><Input className="mt-1" type="email" value={createForm.email} onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))} placeholder="email@example.com" /></div>
+            <div><Label className="text-xs">Téléphone</Label><Input className="mt-1" value={createForm.phone} onChange={e => setCreateForm(f => ({ ...f, phone: e.target.value }))} placeholder="+216 XX XXX XXX" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Rôle *</Label>
+                <Select value={createForm.role} onValueChange={v => setCreateForm(f => ({ ...f, role: v as UserRole }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(roleLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Statut</Label>
+                <Select value={createForm.status} onValueChange={v => setCreateForm(f => ({ ...f, status: v as "active" | "pending" }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Actif</SelectItem>
+                    <SelectItem value="pending">En attente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
+            <Button className="gradient-primary text-primary-foreground" onClick={handleCreateUser}><Plus className="h-4 w-4 mr-1" />Créer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Modifier l'utilisateur</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div><Label className="text-xs">Nom complet *</Label><Input className="mt-1" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} /></div>
+            <div><Label className="text-xs">Email *</Label><Input className="mt-1" type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} /></div>
+            <div><Label className="text-xs">Téléphone</Label><Input className="mt-1" value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Rôle</Label>
+                <Select value={editForm.role} onValueChange={v => setEditForm(f => ({ ...f, role: v as UserRole }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(roleLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Abonnement</Label>
+                <Select value={editForm.subscription} onValueChange={v => setEditForm(f => ({ ...f, subscription: v }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="—">Aucun</SelectItem>
+                    <SelectItem value="Essentiel">Essentiel</SelectItem>
+                    <SelectItem value="Pro">Pro</SelectItem>
+                    <SelectItem value="Cabinet+">Cabinet+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Annuler</Button>
+            <Button className="gradient-primary text-primary-foreground" onClick={handleEditSave}>Enregistrer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Email Dialog */}
+      <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Envoyer un email</DialogTitle></DialogHeader>
+          {emailTarget && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                <p className="font-medium text-foreground">{emailTarget.name}</p>
+                <p className="text-xs text-muted-foreground">{emailTarget.email}</p>
+              </div>
+              <div><Label className="text-xs">Sujet *</Label><Input className="mt-1" value={emailForm.subject} onChange={e => setEmailForm(f => ({ ...f, subject: e.target.value }))} placeholder="Objet de l'email..." /></div>
+              <div><Label className="text-xs">Message</Label><textarea className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm min-h-[100px]" value={emailForm.body} onChange={e => setEmailForm(f => ({ ...f, body: e.target.value }))} placeholder="Contenu du message..." /></div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEmailOpen(false)}>Annuler</Button>
+            <Button className="gradient-primary text-primary-foreground" onClick={handleSendEmail}><Send className="h-4 w-4 mr-1" />Envoyer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Motif dialog for sensitive actions */}
       {motifAction && currentMotifConfig && (

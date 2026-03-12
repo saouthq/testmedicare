@@ -1,11 +1,12 @@
 /**
- * Admin Payments — Migrated to AdminDataTable component
- * ~210 lines → ~120 lines (-43%)
+ * Admin Payments — Full workflows: mark paid, retry, invoice, user link, date filter
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
-import { Banknote, RotateCcw, Eye, CreditCard } from "lucide-react";
+import { Banknote, RotateCcw, Eye, CheckCircle, RefreshCw, FileText, ExternalLink, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
@@ -13,37 +14,89 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { useAdminPayments } from "@/stores/adminStore";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import type { AdminPayment } from "@/types/admin";
+import { useNavigate } from "react-router-dom";
 
 const statusLabels: Record<string, string> = { paid: "Payé", pending: "En attente", failed: "Échoué", refunded: "Remboursé" };
 const statusColors: Record<string, string> = { paid: "bg-accent/10 text-accent", pending: "bg-warning/10 text-warning", failed: "bg-destructive/10 text-destructive", refunded: "bg-muted text-muted-foreground" };
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric" });
 
+type MotifTarget = { type: "refund" | "mark_paid"; id: string } | null;
+
 const AdminPayments = () => {
+  const navigate = useNavigate();
   const { payments, setPayments } = useAdminPayments();
-  const [refundTarget, setRefundTarget] = useState<string | null>(null);
+  const [motifTarget, setMotifTarget] = useState<MotifTarget>(null);
   const [detailPayment, setDetailPayment] = useState<AdminPayment | null>(null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  const dateFiltered = useMemo(() => {
+    if (!dateFrom && !dateTo) return payments;
+    return payments.filter(p => {
+      const d = new Date(p.createdAt);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+      return true;
+    });
+  }, [payments, dateFrom, dateTo]);
 
   const stats = useMemo(() => ({
-    totalRevenue: payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0),
-    paidCount: payments.filter(p => p.status === "paid").length,
-    pendingAmount: payments.filter(p => p.status === "pending").reduce((s, p) => s + p.amount, 0),
-    refundedAmount: payments.filter(p => p.status === "refunded").reduce((s, p) => s + p.amount, 0),
-  }), [payments]);
+    totalRevenue: dateFiltered.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0),
+    paidCount: dateFiltered.filter(p => p.status === "paid").length,
+    pendingAmount: dateFiltered.filter(p => p.status === "pending").reduce((s, p) => s + p.amount, 0),
+    failedCount: dateFiltered.filter(p => p.status === "failed").length,
+    refundedAmount: dateFiltered.filter(p => p.status === "refunded").reduce((s, p) => s + p.amount, 0),
+  }), [dateFiltered]);
 
-  const handleRefundConfirm = (motif: string) => {
-    if (!refundTarget) return;
-    const p = payments.find(x => x.id === refundTarget);
+  const handleMotifConfirm = (motif: string) => {
+    if (!motifTarget) return;
+    const p = payments.find(x => x.id === motifTarget.id);
     if (!p) return;
-    setPayments(prev => prev.map(x => x.id === refundTarget ? { ...x, status: "refunded" as const } : x));
-    appendLog("payment_refunded", "payment", refundTarget, `Remboursement ${p.amount} ${p.currency} à ${p.payerName} — Motif : ${motif}`);
-    toast({ title: `${p.amount} ${p.currency} remboursé à ${p.payerName}` });
-    setRefundTarget(null);
+
+    if (motifTarget.type === "refund") {
+      setPayments(prev => prev.map(x => x.id === motifTarget.id ? { ...x, status: "refunded" as const } : x));
+      appendLog("payment_refunded", "payment", motifTarget.id, `Remboursement ${p.amount} ${p.currency} à ${p.payerName} — Motif : ${motif}`);
+      toast({ title: `${p.amount} ${p.currency} remboursé à ${p.payerName}` });
+    } else if (motifTarget.type === "mark_paid") {
+      setPayments(prev => prev.map(x => x.id === motifTarget.id ? { ...x, status: "paid" as const } : x));
+      appendLog("payment_marked_paid", "payment", motifTarget.id, `Paiement de ${p.payerName} marqué payé — Motif : ${motif}`);
+      toast({ title: `Paiement de ${p.payerName} marqué comme payé` });
+    }
+    setMotifTarget(null);
+    if (detailPayment?.id === motifTarget.id) setDetailPayment(null);
+  };
+
+  const handleRetry = (p: AdminPayment) => {
+    appendLog("payment_retry", "payment", p.id, `Relance paiement échoué pour ${p.payerName}`);
+    toast({ title: "Relance envoyée (mock)", description: `Email de relance envoyé à ${p.payerName}` });
+  };
+
+  const handleGenerateInvoice = (p: AdminPayment) => {
+    appendLog("invoice_generated", "payment", p.id, `Facture générée pour ${p.payerName} — ${p.amount} ${p.currency}`);
+    toast({ title: "Facture générée (mock)", description: `Facture #INV-${p.reference} téléchargée` });
   };
 
   return (
     <DashboardLayout role="admin" title="Paiements & Transactions">
+      {/* Date range filter */}
+      <div className="flex flex-wrap items-end gap-3 mb-4">
+        <div>
+          <Label className="text-[10px] text-muted-foreground">Du</Label>
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-8 text-xs w-36 mt-0.5" />
+        </div>
+        <div>
+          <Label className="text-[10px] text-muted-foreground">Au</Label>
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-8 text-xs w-36 mt-0.5" />
+        </div>
+        {(dateFrom || dateTo) && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setDateFrom(""); setDateTo(""); }}>
+            <RefreshCw className="h-3 w-3 mr-1" />Reset
+          </Button>
+        )}
+      </div>
+
       <AdminDataTable<AdminPayment>
-        data={payments}
+        data={dateFiltered}
         searchPlaceholder="Rechercher par payeur ou référence..."
         searchFn={(item, q) => item.payerName.toLowerCase().includes(q) || item.reference.toLowerCase().includes(q)}
         onRowClick={setDetailPayment}
@@ -54,6 +107,7 @@ const AdminPayments = () => {
           { label: "Revenus encaissés", value: `${stats.totalRevenue.toLocaleString()} DT`, color: "text-accent" },
           { label: "Transactions réussies", value: stats.paidCount, color: "text-primary" },
           { label: "En attente", value: `${stats.pendingAmount} DT`, color: "text-warning" },
+          { label: "Échoués", value: stats.failedCount, color: "text-destructive" },
           { label: "Remboursés", value: `${stats.refundedAmount} DT`, color: "text-muted-foreground" },
         ]}
         filters={[
@@ -80,8 +134,18 @@ const AdminPayments = () => {
           { key: "actions", label: "Actions", className: "text-right", render: p => (
             <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
               {p.status === "paid" && (
-                <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => setRefundTarget(p.id)}>
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => setMotifTarget({ type: "refund", id: p.id })}>
                   <RotateCcw className="h-3 w-3 mr-1" />Rembourser
+                </Button>
+              )}
+              {p.status === "pending" && (
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-accent" onClick={() => setMotifTarget({ type: "mark_paid", id: p.id })}>
+                  <CheckCircle className="h-3 w-3 mr-1" />Payé
+                </Button>
+              )}
+              {p.status === "failed" && (
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-primary" onClick={() => handleRetry(p)}>
+                  <RefreshCw className="h-3 w-3 mr-1" />Relancer
                 </Button>
               )}
               <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDetailPayment(p)}>
@@ -129,24 +193,46 @@ const AdminPayments = () => {
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[detailPayment.status]}`}>{statusLabels[detailPayment.status]}</span>
                 </div>
               </div>
-              {detailPayment.status === "paid" && (
-                <Button size="sm" variant="outline" className="w-full text-warning" onClick={() => { setDetailPayment(null); setRefundTarget(detailPayment.id); }}>
-                  <RotateCcw className="h-4 w-4 mr-1" />Rembourser
+
+              {/* Actions */}
+              <div className="space-y-2">
+                {detailPayment.status === "paid" && (
+                  <>
+                    <Button size="sm" variant="outline" className="w-full text-warning" onClick={() => { setDetailPayment(null); setMotifTarget({ type: "refund", id: detailPayment.id }); }}>
+                      <RotateCcw className="h-4 w-4 mr-1" />Rembourser
+                    </Button>
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => handleGenerateInvoice(detailPayment)}>
+                      <FileText className="h-4 w-4 mr-1" />Générer facture
+                    </Button>
+                  </>
+                )}
+                {detailPayment.status === "pending" && (
+                  <Button size="sm" className="w-full gradient-primary text-primary-foreground" onClick={() => { setDetailPayment(null); setMotifTarget({ type: "mark_paid", id: detailPayment.id }); }}>
+                    <CheckCircle className="h-4 w-4 mr-1" />Marquer comme payé
+                  </Button>
+                )}
+                {detailPayment.status === "failed" && (
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => handleRetry(detailPayment)}>
+                    <RefreshCw className="h-4 w-4 mr-1" />Relancer le paiement
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="w-full text-xs text-muted-foreground" onClick={() => { setDetailPayment(null); navigate("/dashboard/admin/users"); }}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" />Voir le profil du payeur
                 </Button>
-              )}
+              </div>
             </div>
           )}
         </SheetContent>
       </Sheet>
 
       <MotifDialog
-        open={!!refundTarget}
-        onClose={() => setRefundTarget(null)}
-        onConfirm={handleRefundConfirm}
-        title="Rembourser le paiement"
-        description={payments.find(p => p.id === refundTarget)?.payerName || ""}
-        confirmLabel="Confirmer le remboursement"
-        destructive
+        open={!!motifTarget}
+        onClose={() => setMotifTarget(null)}
+        onConfirm={handleMotifConfirm}
+        title={motifTarget?.type === "mark_paid" ? "Marquer comme payé" : "Rembourser le paiement"}
+        description={payments.find(p => p.id === motifTarget?.id)?.payerName || ""}
+        confirmLabel={motifTarget?.type === "mark_paid" ? "Confirmer le paiement" : "Confirmer le remboursement"}
+        destructive={motifTarget?.type === "refund"}
       />
     </DashboardLayout>
   );

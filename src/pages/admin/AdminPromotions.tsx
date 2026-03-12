@@ -1,10 +1,9 @@
 /**
- * Admin Promotions & Offres — Full CRUD page
- * TODO BACKEND: Replace service calls with real API
+ * Admin Promotions & Offres — Full CRUD with store, delete, stats, CSV, detail drawer
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
-import { Plus, Copy, ToggleLeft, ToggleRight, Pencil, Gift, Tag, Percent, Clock, Search, Filter } from "lucide-react";
+import { Plus, Copy, ToggleLeft, ToggleRight, Pencil, Gift, Tag, Percent, Clock, Search, Filter, Trash2, Download, Eye, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 import type { Promotion, PromotionType, PromotionTarget } from "@/types/promotion";
+import { appendLog } from "@/services/admin/adminAuditService";
 import {
   getPromotions,
   createPromotion,
@@ -31,17 +33,8 @@ const typeLabels: Record<PromotionType, { label: string; icon: any }> = {
   free_trial: { label: "Essai gratuit", icon: Clock },
 };
 
-const targetLabels: Record<PromotionTarget, string> = {
-  basic: "Basic uniquement",
-  pro: "Pro uniquement",
-  all: "Tous les plans",
-};
-
-const statusColors: Record<string, string> = {
-  active: "bg-accent/10 text-accent border-accent/20",
-  inactive: "bg-muted text-muted-foreground border-border",
-  expired: "bg-destructive/10 text-destructive border-destructive/20",
-};
+const targetLabels: Record<PromotionTarget, string> = { basic: "Basic uniquement", pro: "Pro uniquement", all: "Tous les plans" };
+const statusColors: Record<string, string> = { active: "bg-accent/10 text-accent border-accent/20", inactive: "bg-muted text-muted-foreground border-border", expired: "bg-destructive/10 text-destructive border-destructive/20" };
 
 type FilterStatus = "all" | "active" | "inactive";
 type FilterType = "all" | PromotionType;
@@ -57,18 +50,14 @@ const AdminPromotions = () => {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [filterType, setFilterType] = useState<FilterType>("all");
-
-  // Modal state
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Promotion>>(emptyForm());
-
-  // Motif dialog
   const [motifAction, setMotifAction] = useState<{ type: string; id: string } | null>(null);
+  const [detailPromo, setDetailPromo] = useState<Promotion | null>(null);
 
   const reload = () => setPromos(getPromotions());
 
-  // Filtered list
   const filtered = useMemo(() => {
     let list = promos;
     if (filterStatus !== "all") list = list.filter(p => p.status === filterStatus);
@@ -80,7 +69,17 @@ const AdminPromotions = () => {
     return list;
   }, [promos, filterStatus, filterType, search]);
 
-  // ─── Handlers ──────────────────────────────────────────────
+  // Stats
+  const stats = useMemo(() => ({
+    total: promos.length,
+    active: promos.filter(p => p.status === "active").length,
+    totalUsage: promos.reduce((s, p) => s + p.usageCount, 0),
+    expiringSoon: promos.filter(p => {
+      if (p.status !== "active" || !p.endDate) return false;
+      const diff = (new Date(p.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+      return diff > 0 && diff < 30;
+    }).length,
+  }), [promos]);
 
   const openCreate = () => { setEditId(null); setForm(emptyForm()); setEditOpen(true); };
   const openEdit = (p: Promotion) => { setEditId(p.id); setForm({ ...p }); setEditOpen(true); };
@@ -89,7 +88,6 @@ const AdminPromotions = () => {
     if (!form.name || !form.startDate || !form.endDate) {
       toast({ title: "Champs obligatoires manquants", variant: "destructive" }); return;
     }
-    // For create/edit we ask motif
     setMotifAction({ type: editId ? "save_edit" : "save_create", id: editId || "new" });
   };
 
@@ -107,6 +105,12 @@ const AdminPromotions = () => {
       togglePromotion(id, motif);
       const p = promos.find(x => x.id === id);
       toast({ title: p?.status === "active" ? "Promotion désactivée" : "Promotion activée" });
+    } else if (type === "delete") {
+      // Delete from localStorage
+      const list = getPromotions().filter(p => p.id !== id);
+      localStorage.setItem("medicare_admin_promotions", JSON.stringify(list));
+      appendLog("delete_promotion", "promotion", id, `Promotion supprimée — ${motif}`);
+      toast({ title: "Promotion supprimée" });
     }
 
     setMotifAction(null);
@@ -120,19 +124,26 @@ const AdminPromotions = () => {
     reload();
   };
 
-  const handleToggle = (id: string) => {
-    setMotifAction({ type: "toggle", id });
-  };
+  const handleToggle = (id: string) => setMotifAction({ type: "toggle", id });
+  const handleDelete = (id: string) => setMotifAction({ type: "delete", id });
 
-  const formatDate = (d: string) => {
-    if (!d) return "—";
-    return new Date(d).toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric" });
-  };
+  const formatDate = (d: string) => !d ? "—" : new Date(d).toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric" });
 
   const valueLabel = (p: Promotion) => {
     if (p.type === "free_months" || p.type === "free_trial") return `${p.value} mois`;
     if (p.type === "percent_discount") return `${p.value}%`;
     return `${p.value} DT`;
+  };
+
+  const handleExportCSV = () => {
+    const csv = ["Nom,Type,Valeur,Début,Fin,Cible,Statut,Code,Utilisations"]
+      .concat(filtered.map(p => `"${p.name}","${typeLabels[p.type].label}","${valueLabel(p)}","${p.startDate}","${p.endDate}","${targetLabels[p.target]}","${p.status}","${p.promoCode || "—"}","${p.usageCount}"`))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `promotions_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export CSV téléchargé" });
   };
 
   return (
@@ -142,11 +153,36 @@ const AdminPromotions = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-foreground">Gestion des promotions</h2>
-            <p className="text-sm text-muted-foreground">{promos.length} promotion(s) au total · {promos.filter(p => p.status === "active").length} active(s)</p>
+            <p className="text-sm text-muted-foreground">{promos.length} promotion(s) au total · {stats.active} active(s)</p>
           </div>
-          <Button onClick={openCreate} className="gradient-primary text-primary-foreground shadow-primary-glow">
-            <Plus className="h-4 w-4 mr-1" />Créer une promotion
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
+              <Download className="h-3.5 w-3.5 mr-1" />Export CSV
+            </Button>
+            <Button onClick={openCreate} className="gradient-primary text-primary-foreground shadow-primary-glow">
+              <Plus className="h-4 w-4 mr-1" />Créer une promotion
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="rounded-xl border bg-card p-4 shadow-card text-center">
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+            <p className="text-[11px] text-muted-foreground">Total</p>
+          </div>
+          <div className="rounded-xl border bg-accent/5 p-4 shadow-card text-center">
+            <p className="text-2xl font-bold text-accent">{stats.active}</p>
+            <p className="text-[11px] text-muted-foreground">Actives</p>
+          </div>
+          <div className="rounded-xl border bg-primary/5 p-4 shadow-card text-center">
+            <p className="text-2xl font-bold text-primary">{stats.totalUsage}</p>
+            <p className="text-[11px] text-muted-foreground">Utilisations totales</p>
+          </div>
+          <div className="rounded-xl border bg-warning/5 p-4 shadow-card text-center">
+            <p className="text-2xl font-bold text-warning">{stats.expiringSoon}</p>
+            <p className="text-[11px] text-muted-foreground">Expirent bientôt</p>
+          </div>
         </div>
 
         {/* Filters */}
@@ -197,7 +233,7 @@ const AdminPromotions = () => {
               {filtered.map(p => {
                 const TypeIcon = typeLabels[p.type].icon;
                 return (
-                  <TableRow key={p.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openEdit(p)}>
+                  <TableRow key={p.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setDetailPromo(p)}>
                     <TableCell className="font-medium text-foreground">{p.name}</TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -220,6 +256,7 @@ const AdminPromotions = () => {
                           {p.status === "active" ? <ToggleRight className="h-3.5 w-3.5 text-accent" /> : <ToggleLeft className="h-3.5 w-3.5" />}
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDuplicate(p.id)} title="Dupliquer"><Copy className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(p.id)} title="Supprimer"><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -230,7 +267,73 @@ const AdminPromotions = () => {
         </div>
       </div>
 
-      {/* ═══ CREATE / EDIT MODAL ═══ */}
+      {/* Detail Drawer */}
+      <Sheet open={!!detailPromo} onOpenChange={() => setDetailPromo(null)}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Détail de la promotion</SheetTitle>
+            <SheetDescription className="sr-only">Informations complètes</SheetDescription>
+          </SheetHeader>
+          {detailPromo && (
+            <ScrollArea className="mt-4 h-[calc(100vh-120px)]">
+              <div className="space-y-5 pr-2">
+                <div className="rounded-lg border p-4 space-y-3">
+                  {[
+                    ["Nom", detailPromo.name],
+                    ["Type", typeLabels[detailPromo.type].label],
+                    ["Valeur", valueLabel(detailPromo)],
+                    ["Cible", targetLabels[detailPromo.target]],
+                    ["Début", formatDate(detailPromo.startDate)],
+                    ["Fin", formatDate(detailPromo.endDate)],
+                    ["Code promo", detailPromo.promoCode || "—"],
+                    ["Utilisations", String(detailPromo.usageCount)],
+                    ["Créée le", formatDate(detailPromo.createdAt)],
+                  ].map(([label, val]) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{label}</span>
+                      <span className="font-medium text-foreground">{val}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Statut</span>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusColors[detailPromo.status]}`}>
+                      {detailPromo.status === "active" ? "Active" : detailPromo.status === "inactive" ? "Inactive" : "Expirée"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Conditions</p>
+                  <div className="space-y-2 text-xs text-foreground">
+                    <p>• Nouveaux médecins : {detailPromo.newDoctorsOnly ? "Oui" : "Non"}</p>
+                    <p>• Inscription pendant la période : {detailPromo.requireSignupDuringPeriod ? "Oui" : "Non"}</p>
+                    <p>• Application auto : {detailPromo.autoApply ? "Oui" : "Non"}</p>
+                    <p>• Code requis : {detailPromo.requireCode ? "Oui" : "Non"}</p>
+                  </div>
+                </div>
+
+                {detailPromo.notes && (
+                  <div className="rounded-lg border p-4">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">Notes admin</p>
+                    <p className="text-sm text-foreground">{detailPromo.notes}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => { setDetailPromo(null); openEdit(detailPromo); }}>
+                    <Pencil className="h-3.5 w-3.5 mr-1" />Modifier
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1 text-destructive" onClick={() => { setDetailPromo(null); handleDelete(detailPromo.id); }}>
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />Supprimer
+                  </Button>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* CREATE / EDIT MODAL */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -275,7 +378,6 @@ const AdminPromotions = () => {
               </Select>
             </div>
 
-            {/* Eligibility */}
             <div className="rounded-lg border p-3 space-y-3">
               <p className="text-xs font-semibold text-foreground">Conditions d'éligibilité</p>
               <div className="flex items-center justify-between">
@@ -288,7 +390,6 @@ const AdminPromotions = () => {
               </div>
             </div>
 
-            {/* Application */}
             <div className="rounded-lg border p-3 space-y-3">
               <p className="text-xs font-semibold text-foreground">Application</p>
               <div className="flex items-center justify-between">
@@ -318,18 +419,20 @@ const AdminPromotions = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Motif dialog for sensitive actions */}
+      {/* Motif dialog */}
       <MotifDialog
         open={!!motifAction}
         onClose={() => setMotifAction(null)}
         onConfirm={handleMotifConfirm}
         title={
           motifAction?.type === "toggle" ? "Activer/Désactiver la promotion"
+            : motifAction?.type === "delete" ? "Supprimer la promotion"
             : motifAction?.type === "save_create" ? "Confirmer la création"
             : "Confirmer la modification"
         }
         description="Cette action sera enregistrée dans les audit logs."
         confirmLabel="Confirmer"
+        destructive={motifAction?.type === "delete"}
       />
     </DashboardLayout>
   );
