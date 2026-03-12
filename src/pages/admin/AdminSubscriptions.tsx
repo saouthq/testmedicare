@@ -193,7 +193,7 @@ const AdminSubscriptions = () => {
           <h3 className="font-semibold text-foreground mb-4">Évolution des revenus</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockAdminRevenue}>
+              <AreaChart data={revenueChartData}>
                 <defs>
                   <linearGradient id="subRevGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />

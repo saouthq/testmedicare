@@ -310,8 +310,8 @@ const AdminSettings = () => {
                     <p className="text-sm text-destructive font-medium flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Plateforme en maintenance</p>
                   </div>
                   <div>
-                    <Label className="text-xs">Message affiché aux utilisateurs</Label>
-                    <Textarea value={maintenanceMessage} onChange={e => setMaintenanceMessage(e.target.value)} className="mt-1" rows={2} />
+                   <Label className="text-xs">Message affiché aux utilisateurs</Label>
+                    <Textarea value={maintenanceMessage} onChange={e => update({ maintenanceMessage: e.target.value })} className="mt-1" rows={2} />
                   </div>
                 </div>
               )}

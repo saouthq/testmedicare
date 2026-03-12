@@ -88,24 +88,46 @@ const statusCfg: Record<string, { label: string; color: string }> = {
 };
 const roleColors: Record<string, string> = { patient: "bg-primary/10 text-primary", doctor: "bg-accent/10 text-accent", admin: "bg-warning/10 text-warning" };
 
+const mockSupportMacros = [
+  { id: "m1", label: "Merci", text: "Merci de nous avoir contactés. Nous traitons votre demande." },
+  { id: "m2", label: "En cours", text: "Votre demande est en cours de traitement par notre équipe." },
+  { id: "m3", label: "Résolu", text: "Votre problème a été résolu. N'hésitez pas à nous recontacter." },
+];
+
 const AdminResolution = () => {
-  // ── Moderation state ──
+  // ── Moderation (local — will be connected to store in next phase) ──
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [modFilter, setModFilter] = useState("all");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [modMotifAction, setModMotifAction] = useState<{ id: number; type: string } | null>(null);
   const [adminNote, setAdminNote] = useState("");
 
-  // ── Disputes state ──
-  const [disputes, setDisputes] = useState<Dispute[]>(defaultDisputes);
+  // ── Disputes — from store ──
+  const { disputes: storeDisputes, setDisputes: setStoreDisputes } = useAdminDisputes();
+  const [disputes, setDisputes] = useState<Dispute[]>(() =>
+    storeDisputes.length > 0
+      ? storeDisputes.map(d => ({ ...d, priority: d.priority || "medium" }))
+      : defaultDisputes
+  );
   const [dispSearch, setDispSearch] = useState("");
   const [dispStatusFilter, setDispStatusFilter] = useState("all");
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [dispMotifAction, setDispMotifAction] = useState<{ id: string; type: string } | null>(null);
 
-  // ── Support state ──
-  const [tickets, setTickets] = useState<TicketExt[]>(enrichTickets());
+  // ── Support — from store ──
+  const { tickets: storeTickets, setTickets: setStoreTickets } = useAdminTickets();
+  const enrichedTickets = (): TicketExt[] => {
+    if (storeTickets.length > 0) {
+      return storeTickets.map(t => ({
+        ...t,
+        messages: t.conversation.length,
+        slaDeadline: t.priority === "high" ? "2h" : t.priority === "medium" ? "8h" : "24h",
+      }));
+    }
+    return [];
+  };
+  const [tickets, setTickets] = useState<TicketExt[]>(enrichedTickets);
   const [ticketSearch, setTicketSearch] = useState("");
   const [ticketStatusFilter, setTicketStatusFilter] = useState("all");
   const [selectedTicket, setSelectedTicket] = useState<TicketExt | null>(null);

@@ -1,13 +1,11 @@
 /**
- * Admin RGPD & Compliance — Data requests management, consent logs, retention policies
- * TODO BACKEND: Replace with real API
+ * Admin RGPD & Compliance — Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
 import {
   Shield, Search, Eye, CheckCircle, Clock, Trash2, Download,
   FileText, User, AlertTriangle, RefreshCw, Database, Lock,
-  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,91 +19,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
-
-// ── Types ──
-type RequestType = "export" | "delete" | "rectify" | "access";
-type RequestStatus = "pending" | "processing" | "completed" | "rejected";
-
-interface DataRequest {
-  id: string;
-  type: RequestType;
-  userName: string;
-  userEmail: string;
-  userRole: string;
-  reason: string;
-  status: RequestStatus;
-  createdAt: string;
-  processedAt?: string;
-  processedBy?: string;
-  notes?: string;
-}
-
-interface ConsentLog {
-  id: string;
-  userName: string;
-  userEmail: string;
-  consentType: string;
-  action: "granted" | "revoked";
-  timestamp: string;
-  ip: string;
-}
-
-interface RetentionPolicy {
-  id: string;
-  dataType: string;
-  description: string;
-  retentionDays: number;
-  autoDelete: boolean;
-  lastPurge?: string;
-}
-
-// ── Mock Data ──
-const mockRequests: DataRequest[] = [
-  { id: "dr-1", type: "export", userName: "Fatma Trabelsi", userEmail: "fatma@email.tn", userRole: "patient", reason: "Je souhaite obtenir une copie de toutes mes données personnelles", status: "pending", createdAt: "2026-03-08T10:00:00" },
-  { id: "dr-2", type: "delete", userName: "Ali Ben Salem", userEmail: "ali@email.tn", userRole: "patient", reason: "Suppression complète de mon compte et données associées", status: "processing", createdAt: "2026-03-06T14:00:00" },
-  { id: "dr-3", type: "rectify", userName: "Dr. Karim Bouzid", userEmail: "karim@email.tn", userRole: "doctor", reason: "Correction de mon adresse professionnelle", status: "completed", createdAt: "2026-03-01T09:00:00", processedAt: "2026-03-02T11:00:00", processedBy: "Admin" },
-  { id: "dr-4", type: "access", userName: "Sarra Mejri", userEmail: "sarra@email.tn", userRole: "patient", reason: "Consultation de l'historique de mes consentements", status: "completed", createdAt: "2026-02-28T16:00:00", processedAt: "2026-03-01T10:00:00", processedBy: "Admin" },
-  { id: "dr-5", type: "export", userName: "Mohamed Kaabi", userEmail: "mohamed@email.tn", userRole: "patient", reason: "Portabilité des données vers un autre prestataire", status: "pending", createdAt: "2026-03-09T08:30:00" },
-  { id: "dr-6", type: "delete", userName: "Labo XYZ", userEmail: "xyz@lab.tn", userRole: "laboratory", reason: "Fermeture définitive du compte laboratoire", status: "rejected", createdAt: "2026-02-20T11:00:00", processedAt: "2026-02-22T09:00:00", processedBy: "Admin", notes: "Données médicales en cours de traitement, suppression impossible avant finalisation" },
-];
-
-const mockConsents: ConsentLog[] = [
-  { id: "cl-1", userName: "Fatma Trabelsi", userEmail: "fatma@email.tn", consentType: "Cookies analytiques", action: "granted", timestamp: "2026-03-08T10:00:00", ip: "196.203.45.12" },
-  { id: "cl-2", userName: "Fatma Trabelsi", userEmail: "fatma@email.tn", consentType: "Notifications marketing", action: "revoked", timestamp: "2026-03-07T15:00:00", ip: "196.203.45.12" },
-  { id: "cl-3", userName: "Ali Ben Salem", userEmail: "ali@email.tn", consentType: "Partage données avec labos", action: "granted", timestamp: "2026-03-06T09:00:00", ip: "197.15.22.45" },
-  { id: "cl-4", userName: "Dr. Bouazizi", userEmail: "ahmed@email.tn", consentType: "CGU v2.4", action: "granted", timestamp: "2026-03-05T08:00:00", ip: "196.203.78.90" },
-  { id: "cl-5", userName: "Sarra Mejri", userEmail: "sarra@email.tn", consentType: "Cookies analytiques", action: "revoked", timestamp: "2026-03-04T12:00:00", ip: "41.226.55.77" },
-  { id: "cl-6", userName: "Mohamed Kaabi", userEmail: "mohamed@email.tn", consentType: "CGU v2.4", action: "granted", timestamp: "2026-03-03T14:00:00", ip: "197.15.33.44" },
-  { id: "cl-7", userName: "Pharmacie El Amal", userEmail: "elamal@pharmacy.tn", consentType: "Conditions partenaires", action: "granted", timestamp: "2026-03-02T11:00:00", ip: "197.15.11.22" },
-  { id: "cl-8", userName: "Ali Ben Salem", userEmail: "ali@email.tn", consentType: "Notifications SMS", action: "granted", timestamp: "2026-03-01T09:00:00", ip: "197.15.22.45" },
-];
-
-const mockPolicies: RetentionPolicy[] = [
-  { id: "rp-1", dataType: "Sessions utilisateurs", description: "Tokens de session et logs de connexion", retentionDays: 30, autoDelete: true, lastPurge: "2026-03-07" },
-  { id: "rp-2", dataType: "Logs d'audit", description: "Actions administratives et modifications", retentionDays: 365, autoDelete: true, lastPurge: "2026-03-01" },
-  { id: "rp-3", dataType: "Dossiers médicaux", description: "Consultations, prescriptions, résultats d'analyses", retentionDays: 3650, autoDelete: false },
-  { id: "rp-4", dataType: "Messages archivés", description: "Conversations patient-médecin terminées", retentionDays: 730, autoDelete: true, lastPurge: "2026-02-15" },
-  { id: "rp-5", dataType: "Fichiers temporaires", description: "Uploads en attente, brouillons", retentionDays: 7, autoDelete: true, lastPurge: "2026-03-09" },
-  { id: "rp-6", dataType: "Consentements", description: "Historique des acceptations/révocations", retentionDays: 1825, autoDelete: false },
-  { id: "rp-7", dataType: "Comptes supprimés", description: "Données anonymisées post-suppression", retentionDays: 90, autoDelete: true, lastPurge: "2026-02-28" },
-];
+import { useAdminCompliance } from "@/stores/adminStore";
+import type { AdminDataRequest, AdminConsentLog, AdminRetentionPolicy, DataRequestType, DataRequestStatus } from "@/types/admin";
 
 // ── Labels & colors ──
-const typeLabels: Record<RequestType, string> = { export: "Export", delete: "Suppression", rectify: "Rectification", access: "Accès" };
-const typeColors: Record<RequestType, string> = { export: "bg-primary/10 text-primary", delete: "bg-destructive/10 text-destructive", rectify: "bg-warning/10 text-warning", access: "bg-accent/10 text-accent" };
-const statusLabels: Record<RequestStatus, string> = { pending: "En attente", processing: "En cours", completed: "Traité", rejected: "Refusé" };
-const statusColors: Record<RequestStatus, string> = { pending: "bg-warning/10 text-warning border-warning/20", processing: "bg-primary/10 text-primary border-primary/20", completed: "bg-accent/10 text-accent border-accent/20", rejected: "bg-destructive/10 text-destructive border-destructive/20" };
+const typeLabels: Record<DataRequestType, string> = { export: "Export", delete: "Suppression", rectify: "Rectification", access: "Accès" };
+const typeColors: Record<DataRequestType, string> = { export: "bg-primary/10 text-primary", delete: "bg-destructive/10 text-destructive", rectify: "bg-warning/10 text-warning", access: "bg-accent/10 text-accent" };
+const statusLabels: Record<DataRequestStatus, string> = { pending: "En attente", processing: "En cours", completed: "Traité", rejected: "Refusé" };
+const statusColors: Record<DataRequestStatus, string> = { pending: "bg-warning/10 text-warning border-warning/20", processing: "bg-primary/10 text-primary border-primary/20", completed: "bg-accent/10 text-accent border-accent/20", rejected: "bg-destructive/10 text-destructive border-destructive/20" };
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const AdminCompliance = () => {
-  const [requests, setRequests] = useState(mockRequests);
-  const [consents] = useState(mockConsents);
-  const [policies, setPolicies] = useState(mockPolicies);
+  const { dataRequests: requests, consentLogs: consents, retentionPolicies: policies, setDataRequests: setRequests, setRetentionPolicies: setPolicies } = useAdminCompliance();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [detailRequest, setDetailRequest] = useState<DataRequest | null>(null);
+  const [detailRequest, setDetailRequest] = useState<AdminDataRequest | null>(null);
   const [motifAction, setMotifAction] = useState<{ id: string; type: "process" | "reject" } | null>(null);
 
   // Requests filtering

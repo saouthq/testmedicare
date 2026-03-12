@@ -114,7 +114,7 @@ const AdminAPIPartners = () => {
             <Button size="sm" onClick={() => { setDrawerType("webhook"); setWhForm({ url: "", events: [] }); setDrawerOpen(true); }}><Plus className="h-4 w-4 mr-1" />Nouveau webhook</Button>
           </div>
           <div className="space-y-3">
-            {webhooks.map(w => (
+            {webhooks.map((w: AdminWebhook) => (
               <Card key={w.id} className={w.status === "failing" ? "border-destructive/30" : ""}>
                 <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex-1 min-w-0">
