@@ -1,19 +1,22 @@
 /**
- * Admin Users — Full user management with bulk actions, CSV export, motif-required sensitive actions
- * Connected to central admin store
+ * Admin Users — Full user management with 360° view, bulk actions, CSV export
+ * Connected to central admin store with cross-entity lookups
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
-import { Search, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, X, RotateCcw, KeyRound, Download, LogOut } from "lucide-react";
+import { Search, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, X, RotateCcw, KeyRound, Download, LogOut, Building2, CreditCard, MessageSquare, Gavel, FileText, ExternalLink, Inbox } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAdminUsers } from "@/stores/adminStore";
+import { useAdminUsers, useAdminLookups } from "@/stores/adminStore";
 import type { AdminUser } from "@/types/admin";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
+import EmptyState from "@/components/shared/EmptyState";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 
 type UserFilter = "all" | "doctors" | "patients" | "secretaries" | "pharmacies" | "laboratories" | "pending";
 
