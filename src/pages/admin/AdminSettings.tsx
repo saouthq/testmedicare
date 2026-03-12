@@ -124,7 +124,7 @@ const AdminSettings = () => {
                 <div><Label className="text-xs">Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => update({ maxFileSize: e.target.value })} type="number" className="mt-1" /></div>
                 <div>
                   <Label className="text-xs">Langue par défaut</Label>
-                  <Select value={defaultLanguage} onValueChange={setDefaultLanguage}>
+                  <Select value={defaultLanguage} onValueChange={v => update({ defaultLanguage: v })}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="fr">Français</SelectItem>
