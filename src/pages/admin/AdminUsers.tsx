@@ -78,11 +78,11 @@ const AdminUsers = () => {
     const { type, userId, userName } = motifAction;
 
     if (type === "suspend") {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "suspended" } : u));
-      appendLog("user_suspended", "user", String(userId), `${userName} suspendu — Motif : ${motif}`);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "suspended" as const } : u));
+      appendLog("user_suspended", "user", userId, `${userName} suspendu — Motif : ${motif}`);
       toast({ title: `${userName} suspendu` });
     } else if (type === "reactivate") {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "active" } : u));
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "active" as const } : u));
       appendLog("user_reactivated", "user", String(userId), `${userName} réactivé — Motif : ${motif}`);
       toast({ title: `${userName} réactivé` });
     } else if (type === "reject") {
