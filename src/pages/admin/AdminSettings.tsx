@@ -269,8 +269,8 @@ const AdminSettings = () => {
               </div>
               <div className="max-w-xs">
                 <Label className="text-xs">Durée verrouillage (min)</Label>
-                <Input value={lockoutDuration} onChange={e => setLockoutDuration(e.target.value)} type="number" className="mt-1" />
-                <p className="text-[10px] text-muted-foreground mt-1">Après {loginAttempts} échecs, le compte est bloqué {lockoutDuration} min</p>
+                <Input value={security.lockoutDuration} onChange={e => update({ security: { ...security, lockoutDuration: e.target.value } })} type="number" className="mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Après {security.loginAttempts} échecs, le compte est bloqué {security.lockoutDuration} min</p>
               </div>
             </div>
 
