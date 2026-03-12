@@ -48,7 +48,7 @@ const AdminAPIPartners = () => {
 
   const createKey = () => {
     if (!keyForm.name) { toast.error("Nom requis"); return; }
-    const newKey: ApiKey = { id: String(Date.now()), name: keyForm.name, key: `mk_live_${Math.random().toString(36).slice(2, 26)}`, status: "active", quotaUsed: 0, quotaMax: 50000, lastUsed: "—", createdAt: "Mar 2026" };
+    const newKey: AdminApiKey = { id: String(Date.now()), name: keyForm.name, key: `mk_live_${Math.random().toString(36).slice(2, 26)}`, status: "active", quotaUsed: 0, quotaMax: 50000, lastUsed: "—", createdAt: "Mar 2026" };
     setKeys(prev => [newKey, ...prev]);
     setDrawerOpen(false);
     toast.success("Clé API créée");

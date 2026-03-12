@@ -64,7 +64,7 @@ const AdminCompliance = () => {
     if (!req) return;
     const newStatus = motifAction.type === "process" ? "completed" : "rejected";
     setRequests(prev => prev.map(r => r.id === motifAction.id ? {
-      ...r, status: newStatus as RequestStatus,
+      ...r, status: newStatus as DataRequestStatus,
       processedAt: new Date().toISOString(),
       processedBy: "Admin",
       notes: motif,

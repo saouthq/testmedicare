@@ -68,7 +68,7 @@ const defaultDisputes: Dispute[] = [
 interface TicketMessage { id: string; sender: "user" | "admin"; senderName: string; text: string; time: string; }
 interface TicketExt { id: string; subject: string; category: string; priority: string; status: string; requester: string; requesterRole: string; assignedTo: string; createdAt: string; messages: number; slaDeadline: string; conversation: TicketMessage[]; }
 
-const enrichTickets = (): TicketExt[] => mockAdminTickets.map(t => ({
+const enrichTickets = (tickets: AdminTicket[]): TicketExt[] => tickets.map(t => ({
   ...t, status: t.status === "open" ? "open" : "closed",
   slaDeadline: t.priority === "high" ? "2h" : t.priority === "medium" ? "8h" : "24h",
   conversation: [
