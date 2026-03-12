@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
-import { mockGuardPharmacies } from "@/data/mockData";
+import { useAdminGuardPharmacies } from "@/stores/adminStore";
 
 const AdminGuardPharmacies = () => {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
