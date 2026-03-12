@@ -16,7 +16,8 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import { useAdminTickets, useAdminDisputes, useAdminModerationReports } from "@/stores/adminStore";
-import type { AdminTicket } from "@/types/admin";
+import type { AdminModerationReport, AdminTicket, ModerationNote } from "@/types/admin";
+import EmptyState from "@/components/shared/EmptyState";
 import {
   AlertTriangle, Flag, CheckCircle, XCircle, User, Shield, Ban, Gavel,
   Send, Clock, FileText, Image, MessageSquare, ArrowRight, Search,
