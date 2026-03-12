@@ -140,8 +140,8 @@ const AdminSettings = () => {
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Pages légales</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label className="text-xs">URL CGU</Label><Input value={termsUrl} onChange={e => setTermsUrl(e.target.value)} className="mt-1" /></div>
-                <div><Label className="text-xs">URL Politique de confidentialité</Label><Input value={privacyUrl} onChange={e => setPrivacyUrl(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">URL CGU</Label><Input value={termsUrl} onChange={e => update({ termsUrl: e.target.value })} className="mt-1" /></div>
+                <div><Label className="text-xs">URL Politique de confidentialité</Label><Input value={privacyUrl} onChange={e => update({ privacyUrl: e.target.value })} className="mt-1" /></div>
               </div>
             </div>
 
