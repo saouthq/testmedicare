@@ -20,6 +20,7 @@ import {
   handleRenewal, getProfileCompletionPercent,
 } from "@/stores/doctorStore";
 import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
+import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { useActionGating } from "@/hooks/useActionGating";
 
 const CURRENT_DOCTOR = "Dr. Bouazizi";
