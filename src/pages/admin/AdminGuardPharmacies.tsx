@@ -1,29 +1,29 @@
 /**
- * Admin Guard Pharmacies — Manual toggle with city filter + stats
- * TODO BACKEND: Replace with real API
+ * Admin Guard Pharmacies — Migrated to AdminDataTable
+ * ~127 lines → ~90 lines
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
-import { Pill, Search, Calendar, MapPin } from "lucide-react";
+import { Pill, Calendar, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import { useAdminGuardPharmacies } from "@/stores/adminStore";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+import type { AdminGuardPharmacy } from "@/types/admin";
 
 const AdminGuardPharmacies = () => {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [search, setSearch] = useState("");
-  const [cityFilter, setCityFilter] = useState("all");
   const { pharmacies, setPharmacies } = useAdminGuardPharmacies();
 
   const cities = useMemo(() => Array.from(new Set(pharmacies.map(p => p.city))).sort(), [pharmacies]);
-
-  const filtered = useMemo(() => pharmacies.filter(p => {
-    if (cityFilter !== "all" && p.city !== cityFilter) return false;
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.city.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }), [pharmacies, cityFilter, search]);
+  const guardCount = pharmacies.filter(p => p.isGuard).length;
+  const guardByCity = useMemo(() => {
+    const map: Record<string, number> = {};
+    pharmacies.filter(p => p.isGuard).forEach(p => { map[p.city] = (map[p.city] || 0) + 1; });
+    return map;
+  }, [pharmacies]);
 
   const toggleGuard = (id: string) => {
     setPharmacies(prev => prev.map(p => {
@@ -39,40 +39,9 @@ const AdminGuardPharmacies = () => {
     }));
   };
 
-  const guardCount = pharmacies.filter(p => p.isGuard).length;
-  const guardByCity = useMemo(() => {
-    const map: Record<string, number> = {};
-    pharmacies.filter(p => p.isGuard).forEach(p => { map[p.city] = (map[p.city] || 0) + 1; });
-    return map;
-  }, [pharmacies]);
-
   return (
     <DashboardLayout role="admin" title="Pharmacies de garde">
       <div className="space-y-6">
-        {/* Stats */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <Pill className="h-5 w-5 text-primary mb-2" />
-            <p className="text-2xl font-bold text-foreground">{pharmacies.length}</p>
-            <p className="text-xs text-muted-foreground">Total pharmacies</p>
-          </div>
-          <div className="rounded-xl border bg-accent/5 p-4 shadow-card">
-            <Pill className="h-5 w-5 text-accent mb-2" />
-            <p className="text-2xl font-bold text-accent">{guardCount}</p>
-            <p className="text-xs text-muted-foreground">De garde aujourd'hui</p>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <MapPin className="h-5 w-5 text-primary mb-2" />
-            <p className="text-2xl font-bold text-foreground">{cities.length}</p>
-            <p className="text-xs text-muted-foreground">Villes couvertes</p>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-card">
-            <Calendar className="h-5 w-5 text-warning mb-2" />
-            <p className="text-sm font-bold text-foreground">{new Date(date).toLocaleDateString("fr-TN", { day: "numeric", month: "long" })}</p>
-            <p className="text-xs text-muted-foreground">Date sélectionnée</p>
-          </div>
-        </div>
-
         {/* Guard by city summary */}
         {Object.keys(guardByCity).length > 0 && (
           <div className="rounded-xl border bg-card p-4 shadow-card">
@@ -85,40 +54,49 @@ const AdminGuardPharmacies = () => {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-primary" />
-            <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-44" />
-          </div>
-          <select value={cityFilter} onChange={e => setCityFilter(e.target.value)} className="rounded-lg border bg-card px-3 py-2 text-sm">
-            <option value="all">Toutes les villes</option>
-            {cities.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Rechercher pharmacie..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
-          </div>
-        </div>
-
-        {/* List */}
-        <div className="rounded-xl border bg-card shadow-card divide-y">
-          {filtered.map(p => (
-            <div key={p.id} className={`flex items-center justify-between px-5 py-4 hover:bg-muted/20 transition-colors ${p.isGuard ? "bg-accent/5" : ""}`}>
-              <div>
-                <p className="font-medium text-foreground text-sm flex items-center gap-2">
-                  {p.name}
-                  {p.isGuard && <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-semibold">De garde</span>}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                  <MapPin className="h-3 w-3" />{p.city} · {p.address} · {p.phone}
-                </p>
-              </div>
-              <Switch checked={p.isGuard} onCheckedChange={() => toggleGuard(p.id)} />
+        <AdminDataTable<AdminGuardPharmacy>
+          data={pharmacies}
+          searchPlaceholder="Rechercher pharmacie..."
+          searchFn={(item, q) => item.name.toLowerCase().includes(q) || item.city.toLowerCase().includes(q)}
+          emptyIcon={Pill}
+          emptyTitle="Aucune pharmacie"
+          emptyDescription="Aucune pharmacie enregistrée."
+          stats={[
+            { label: "Total pharmacies", value: pharmacies.length },
+            { label: "De garde", value: guardCount, color: "text-accent" },
+            { label: "Villes couvertes", value: cities.length },
+            { label: new Date(date).toLocaleDateString("fr-TN", { day: "numeric", month: "long" }), value: "📅" },
+          ]}
+          filters={[
+            { key: "city", label: "Ville", options: [
+              { value: "all", label: "Toutes" },
+              ...cities.map(c => ({ value: c, label: c })),
+            ]},
+          ]}
+          headerActions={
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-44 h-8 text-xs" />
             </div>
-          ))}
-        </div>
-        <p className="text-[11px] text-muted-foreground">{filtered.length} pharmacie(s) affichée(s). Les pharmacies de garde sont visibles sur l'annuaire public.</p>
+          }
+          columns={[
+            { key: "name", label: "Pharmacie", render: p => (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-foreground text-sm">{p.name}</span>
+                {p.isGuard && <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-semibold">De garde</span>}
+              </div>
+            )},
+            { key: "city", label: "Ville", render: p => <span className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{p.city}</span> },
+            { key: "address", label: "Adresse", render: p => <span className="text-xs text-muted-foreground">{p.address}</span>, hideOnMobile: true },
+            { key: "phone", label: "Téléphone", render: p => <span className="text-xs text-muted-foreground">{p.phone}</span>, hideOnMobile: true },
+            { key: "toggle", label: "Garde", className: "text-right", render: p => (
+              <div onClick={e => e.stopPropagation()}>
+                <Switch checked={p.isGuard} onCheckedChange={() => toggleGuard(p.id)} />
+              </div>
+            )},
+          ]}
+        />
+        <p className="text-[11px] text-muted-foreground">{pharmacies.length} pharmacie(s). Les pharmacies de garde sont visibles sur l'annuaire public.</p>
       </div>
     </DashboardLayout>
   );

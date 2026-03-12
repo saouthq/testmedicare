@@ -1,40 +1,30 @@
 /**
- * Admin Payments — Stats, filters, detail drawer, CSV export, refund with motif
- * Connected to central admin store
+ * Admin Payments — Migrated to AdminDataTable component
+ * ~210 lines → ~120 lines (-43%)
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
-import { Search, CreditCard, RotateCcw, Download, Eye, TrendingUp, ArrowUpRight, Clock, Banknote } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Banknote, RotateCcw, Eye, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { useAdminPayments } from "@/stores/adminStore";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import type { AdminPayment } from "@/types/admin";
 
 const statusLabels: Record<string, string> = { paid: "Payé", pending: "En attente", failed: "Échoué", refunded: "Remboursé" };
 const statusColors: Record<string, string> = { paid: "bg-accent/10 text-accent", pending: "bg-warning/10 text-warning", failed: "bg-destructive/10 text-destructive", refunded: "bg-muted text-muted-foreground" };
+const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric" });
 
 const AdminPayments = () => {
-  const [search, setSearch] = useState("");
   const { payments, setPayments } = useAdminPayments();
-  const [typeFilter, setTypeFilter] = useState<"all" | "subscription" | "teleconsult">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "pending" | "failed" | "refunded">("all");
   const [refundTarget, setRefundTarget] = useState<string | null>(null);
   const [detailPayment, setDetailPayment] = useState<AdminPayment | null>(null);
 
-  const filtered = useMemo(() => payments.filter(p => {
-    if (typeFilter !== "all" && p.type !== typeFilter) return false;
-    if (statusFilter !== "all" && p.status !== statusFilter) return false;
-    if (search && !p.payerName.toLowerCase().includes(search.toLowerCase()) && !p.reference.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }), [payments, typeFilter, statusFilter, search]);
-
   const stats = useMemo(() => ({
     totalRevenue: payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0),
-    totalCount: payments.length,
     paidCount: payments.filter(p => p.status === "paid").length,
     pendingAmount: payments.filter(p => p.status === "pending").reduce((s, p) => s + p.amount, 0),
     refundedAmount: payments.filter(p => p.status === "refunded").reduce((s, p) => s + p.amount, 0),
@@ -44,116 +34,68 @@ const AdminPayments = () => {
     if (!refundTarget) return;
     const p = payments.find(x => x.id === refundTarget);
     if (!p) return;
-    setPayments(prev => prev.map(x => x.id === refundTarget ? { ...x, status: "refunded" } : x));
+    setPayments(prev => prev.map(x => x.id === refundTarget ? { ...x, status: "refunded" as const } : x));
     appendLog("payment_refunded", "payment", refundTarget, `Remboursement ${p.amount} ${p.currency} à ${p.payerName} — Motif : ${motif}`);
     toast({ title: `${p.amount} ${p.currency} remboursé à ${p.payerName}` });
     setRefundTarget(null);
   };
 
-  const handleExportCSV = () => {
-    const csv = ["Référence,Payeur,Email,Type,Montant,Statut,Méthode,Date"]
-      .concat(filtered.map(p => `"${p.reference}","${p.payerName}","${p.payerEmail}","${p.type === "subscription" ? "Abonnement" : "Téléconsult"}","${p.amount} ${p.currency}","${statusLabels[p.status]}","${p.method}","${p.createdAt}"`))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `payments_${new Date().toISOString().split("T")[0]}.csv`; a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "Export CSV téléchargé" });
-  };
-
-  const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric" });
-
   return (
     <DashboardLayout role="admin" title="Paiements & Transactions">
-      <div className="space-y-6">
-        {/* Stats */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <Banknote className="h-5 w-5 text-accent mb-2" />
-            <p className="text-2xl font-bold text-foreground">{stats.totalRevenue.toLocaleString()} DT</p>
-            <p className="text-xs text-muted-foreground">Revenus encaissés</p>
-          </div>
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <TrendingUp className="h-5 w-5 text-primary mb-2" />
-            <p className="text-2xl font-bold text-foreground">{stats.paidCount}</p>
-            <p className="text-xs text-muted-foreground">Transactions réussies</p>
-          </div>
-          <div className="rounded-xl border bg-warning/5 p-5 shadow-card">
-            <Clock className="h-5 w-5 text-warning mb-2" />
-            <p className="text-2xl font-bold text-warning">{stats.pendingAmount} DT</p>
-            <p className="text-xs text-muted-foreground">En attente</p>
-          </div>
-          <div className="rounded-xl border bg-muted/30 p-5 shadow-card">
-            <RotateCcw className="h-5 w-5 text-muted-foreground mb-2" />
-            <p className="text-2xl font-bold text-muted-foreground">{stats.refundedAmount} DT</p>
-            <p className="text-xs text-muted-foreground">Remboursés</p>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Rechercher par payeur ou référence..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
-          </div>
-          <div className="flex gap-2">
-            <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)} className="rounded-lg border bg-card px-3 py-2 text-sm">
-              <option value="all">Tous types</option>
-              <option value="subscription">Abonnement</option>
-              <option value="teleconsult">Téléconsult</option>
-            </select>
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)} className="rounded-lg border bg-card px-3 py-2 text-sm">
-              <option value="all">Tous statuts</option>
-              <option value="paid">Payé</option>
-              <option value="pending">En attente</option>
-              <option value="failed">Échoué</option>
-              <option value="refunded">Remboursé</option>
-            </select>
-            <Button variant="outline" size="sm" className="text-xs h-9" onClick={handleExportCSV}>
-              <Download className="h-3.5 w-3.5 mr-1" />CSV
-            </Button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead><tr className="border-b bg-muted/30">
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Payeur</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Référence</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Montant</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Date</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Statut</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
-            </tr></thead>
-            <tbody>
-              {filtered.map(p => (
-                <tr key={p.id} className="border-b last:border-0 hover:bg-muted/20 cursor-pointer" onClick={() => setDetailPayment(p)}>
-                  <td className="px-4 py-3 font-medium text-foreground">{p.payerName}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{p.reference}</td>
-                  <td className="px-4 py-3"><span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{p.type === "subscription" ? "Abonnement" : "Téléconsult"}</span></td>
-                  <td className="px-4 py-3 font-bold text-foreground">{p.amount} {p.currency}</td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell text-xs">{formatDate(p.createdAt)}</td>
-                  <td className="px-4 py-3"><span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[p.status]}`}>{statusLabels[p.status]}</span></td>
-                  <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1">
-                      {p.status === "paid" && (
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => setRefundTarget(p.id)}>
-                          <RotateCcw className="h-3 w-3 mr-1" />Rembourser
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDetailPayment(p)}>
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <AdminDataTable<AdminPayment>
+        data={payments}
+        searchPlaceholder="Rechercher par payeur ou référence..."
+        searchFn={(item, q) => item.payerName.toLowerCase().includes(q) || item.reference.toLowerCase().includes(q)}
+        onRowClick={setDetailPayment}
+        emptyIcon={Banknote}
+        emptyTitle="Aucun paiement"
+        emptyDescription="Aucune transaction enregistrée."
+        stats={[
+          { label: "Revenus encaissés", value: `${stats.totalRevenue.toLocaleString()} DT`, color: "text-accent" },
+          { label: "Transactions réussies", value: stats.paidCount, color: "text-primary" },
+          { label: "En attente", value: `${stats.pendingAmount} DT`, color: "text-warning" },
+          { label: "Remboursés", value: `${stats.refundedAmount} DT`, color: "text-muted-foreground" },
+        ]}
+        filters={[
+          { key: "type", label: "Type", options: [
+            { value: "all", label: "Tous" },
+            { value: "subscription", label: "Abonnement" },
+            { value: "teleconsult", label: "Téléconsult" },
+          ]},
+          { key: "status", label: "Statut", options: [
+            { value: "all", label: "Tous" },
+            { value: "paid", label: "Payé" },
+            { value: "pending", label: "En attente" },
+            { value: "failed", label: "Échoué" },
+            { value: "refunded", label: "Remboursé" },
+          ]},
+        ]}
+        columns={[
+          { key: "payerName", label: "Payeur", render: p => <span className="font-medium text-foreground">{p.payerName}</span> },
+          { key: "reference", label: "Référence", render: p => <span className="text-xs text-muted-foreground font-mono">{p.reference}</span> },
+          { key: "type", label: "Type", render: p => <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{p.type === "subscription" ? "Abonnement" : "Téléconsult"}</span> },
+          { key: "amount", label: "Montant", render: p => <span className="font-bold text-foreground">{p.amount} {p.currency}</span>, sortable: true, sortFn: (a, b) => a.amount - b.amount },
+          { key: "createdAt", label: "Date", render: p => <span className="text-muted-foreground text-xs">{formatDate(p.createdAt)}</span>, hideOnMobile: true },
+          { key: "status", label: "Statut", render: p => <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[p.status]}`}>{statusLabels[p.status]}</span> },
+          { key: "actions", label: "Actions", className: "text-right", render: p => (
+            <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+              {p.status === "paid" && (
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-warning" onClick={() => setRefundTarget(p.id)}>
+                  <RotateCcw className="h-3 w-3 mr-1" />Rembourser
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDetailPayment(p)}>
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )},
+        ]}
+        exportCsv={{
+          filename: "payments",
+          headers: ["Référence", "Payeur", "Email", "Type", "Montant", "Statut", "Méthode", "Date"],
+          rowFn: p => [p.reference, p.payerName, p.payerEmail, p.type === "subscription" ? "Abonnement" : "Téléconsult", `${p.amount} ${p.currency}`, statusLabels[p.status], p.method, p.createdAt],
+        }}
+      />
 
       {/* Detail drawer */}
       <Sheet open={!!detailPayment} onOpenChange={() => setDetailPayment(null)}>
