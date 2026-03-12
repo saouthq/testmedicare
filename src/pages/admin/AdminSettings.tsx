@@ -251,7 +251,7 @@ const AdminSettings = () => {
                   <p className="text-sm font-medium text-foreground">2FA admin obligatoire</p>
                   <p className="text-xs text-muted-foreground">Exiger le 2FA pour les admins</p>
                 </div>
-                <Toggle enabled={twoFactor} onToggle={() => setTwoFactor(!twoFactor)} />
+                <Toggle enabled={security.twoFactor} onToggle={() => update({ security: { ...security, twoFactor: !security.twoFactor } })} />
               </div>
               <div className="grid gap-4 sm:grid-cols-3 pt-2">
                 <div>
