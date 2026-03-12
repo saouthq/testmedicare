@@ -416,7 +416,7 @@ const AdminSpecialties = () => {
       {/* Delete confirmation */}
       <ConfirmDialog
         open={!!deleteId}
-        onOpenChange={() => setDeleteId(null)}
+        onCancel={() => setDeleteId(null)}
         title="Supprimer la spécialité"
         description={`Êtes-vous sûr de vouloir supprimer "${specs.find(s => s.id === deleteId)?.label}" ? Cette action est irréversible.`}
         confirmLabel="Supprimer"
