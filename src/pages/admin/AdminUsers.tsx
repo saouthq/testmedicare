@@ -48,7 +48,7 @@ const AdminUsers = () => {
     .sort((a, b) => sortBy === "name" ? a.name.localeCompare(b.name) : 0)
   , [users, search, filter, sortBy]);
 
-  const toggleSelect = (id: number) => {
+  const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
