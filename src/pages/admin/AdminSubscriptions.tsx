@@ -38,19 +38,18 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 
 const PLAN_PRICES: Record<string, number> = { "Basic": 39, "Pro": 129, "Essentiel": 49, "Cabinet+": 299 };
 
+const revenueChartData = [
+  { month: "Oct", value: 28000 }, { month: "Nov", value: 31000 },
+  { month: "Déc", value: 34000 }, { month: "Jan", value: 37500 },
+  { month: "Fév", value: 41200 }, { month: "Mar", value: 44800 },
+];
+
 const AdminSubscriptions = () => {
-  const [subs, setSubs] = useState<DoctorSubscription[]>(() => {
-    const stored = getDoctorSubscriptions();
-    // Enrich with extra statuses for demo
-    return stored.map((s, i) => {
-      if (i === 3 && s.status === "active") return { ...s, status: "expired" as any };
-      return s;
-    });
-  });
+  const { subscriptions: subs, setSubscriptions: setSubs } = useAdminSubscriptions();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | string>("all");
   const [filterPlan, setFilterPlan] = useState<"all" | string>("all");
-  const [detailSub, setDetailSub] = useState<DoctorSubscription | null>(null);
+  const [detailSub, setDetailSub] = useState<AdminSubscription | null>(null);
 
   // Plan change
   const [changePlanSub, setChangePlanSub] = useState<DoctorSubscription | null>(null);
