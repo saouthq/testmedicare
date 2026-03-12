@@ -83,7 +83,7 @@ const AdminSubscriptions = () => {
     expired: subs.filter(s => s.status === "expired").length,
   }), [subs]);
 
-  const openChangePlan = (sub: DoctorSubscription) => {
+  const openChangePlan = (sub: AdminSubscription) => {
     setChangePlanSub(sub);
     setNewPlan(sub.plan === "Basic" ? "Pro" : "Basic");
   };
@@ -94,9 +94,9 @@ const AdminSubscriptions = () => {
     setChangePlanSub(null);
   };
 
-  const handleSuspend = (sub: DoctorSubscription) => setMotifAction({ type: "suspend", subId: sub.id });
-  const handleReactivate = (sub: DoctorSubscription) => setMotifAction({ type: "reactivate", subId: sub.id });
-  const handleMarkUnpaid = (sub: DoctorSubscription) => setMotifAction({ type: "mark_unpaid", subId: sub.id });
+  const handleSuspend = (sub: AdminSubscription) => setMotifAction({ type: "suspend", subId: sub.id });
+  const handleReactivate = (sub: AdminSubscription) => setMotifAction({ type: "reactivate", subId: sub.id });
+  const handleMarkUnpaid = (sub: AdminSubscription) => setMotifAction({ type: "mark_unpaid", subId: sub.id });
 
   const handleExtendConfirm = () => {
     if (!extendSub) return;
