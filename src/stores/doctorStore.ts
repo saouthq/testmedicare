@@ -73,6 +73,8 @@ export function useProfileCompletion() { return useStore(profileCompletionStore)
 /** Handle renewal request (approve / reject) */
 export function handleRenewal(id: string, action: "approved" | "rejected") {
   // TODO BACKEND: PATCH /api/renewals/:id
+  if (!isActionEnabled("doctor.handle_renewal")) return false;
+
   const req = renewalRequestsStore.read().find(r => r.id === id);
   renewalRequestsStore.set(prev => prev.map(r =>
     r.id === id ? { ...r, status: action } : r
@@ -96,6 +98,8 @@ export function handleRenewal(id: string, action: "approved" | "rejected") {
       appendLog("renewal_rejected", "prescription", id, `Renouvellement ${req.prescriptionId} refusé pour ${req.patientName}`);
     }
   }
+
+  return true;
 }
 
 /** Compute profile completion percentage */
