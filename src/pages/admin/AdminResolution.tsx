@@ -71,6 +71,7 @@ interface TicketExt { id: string; subject: string; category: string; priority: s
 
 const enrichTickets = (tickets: AdminTicket[]): TicketExt[] => tickets.map(t => ({
   ...t, status: t.status === "open" ? "open" : "closed",
+  messages: t.conversation.length,
   slaDeadline: t.priority === "high" ? "2h" : t.priority === "medium" ? "8h" : "24h",
   conversation: [
     { id: `${t.id}-1`, sender: "user" as const, senderName: t.requester, text: `Bonjour, ${t.subject.toLowerCase()}. Merci de m'aider.`, time: t.createdAt + " 09:15" },
