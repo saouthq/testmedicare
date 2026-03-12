@@ -98,7 +98,7 @@ const AdminUsers = () => {
       toast({ title: `${userName} déconnecté de force` });
     } else if (type === "bulk_suspend") {
       const ids = Array.from(selectedIds);
-      setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: "suspended" } : u));
+      setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: "suspended" as const } : u));
       appendLog("bulk_suspend", "user", ids.join(","), `Suspension en masse de ${ids.length} utilisateurs — Motif : ${motif}`);
       toast({ title: `${ids.length} utilisateur(s) suspendu(s)` });
       setSelectedIds(new Set());
