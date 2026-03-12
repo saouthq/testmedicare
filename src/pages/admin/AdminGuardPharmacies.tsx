@@ -54,7 +54,7 @@ const AdminGuardPharmacies = () => {
           </div>
         )}
 
-        <AdminDataTable
+        <AdminDataTable<AdminGuardPharmacy>
           data={pharmacies}
           searchPlaceholder="Rechercher pharmacie..."
           searchFn={(item, q) => item.name.toLowerCase().includes(q) || item.city.toLowerCase().includes(q)}

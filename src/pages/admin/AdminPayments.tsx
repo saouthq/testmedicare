@@ -42,7 +42,7 @@ const AdminPayments = () => {
 
   return (
     <DashboardLayout role="admin" title="Paiements & Transactions">
-      <AdminDataTable
+      <AdminDataTable<AdminPayment>
         data={payments}
         searchPlaceholder="Rechercher par payeur ou référence..."
         searchFn={(item, q) => item.payerName.toLowerCase().includes(q) || item.reference.toLowerCase().includes(q)}
