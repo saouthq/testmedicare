@@ -138,6 +138,9 @@ export function PrescriptionsList() {
 
 function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void }) {
   const { handleResend, handlePrint } = usePrescriptions();
+  const { isEnabled } = useActionGating();
+  const canSendToPharmacy = isEnabled("doctor.send_prescription_pharmacy");
+
   return (
     <div className="rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all p-3 sm:p-4 cursor-pointer" onClick={onOpen}>
       <div className="flex items-center justify-between gap-3">
@@ -164,7 +167,7 @@ function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void 
           <Button variant="outline" size="sm" className="text-xs" onClick={() => handlePrint(rx.id)}>
             <Printer className="h-3.5 w-3.5" />
           </Button>
-          {!rx.sent && isPharmacySendEnabled() && (
+          {!rx.sent && canSendToPharmacy && isPharmacySendEnabled() && (
             <Button variant="outline" size="sm" className="text-xs" onClick={() => handleResend(rx.id)}>
               <Send className="h-3.5 w-3.5" />
             </Button>
