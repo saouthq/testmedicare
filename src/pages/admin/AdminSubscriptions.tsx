@@ -135,7 +135,7 @@ const AdminSubscriptions = () => {
       if (type === "mark_unpaid") {
         appendLog("subscription_unpaid", "subscription", subId, `${s.doctorName} marqué impayé — ${motif}`);
         toast({ title: "Marqué comme impayé", description: s.doctorName });
-        return { ...s, status: "unpaid" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Marqué impayé — ${motif}` }] };
+        return { ...s, status: "unpaid" as SubscriptionStatus, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Marqué impayé — ${motif}` }] };
       }
 
       if (type === "extend") {
