@@ -16,6 +16,7 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import { useAdminTickets, useAdminDisputes, useAdminModerationReports } from "@/stores/adminStore";
+import type { AdminTicket } from "@/types/admin";
 import {
   AlertTriangle, Flag, CheckCircle, XCircle, User, Shield, Ban, Gavel,
   Send, Clock, FileText, Image, MessageSquare, ArrowRight, Search,
@@ -68,8 +69,9 @@ const defaultDisputes: Dispute[] = [
 interface TicketMessage { id: string; sender: "user" | "admin"; senderName: string; text: string; time: string; }
 interface TicketExt { id: string; subject: string; category: string; priority: string; status: string; requester: string; requesterRole: string; assignedTo: string; createdAt: string; messages: number; slaDeadline: string; conversation: TicketMessage[]; }
 
-const enrichTickets = (): TicketExt[] => mockAdminTickets.map(t => ({
+const enrichTickets = (tickets: AdminTicket[]): TicketExt[] => tickets.map(t => ({
   ...t, status: t.status === "open" ? "open" : "closed",
+  messages: t.conversation.length,
   slaDeadline: t.priority === "high" ? "2h" : t.priority === "medium" ? "8h" : "24h",
   conversation: [
     { id: `${t.id}-1`, sender: "user" as const, senderName: t.requester, text: `Bonjour, ${t.subject.toLowerCase()}. Merci de m'aider.`, time: t.createdAt + " 09:15" },
