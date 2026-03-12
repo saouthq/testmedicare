@@ -280,11 +280,11 @@ const AdminSettings = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="text-xs">Cooldown entre envois (sec)</Label>
-                  <Input value={otpCooldown} onChange={e => setOtpCooldown(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.otpCooldown} onChange={e => update({ security: { ...security, otpCooldown: e.target.value } })} type="number" className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-xs">Max tentatives</Label>
-                  <Input value={otpMaxRetries} onChange={e => setOtpMaxRetries(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.otpMaxRetries} onChange={e => update({ security: { ...security, otpMaxRetries: e.target.value } })} type="number" className="mt-1" />
                 </div>
               </div>
             </div>
