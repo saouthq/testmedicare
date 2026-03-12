@@ -1,12 +1,12 @@
 /**
- * Admin System Settings — Connected to central admin store
+ * Admin System Settings — with reset to defaults
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useCallback } from "react";
 import {
   Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle,
   Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound,
-  Mail, MessageSquare, Clock, Users, FileText,
+  Mail, MessageSquare, Clock, Users, FileText, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useAdminSettings } from "@/stores/adminStore";
 
 type SettingsTab = "general" | "features" | "notifications" | "security" | "maintenance";
@@ -24,8 +25,8 @@ const AdminSettings = () => {
   const [tab, setTab] = useState<SettingsTab>("general");
   const [saved, setSaved] = useState(false);
   const { settings, setSettings } = useAdminSettings();
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
-  // Derived local state from store settings
   const { platformName, supportEmail, supportPhone, maxFileSize, autoApprovePatients,
     defaultLanguage, timezone, termsUrl, privacyUrl, features, notifConfig, security,
     maintenanceMode, maintenanceMessage } = settings;
@@ -49,10 +50,21 @@ const AdminSettings = () => {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const handleResetDefaults = () => {
+    // Reset current tab settings to defaults
+    if (tab === "security") {
+      update({ security: { otpCooldown: "60", otpMaxRetries: "5", sessionTimeout: "30", twoFactor: false, passwordMinLength: "8", loginAttempts: "5", lockoutDuration: "15" } });
+    } else if (tab === "notifications") {
+      update({ notifConfig: { rdvReminder: true, rdvReminderDelay: "24", rdvConfirmation: true, prescriptionReady: true, labResultReady: true, accountApproved: true, paymentReceipt: true, weeklyReport: false, marketingConsent: true } });
+    }
+    appendLog("settings_reset", "system", tab, `Paramètres "${tab}" réinitialisés aux valeurs par défaut`);
+    toast({ title: "Paramètres réinitialisés" });
+    setResetConfirmOpen(false);
+  };
+
   const handleMaintenanceToggle = () => {
-    if (!maintenanceMode) {
-      setMaintenanceMotifOpen(true);
-    } else {
+    if (!maintenanceMode) setMaintenanceMotifOpen(true);
+    else {
       update({ maintenanceMode: false });
       appendLog("maintenance_disabled", "system", "maintenance", "Mode maintenance désactivé");
       toast({ title: "Mode maintenance désactivé" });
@@ -85,19 +97,18 @@ const AdminSettings = () => {
     aiAssistant: { label: "Assistant IA", desc: "IA pour aide au diagnostic (médecins)", category: "Clinique" },
     pharmacyGuard: { label: "Pharmacies de garde", desc: "Module de gestion des gardes", category: "Pharmacie" },
     labDemands: { label: "Demandes labo", desc: "Workflow demandes d'analyses", category: "Laboratoire" },
-    prescriptionSendPharmacy: { label: "Envoi ordonnances → Pharmacie", desc: "Patients et médecins peuvent envoyer aux pharmacies", category: "Ordonnances" },
-    prescriptionSendLab: { label: "Envoi ordonnances → Labo", desc: "Envoi des demandes d'analyses aux laboratoires", category: "Ordonnances" },
+    prescriptionSendPharmacy: { label: "Envoi ordonnances → Pharmacie", desc: "Envoyer aux pharmacies", category: "Ordonnances" },
+    prescriptionSendLab: { label: "Envoi ordonnances → Labo", desc: "Envoi des demandes d'analyses", category: "Ordonnances" },
     patientMessaging: { label: "Messagerie patients", desc: "Chat patient-médecin (bêta)", category: "Communication" },
     textReviews: { label: "Avis texte", desc: "Avis patients sur les médecins", category: "Public" },
-    medicinesDirectory: { label: "Annuaire médicaments", desc: "Répertoire public des médicaments", category: "Public" },
+    medicinesDirectory: { label: "Annuaire médicaments", desc: "Répertoire public", category: "Public" },
     patientChat: { label: "Chat patient", desc: "Chat en temps réel patient-secrétariat", category: "Communication" },
-    onlinePayment: { label: "Paiement en ligne", desc: "Paiement par carte bancaire (téléconsultation)", category: "Finance" },
-    appointmentReminder: { label: "Rappels RDV", desc: "SMS/push de rappel automatique", category: "Communication" },
-    disputeReporting: { label: "Signalement litiges", desc: "Patients et médecins peuvent signaler un litige", category: "Modération" },
-    commentReporting: { label: "Signalement commentaires", desc: "Signaler un avis inapproprié", category: "Modération" },
+    onlinePayment: { label: "Paiement en ligne", desc: "Paiement par carte bancaire", category: "Finance" },
+    appointmentReminder: { label: "Rappels RDV", desc: "SMS/push automatique", category: "Communication" },
+    disputeReporting: { label: "Signalement litiges", desc: "Signaler un litige", category: "Modération" },
+    commentReporting: { label: "Signalement commentaires", desc: "Signaler un avis", category: "Modération" },
   };
 
-  // Group features by category
   const categories = [...new Set(Object.values(featureLabels).map(f => f.category))];
 
   return (
@@ -117,7 +128,7 @@ const AdminSettings = () => {
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-5">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Informations plateforme</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><Label className="text-xs">Nom de la plateforme</Label><Input value={platformName} onChange={e => update({ platformName: e.target.value })} className="mt-1" /></div>
+                <div><Label className="text-xs">Nom</Label><Input value={platformName} onChange={e => update({ platformName: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Email support</Label><Input value={supportEmail} onChange={e => update({ supportEmail: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Téléphone support</Label><Input value={supportPhone} onChange={e => update({ supportPhone: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Devise</Label><Input value="Dinar Tunisien (DT)" disabled className="mt-1 bg-muted/50" /></div>
@@ -148,17 +159,11 @@ const AdminSettings = () => {
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Users className="h-4 w-4 text-primary" />Inscriptions</h3>
               <div className="flex items-center justify-between py-3 border-b">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Approbation auto des patients</p>
-                  <p className="text-xs text-muted-foreground">Les patients sont activés sans validation manuelle</p>
-                </div>
+                <div><p className="text-sm font-medium text-foreground">Approbation auto des patients</p><p className="text-xs text-muted-foreground">Activés sans validation manuelle</p></div>
                 <Toggle enabled={autoApprovePatients} onToggle={() => update({ autoApprovePatients: !autoApprovePatients })} />
               </div>
               <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Validation manuelle pros</p>
-                  <p className="text-xs text-muted-foreground">Médecins, labos, pharmacies nécessitent KYC</p>
-                </div>
+                <div><p className="text-sm font-medium text-foreground">Validation manuelle pros</p><p className="text-xs text-muted-foreground">Nécessitent KYC</p></div>
                 <Toggle enabled={true} onToggle={() => {}} />
               </div>
             </div>
@@ -167,32 +172,25 @@ const AdminSettings = () => {
               <h3 className="font-semibold text-foreground flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" />Modèle de revenus</h3>
               <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
                 <p className="text-sm font-medium text-foreground">Abonnements uniquement</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Les revenus de la plateforme proviennent exclusivement des abonnements des professionnels de santé.
-                  Aucune commission n'est prélevée sur les téléconsultations — les médecins fixent librement leurs tarifs.
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Revenus exclusivement des abonnements. Aucune commission sur les téléconsultations.</p>
               </div>
-              <p className="text-[10px] text-muted-foreground">Gérez les plans et tarifs d'abonnement depuis la page « Plans & Tarifs » dans le menu Finance & Offres.</p>
             </div>
           </div>
         )}
 
-        {/* Feature flags — grouped by category */}
+        {/* Feature flags */}
         {tab === "features" && (
           <div className="space-y-6">
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-2">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Zap className="h-4 w-4 text-primary" />Feature flags</h3>
-              <p className="text-xs text-muted-foreground">Activez ou désactivez les fonctionnalités. Les changements affectent <strong>tous les espaces</strong> concernés (patient, médecin, pharmacie, etc.).</p>
+              <p className="text-xs text-muted-foreground">Les changements affectent <strong>tous les espaces</strong>.</p>
             </div>
             {categories.map(cat => (
               <div key={cat} className="rounded-xl border bg-card p-6 shadow-card space-y-1">
                 <h4 className="text-sm font-semibold text-foreground mb-3">{cat}</h4>
                 {Object.entries(featureLabels).filter(([, v]) => v.category === cat).map(([key, { label, desc }]) => (
                   <div key={key} className="flex items-center justify-between py-3 border-b last:border-0">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{label}</p>
-                      <p className="text-xs text-muted-foreground">{desc}</p>
-                    </div>
+                    <div><p className="text-sm font-medium text-foreground">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
                     <Toggle enabled={!!features[key]} onToggle={() => toggleFeature(key)} />
                   </div>
                 ))}
@@ -206,7 +204,6 @@ const AdminSettings = () => {
           <div className="space-y-6">
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Bell className="h-4 w-4 text-primary" />Notifications automatiques</h3>
-              <p className="text-xs text-muted-foreground">Configurez quels événements déclenchent une notification.</p>
               {[
                 { key: "rdvReminder", label: "Rappel de RDV", desc: "SMS/push avant le rendez-vous" },
                 { key: "rdvConfirmation", label: "Confirmation de RDV", desc: "Email après prise de RDV" },
@@ -218,74 +215,45 @@ const AdminSettings = () => {
                 { key: "marketingConsent", label: "Opt-in marketing", desc: "Permettre les emails promotionnels" },
               ].map(n => (
                 <div key={n.key} className="flex items-center justify-between py-3 border-b last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{n.label}</p>
-                    <p className="text-xs text-muted-foreground">{n.desc}</p>
-                  </div>
-                  <Toggle
-                    enabled={!!(notifConfig as Record<string, boolean | string>)[n.key]}
-                    onToggle={() => update({ notifConfig: { ...notifConfig, [n.key]: !(notifConfig as Record<string, boolean | string>)[n.key] } })}
-                  />
+                  <div><p className="text-sm font-medium text-foreground">{n.label}</p><p className="text-xs text-muted-foreground">{n.desc}</p></div>
+                  <Toggle enabled={!!(notifConfig as Record<string, boolean | string>)[n.key]} onToggle={() => update({ notifConfig: { ...notifConfig, [n.key]: !(notifConfig as Record<string, boolean | string>)[n.key] } })} />
                 </div>
               ))}
             </div>
-
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Clock className="h-4 w-4 text-primary" />Délai de rappel RDV</h3>
               <div className="max-w-xs">
                 <Label className="text-xs">Heures avant le RDV</Label>
                 <Input value={notifConfig.rdvReminderDelay as string} onChange={e => update({ notifConfig: { ...notifConfig, rdvReminderDelay: e.target.value } })} type="number" className="mt-1" />
-                <p className="text-[10px] text-muted-foreground mt-1">Le rappel sera envoyé {notifConfig.rdvReminderDelay}h avant le RDV</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Security & OTP */}
+        {/* Security */}
         {tab === "security" && (
           <div className="space-y-6">
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Shield className="h-4 w-4 text-primary" />Sécurité</h3>
               <div className="flex items-center justify-between py-3 border-b">
-                <div>
-                  <p className="text-sm font-medium text-foreground">2FA admin obligatoire</p>
-                  <p className="text-xs text-muted-foreground">Exiger le 2FA pour les admins</p>
-                </div>
+                <div><p className="text-sm font-medium text-foreground">2FA admin obligatoire</p><p className="text-xs text-muted-foreground">Exiger le 2FA pour les admins</p></div>
                 <Toggle enabled={security.twoFactor} onToggle={() => update({ security: { ...security, twoFactor: !security.twoFactor } })} />
               </div>
               <div className="grid gap-4 sm:grid-cols-3 pt-2">
-                <div>
-                  <Label className="text-xs">Timeout session (min)</Label>
-                  <Input value={security.sessionTimeout} onChange={e => update({ security: { ...security, sessionTimeout: e.target.value } })} type="number" className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-xs">Longueur min MDP</Label>
-                  <Input value={security.passwordMinLength} onChange={e => update({ security: { ...security, passwordMinLength: e.target.value } })} type="number" className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-xs">Tentatives connexion max</Label>
-                  <Input value={security.loginAttempts} onChange={e => update({ security: { ...security, loginAttempts: e.target.value } })} type="number" className="mt-1" />
-                </div>
+                <div><Label className="text-xs">Timeout session (min)</Label><Input value={security.sessionTimeout} onChange={e => update({ security: { ...security, sessionTimeout: e.target.value } })} type="number" className="mt-1" /></div>
+                <div><Label className="text-xs">Longueur min MDP</Label><Input value={security.passwordMinLength} onChange={e => update({ security: { ...security, passwordMinLength: e.target.value } })} type="number" className="mt-1" /></div>
+                <div><Label className="text-xs">Tentatives max</Label><Input value={security.loginAttempts} onChange={e => update({ security: { ...security, loginAttempts: e.target.value } })} type="number" className="mt-1" /></div>
               </div>
               <div className="max-w-xs">
                 <Label className="text-xs">Durée verrouillage (min)</Label>
                 <Input value={security.lockoutDuration} onChange={e => update({ security: { ...security, lockoutDuration: e.target.value } })} type="number" className="mt-1" />
-                <p className="text-[10px] text-muted-foreground mt-1">Après {security.loginAttempts} échecs, le compte est bloqué {security.lockoutDuration} min</p>
               </div>
             </div>
-
             <div className="rounded-xl border bg-card p-6 shadow-card space-y-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" />Configuration OTP</h3>
-              <p className="text-xs text-muted-foreground">Paramètres pour les codes OTP (login, vérification).</p>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label className="text-xs">Cooldown entre envois (sec)</Label>
-                  <Input value={security.otpCooldown} onChange={e => update({ security: { ...security, otpCooldown: e.target.value } })} type="number" className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-xs">Max tentatives</Label>
-                  <Input value={security.otpMaxRetries} onChange={e => update({ security: { ...security, otpMaxRetries: e.target.value } })} type="number" className="mt-1" />
-                </div>
+                <div><Label className="text-xs">Cooldown entre envois (sec)</Label><Input value={security.otpCooldown} onChange={e => update({ security: { ...security, otpCooldown: e.target.value } })} type="number" className="mt-1" /></div>
+                <div><Label className="text-xs">Max tentatives</Label><Input value={security.otpMaxRetries} onChange={e => update({ security: { ...security, otpMaxRetries: e.target.value } })} type="number" className="mt-1" /></div>
               </div>
             </div>
           </div>
@@ -297,9 +265,7 @@ const AdminSettings = () => {
             <div className={`rounded-xl border p-6 shadow-card ${maintenanceMode ? "bg-destructive/5 border-destructive/30" : "bg-card"}`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-foreground flex items-center gap-2">
-                    <Server className="h-4 w-4 text-primary" />Mode maintenance
-                  </h3>
+                  <h3 className="font-semibold text-foreground flex items-center gap-2"><Server className="h-4 w-4 text-primary" />Mode maintenance</h3>
                   <p className="text-xs text-muted-foreground mt-1">Rend la plateforme inaccessible</p>
                 </div>
                 <Toggle enabled={maintenanceMode} onToggle={handleMaintenanceToggle} />
@@ -310,7 +276,7 @@ const AdminSettings = () => {
                     <p className="text-sm text-destructive font-medium flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Plateforme en maintenance</p>
                   </div>
                   <div>
-                   <Label className="text-xs">Message affiché aux utilisateurs</Label>
+                    <Label className="text-xs">Message affiché</Label>
                     <Textarea value={maintenanceMessage} onChange={e => update({ maintenanceMessage: e.target.value })} className="mt-1" rows={2} />
                   </div>
                 </div>
@@ -340,24 +306,27 @@ const AdminSettings = () => {
           </div>
         )}
 
-        {/* Save */}
-        <div className="flex items-center justify-end gap-3 pb-6">
-          {saved && <span className="flex items-center gap-1 text-sm text-accent"><CheckCircle className="h-4 w-4" />Sauvegardé</span>}
-          <Button className="gradient-primary text-primary-foreground" onClick={handleSave}>
-            <Save className="h-4 w-4 mr-1" />Enregistrer
-          </Button>
+        {/* Save + Reset */}
+        <div className="flex items-center justify-between gap-3 pb-6">
+          {(tab === "security" || tab === "notifications") && (
+            <Button variant="outline" className="text-xs" onClick={() => setResetConfirmOpen(true)}>
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />Réinitialiser
+            </Button>
+          )}
+          <div className="flex items-center gap-3 ml-auto">
+            {saved && <span className="flex items-center gap-1 text-sm text-accent"><CheckCircle className="h-4 w-4" />Sauvegardé</span>}
+            <Button className="gradient-primary text-primary-foreground" onClick={handleSave}>
+              <Save className="h-4 w-4 mr-1" />Enregistrer
+            </Button>
+          </div>
         </div>
       </div>
 
-      <MotifDialog
-        open={maintenanceMotifOpen}
-        onClose={() => setMaintenanceMotifOpen(false)}
-        onConfirm={handleMaintenanceConfirm}
-        title="Activer le mode maintenance"
-        description="La plateforme sera inaccessible à tous les utilisateurs."
-        confirmLabel="Activer la maintenance"
-        destructive
-      />
+      <MotifDialog open={maintenanceMotifOpen} onClose={() => setMaintenanceMotifOpen(false)} onConfirm={handleMaintenanceConfirm}
+        title="Activer le mode maintenance" description="La plateforme sera inaccessible." confirmLabel="Activer" destructive />
+
+      <ConfirmDialog open={resetConfirmOpen} onCancel={() => setResetConfirmOpen(false)} onConfirm={handleResetDefaults}
+        title="Réinitialiser les paramètres" description={`Les paramètres de l'onglet "${tab}" seront remis aux valeurs par défaut.`} confirmLabel="Réinitialiser" />
     </DashboardLayout>
   );
 };

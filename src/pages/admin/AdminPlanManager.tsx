@@ -1,12 +1,11 @@
 /**
- * AdminPlanManager — CRUD for subscription plans per role
- * TODO BACKEND: Replace with real API calls
+ * AdminPlanManager — CRUD for subscription plans with duplication, subscriber count, CSV export
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
 import {
-  Plus, Pencil, Trash2, Archive, Eye, Star, Save, Crown,
-  Building2, Stethoscope, Pill, FlaskConical, Hospital,
+  Plus, Pencil, Trash2, Archive, Eye, Star, Save, Crown, Copy, Download,
+  Building2, Stethoscope, Pill, FlaskConical, Hospital, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,7 @@ import {
   type AdminPlan, type PlanRole, type PlanStatus, planRoleLabels,
 } from "@/stores/adminPlanStore";
 import { featureCatalog } from "@/stores/featureMatrixStore";
+import { useAdminSubscriptions } from "@/stores/adminStore";
 
 const roleIcons: Record<PlanRole, any> = {
   doctor: Stethoscope, pharmacy: Pill, laboratory: FlaskConical,
@@ -47,11 +47,12 @@ const emptyPlan = (role: PlanRole): Partial<AdminPlan> => ({
 
 const AdminPlanManager = () => {
   const [plans] = useAdminPlans();
+  const { subscriptions } = useAdminSubscriptions();
   const [activeRole, setActiveRole] = useState<PlanRole>("doctor");
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<AdminPlan>>(emptyPlan("doctor"));
-  const [motifAction, setMotifAction] = useState<{ type: string; id: string; data?: any } | null>(null);
+  const [motifAction, setMotifAction] = useState<{ type: string; id: string } | null>(null);
   const [featureSearch, setFeatureSearch] = useState("");
 
   const rolePlans = useMemo(() =>
@@ -59,7 +60,20 @@ const AdminPlanManager = () => {
     [plans, activeRole]
   );
 
-  const categories = useMemo(() => [...new Set(featureCatalog.map(f => f.category))], []);
+  // Subscriber counts per plan
+  const subscriberCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    subscriptions.forEach(s => {
+      if (s.status === "active" || s.status === "trial") {
+        const key = s.plan.toLowerCase();
+        plans.forEach(p => {
+          if (p.name.toLowerCase() === key) counts[p.id] = (counts[p.id] || 0) + 1;
+        });
+      }
+    });
+    return counts;
+  }, [plans, subscriptions]);
+
   const filteredFeatures = useMemo(() => {
     if (!featureSearch) return featureCatalog;
     const q = featureSearch.toLowerCase();
@@ -75,6 +89,14 @@ const AdminPlanManager = () => {
   const openCreate = () => { setEditId(null); setForm(emptyPlan(activeRole)); setEditOpen(true); };
   const openEdit = (p: AdminPlan) => { setEditId(p.id); setForm({ ...p }); setEditOpen(true); };
 
+  const handleDuplicate = (p: AdminPlan) => {
+    const dup: Omit<AdminPlan, "id" | "createdAt" | "updatedAt"> = {
+      ...p, name: `${p.name} (copie)`, status: "draft" as PlanStatus, sortOrder: rolePlans.length + 1,
+    };
+    createPlan(dup, "Duplication de plan");
+    toast({ title: "Plan dupliqué", description: `${p.name} → ${dup.name}` });
+  };
+
   const handleSave = () => {
     if (!form.name || !form.monthlyPrice) {
       toast({ title: "Nom et prix mensuel requis", variant: "destructive" }); return;
@@ -85,7 +107,7 @@ const AdminPlanManager = () => {
 
   const handleMotifConfirm = (motif: string) => {
     if (!motifAction) return;
-    const { type, id, data } = motifAction;
+    const { type, id } = motifAction;
 
     if (type === "save_create") {
       createPlan(form as any, motif);
@@ -115,6 +137,17 @@ const AdminPlanManager = () => {
     }));
   };
 
+  const handleExportCSV = () => {
+    const csv = ["Rôle,Plan,Prix mensuel,Prix annuel,Essai,Features,Statut,Abonnés"]
+      .concat(plans.map(p => `"${planRoleLabels[p.role]}","${p.name}","${p.monthlyPrice} DT","${p.annualPrice} DT","${p.trialDays}j","${p.features.length}","${statusLabels[p.status].label}","${subscriberCounts[p.id] || 0}"`))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `plans_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export CSV téléchargé" });
+  };
+
   return (
     <DashboardLayout role="admin" title="Gestion des Plans">
       <div className="space-y-6">
@@ -123,14 +156,18 @@ const AdminPlanManager = () => {
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Crown className="h-5 w-5 text-primary" />Gestion des plans d'abonnement
             </h2>
-            <p className="text-sm text-muted-foreground">Créer, éditer et activer des plans par rôle avec tarification mensuelle/annuelle.</p>
+            <p className="text-sm text-muted-foreground">{plans.length} plan(s) · {plans.filter(p => p.status === "active").length} actif(s)</p>
           </div>
-          <Button onClick={openCreate} className="gradient-primary text-primary-foreground">
-            <Plus className="h-4 w-4 mr-1" />Créer un plan
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
+              <Download className="h-3.5 w-3.5 mr-1" />Export CSV
+            </Button>
+            <Button onClick={openCreate} className="gradient-primary text-primary-foreground">
+              <Plus className="h-4 w-4 mr-1" />Créer un plan
+            </Button>
+          </div>
         </div>
 
-        {/* Role tabs */}
         <Tabs value={activeRole} onValueChange={v => setActiveRole(v as PlanRole)}>
           <TabsList className="bg-muted/50">
             {roles.map(r => {
@@ -147,7 +184,6 @@ const AdminPlanManager = () => {
 
           {roles.map(r => (
             <TabsContent key={r} value={r}>
-              {/* Plans table */}
               <div className="rounded-xl border bg-card shadow-card overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -157,13 +193,14 @@ const AdminPlanManager = () => {
                       <TableHead>Prix annuel</TableHead>
                       <TableHead>Essai</TableHead>
                       <TableHead>Features</TableHead>
+                      <TableHead>Abonnés</TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {rolePlans.length === 0 && (
-                      <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Aucun plan pour ce rôle</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Aucun plan pour ce rôle</TableCell></TableRow>
                     )}
                     {rolePlans.map(p => (
                       <TableRow key={p.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openEdit(p)}>
@@ -179,7 +216,12 @@ const AdminPlanManager = () => {
                         <TableCell className="font-bold text-foreground">{p.monthlyPrice} DT</TableCell>
                         <TableCell className="text-muted-foreground">{p.annualPrice} DT/mois</TableCell>
                         <TableCell className="text-sm">{p.trialDays}j</TableCell>
-                        <TableCell><span className="text-xs text-muted-foreground">{p.features.length} features</span></TableCell>
+                        <TableCell><span className="text-xs text-muted-foreground">{p.features.length}</span></TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center gap-1 text-xs text-foreground">
+                            <Users className="h-3 w-3 text-primary" />{subscriberCounts[p.id] || 0}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusLabels[p.status].color}`}>
                             {statusLabels[p.status].label}
@@ -188,6 +230,7 @@ const AdminPlanManager = () => {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}><Pencil className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDuplicate(p)} title="Dupliquer"><Copy className="h-3.5 w-3.5" /></Button>
                             {p.status === "active" ? (
                               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMotifAction({ type: "archive", id: p.id })}><Archive className="h-3.5 w-3.5" /></Button>
                             ) : (
@@ -202,10 +245,10 @@ const AdminPlanManager = () => {
                 </Table>
               </div>
 
-              {/* Plan comparison preview */}
+              {/* Comparison preview */}
               {rolePlans.filter(p => p.status === "active").length > 0 && (
                 <div className="mt-6">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Aperçu comparatif (tel que vu par les utilisateurs)</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Aperçu comparatif</h3>
                   <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(rolePlans.filter(p => p.status === "active").length, 4)}, 1fr)` }}>
                     {rolePlans.filter(p => p.status === "active").map(p => (
                       <div key={p.id} className={`rounded-xl border p-5 ${p.highlighted ? "border-primary bg-primary/5 shadow-primary-glow" : "bg-card"}`}>
@@ -215,7 +258,10 @@ const AdminPlanManager = () => {
                         </div>
                         <p className="text-2xl font-bold text-foreground">{p.monthlyPrice} <span className="text-sm font-normal text-muted-foreground">DT/mois</span></p>
                         <p className="text-xs text-muted-foreground">ou {p.annualPrice} DT/mois (annuel)</p>
-                        <p className="text-xs text-muted-foreground mt-1">{p.trialDays} jours d'essai gratuit</p>
+                        <p className="text-xs text-muted-foreground mt-1">{p.trialDays} jours d'essai</p>
+                        {(subscriberCounts[p.id] || 0) > 0 && (
+                          <p className="text-xs text-primary font-medium mt-1 flex items-center gap-1"><Users className="h-3 w-3" />{subscriberCounts[p.id]} abonné(s) actif(s)</p>
+                        )}
                         <div className="mt-4 space-y-1.5">
                           {p.features.slice(0, 8).map(fId => {
                             const feat = featureCatalog.find(f => f.id === fId);
@@ -250,9 +296,7 @@ const AdminPlanManager = () => {
                   <Label className="text-xs">Rôle *</Label>
                   <Select value={form.role || "doctor"} onValueChange={v => setForm(f => ({ ...f, role: v as PlanRole }))}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {roles.map(r => <SelectItem key={r} value={r}>{planRoleLabels[r]}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{roles.map(r => <SelectItem key={r} value={r}>{planRoleLabels[r]}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
@@ -265,18 +309,9 @@ const AdminPlanManager = () => {
                 <Textarea className="mt-1" rows={2} value={form.description || ""} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">Prix mensuel (DT) *</Label>
-                  <Input className="mt-1" type="number" min={0} value={form.monthlyPrice || ""} onChange={e => setForm(f => ({ ...f, monthlyPrice: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Prix annuel/mois (DT)</Label>
-                  <Input className="mt-1" type="number" min={0} value={form.annualPrice || ""} onChange={e => setForm(f => ({ ...f, annualPrice: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Essai (jours)</Label>
-                  <Input className="mt-1" type="number" min={0} value={form.trialDays || ""} onChange={e => setForm(f => ({ ...f, trialDays: Number(e.target.value) }))} />
-                </div>
+                <div><Label className="text-xs">Prix mensuel (DT) *</Label><Input className="mt-1" type="number" min={0} value={form.monthlyPrice || ""} onChange={e => setForm(f => ({ ...f, monthlyPrice: Number(e.target.value) }))} /></div>
+                <div><Label className="text-xs">Prix annuel/mois (DT)</Label><Input className="mt-1" type="number" min={0} value={form.annualPrice || ""} onChange={e => setForm(f => ({ ...f, annualPrice: Number(e.target.value) }))} /></div>
+                <div><Label className="text-xs">Essai (jours)</Label><Input className="mt-1" type="number" min={0} value={form.trialDays || ""} onChange={e => setForm(f => ({ ...f, trialDays: Number(e.target.value) }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -296,16 +331,12 @@ const AdminPlanManager = () => {
                 </div>
               </div>
               {(form.role === "clinic" || form.role === "hospital") && (
-                <div>
-                  <Label className="text-xs">Nombre max d'utilisateurs</Label>
-                  <Input className="mt-1" type="number" min={1} value={form.maxUsers || ""} onChange={e => setForm(f => ({ ...f, maxUsers: Number(e.target.value) }))} />
-                </div>
+                <div><Label className="text-xs">Nombre max d'utilisateurs</Label><Input className="mt-1" type="number" min={1} value={form.maxUsers || ""} onChange={e => setForm(f => ({ ...f, maxUsers: Number(e.target.value) }))} /></div>
               )}
 
-              {/* Feature selection */}
               <div className="rounded-lg border p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-foreground">Fonctionnalités incluses ({(form.features || []).length})</p>
+                  <p className="text-sm font-semibold text-foreground">Fonctionnalités ({(form.features || []).length})</p>
                   <Input placeholder="Filtrer..." value={featureSearch} onChange={e => setFeatureSearch(e.target.value)} className="w-40 h-7 text-xs" />
                 </div>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -335,17 +366,11 @@ const AdminPlanManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Motif dialog */}
       {motifAction && (
-        <MotifDialog
-          open={!!motifAction}
-          onClose={() => setMotifAction(null)}
-          onConfirm={handleMotifConfirm}
-          title={motifAction.type === "delete" ? "Supprimer le plan" : motifAction.type === "archive" ? "Archiver le plan" : "Confirmer l'action"}
-          description="Cette action sera enregistrée dans les audit logs."
-          confirmLabel="Confirmer"
-          destructive={motifAction.type === "delete"}
-        />
+        <MotifDialog open={!!motifAction} onClose={() => setMotifAction(null)} onConfirm={handleMotifConfirm}
+          title={motifAction.type === "save_create" ? "Créer le plan" : motifAction.type === "save_edit" ? "Modifier le plan" : motifAction.type === "archive" ? "Archiver le plan" : motifAction.type === "activate" ? "Activer le plan" : "Supprimer le plan"}
+          description="Cette action sera enregistrée dans les audit logs." confirmLabel="Confirmer"
+          destructive={motifAction.type === "delete"} />
       )}
     </DashboardLayout>
   );

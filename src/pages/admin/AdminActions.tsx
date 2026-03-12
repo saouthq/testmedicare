@@ -1,16 +1,19 @@
 /**
- * AdminActions — Central admin action center for batch operations and platform management.
+ * AdminActions — Central admin action center with MotifDialog for dangerous actions + execution history
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Zap, Users, Shield, Activity, Database, Mail, Bell, Settings,
   RefreshCw, Download, Upload, Trash2, CheckCircle2, AlertTriangle,
-  Play, Pause, Clock, BarChart3, Globe, Send,
+  Play, Pause, Clock, BarChart3, Globe, Send, History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import MotifDialog from "@/components/admin/MotifDialog";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { appendLog } from "@/services/admin/adminAuditService";
 
 interface ActionItem {
   id: string;
@@ -20,41 +23,85 @@ interface ActionItem {
   color: string;
   category: string;
   dangerous?: boolean;
-  running?: boolean;
 }
+
+interface ExecutionEntry {
+  id: string;
+  actionId: string;
+  actionLabel: string;
+  timestamp: string;
+  status: "success" | "error";
+  motif?: string;
+}
+
+const HISTORY_KEY = "medicare_admin_action_history";
+const MAX_HISTORY = 50;
+
+const getHistory = (): ExecutionEntry[] => {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; }
+};
+const saveHistory = (entries: ExecutionEntry[]) => localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, MAX_HISTORY)));
 
 const AdminActions = () => {
   const [running, setRunning] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [history, setHistory] = useState<ExecutionEntry[]>(getHistory());
+  const [motifTarget, setMotifTarget] = useState<ActionItem | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<ActionItem | null>(null);
 
-  const runAction = (id: string, label: string) => {
-    setRunning(prev => new Set([...prev, id]));
+  const executeAction = (action: ActionItem, motif?: string) => {
+    setRunning(prev => new Set([...prev, action.id]));
     setTimeout(() => {
-      setRunning(prev => { const n = new Set(prev); n.delete(id); return n; });
-      toast({ title: `✅ ${label}`, description: "Action exécutée avec succès." });
+      setRunning(prev => { const n = new Set(prev); n.delete(action.id); return n; });
+      const entry: ExecutionEntry = {
+        id: `exec-${Date.now()}`,
+        actionId: action.id,
+        actionLabel: action.label,
+        timestamp: new Date().toISOString(),
+        status: "success",
+        motif,
+      };
+      const updated = [entry, ...history].slice(0, MAX_HISTORY);
+      setHistory(updated);
+      saveHistory(updated);
+      appendLog("action_executed", "system", action.id, `Action "${action.label}" exécutée${motif ? ` — Motif : ${motif}` : ""}`);
+      toast({ title: `✅ ${action.label}`, description: "Action exécutée avec succès." });
     }, 2000);
   };
 
+  const handleActionClick = (action: ActionItem) => {
+    if (action.dangerous) {
+      setMotifTarget(action);
+    } else {
+      setConfirmTarget(action);
+    }
+  };
+
+  const handleMotifConfirm = (motif: string) => {
+    if (motifTarget) executeAction(motifTarget, motif);
+    setMotifTarget(null);
+  };
+
+  const handleConfirm = () => {
+    if (confirmTarget) executeAction(confirmTarget);
+    setConfirmTarget(null);
+  };
+
   const actions: ActionItem[] = [
-    // Users
     { id: "sync_users", label: "Synchroniser les utilisateurs", desc: "Vérifier la cohérence des comptes et profils", icon: Users, color: "text-primary", category: "Utilisateurs" },
     { id: "bulk_notify", label: "Notification en masse", desc: "Envoyer une notification push à tous les utilisateurs actifs", icon: Bell, color: "text-warning", category: "Utilisateurs" },
     { id: "export_users", label: "Export complet utilisateurs", desc: "Générer un export CSV de tous les comptes", icon: Download, color: "text-accent", category: "Utilisateurs" },
     { id: "purge_inactive", label: "Purger comptes inactifs", desc: "Supprimer les comptes inactifs depuis > 12 mois", icon: Trash2, color: "text-destructive", category: "Utilisateurs", dangerous: true },
-    // Platform
     { id: "clear_cache", label: "Vider le cache plateforme", desc: "Invalider tous les caches (sessions, données, requêtes)", icon: RefreshCw, color: "text-primary", category: "Plateforme" },
-    { id: "maintenance_on", label: "Activer mode maintenance", desc: "Mettre la plateforme en maintenance programmée", icon: Pause, color: "text-warning", category: "Plateforme" },
+    { id: "maintenance_on", label: "Activer mode maintenance", desc: "Mettre la plateforme en maintenance programmée", icon: Pause, color: "text-warning", category: "Plateforme", dangerous: true },
     { id: "maintenance_off", label: "Désactiver mode maintenance", desc: "Remettre la plateforme en production", icon: Play, color: "text-accent", category: "Plateforme" },
     { id: "reindex_search", label: "Réindexer la recherche", desc: "Reconstruire l'index de recherche (médecins, médicaments)", icon: Database, color: "text-primary", category: "Plateforme" },
-    // Security
-    { id: "rotate_keys", label: "Rotation des clés API", desc: "Regénérer toutes les clés API expirées", icon: Shield, color: "text-warning", category: "Sécurité" },
+    { id: "rotate_keys", label: "Rotation des clés API", desc: "Regénérer toutes les clés API expirées", icon: Shield, color: "text-warning", category: "Sécurité", dangerous: true },
     { id: "force_logout_all", label: "Déconnecter tous les utilisateurs", desc: "Invalider toutes les sessions actives", icon: AlertTriangle, color: "text-destructive", category: "Sécurité", dangerous: true },
     { id: "audit_export", label: "Export audit logs", desc: "Télécharger les 90 derniers jours de logs d'audit", icon: Download, color: "text-accent", category: "Sécurité" },
-    // Communication
     { id: "send_campaign", label: "Envoyer campagne email", desc: "Envoyer la campagne email en attente à tous les abonnés", icon: Send, color: "text-primary", category: "Communication" },
     { id: "test_email", label: "Tester la configuration email", desc: "Envoyer un email de test à l'admin", icon: Mail, color: "text-accent", category: "Communication" },
     { id: "sms_blast", label: "SMS de rappel RDV", desc: "Envoyer les SMS de rappel pour les RDV de demain", icon: Bell, color: "text-warning", category: "Communication" },
-    // Data
     { id: "backup_db", label: "Backup base de données", desc: "Créer un snapshot complet de la base de données", icon: Database, color: "text-accent", category: "Données" },
     { id: "import_meds", label: "Importer base médicaments", desc: "Mettre à jour la base de médicaments depuis la source officielle", icon: Upload, color: "text-primary", category: "Données" },
     { id: "analytics_refresh", label: "Rafraîchir analytics", desc: "Recalculer tous les KPIs et tableaux de bord", icon: BarChart3, color: "text-accent", category: "Données" },
@@ -67,10 +114,11 @@ const AdminActions = () => {
     : actions;
   const groupedActions = categories.map(c => ({ category: c, items: filteredActions.filter(a => a.category === c) })).filter(g => g.items.length > 0);
 
+  const formatTime = (iso: string) => new Date(iso).toLocaleString("fr-TN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
   return (
     <DashboardLayout role="admin" title="Centre d'actions">
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-foreground flex items-center gap-2"><Zap className="h-5 w-5 text-warning" />Centre d'actions</h2>
@@ -82,7 +130,6 @@ const AdminActions = () => {
           </div>
         </div>
 
-        {/* Action groups */}
         {groupedActions.map(g => (
           <div key={g.category}>
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -109,7 +156,7 @@ const AdminActions = () => {
                       variant={a.dangerous ? "destructive" : "outline"}
                       className="w-full text-xs h-8"
                       disabled={isRunning}
-                      onClick={() => runAction(a.id, a.label)}
+                      onClick={() => handleActionClick(a)}
                     >
                       {isRunning ? (
                         <><RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />En cours...</>
@@ -130,7 +177,65 @@ const AdminActions = () => {
             <p>Aucune action trouvée</p>
           </div>
         )}
+
+        {/* Execution History */}
+        {history.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <History className="h-4 w-4 text-primary" />Dernières exécutions
+            </h3>
+            <div className="rounded-xl border bg-card shadow-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/30">
+                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Action</th>
+                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs hidden sm:table-cell">Motif</th>
+                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Date</th>
+                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.slice(0, 15).map(e => (
+                      <tr key={e.id} className="border-b last:border-0">
+                        <td className="px-4 py-2.5 text-foreground text-xs font-medium">{e.actionLabel}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground text-xs hidden sm:table-cell truncate max-w-[200px]">{e.motif || "—"}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground text-xs">{formatTime(e.timestamp)}</td>
+                        <td className="px-4 py-2.5">
+                          <span className="inline-flex items-center gap-1 text-xs text-accent">
+                            <CheckCircle2 className="h-3 w-3" />OK
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* MotifDialog for dangerous actions */}
+      <MotifDialog
+        open={!!motifTarget}
+        onClose={() => setMotifTarget(null)}
+        onConfirm={handleMotifConfirm}
+        title={`Exécuter : ${motifTarget?.label}`}
+        description={`⚠️ Action dangereuse — ${motifTarget?.desc}`}
+        confirmLabel="Exécuter"
+        destructive
+      />
+
+      {/* ConfirmDialog for safe actions */}
+      <ConfirmDialog
+        open={!!confirmTarget}
+        onCancel={() => setConfirmTarget(null)}
+        onConfirm={handleConfirm}
+        title={`Exécuter : ${confirmTarget?.label}`}
+        description={confirmTarget?.desc || ""}
+        confirmLabel="Exécuter"
+      />
     </DashboardLayout>
   );
 };
