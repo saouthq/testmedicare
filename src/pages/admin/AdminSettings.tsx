@@ -152,7 +152,7 @@ const AdminSettings = () => {
                   <p className="text-sm font-medium text-foreground">Approbation auto des patients</p>
                   <p className="text-xs text-muted-foreground">Les patients sont activés sans validation manuelle</p>
                 </div>
-                <Toggle enabled={autoApprovePatients} onToggle={() => setAutoApprovePatients(!autoApprovePatients)} />
+                <Toggle enabled={autoApprovePatients} onToggle={() => update({ autoApprovePatients: !autoApprovePatients })} />
               </div>
               <div className="flex items-center justify-between py-3">
                 <div>
