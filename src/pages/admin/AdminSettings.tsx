@@ -193,7 +193,7 @@ const AdminSettings = () => {
                       <p className="text-sm font-medium text-foreground">{label}</p>
                       <p className="text-xs text-muted-foreground">{desc}</p>
                     </div>
-                    <Toggle enabled={features[key as keyof typeof features]} onToggle={() => toggleFeature(key as keyof typeof features)} />
+                    <Toggle enabled={!!features[key]} onToggle={() => toggleFeature(key)} />
                   </div>
                 ))}
               </div>
