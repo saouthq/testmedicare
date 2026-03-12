@@ -26,8 +26,7 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { useAdminSubscriptions } from "@/stores/adminStore";
 import type { AdminSubscription, SubscriptionStatus } from "@/types/admin";
 
-// Extended status config (merge with entitlementStore)
-type ExtendedStatus = SubscriptionStatus;
+// Status config
 const statusConfig: Record<string, { label: string; color: string }> = {
   trial: { label: "Essai", color: "bg-warning/10 text-warning border-warning/20" },
   active: { label: "Actif", color: "bg-accent/10 text-accent border-accent/20" },
