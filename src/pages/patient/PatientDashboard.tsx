@@ -97,13 +97,24 @@ const PatientDashboard = () => {
   };
 
   const handleRenewal = (prescId: string) => {
+    if (!isEnabled("patient.request_renewal")) {
+      toast({ title: "Action désactivée", description: "Le renouvellement d’ordonnance est désactivé par l’administrateur." });
+      return;
+    }
+
     const prescription = recentPrescriptions.find(p => p.id === prescId);
-    requestRenewal({
+    const renewalId = requestRenewal({
       patientName: `${profile.firstName} ${profile.lastName}`,
       patientAvatar: `${profile.firstName[0]}${profile.lastName[0]}`,
       prescriptionId: prescId,
       items: prescription ? [prescription.id] : [prescId],
     });
+
+    if (!renewalId) {
+      toast({ title: "Action désactivée", description: "Le renouvellement d’ordonnance est désactivé par l’administrateur." });
+      return;
+    }
+
     toast({ title: "Demande envoyée", description: "Votre demande de renouvellement a été envoyée au médecin." });
   };
 
