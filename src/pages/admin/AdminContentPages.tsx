@@ -30,7 +30,7 @@ const AdminContentPages = () => {
 
   const filtered = filterType === "all" ? pages : pages.filter(p => p.type === filterType);
 
-  const openEdit = (page: ContentPage) => {
+  const openEdit = (page: AdminContentPage) => {
     setEditing(page);
     setEditTitle(page.title);
     setEditContent(page.content);
