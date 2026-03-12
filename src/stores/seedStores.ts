@@ -52,6 +52,7 @@ const ALL_STORES = [
   reportsStore,
   threadsStore,
   messagesItemsStore,
+  adminStore,
 ];
 
 const ALL_STORAGE_KEYS = [
