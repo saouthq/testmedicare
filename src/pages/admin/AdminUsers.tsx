@@ -28,9 +28,11 @@ const statusLabels: Record<string, string> = { active: "Actif", pending: "En att
 type MotifAction = { type: "suspend" | "reactivate" | "reject" | "reset_password" | "force_disconnect" | "bulk_suspend"; userId: string; userName: string } | null;
 
 const AdminUsers = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserFilter>("all");
   const { users, setUsers } = useAdminUsers();
+  const lookups = useAdminLookups();
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "joined">("joined");
