@@ -51,6 +51,8 @@ function StatPill({ label, value }: { label: string; value: string }) {
 /* ── Toolbar ── */
 export function PrescriptionsToolbar() {
   const { filter, setFilter, q, setQ } = usePrescriptions();
+  const { isEnabled } = useActionGating();
+  const canSendToPharmacy = isEnabled("doctor.send_prescription_pharmacy");
   const filters: Array<{ key: PrescriptionFilter; label: string }> = [
     { key: "all", label: "Toutes" },
     { key: "active", label: "Actives" },
@@ -75,7 +77,7 @@ export function PrescriptionsToolbar() {
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher patient, ordonnance…" className="h-9 pl-9 text-sm" />
           </div>
-          <PrescriptionsActionButton />
+          {canSendToPharmacy && <PrescriptionsActionButton />}
         </div>
       </div>
     </div>
