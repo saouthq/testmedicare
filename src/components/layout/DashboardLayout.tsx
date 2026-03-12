@@ -121,7 +121,6 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
       { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
-      { title: "Centre de revenus", url: "/dashboard/admin/revenue", icon: Banknote },
     ],
   },
   {
@@ -138,12 +137,8 @@ const adminSections: NavSection[] = [
     label: "Opérations",
     items: [
       { title: "Supervision RDV", url: "/dashboard/admin/appointments", icon: Calendar },
-      { title: "Litiges", url: "/dashboard/admin/disputes", icon: Gavel },
+      { title: "Centre de résolution", url: "/dashboard/admin/resolution", icon: Gavel },
       { title: "Pharmacies garde", url: "/dashboard/admin/guard-pharmacies", icon: Pill },
-      { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
-      { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
-      { title: "Performance", url: "/dashboard/admin/doctor-performance", icon: Activity },
-      { title: "Satisfaction", url: "/dashboard/admin/satisfaction", icon: Star },
     ],
   },
   {
@@ -160,12 +155,10 @@ const adminSections: NavSection[] = [
   {
     label: "Configuration",
     items: [
-      { title: "Modules", url: "/dashboard/admin/modules", icon: Power },
+      { title: "Configuration", url: "/dashboard/admin/configuration", icon: Power },
       { title: "Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
-      { title: "Actions", url: "/dashboard/admin/action-gating", icon: ShieldCheck },
       { title: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
       { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
-      { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
     ],
   },
   {
@@ -182,8 +175,7 @@ const adminSections: NavSection[] = [
     label: "Système",
     items: [
       { title: "RGPD", url: "/dashboard/admin/compliance", icon: ShieldCheck },
-      { title: "Journal système", url: "/dashboard/admin/logs", icon: Activity },
-      { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
+      { title: "Journaux", url: "/dashboard/admin/logs", icon: Activity },
       { title: "API & Partenaires", url: "/dashboard/admin/api-partners", icon: Key },
       { title: "Rapports", url: "/dashboard/admin/reports", icon: FileDown },
       { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },

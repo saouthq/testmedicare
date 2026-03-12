@@ -5,13 +5,7 @@
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { lazy, Suspense } from "react";
-
-// Lazy load each tab's content to keep bundle manageable
-// We import the existing components but strip their DashboardLayout wrapper
-import AdminFeatureFlagsContent from "./AdminFeatureFlags";
-import AdminModulesContent from "./AdminModules";
-import AdminActionGatingContent from "./AdminActionGating";
+import { useState, useMemo } from "react";
 
 /**
  * This page wraps the 3 feature-control pages into tabs.
@@ -26,7 +20,6 @@ import AdminActionGatingContent from "./AdminActionGating";
 // Render the Configuration page with tabs that switch between the 3 feature pages.
 // We re-export the content inline to avoid double-DashboardLayout.
 
-import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
