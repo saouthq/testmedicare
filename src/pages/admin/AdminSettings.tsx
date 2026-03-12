@@ -234,7 +234,7 @@ const AdminSettings = () => {
               <h3 className="font-semibold text-foreground flex items-center gap-2"><Clock className="h-4 w-4 text-primary" />Délai de rappel RDV</h3>
               <div className="max-w-xs">
                 <Label className="text-xs">Heures avant le RDV</Label>
-                <Input value={notifConfig.rdvReminderDelay} onChange={e => setNotifConfig(prev => ({ ...prev, rdvReminderDelay: e.target.value }))} type="number" className="mt-1" />
+                <Input value={notifConfig.rdvReminderDelay as string} onChange={e => update({ notifConfig: { ...notifConfig, rdvReminderDelay: e.target.value } })} type="number" className="mt-1" />
                 <p className="text-[10px] text-muted-foreground mt-1">Le rappel sera envoyé {notifConfig.rdvReminderDelay}h avant le RDV</p>
               </div>
             </div>
