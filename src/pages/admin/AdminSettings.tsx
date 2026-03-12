@@ -53,25 +53,23 @@ const AdminSettings = () => {
     if (!maintenanceMode) {
       setMaintenanceMotifOpen(true);
     } else {
-      setMaintenanceMode(false);
+      update({ maintenanceMode: false });
       appendLog("maintenance_disabled", "system", "maintenance", "Mode maintenance désactivé");
       toast({ title: "Mode maintenance désactivé" });
     }
   };
 
   const handleMaintenanceConfirm = (motif: string) => {
-    setMaintenanceMode(true);
+    update({ maintenanceMode: true });
     appendLog("maintenance_enabled", "system", "maintenance", `Mode maintenance activé — Motif : ${motif}`);
     toast({ title: "Mode maintenance activé", variant: "destructive" });
     setMaintenanceMotifOpen(false);
   };
 
-  const toggleFeature = (key: keyof typeof features) => {
-    setFeatures(prev => {
-      const newVal = !prev[key];
-      appendLog("feature_flag_changed", "system", key, `Feature "${key}" → ${newVal ? "activé" : "désactivé"}`);
-      return { ...prev, [key]: newVal };
-    });
+  const toggleFeature = (key: string) => {
+    const newVal = !features[key];
+    update({ features: { ...features, [key]: newVal } });
+    appendLog("feature_flag_changed", "system", key, `Feature "${key}" → ${newVal ? "activé" : "désactivé"}`);
   };
 
   const tabs = [
