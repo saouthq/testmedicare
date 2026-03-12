@@ -254,6 +254,7 @@ const AdminResolution = () => {
             ))}
           </div>
           <div className="space-y-3">
+            {modFiltered.length === 0 && <EmptyState icon={Flag} title="Aucun signalement" description="Aucun signalement ne correspond à ce filtre." compact />}
             {modFiltered.map(r => (
               <div key={r.id} className={`rounded-xl border bg-card shadow-card p-4 cursor-pointer hover:shadow-md transition-all ${r.priority === "high" && r.status === "pending" ? "border-destructive/30" : ""}`} onClick={() => setSelectedReport(r)}>
                 <div className="flex items-start gap-3">
