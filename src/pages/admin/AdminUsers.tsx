@@ -91,7 +91,7 @@ const AdminUsers = () => {
       toast({ title: `${userName} refusé(e)`, variant: "destructive" });
       if (selectedUser?.id === userId) { setSelectedUser(null); setDrawerOpen(false); }
     } else if (type === "reset_password") {
-      appendLog("password_reset", "user", String(userId), `Réinitialisation MDP de ${userName} — Motif : ${motif}`);
+      appendLog("password_reset", "user", userId, `Réinitialisation MDP de ${userName} — Motif : ${motif}`);
       toast({ title: `Lien de réinitialisation envoyé à ${userName}` });
     } else if (type === "force_disconnect") {
       appendLog("force_disconnect", "user", String(userId), `Déconnexion forcée de ${userName} — Motif : ${motif}`);
