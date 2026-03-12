@@ -1,10 +1,9 @@
 /**
- * AdminAPIPartners — Gestion des clés API, webhooks, intégrations
- * // TODO BACKEND: Gérer les clés API et webhooks côté serveur
+ * AdminAPIPartners — Connected to central admin store
  */
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,49 +13,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Key, Webhook, Activity, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
-
-interface ApiKey {
-  id: string;
-  name: string;
-  key: string;
-  status: "active" | "revoked";
-  quotaUsed: number;
-  quotaMax: number;
-  lastUsed: string;
-  createdAt: string;
-}
-
-interface WebhookConfig {
-  id: string;
-  url: string;
-  events: string[];
-  status: "active" | "inactive" | "failing";
-  lastTriggered: string;
-  failCount: number;
-}
+import { Key, Webhook, Activity, Plus, Copy, Trash2, Eye, EyeOff } from "lucide-react";
+import { useAdminApiPartners } from "@/stores/adminStore";
+import type { AdminApiKey, AdminWebhook } from "@/types/admin";
 
 interface ApiLog {
-  id: string;
-  endpoint: string;
-  method: string;
-  status: number;
-  apiKeyName: string;
-  timestamp: string;
-  duration: string;
+  id: string; endpoint: string; method: string; status: number;
+  apiKeyName: string; timestamp: string; duration: string;
 }
-
-const initialKeys: ApiKey[] = [
-  { id: "1", name: "Production - App Mobile", key: "mk_live_4f8a9b2c3d1e5f6g7h8i9j0k", status: "active", quotaUsed: 12450, quotaMax: 50000, lastUsed: "Il y a 2 min", createdAt: "Jan 2026" },
-  { id: "2", name: "Staging - Tests", key: "mk_test_1a2b3c4d5e6f7g8h9i0j1k2l", status: "active", quotaUsed: 3200, quotaMax: 10000, lastUsed: "Il y a 1h", createdAt: "Fév 2026" },
-  { id: "3", name: "Ancien partenaire", key: "mk_live_old_9z8y7x6w5v4u3t2s1r0q", status: "revoked", quotaUsed: 0, quotaMax: 50000, lastUsed: "15 Jan 2026", createdAt: "Nov 2025" },
-];
-
-const initialWebhooks: WebhookConfig[] = [
-  { id: "1", url: "https://api.partenaire.tn/webhooks/appointments", events: ["appointment.created", "appointment.cancelled"], status: "active", lastTriggered: "Il y a 5 min", failCount: 0 },
-  { id: "2", url: "https://crm.clinique-tunis.tn/api/hooks", events: ["patient.registered", "consultation.completed"], status: "active", lastTriggered: "Il y a 30 min", failCount: 2 },
-  { id: "3", url: "https://old-system.tn/webhook", events: ["prescription.created"], status: "failing", lastTriggered: "Il y a 3j", failCount: 15 },
-];
 
 const initialLogs: ApiLog[] = [
   { id: "1", endpoint: "/api/v1/appointments", method: "GET", status: 200, apiKeyName: "Production", timestamp: "11:42:15", duration: "45ms" },
@@ -70,8 +34,7 @@ const initialLogs: ApiLog[] = [
 const allEvents = ["appointment.created", "appointment.cancelled", "appointment.updated", "patient.registered", "consultation.completed", "prescription.created", "payment.received"];
 
 const AdminAPIPartners = () => {
-  const [keys, setKeys] = useState(initialKeys);
-  const [webhooks, setWebhooks] = useState(initialWebhooks);
+  const { apiKeys: keys, webhooks, setApiKeys: setKeys, setWebhooks } = useAdminApiPartners();
   const [showKey, setShowKey] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerType, setDrawerType] = useState<"key" | "webhook">("key");
