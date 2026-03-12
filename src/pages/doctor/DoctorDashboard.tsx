@@ -33,6 +33,7 @@ const DoctorDashboard = () => {
 
   const [sub] = useDoctorSubscription();
   const config = getSpecialtyConfig(sub.activity, sub.specialty);
+  const { isEnabled } = useActionGating();
   const isEssentiel = sub.plan === "essentiel";
   const proPlan = plansByActivity[sub.activity]?.find(p => p.id === "pro");
   const completionPercent = getProfileCompletionPercent(profileCompletion);
