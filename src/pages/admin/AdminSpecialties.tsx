@@ -421,7 +421,7 @@ const AdminSpecialties = () => {
         description={`Êtes-vous sûr de vouloir supprimer "${specs.find(s => s.id === deleteId)?.label}" ? Cette action est irréversible.`}
         confirmLabel="Supprimer"
         onConfirm={handleDelete}
-        variant="destructive"
+        variant="danger"
       />
     </DashboardLayout>
   );
