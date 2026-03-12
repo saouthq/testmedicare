@@ -1,10 +1,8 @@
 /**
- * Admin System Settings — Platform config, subscriptions, notifications, security, maintenance
- * No commission/teleconsult fees — doctors set their own prices. Revenue = subscriptions only.
- * TODO BACKEND: Replace with real API
+ * Admin System Settings — Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle,
   Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound,
@@ -18,66 +16,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
+import { useAdminSettings } from "@/stores/adminStore";
 
 type SettingsTab = "general" | "features" | "notifications" | "security" | "maintenance";
 
 const AdminSettings = () => {
   const [tab, setTab] = useState<SettingsTab>("general");
   const [saved, setSaved] = useState(false);
+  const { settings, setSettings } = useAdminSettings();
 
-  // General
-  const [platformName, setPlatformName] = useState("Medicare.tn");
-  const [supportEmail, setSupportEmail] = useState("support@medicare.tn");
-  const [supportPhone, setSupportPhone] = useState("+216 71 000 000");
-  const [maxFileSize, setMaxFileSize] = useState("10");
-  const [autoApprovePatients, setAutoApprovePatients] = useState(true);
-  const [defaultLanguage, setDefaultLanguage] = useState("fr");
-  const [timezone, setTimezone] = useState("Africa/Tunis");
-  const [termsUrl, setTermsUrl] = useState("https://medicare.tn/legal/cgu");
-  const [privacyUrl, setPrivacyUrl] = useState("https://medicare.tn/legal/privacy");
+  // Derived local state from store settings
+  const { platformName, supportEmail, supportPhone, maxFileSize, autoApprovePatients,
+    defaultLanguage, timezone, termsUrl, privacyUrl, features, notifConfig, security,
+    maintenanceMode, maintenanceMessage } = settings;
 
-  // Feature flags (granular cross-space controls)
-  const [features, setFeatures] = useState({
-    teleconsultation: true,
-    aiAssistant: true,
-    pharmacyGuard: true,
-    labDemands: true,
-    prescriptionSendPharmacy: true,
-    prescriptionSendLab: true,
-    patientMessaging: false,
-    textReviews: true,
-    medicinesDirectory: true,
-    patientChat: false,
-    onlinePayment: true,
-    appointmentReminder: true,
-    disputeReporting: true,
-    commentReporting: true,
-  });
+  const update = useCallback((patch: Partial<typeof settings>) => {
+    setSettings(prev => ({ ...prev, ...patch }));
+  }, [setSettings]);
 
-  // Notifications
-  const [notifConfig, setNotifConfig] = useState({
-    rdvReminder: true, rdvReminderDelay: "24",
-    rdvConfirmation: true,
-    prescriptionReady: true,
-    labResultReady: true,
-    accountApproved: true,
-    paymentReceipt: true,
-    weeklyReport: false,
-    marketingConsent: true,
-  });
-
-  // Security / OTP
-  const [otpCooldown, setOtpCooldown] = useState("60");
-  const [otpMaxRetries, setOtpMaxRetries] = useState("5");
-  const [sessionTimeout, setSessionTimeout] = useState("30");
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [passwordMinLength, setPasswordMinLength] = useState("8");
-  const [loginAttempts, setLoginAttempts] = useState("5");
-  const [lockoutDuration, setLockoutDuration] = useState("15");
-
-  // Maintenance
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState("La plateforme est en maintenance. Nous serons de retour très bientôt.");
   const [maintenanceMotifOpen, setMaintenanceMotifOpen] = useState(false);
 
   const Toggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
@@ -87,8 +43,6 @@ const AdminSettings = () => {
   );
 
   const handleSave = () => {
-    // Persist feature flags to localStorage for cross-space usage
-    try { localStorage.setItem("medicare_admin_features", JSON.stringify(features)); } catch {}
     appendLog("settings_updated", "system", "settings", `Paramètres système mis à jour (onglet: ${tab})`);
     setSaved(true);
     toast({ title: "Paramètres sauvegardés" });
