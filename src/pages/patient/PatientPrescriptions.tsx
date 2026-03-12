@@ -188,19 +188,23 @@ const PatientPrescriptions = () => {
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Aperçu ordonnance (mock)" })}><Eye className="h-4 w-4 mr-1" />Voir le détail</Button>
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Téléchargement PDF (mock)" })}><Download className="h-4 w-4 mr-1" />Télécharger PDF</Button>
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Impression (mock)" })}><Printer className="h-4 w-4 mr-1" />Imprimer</Button>
-                    {p.status === "active" && canSendMore(p) && sendingToPharmacy !== p.id && (
+                    {p.status === "active" && canSendMore(p) && sendingToPharmacy !== p.id && isEnabled("patient.send_to_pharmacy") && (
                       <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setSendingToPharmacy(p.id)}>
                         <Send className="h-4 w-4 mr-1" />Envoyer à une pharmacie
                       </Button>
                     )}
-                    {p.status === "active" && (
+                    {p.status === "active" && isEnabled("patient.request_renewal") && (
                       <Button variant="outline" size="sm" onClick={() => {
-                        requestRenewal({
+                        const renewalId = requestRenewal({
                           patientName: "Amine Ben Ali",
                           patientAvatar: "AB",
                           prescriptionId: p.id,
                           items: p.items,
                         });
+                        if (!renewalId) {
+                          toast({ title: "Action désactivée", description: "Le renouvellement est désactivé par l’administrateur." });
+                          return;
+                        }
                         toast({ title: "Demande envoyée", description: `Demande de renouvellement de ${p.id} envoyée à ${p.doctor}. Visible dans son dashboard.` });
                       }}>
                         <RotateCcw className="h-4 w-4 mr-1" />Demander un renouvellement
