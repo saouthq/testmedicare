@@ -337,6 +337,7 @@ const AdminResolution = () => {
             </Select>
           </div>
           <div className="space-y-3">
+            {supportFiltered.length === 0 && <EmptyState icon={MessageSquare} title="Aucun ticket" description="Aucun ticket ne correspond à ce filtre." compact />}
             {supportFiltered.map(t => (
               <div key={t.id} className={`rounded-xl border bg-card p-5 shadow-card cursor-pointer hover:bg-muted/20 transition-colors ${t.priority === "high" && t.status !== "closed" ? "border-destructive/30" : ""}`} onClick={() => setSelectedTicket(t)}>
                 <div className="flex items-start justify-between gap-3">
