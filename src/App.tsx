@@ -288,37 +288,40 @@ const App = () => (
           <Route path="/dashboard/admin/verifications" element={<AdminGuard><AdminVerifications /></AdminGuard>} />
           <Route path="/dashboard/admin/subscriptions" element={<AdminGuard><AdminSubscriptions /></AdminGuard>} />
           <Route path="/dashboard/admin/payments" element={<AdminGuard><AdminPayments /></AdminGuard>} />
-          <Route path="/dashboard/admin/moderation" element={<AdminGuard><AdminModeration /></AdminGuard>} />
-          <Route path="/dashboard/admin/audit-logs" element={<AdminGuard><AdminAuditLogs /></AdminGuard>} />
           <Route path="/dashboard/admin/reference-data" element={<AdminGuard><AdminReferenceData /></AdminGuard>} />
           <Route path="/dashboard/admin/notification-templates" element={<AdminGuard><AdminNotificationTemplates /></AdminGuard>} />
           <Route path="/dashboard/admin/analytics" element={<AdminGuard><AdminAnalytics /></AdminGuard>} />
-          <Route path="/dashboard/admin/support" element={<AdminGuard><AdminSupport /></AdminGuard>} />
           <Route path="/dashboard/admin/guard-pharmacies" element={<AdminGuard><AdminGuardPharmacies /></AdminGuard>} />
           <Route path="/dashboard/admin/campaigns" element={<AdminGuard><AdminCampaigns /></AdminGuard>} />
           <Route path="/dashboard/admin/promotions" element={<AdminGuard><AdminPromotions /></AdminGuard>} />
           <Route path="/dashboard/admin/iam" element={<AdminGuard><AdminIAM /></AdminGuard>} />
-          <Route path="/dashboard/admin/disputes" element={<AdminGuard><AdminDisputes /></AdminGuard>} />
           <Route path="/dashboard/admin/feature-matrix" element={<AdminGuard><AdminFeatureMatrix /></AdminGuard>} />
-          <Route path="/dashboard/admin/modules" element={<AdminGuard><AdminModules /></AdminGuard>} />
           <Route path="/dashboard/admin/plans" element={<AdminGuard><AdminPlanManager /></AdminGuard>} />
           <Route path="/dashboard/admin/overrides" element={<AdminGuard><AdminOverrides /></AdminGuard>} />
           <Route path="/dashboard/admin/specialties" element={<AdminGuard><AdminSpecialties /></AdminGuard>} />
           <Route path="/dashboard/admin/actions" element={<AdminGuard><AdminActions /></AdminGuard>} />
-          <Route path="/dashboard/admin/feature-flags" element={<AdminGuard><AdminFeatureFlags /></AdminGuard>} />
           <Route path="/dashboard/admin/compliance" element={<AdminGuard><AdminCompliance /></AdminGuard>} />
           <Route path="/dashboard/admin/email-config" element={<AdminGuard><AdminEmailConfig /></AdminGuard>} />
           <Route path="/dashboard/admin/onboarding" element={<AdminGuard><AdminOnboarding /></AdminGuard>} />
-          <Route path="/dashboard/admin/revenue" element={<AdminGuard><AdminRevenue /></AdminGuard>} />
-          <Route path="/dashboard/admin/doctor-performance" element={<AdminGuard><AdminDoctorPerformance /></AdminGuard>} />
           <Route path="/dashboard/admin/content" element={<AdminGuard><AdminContentPages /></AdminGuard>} />
-          <Route path="/dashboard/admin/satisfaction" element={<AdminGuard><AdminSatisfaction /></AdminGuard>} />
           <Route path="/dashboard/admin/api-partners" element={<AdminGuard><AdminAPIPartners /></AdminGuard>} />
           <Route path="/dashboard/admin/reports" element={<AdminGuard><AdminReports /></AdminGuard>} />
           <Route path="/dashboard/admin/settings" element={<AdminGuard><AdminSettings /></AdminGuard>} />
           <Route path="/dashboard/admin/logs" element={<AdminGuard><AdminLogs /></AdminGuard>} />
           <Route path="/dashboard/admin/sidebar-config" element={<AdminGuard><AdminSidebarConfig /></AdminGuard>} />
-          <Route path="/dashboard/admin/action-gating" element={<AdminGuard><AdminActionGating /></AdminGuard>} />
+          <Route path="/dashboard/admin/resolution" element={<AdminGuard><AdminResolution /></AdminGuard>} />
+          <Route path="/dashboard/admin/configuration" element={<AdminGuard><AdminConfiguration /></AdminGuard>} />
+          {/* Redirects from old merged routes */}
+          <Route path="/dashboard/admin/revenue" element={<Navigate to="/dashboard/admin/analytics" replace />} />
+          <Route path="/dashboard/admin/doctor-performance" element={<Navigate to="/dashboard/admin/analytics" replace />} />
+          <Route path="/dashboard/admin/satisfaction" element={<Navigate to="/dashboard/admin/analytics" replace />} />
+          <Route path="/dashboard/admin/audit-logs" element={<Navigate to="/dashboard/admin/logs" replace />} />
+          <Route path="/dashboard/admin/moderation" element={<Navigate to="/dashboard/admin/resolution" replace />} />
+          <Route path="/dashboard/admin/disputes" element={<Navigate to="/dashboard/admin/resolution" replace />} />
+          <Route path="/dashboard/admin/support" element={<Navigate to="/dashboard/admin/resolution" replace />} />
+          <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/dashboard/admin/configuration" replace />} />
+          <Route path="/dashboard/admin/modules" element={<Navigate to="/dashboard/admin/configuration" replace />} />
+          <Route path="/dashboard/admin/action-gating" element={<Navigate to="/dashboard/admin/configuration" replace />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
