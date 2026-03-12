@@ -20,7 +20,7 @@ import { useHealth } from "@/stores/healthStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useFavoriteDoctors } from "@/stores/favoriteDoctorsStore";
 import type { SharedAppointment } from "@/types/appointment";
-import type { HealthDocument } from "@/types";
+import { useActionGating } from "@/hooks/useActionGating";
 
 const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" || a.teleconsultation;
 

@@ -15,6 +15,7 @@ import type { Prescription } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { isModuleEnabled } from "@/stores/adminModulesStore";
+import { useActionGating } from "@/hooks/useActionGating";
 
 /** Check if pharmacy send feature is enabled (module + feature flag) */
 function isPharmacySendEnabled(): boolean {
