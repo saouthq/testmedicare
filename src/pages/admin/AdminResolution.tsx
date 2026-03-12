@@ -90,11 +90,12 @@ const mockSupportMacros = [
 ];
 
 const AdminResolution = () => {
-  // ── Moderation (local — will be connected to store in next phase) ──
-  const [reports, setReports] = useState<Report[]>(initialReports);
+  // ── Moderation — from store ──
+  const { reports: storeReports, setReports: setStoreReports } = useAdminModerationReports();
+  const [reports, setReports] = useState<AdminModerationReport[]>(storeReports);
   const [modFilter, setModFilter] = useState("all");
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [modMotifAction, setModMotifAction] = useState<{ id: number; type: string } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<AdminModerationReport | null>(null);
+  const [modMotifAction, setModMotifAction] = useState<{ id: string; type: string } | null>(null);
   const [adminNote, setAdminNote] = useState("");
 
   // ── Disputes — from store ──
