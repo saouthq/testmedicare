@@ -34,6 +34,7 @@ const PatientDashboard = () => {
   const [health] = useHealth();
   const [doctorRx] = useDoctorPrescriptions();
   const [favoriteDoctors] = useFavoriteDoctors();
+  const { isEnabled } = useActionGating();
 
   const PATIENT_ID = 1;
   const appointments = useMemo(() => 
