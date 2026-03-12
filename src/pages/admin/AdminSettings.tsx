@@ -119,7 +119,7 @@ const AdminSettings = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div><Label className="text-xs">Nom de la plateforme</Label><Input value={platformName} onChange={e => update({ platformName: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Email support</Label><Input value={supportEmail} onChange={e => update({ supportEmail: e.target.value })} className="mt-1" /></div>
-                <div><Label className="text-xs">Téléphone support</Label><Input value={supportPhone} onChange={e => setSupportPhone(e.target.value)} className="mt-1" /></div>
+                <div><Label className="text-xs">Téléphone support</Label><Input value={supportPhone} onChange={e => update({ supportPhone: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Devise</Label><Input value="Dinar Tunisien (DT)" disabled className="mt-1 bg-muted/50" /></div>
                 <div><Label className="text-xs">Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => setMaxFileSize(e.target.value)} type="number" className="mt-1" /></div>
                 <div>
