@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
-import { mockAdminTickets, mockSupportMacros } from "@/data/mockData";
+import { useAdminTickets, useAdminDisputes, useAdminModerationReports } from "@/stores/adminStore";
 import {
   AlertTriangle, Flag, CheckCircle, XCircle, User, Shield, Ban, Gavel,
   Send, Clock, FileText, Image, MessageSquare, ArrowRight, Search,
