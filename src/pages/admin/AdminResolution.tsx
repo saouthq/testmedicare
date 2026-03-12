@@ -298,6 +298,8 @@ const AdminResolution = () => {
             </div>
           </div>
           <div className="space-y-3">
+          <div className="space-y-3">
+            {dispFiltered.length === 0 && <EmptyState icon={Gavel} title="Aucun litige" description="Aucun litige ne correspond à ce filtre." compact />}
             {dispFiltered.map(d => (
               <div key={d.id} className={`rounded-xl border bg-card shadow-card p-4 cursor-pointer hover:shadow-md transition-all ${d.priority === "high" && d.status === "open" ? "border-destructive/30" : ""}`} onClick={() => setSelectedDispute(d)}>
                 <div className="flex items-start gap-3">
@@ -314,7 +316,6 @@ const AdminResolution = () => {
               </div>
             ))}
           </div>
-        </TabsContent>
 
         {/* ════ SUPPORT ════ */}
         <TabsContent value="support" className="space-y-6">
