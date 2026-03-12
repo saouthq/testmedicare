@@ -18,9 +18,9 @@ import {
   FlaskConical, ClipboardList, Clock, UserCircle, Building2, Menu, X,
   Activity, ScrollText, MessageSquare, Plug, Banknote, Bot, Gavel, Send,
   Video, CalendarDays, FileDown, Key, Star, BookOpen,
+  ChevronLeft, ChevronRight, ChevronDown, PanelLeftClose, PanelLeft, Pin, PinOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface NavItem {
   title: string;
@@ -28,7 +28,6 @@ interface NavItem {
   icon: any;
 }
 
-/** Admin sidebar sections for better organization */
 interface NavSection {
   label: string;
   items: NavItem[];
@@ -57,13 +56,11 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Salle d'attente", url: "/dashboard/doctor/waiting-room", icon: Clock },
     { title: "Mes patients", url: "/dashboard/doctor/patients", icon: Users },
     { title: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
-    // ── Cabinet ──
     { title: "Facturation", url: "/dashboard/doctor/billing", icon: Banknote },
     { title: "Tarifs & Actes", url: "/dashboard/doctor/tarifs", icon: CreditCard },
     { title: "Secrétaires", url: "/dashboard/doctor/secretary", icon: Building2 },
     { title: "Documents", url: "/dashboard/doctor/documents", icon: FileDown },
     { title: "Congés", url: "/dashboard/doctor/leaves", icon: CalendarDays },
-    // ── Outils ──
     { title: "Messagerie", url: "/dashboard/doctor/messages", icon: MessageSquare },
     { title: "Téléconsultation", url: "/dashboard/doctor/teleconsultation", icon: Video },
     { title: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
@@ -118,9 +115,6 @@ const navItems: Record<string, NavItem[]> = {
   ],
 };
 
-/**
- * Admin nav grouped by sections for clarity and scalability
- */
 const adminSections: NavSection[] = [
   {
     label: "Vue d'ensemble",
@@ -148,8 +142,8 @@ const adminSections: NavSection[] = [
       { title: "Pharmacies garde", url: "/dashboard/admin/guard-pharmacies", icon: Pill },
       { title: "Support", url: "/dashboard/admin/support", icon: MessageSquare },
       { title: "Modération", url: "/dashboard/admin/moderation", icon: Flag },
-      { title: "Performance médecins", url: "/dashboard/admin/doctor-performance", icon: Activity },
-      { title: "Satisfaction & NPS", url: "/dashboard/admin/satisfaction", icon: Star },
+      { title: "Performance", url: "/dashboard/admin/doctor-performance", icon: Activity },
+      { title: "Satisfaction", url: "/dashboard/admin/satisfaction", icon: Star },
     ],
   },
   {
@@ -157,31 +151,41 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Plans & Tarifs", url: "/dashboard/admin/plans", icon: Crown },
       { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
-      { title: "Matrice fonctionnalités", url: "/dashboard/admin/feature-matrix", icon: Activity },
-      { title: "Overrides comptes", url: "/dashboard/admin/overrides", icon: UserCog },
+      { title: "Matrice features", url: "/dashboard/admin/feature-matrix", icon: Activity },
+      { title: "Overrides", url: "/dashboard/admin/overrides", icon: UserCog },
       { title: "Paiements", url: "/dashboard/admin/payments", icon: Banknote },
       { title: "Promotions", url: "/dashboard/admin/promotions", icon: CreditCard },
     ],
   },
   {
-    label: "Système",
+    label: "Configuration",
     items: [
-      { title: "Modules plateforme", url: "/dashboard/admin/modules", icon: Power },
-      { title: "Config Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
-      { title: "Contrôle Actions", url: "/dashboard/admin/action-gating", icon: ShieldCheck },
+      { title: "Modules", url: "/dashboard/admin/modules", icon: Power },
+      { title: "Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
+      { title: "Actions", url: "/dashboard/admin/action-gating", icon: ShieldCheck },
       { title: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
       { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
       { title: "Feature Flags", url: "/dashboard/admin/feature-flags", icon: FlagIcon },
-      { title: "Contenu & Pages", url: "/dashboard/admin/content", icon: ScrollText },
+    ],
+  },
+  {
+    label: "Contenu & Comm.",
+    items: [
+      { title: "Pages & Contenu", url: "/dashboard/admin/content", icon: ScrollText },
       { title: "Email & SMS", url: "/dashboard/admin/email-config", icon: MessageSquare },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
       { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
       { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
-      { title: "RGPD & Conformité", url: "/dashboard/admin/compliance", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "Système",
+    items: [
+      { title: "RGPD", url: "/dashboard/admin/compliance", icon: ShieldCheck },
       { title: "Journal système", url: "/dashboard/admin/logs", icon: Activity },
       { title: "Audit logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
       { title: "API & Partenaires", url: "/dashboard/admin/api-partners", icon: Key },
-      { title: "Rapports & Exports", url: "/dashboard/admin/reports", icon: FileDown },
+      { title: "Rapports", url: "/dashboard/admin/reports", icon: FileDown },
       { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
     ],
   },
@@ -198,18 +202,26 @@ const roleLabels: Record<string, string> = {
   clinic: "Clinique",
 };
 
+const SIDEBAR_PINNED_KEY = "medicare_sidebar_pinned";
+
 const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const location = useLocation();
   const items = navItems[role];
   const [moduleStates] = useAdminModules();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const [hidden, setHidden] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [pinned, setPinned] = useState(() => {
+    try { return localStorage.getItem(SIDEBAR_PINNED_KEY) === "true"; } catch { return true; }
+  });
   const [notifOpen, setNotifOpen] = useState(false);
   const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
-  // Global Cmd+K shortcut for admin spotlight
+  // Persist pin state
+  useEffect(() => {
+    try { localStorage.setItem(SIDEBAR_PINNED_KEY, String(pinned)); } catch {}
+  }, [pinned]);
+
+  // Cmd+K for admin
   useEffect(() => {
     if (role !== "admin") return;
     const handler = (e: KeyboardEvent) => {
@@ -222,9 +234,6 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     return () => window.removeEventListener("keydown", handler);
   }, [role]);
 
-  const expanded = pinned || hovered || sidebarOpen;
-
-  // Cross-role notifications count
   const { notifications: crossNotifs } = useNotifications(role);
   const unreadCount = crossNotifs.filter((n) => !n.read).length;
   const [patients] = useSharedPatients();
@@ -239,52 +248,69 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     return role.slice(0, 2).toUpperCase();
   }, [role, patients]);
 
-  /** Render admin sidebar with grouped sections */
+  const toggleSection = (label: string) => {
+    setCollapsedSections(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  // Auto-expand the section containing the active route
+  useEffect(() => {
+    if (role !== "admin") return;
+    for (const section of adminSections) {
+      if (section.items.some(i => location.pathname === i.url)) {
+        setCollapsedSections(prev => ({ ...prev, [section.label]: false }));
+        break;
+      }
+    }
+  }, [location.pathname, role]);
+
+  /** Render admin sidebar with collapsible sections */
   const renderAdminNav = () => (
     <>
-      {adminSections.map((section) => (
-        <div key={section.label} className="mb-1">
-          {/* Section label — visible only when expanded */}
-          <div className={`px-3 pt-3 pb-1 transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 h-0 overflow-hidden pt-1 pb-0"}`}>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-              {section.label}
-            </p>
+      {adminSections.map((section) => {
+        const isCollapsed = collapsedSections[section.label] ?? false;
+        const hasActive = section.items.some(i => location.pathname === i.url);
+        return (
+          <div key={section.label} className="mb-0.5">
+            <button
+              onClick={() => toggleSection(section.label)}
+              className={`w-full flex items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors rounded-md ${
+                hasActive ? "text-primary" : "text-muted-foreground/60 hover:text-muted-foreground"
+              }`}
+            >
+              <span>{section.label}</span>
+              <ChevronDown className={`h-3 w-3 transition-transform ${isCollapsed ? "-rotate-90" : ""}`} />
+            </button>
+            {!isCollapsed && section.items.map((item) => {
+              const isActive = location.pathname === item.url;
+              return (
+                <Link
+                  key={item.url}
+                  to={item.url}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors whitespace-nowrap active-scale mx-1 ${
+                    isActive
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span>{item.title}</span>
+                </Link>
+              );
+            })}
           </div>
-          {!expanded && <div className="h-px bg-border mx-2 my-1" />}
-          {section.items.map((item) => {
-            const isActive = location.pathname === item.url;
-            return (
-              <Link
-                key={item.url}
-                to={item.url}
-                onClick={() => setSidebarOpen(false)}
-                title={!expanded ? item.title : undefined}
-                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors whitespace-nowrap active-scale mx-1 ${
-                  isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
-                  {item.title}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 
-  /** Render standard sidebar nav — with feature gating for doctor + specialty labels */
+  /** Render standard sidebar nav */
   const [doctorSub] = useDoctorSubscription();
   const doctorEnabledIds = useMemo(() => {
     if (role !== "doctor") return new Set<string>();
     return new Set(getEnabledFeatures(doctorSub.activity, doctorSub.plan, doctorSub.specialty).map(f => f.id));
   }, [role, doctorSub]);
 
-  // Specialty config for sidebar label overrides & hidden items
   const specConfig = useMemo(() => {
     if (role !== "doctor") return null;
     try {
@@ -297,21 +323,13 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
     <>
       {(items || []).map((item) => {
         const isActive = location.pathname === item.url;
-        // Admin module gating — hide sidebar items for disabled modules
         if (role !== "admin" && !isSidebarUrlEnabled(item.url)) return null;
-        // Admin sidebar visibility gating — hide items disabled by admin
         if (role !== "admin" && !isSidebarItemVisible(role, item.url, role === "doctor" ? doctorSub.specialty : undefined)) return null;
-        // Specialty-specific hidden items
         if (role === "doctor" && specConfig?.sidebarHidden?.includes(item.url)) return null;
-        // Feature gating for doctor subscription
         const requiredFeature = role === "doctor" ? sidebarFeatureMap[item.url] : undefined;
         const isLocked = requiredFeature ? !doctorEnabledIds.has(requiredFeature) : false;
         const isBlurred = requiredFeature ? blurredFeatures.has(requiredFeature) : false;
-
-        // Hidden features (not blurred) - don't show in sidebar
         if (isLocked && !isBlurred) return null;
-
-        // Specialty label override
         const displayTitle = (role === "doctor" && specConfig?.sidebarLabels?.[item.url]) || item.title;
 
         return (
@@ -324,9 +342,8 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
                 toast({ title: "Fonctionnalité Pro", description: "Passez au plan supérieur pour débloquer cette fonctionnalité." });
                 return;
               }
-              setSidebarOpen(false);
+              setMobileOpen(false);
             }}
-            title={!expanded ? displayTitle : undefined}
             className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors whitespace-nowrap active-scale ${
               isLocked
                 ? "text-muted-foreground/50 cursor-not-allowed"
@@ -336,112 +353,104 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
             }`}
           >
             <item.icon className={`h-4 w-4 shrink-0 ${isLocked ? "opacity-40" : ""}`} />
-            <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
-              {displayTitle}
-            </span>
-            {isLocked && expanded && <Lock className="h-3 w-3 text-muted-foreground/50 ml-auto shrink-0" />}
+            <span>{displayTitle}</span>
+            {isLocked && <Lock className="h-3 w-3 text-muted-foreground/50 ml-auto shrink-0" />}
           </Link>
         );
       })}
     </>
   );
 
+  const sidebarWidth = pinned ? "w-56" : "w-0 lg:w-0";
+
   return (
     <div className="flex min-h-screen bg-background">
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden animate-fade-in" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Toggle button when sidebar is hidden */}
-      {hidden && (
-        <button
-          onClick={() => setHidden(false)}
-          className="fixed top-4 left-3 z-50 h-8 w-8 rounded-lg bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-sm"
-          title="Afficher la sidebar"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden animate-fade-in" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* Sidebar */}
-      {!hidden && (
-        <aside
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          className={`
-            fixed inset-y-0 left-0 z-50 border-r bg-card flex flex-col
-            transition-all duration-300 ease-in-out overflow-x-hidden
-            ${expanded ? "w-56" : "w-[52px]"}
-            lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:z-auto
-            ${sidebarOpen ? "translate-x-0 w-56" : "-translate-x-full lg:translate-x-0"}
-          `}
-        >
-          {/* Header */}
-          <div className="flex h-14 items-center border-b px-2.5 shrink-0 justify-between">
-            <Link to="/" className="flex items-center gap-2 min-w-0">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-primary">
-                <Stethoscope className="h-3.5 w-3.5 text-primary-foreground" />
-              </div>
-              <span className={`font-bold text-sm text-foreground whitespace-nowrap transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
-                Medicare
-              </span>
-            </Link>
-            <div className={`flex items-center gap-1 transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
-              <button
-                onClick={() => setHidden(true)}
-                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                title="Masquer la sidebar"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-              <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}>
-                <X className="h-4 w-4" />
-              </button>
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 border-r bg-card flex flex-col
+          transition-all duration-300 ease-in-out overflow-hidden
+          ${pinned ? "lg:w-56" : "lg:w-0 lg:border-0"}
+          ${mobileOpen ? "w-56" : "w-0 border-0"}
+          lg:sticky lg:top-0 lg:h-screen lg:z-auto
+        `}
+      >
+        {/* Header */}
+        <div className="flex h-14 items-center border-b px-2.5 shrink-0 justify-between min-w-[14rem]">
+          <Link to="/" className="flex items-center gap-2 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-primary">
+              <Stethoscope className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
-          </div>
-
-          {/* Nav */}
-          <nav className="flex-1 min-h-0 px-1.5 py-1.5 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-thin">
-            {role === "admin" ? renderAdminNav() : renderStandardNav()}
-          </nav>
-
-          {/* Footer — hide settings link for admin (already in nav) */}
-          <div className="border-t px-1.5 py-2 space-y-0.5 shrink-0 flex-shrink-0">
-            {role !== "admin" && (
-              <Link
-                to={`/dashboard/${role}/settings`}
-                title={!expanded ? "Paramètres" : undefined}
-                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap active-scale"
-              >
-                <Settings className="h-4 w-4 shrink-0" />
-                <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Paramètres</span>
-              </Link>
-            )}
-            <Link
-              to="/login"
-              title={!expanded ? "Déconnexion" : undefined}
-              onClick={() => localStorage.removeItem("userRole")}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap active-scale"
+            <span className="font-bold text-sm text-foreground whitespace-nowrap">Medicare</span>
+          </Link>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPinned(false)}
+              className="hidden lg:flex h-7 w-7 rounded-md items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              title="Replier la sidebar"
             >
-              <LogOut className="h-4 w-4 shrink-0" />
-              <span className={`transition-opacity duration-200 ${expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>Déconnexion</span>
-            </Link>
+              <PanelLeftClose className="h-3.5 w-3.5" />
+            </button>
+            <button className="lg:hidden text-muted-foreground" onClick={() => setMobileOpen(false)}>
+              <X className="h-4 w-4" />
+            </button>
           </div>
-        </aside>
-      )}
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 min-h-0 px-1.5 py-1.5 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-thin min-w-[14rem]">
+          {role === "admin" ? renderAdminNav() : renderStandardNav()}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t px-1.5 py-2 space-y-0.5 shrink-0 min-w-[14rem]">
+          {role !== "admin" && (
+            <Link
+              to={`/dashboard/${role}/settings`}
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap active-scale"
+            >
+              <Settings className="h-4 w-4 shrink-0" />
+              <span>Paramètres</span>
+            </Link>
+          )}
+          <Link
+            to="/login"
+            onClick={() => localStorage.removeItem("userRole")}
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap active-scale"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span>Déconnexion</span>
+          </Link>
+        </div>
+      </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card/80 glass-header px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <button className="lg:hidden text-muted-foreground active-scale p-1" onClick={() => setSidebarOpen(true)}>
+          <div className="flex items-center gap-2">
+            {/* Mobile menu button */}
+            <button className="lg:hidden text-muted-foreground active-scale p-1" onClick={() => setMobileOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
+            {/* Desktop: show sidebar toggle when unpinned */}
+            {!pinned && (
+              <button
+                onClick={() => setPinned(true)}
+                className="hidden lg:flex h-8 w-8 rounded-lg items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                title="Afficher la sidebar"
+              >
+                <PanelLeft className="h-4 w-4" />
+              </button>
+            )}
             <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h1>
           </div>
-           <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Admin spotlight trigger */}
             {role === "admin" && (
               <Button
@@ -496,7 +505,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           </div>
         </header>
 
-        {/* Page content — with admin module gating */}
+        {/* Page content */}
         <main className="flex-1 p-4 sm:p-6 pb-safe">
           {role !== "admin" && getDisabledModuleForRoute(location.pathname) ? (
             <div className="flex items-center justify-center min-h-[60vh] px-4">
