@@ -67,8 +67,8 @@ const AdminUsers = () => {
   const handleApprove = (id: string) => {
     const u = users.find(x => x.id === id);
     if (!u) return;
-    setUsers(prev => prev.map(x => x.id === id ? { ...x, status: "active", verified: true } : x));
-    appendLog("user_approved", "user", String(id), `Inscription de ${u.name} approuvée`);
+    setUsers(prev => prev.map(x => x.id === id ? { ...x, status: "active" as const, verified: true } : x));
+    appendLog("user_approved", "user", id, `Inscription de ${u.name} approuvée`);
     toast({ title: `${u.name} approuvé(e)` });
     if (selectedUser?.id === id) setSelectedUser(null);
   };
