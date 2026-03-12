@@ -12,6 +12,7 @@ import { requestRenewal } from "@/stores/doctorStore";
 import { mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useSharedPrescriptions, sendPrescriptionToPharmacies } from "@/stores/prescriptionsStore";
+import { useActionGating } from "@/hooks/useActionGating";
 
 const MAX_PHARMACIES = 6;
 
