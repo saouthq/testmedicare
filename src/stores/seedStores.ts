@@ -135,6 +135,9 @@ export function seedAllStores() {
 
   // ── Messaging ──
   seedMessagesIfEmpty();
+
+  // ── Admin central store ──
+  seedAdminStoreIfEmpty(adminSeedData);
 }
 
 /**
