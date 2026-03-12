@@ -256,15 +256,15 @@ const AdminSettings = () => {
               <div className="grid gap-4 sm:grid-cols-3 pt-2">
                 <div>
                   <Label className="text-xs">Timeout session (min)</Label>
-                  <Input value={sessionTimeout} onChange={e => setSessionTimeout(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.sessionTimeout} onChange={e => update({ security: { ...security, sessionTimeout: e.target.value } })} type="number" className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-xs">Longueur min MDP</Label>
-                  <Input value={passwordMinLength} onChange={e => setPasswordMinLength(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.passwordMinLength} onChange={e => update({ security: { ...security, passwordMinLength: e.target.value } })} type="number" className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-xs">Tentatives connexion max</Label>
-                  <Input value={loginAttempts} onChange={e => setLoginAttempts(e.target.value)} type="number" className="mt-1" />
+                  <Input value={security.loginAttempts} onChange={e => update({ security: { ...security, loginAttempts: e.target.value } })} type="number" className="mt-1" />
                 </div>
               </div>
               <div className="max-w-xs">
