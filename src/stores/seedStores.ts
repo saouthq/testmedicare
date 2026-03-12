@@ -32,6 +32,8 @@ import { mockDoctorPrescriptions } from "@/data/mocks/doctor";
 import { mockPharmacyStock, mockPharmacyPrescriptions } from "@/data/mocks/pharmacy";
 import { mockSecretaryBillingInvoices } from "@/data/mocks/secretary";
 import { mockLabDemands } from "@/data/mocks/lab";
+import { seedAdminStoreIfEmpty, adminStore } from "./adminStore";
+import { adminSeedData } from "@/data/mocks/adminSeed";
 
 let seeded = false;
 
@@ -50,6 +52,7 @@ const ALL_STORES = [
   reportsStore,
   threadsStore,
   messagesItemsStore,
+  adminStore,
 ];
 
 const ALL_STORAGE_KEYS = [
@@ -71,6 +74,7 @@ const ALL_STORAGE_KEYS = [
   "medicare_reports",
   "medicare_chat_threads",
   "medicare_chat_messages",
+  "medicare_admin",
   "doctor_renewal_requests",
   "doctor_profile_completion",
   "medicare_patient_profile",
@@ -131,6 +135,9 @@ export function seedAllStores() {
 
   // ── Messaging ──
   seedMessagesIfEmpty();
+
+  // ── Admin central store ──
+  seedAdminStoreIfEmpty(adminSeedData);
 }
 
 /**
