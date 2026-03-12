@@ -121,7 +121,7 @@ const AdminSettings = () => {
                 <div><Label className="text-xs">Email support</Label><Input value={supportEmail} onChange={e => update({ supportEmail: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Téléphone support</Label><Input value={supportPhone} onChange={e => update({ supportPhone: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-xs">Devise</Label><Input value="Dinar Tunisien (DT)" disabled className="mt-1 bg-muted/50" /></div>
-                <div><Label className="text-xs">Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => setMaxFileSize(e.target.value)} type="number" className="mt-1" /></div>
+                <div><Label className="text-xs">Taille max fichiers (Mo)</Label><Input value={maxFileSize} onChange={e => update({ maxFileSize: e.target.value })} type="number" className="mt-1" /></div>
                 <div>
                   <Label className="text-xs">Langue par défaut</Label>
                   <Select value={defaultLanguage} onValueChange={setDefaultLanguage}>
