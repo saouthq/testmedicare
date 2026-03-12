@@ -20,7 +20,6 @@ import { useState, useMemo } from "react";
 // Render the Configuration page with tabs that switch between the 3 feature pages.
 // We re-export the content inline to avoid double-DashboardLayout.
 
-import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
