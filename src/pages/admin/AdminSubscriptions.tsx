@@ -117,7 +117,7 @@ const AdminSubscriptions = () => {
         const event = `Plan changé de ${oldPlan} → ${np} — Motif : ${motif}`;
         appendLog("subscription_plan_changed", "subscription", subId, `${s.doctorName}: ${event}`);
         toast({ title: `Plan changé → ${np}`, description: s.doctorName });
-        return { ...s, plan: np as any, monthlyPrice: PLAN_PRICES[np] || s.monthlyPrice, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event }] };
+        return { ...s, plan: np, monthlyPrice: PLAN_PRICES[np] || s.monthlyPrice, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event }] };
       }
 
       if (type === "suspend") {
