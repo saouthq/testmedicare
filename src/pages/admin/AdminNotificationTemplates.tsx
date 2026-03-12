@@ -1,7 +1,6 @@
 /**
- * Admin Notification Templates — CRUD with create, edit, preview, test send, duplicate, delete
- * Variables auto-detection, channel filter, audit trail
- * TODO BACKEND: Replace with real API
+ * Admin Notification Templates — CRUD with preview, test send, duplicate
+ * Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
@@ -18,36 +17,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
+import { useAdminNotificationTemplates } from "@/stores/adminStore";
+import type { AdminNotificationTemplate } from "@/types/admin";
 
-interface NotifTemplate {
-  id: string;
-  name: string;
-  channel: string;
-  subject: string;
-  body: string;
-  variables: string[];
-  active: boolean;
-  lastModified: string;
-  usageCount: number;
-}
-
-const initialTemplates: NotifTemplate[] = [
-  { id: "tpl-1", name: "RDV confirmé", channel: "sms", subject: "", body: "Votre RDV avec {{doctor_name}} est confirmé le {{date}} à {{time}}. — Medicare.tn", variables: ["doctor_name", "date", "time"], active: true, lastModified: "08 Mar 2026", usageCount: 4521 },
-  { id: "tpl-2", name: "Rappel RDV", channel: "sms", subject: "", body: "Rappel : RDV demain à {{time}} avec {{doctor_name}}. Adresse : {{address}}.", variables: ["doctor_name", "time", "address"], active: true, lastModified: "07 Mar 2026", usageCount: 8900 },
-  { id: "tpl-3", name: "Validation professionnelle", channel: "email", subject: "Votre compte Medicare a été validé", body: "Bonjour {{name}},\n\nVotre compte professionnel Medicare a été validé avec succès.\n\nVous pouvez maintenant accéder à votre espace et commencer à gérer vos rendez-vous.\n\nCordialement,\nL'équipe Medicare.tn", variables: ["name"], active: true, lastModified: "05 Mar 2026", usageCount: 342 },
-  { id: "tpl-4", name: "Résultat disponible", channel: "sms", subject: "", body: "Vos résultats d'analyses sont disponibles sur Medicare.tn. Connectez-vous pour les consulter.", variables: [], active: true, lastModified: "01 Mar 2026", usageCount: 1200 },
-  { id: "tpl-5", name: "Bienvenue patient", channel: "email", subject: "Bienvenue sur Medicare", body: "Bonjour {{name}},\n\nBienvenue sur Medicare.tn !\nPrenez votre premier RDV en quelques clics.\n\nCordialement,\nL'équipe Medicare", variables: ["name"], active: true, lastModified: "28 Fév 2026", usageCount: 8500 },
-  { id: "tpl-6", name: "OTP Connexion", channel: "sms", subject: "", body: "Votre code de connexion Medicare est : {{code}}. Valable 5 minutes.", variables: ["code"], active: true, lastModified: "01 Mar 2026", usageCount: 15000 },
-  { id: "tpl-7", name: "Ordonnance disponible", channel: "push", subject: "Ordonnance prête", body: "Votre ordonnance de {{doctor_name}} est disponible dans votre espace.", variables: ["doctor_name"], active: true, lastModified: "06 Mar 2026", usageCount: 2100 },
-  { id: "tpl-8", name: "Paiement reçu", channel: "email", subject: "Confirmation de paiement", body: "Bonjour {{name}},\n\nNous confirmons la réception de votre paiement de {{amount}} DT pour {{service}}.\n\nRéférence : {{reference}}\n\nCordialement,\nMedicare.tn", variables: ["name", "amount", "service", "reference"], active: true, lastModified: "05 Mar 2026", usageCount: 1800 },
-  { id: "tpl-9", name: "RDV annulé", channel: "sms", subject: "", body: "Votre RDV du {{date}} avec {{doctor_name}} a été annulé. Vous pouvez reprendre RDV sur Medicare.tn", variables: ["date", "doctor_name"], active: false, lastModified: "01 Mar 2026", usageCount: 450 },
-];
+type NotifTemplate = AdminNotificationTemplate;
 
 const channelIcons: Record<string, any> = { sms: Smartphone, email: Mail, push: Bell };
 const channelColors: Record<string, string> = { sms: "bg-accent/10 text-accent", email: "bg-primary/10 text-primary", push: "bg-warning/10 text-warning" };
 
 const AdminNotificationTemplates = () => {
-  const [templates, setTemplates] = useState(initialTemplates);
+  const { templates, setTemplates } = useAdminNotificationTemplates();
   const [channelFilter, setChannelFilter] = useState("all");
   const [search, setSearch] = useState("");
   // Edit

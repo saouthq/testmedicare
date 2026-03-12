@@ -1,6 +1,6 @@
 /**
- * AdminContentPages — Gestion du contenu public (pages légales, FAQ, bannières, annonces)
- * TODO BACKEND: Replace with real API
+ * AdminContentPages — Gestion du contenu public
+ * Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
@@ -14,40 +14,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
-
-interface ContentPage {
-  id: string;
-  title: string;
-  type: "legal" | "faq" | "announcement" | "banner";
-  status: "published" | "draft";
-  lastModified: string;
-  content: string;
-}
-
-const initialPages: ContentPage[] = [
-  { id: "cp-1", title: "Conditions Générales d'Utilisation", type: "legal", status: "published", lastModified: "2026-02-15", content: "Les présentes CGU régissent l'utilisation de la plateforme Medicare..." },
-  { id: "cp-2", title: "Politique de Confidentialité", type: "legal", status: "published", lastModified: "2026-02-10", content: "Medicare s'engage à protéger la vie privée des utilisateurs..." },
-  { id: "cp-3", title: "Politique de Cookies", type: "legal", status: "published", lastModified: "2026-01-20", content: "Nous utilisons des cookies pour améliorer votre expérience..." },
-  { id: "cp-4", title: "Comment prendre un rendez-vous ?", type: "faq", status: "published", lastModified: "2026-03-01", content: "Recherchez un médecin, choisissez un créneau et confirmez..." },
-  { id: "cp-5", title: "Comment annuler un rendez-vous ?", type: "faq", status: "published", lastModified: "2026-03-01", content: "Allez dans Mes RDV, cliquez sur le RDV et sélectionnez Annuler..." },
-  { id: "cp-6", title: "Maintenance prévue le 15 mars", type: "announcement", status: "draft", lastModified: "2026-03-08", content: "Une maintenance est prévue le 15 mars de 2h à 4h du matin." },
-  { id: "cp-7", title: "Bannière promo : -20% premier mois", type: "banner", status: "published", lastModified: "2026-03-05", content: "Offre spéciale : -20% sur votre premier mois d'abonnement Pro !" },
-];
+import { useAdminContentPages } from "@/stores/adminStore";
+import type { AdminContentPage } from "@/types/admin";
 
 const typeLabels: Record<string, string> = { legal: "Page légale", faq: "FAQ", announcement: "Annonce", banner: "Bannière" };
 const typeColors: Record<string, string> = { legal: "bg-primary/10 text-primary", faq: "bg-accent/10 text-accent", announcement: "bg-warning/10 text-warning", banner: "bg-muted text-muted-foreground" };
 const typeIcons: Record<string, any> = { legal: Shield, faq: HelpCircle, announcement: Megaphone, banner: Globe };
 
 const AdminContentPages = () => {
-  const [pages, setPages] = useState(initialPages);
+  const { pages, setPages } = useAdminContentPages();
   const [filterType, setFilterType] = useState<string>("all");
-  const [editing, setEditing] = useState<ContentPage | null>(null);
+  const [editing, setEditing] = useState<AdminContentPage | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
   const filtered = filterType === "all" ? pages : pages.filter(p => p.type === filterType);
 
-  const openEdit = (page: ContentPage) => {
+  const openEdit = (page: AdminContentPage) => {
     setEditing(page);
     setEditTitle(page.title);
     setEditContent(page.content);
@@ -73,7 +56,7 @@ const AdminContentPages = () => {
   };
 
   const addPage = () => {
-    const newPage: ContentPage = {
+    const newPage: AdminContentPage = {
       id: `cp-${Date.now()}`,
       title: "Nouveau contenu",
       type: "faq",

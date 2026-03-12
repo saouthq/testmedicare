@@ -1,6 +1,6 @@
 /**
  * Admin IAM — Gestion des comptes admin + sous-rôles + matrice permissions
- * TODO BACKEND: Replace with real RBAC API
+ * Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
@@ -16,9 +16,8 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { appendLog } from "@/services/admin/adminAuditService";
 import MotifDialog from "@/components/admin/MotifDialog";
-
-/** Sub-role definitions */
-export type AdminSubRole = "superadmin" | "support" | "verification" | "finance" | "moderation" | "compliance";
+import { useAdminIAM } from "@/stores/adminStore";
+import type { AdminSubRole, AdminAccount } from "@/types/admin";
 
 const SUB_ROLES: { key: AdminSubRole; label: string; color: string }[] = [
   { key: "superadmin", label: "Super Admin", color: "bg-destructive/10 text-destructive" },
@@ -29,7 +28,6 @@ const SUB_ROLES: { key: AdminSubRole; label: string; color: string }[] = [
   { key: "compliance", label: "Compliance", color: "bg-muted text-muted-foreground" },
 ];
 
-/** Permissions matrix */
 const PERMISSIONS = [
   { action: "Voir dashboard", superadmin: true, support: true, verification: true, finance: true, moderation: true, compliance: true },
   { action: "Gérer utilisateurs", superadmin: true, support: true, verification: false, finance: false, moderation: false, compliance: true },
@@ -49,29 +47,11 @@ const PERMISSIONS = [
   { action: "Référentiels", superadmin: true, support: false, verification: true, finance: false, moderation: false, compliance: true },
 ];
 
-interface AdminAccount {
-  id: string;
-  name: string;
-  email: string;
-  role: AdminSubRole;
-  status: "active" | "suspended";
-  lastLogin: string;
-  createdAt: string;
-}
-
-const initialAdmins: AdminAccount[] = [
-  { id: "adm-1", name: "Mohamed Karoui", email: "m.karoui@medicare.tn", role: "superadmin", status: "active", lastLogin: "09 Mar 2026, 08:30", createdAt: "Jan 2025" },
-  { id: "adm-2", name: "Sonia Trabelsi", email: "s.trabelsi@medicare.tn", role: "support", status: "active", lastLogin: "08 Mar 2026, 17:45", createdAt: "Mar 2025" },
-  { id: "adm-3", name: "Karim Bouzid", email: "k.bouzid@medicare.tn", role: "verification", status: "active", lastLogin: "09 Mar 2026, 09:15", createdAt: "Jun 2025" },
-  { id: "adm-4", name: "Nadia Hamdi", email: "n.hamdi@medicare.tn", role: "finance", status: "active", lastLogin: "07 Mar 2026, 14:20", createdAt: "Sep 2025" },
-  { id: "adm-5", name: "Ali Sfar", email: "a.sfar@medicare.tn", role: "moderation", status: "suspended", lastLogin: "01 Mar 2026, 11:00", createdAt: "Nov 2025" },
-];
-
 type Tab = "accounts" | "permissions";
 
 const AdminIAM = () => {
   const [tab, setTab] = useState<Tab>("accounts");
-  const [admins, setAdmins] = useState<AdminAccount[]>(initialAdmins);
+  const { accounts: admins, setAccounts: setAdmins } = useAdminIAM();
   const [editOpen, setEditOpen] = useState(false);
   const [editAdmin, setEditAdmin] = useState<AdminAccount | null>(null);
   const [detailAdmin, setDetailAdmin] = useState<AdminAccount | null>(null);

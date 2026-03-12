@@ -1,13 +1,14 @@
 /**
  * Admin Users — Full user management with bulk actions, CSV export, motif-required sensitive actions
- * TODO BACKEND: Replace with real API calls
+ * Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
 import { Search, CheckCircle, XCircle, Eye, Ban, UserCheck, Mail, Phone, Calendar, Shield, ArrowUpDown, X, RotateCcw, KeyRound, Download, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockAdminUsers } from "@/data/mockData";
+import { useAdminUsers } from "@/stores/adminStore";
+import type { AdminUser } from "@/types/admin";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
@@ -21,17 +22,17 @@ const roleColors: Record<string, string> = { doctor: "bg-primary/10 text-primary
 const statusColors: Record<string, string> = { active: "bg-accent/10 text-accent", pending: "bg-warning/10 text-warning", suspended: "bg-destructive/10 text-destructive" };
 const statusLabels: Record<string, string> = { active: "Actif", pending: "En attente", suspended: "Suspendu" };
 
-type MotifAction = { type: "suspend" | "reactivate" | "reject" | "reset_password" | "force_disconnect" | "bulk_suspend"; userId: number; userName: string } | null;
+type MotifAction = { type: "suspend" | "reactivate" | "reject" | "reset_password" | "force_disconnect" | "bulk_suspend"; userId: string; userName: string } | null;
 
 const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserFilter>("all");
-  const [users, setUsers] = useState(mockAdminUsers);
-  const [selectedUser, setSelectedUser] = useState<typeof mockAdminUsers[0] | null>(null);
+  const { users, setUsers } = useAdminUsers();
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "joined">("joined");
   const [motifAction, setMotifAction] = useState<MotifAction>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => users
     .filter(u => {
@@ -63,11 +64,11 @@ const AdminUsers = () => {
     }
   };
 
-  const handleApprove = (id: number) => {
+  const handleApprove = (id: string) => {
     const u = users.find(x => x.id === id);
     if (!u) return;
-    setUsers(prev => prev.map(x => x.id === id ? { ...x, status: "active", verified: true } : x));
-    appendLog("user_approved", "user", String(id), `Inscription de ${u.name} approuvée`);
+    setUsers(prev => prev.map(x => x.id === id ? { ...x, status: "active" as const, verified: true } : x));
+    appendLog("user_approved", "user", id, `Inscription de ${u.name} approuvée`);
     toast({ title: `${u.name} approuvé(e)` });
     if (selectedUser?.id === id) setSelectedUser(null);
   };
@@ -77,27 +78,27 @@ const AdminUsers = () => {
     const { type, userId, userName } = motifAction;
 
     if (type === "suspend") {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "suspended" } : u));
-      appendLog("user_suspended", "user", String(userId), `${userName} suspendu — Motif : ${motif}`);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "suspended" as const } : u));
+      appendLog("user_suspended", "user", userId, `${userName} suspendu — Motif : ${motif}`);
       toast({ title: `${userName} suspendu` });
     } else if (type === "reactivate") {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "active" } : u));
-      appendLog("user_reactivated", "user", String(userId), `${userName} réactivé — Motif : ${motif}`);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "active" as const } : u));
+      appendLog("user_reactivated", "user", userId, `${userName} réactivé — Motif : ${motif}`);
       toast({ title: `${userName} réactivé` });
     } else if (type === "reject") {
       setUsers(prev => prev.filter(u => u.id !== userId));
-      appendLog("user_rejected", "user", String(userId), `Inscription de ${userName} refusée — Motif : ${motif}`);
+      appendLog("user_rejected", "user", userId, `Inscription de ${userName} refusée — Motif : ${motif}`);
       toast({ title: `${userName} refusé(e)`, variant: "destructive" });
       if (selectedUser?.id === userId) { setSelectedUser(null); setDrawerOpen(false); }
     } else if (type === "reset_password") {
-      appendLog("password_reset", "user", String(userId), `Réinitialisation MDP de ${userName} — Motif : ${motif}`);
+      appendLog("password_reset", "user", userId, `Réinitialisation MDP de ${userName} — Motif : ${motif}`);
       toast({ title: `Lien de réinitialisation envoyé à ${userName}` });
     } else if (type === "force_disconnect") {
-      appendLog("force_disconnect", "user", String(userId), `Déconnexion forcée de ${userName} — Motif : ${motif}`);
+      appendLog("force_disconnect", "user", userId, `Déconnexion forcée de ${userName} — Motif : ${motif}`);
       toast({ title: `${userName} déconnecté de force` });
     } else if (type === "bulk_suspend") {
       const ids = Array.from(selectedIds);
-      setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: "suspended" } : u));
+      setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: "suspended" as const } : u));
       appendLog("bulk_suspend", "user", ids.join(","), `Suspension en masse de ${ids.length} utilisateurs — Motif : ${motif}`);
       toast({ title: `${ids.length} utilisateur(s) suspendu(s)` });
       setSelectedIds(new Set());
@@ -118,7 +119,7 @@ const AdminUsers = () => {
     toast({ title: "Export CSV téléchargé", description: `${filtered.length} utilisateur(s)` });
   };
 
-  const openUserDrawer = (u: typeof mockAdminUsers[0]) => {
+  const openUserDrawer = (u: AdminUser) => {
     setSelectedUser(u);
     setDrawerOpen(true);
   };

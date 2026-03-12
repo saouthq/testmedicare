@@ -1,6 +1,6 @@
 /**
  * Admin Payments — Stats, filters, detail drawer, CSV export, refund with motif
- * TODO BACKEND: Replace with real API
+ * Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
@@ -11,41 +11,19 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
-
-interface Payment {
-  id: string;
-  type: "subscription" | "teleconsult";
-  amount: number;
-  currency: string;
-  status: string;
-  createdAt: string;
-  payerName: string;
-  payerEmail: string;
-  method: string;
-  reference: string;
-}
-
-const initialPayments: Payment[] = [
-  { id: "pay-1", type: "subscription", amount: 129, currency: "DT", status: "paid", createdAt: "2026-03-08", payerName: "Dr. Ahmed Bouazizi", payerEmail: "ahmed@email.tn", method: "Carte bancaire", reference: "SUB-20260308-001" },
-  { id: "pay-2", type: "teleconsult", amount: 35, currency: "DT", status: "paid", createdAt: "2026-03-07", payerName: "Fatma Trabelsi", payerEmail: "fatma@email.tn", method: "Carte bancaire", reference: "TC-20260307-042" },
-  { id: "pay-3", type: "subscription", amount: 49, currency: "DT", status: "pending", createdAt: "2026-03-06", payerName: "Dr. Sonia Gharbi", payerEmail: "sonia@email.tn", method: "Virement", reference: "SUB-20260306-003" },
-  { id: "pay-4", type: "teleconsult", amount: 60, currency: "DT", status: "failed", createdAt: "2026-03-05", payerName: "Ali Ben Salem", payerEmail: "ali@email.tn", method: "Carte bancaire", reference: "TC-20260305-018" },
-  { id: "pay-5", type: "subscription", amount: 129, currency: "DT", status: "refunded", createdAt: "2026-03-03", payerName: "Dr. Khaled Hammami", payerEmail: "khaled@email.tn", method: "Carte bancaire", reference: "SUB-20260303-002" },
-  { id: "pay-6", type: "teleconsult", amount: 35, currency: "DT", status: "paid", createdAt: "2026-03-02", payerName: "Sarra Mejri", payerEmail: "sarra@email.tn", method: "Carte bancaire", reference: "TC-20260302-007" },
-  { id: "pay-7", type: "subscription", amount: 129, currency: "DT", status: "paid", createdAt: "2026-03-01", payerName: "Dr. Nadia Hamdi", payerEmail: "nadia@email.tn", method: "Carte bancaire", reference: "SUB-20260301-005" },
-  { id: "pay-8", type: "teleconsult", amount: 45, currency: "DT", status: "paid", createdAt: "2026-02-28", payerName: "Mohamed Kaabi", payerEmail: "mohamed@email.tn", method: "Carte bancaire", reference: "TC-20260228-033" },
-];
+import { useAdminPayments } from "@/stores/adminStore";
+import type { AdminPayment } from "@/types/admin";
 
 const statusLabels: Record<string, string> = { paid: "Payé", pending: "En attente", failed: "Échoué", refunded: "Remboursé" };
 const statusColors: Record<string, string> = { paid: "bg-accent/10 text-accent", pending: "bg-warning/10 text-warning", failed: "bg-destructive/10 text-destructive", refunded: "bg-muted text-muted-foreground" };
 
 const AdminPayments = () => {
   const [search, setSearch] = useState("");
-  const [payments, setPayments] = useState<Payment[]>(initialPayments);
+  const { payments, setPayments } = useAdminPayments();
   const [typeFilter, setTypeFilter] = useState<"all" | "subscription" | "teleconsult">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "pending" | "failed" | "refunded">("all");
   const [refundTarget, setRefundTarget] = useState<string | null>(null);
-  const [detailPayment, setDetailPayment] = useState<Payment | null>(null);
+  const [detailPayment, setDetailPayment] = useState<AdminPayment | null>(null);
 
   const filtered = useMemo(() => payments.filter(p => {
     if (typeFilter !== "all" && p.type !== typeFilter) return false;
