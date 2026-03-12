@@ -92,6 +92,11 @@ const PatientPrescriptions = () => {
   };
 
   const handleSendToPharmacies = (id: string) => {
+    if (!isEnabled("patient.send_to_pharmacy")) {
+      toast({ title: "Action désactivée", description: "L’envoi vers pharmacie est désactivé par l’administrateur." });
+      return;
+    }
+
     const p = mergedPrescriptions.find((rx) => rx.id === id);
     if (!p) return;
 
