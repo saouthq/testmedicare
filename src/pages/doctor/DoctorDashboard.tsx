@@ -20,7 +20,7 @@ import {
   handleRenewal, getProfileCompletionPercent,
 } from "@/stores/doctorStore";
 import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
-import { useSharedPatients } from "@/stores/sharedPatientsStore";
+import { useActionGating } from "@/hooks/useActionGating";
 
 const CURRENT_DOCTOR = "Dr. Bouazizi";
 
@@ -33,6 +33,7 @@ const DoctorDashboard = () => {
 
   const [sub] = useDoctorSubscription();
   const config = getSpecialtyConfig(sub.activity, sub.specialty);
+  const { isEnabled } = useActionGating();
   const isEssentiel = sub.plan === "essentiel";
   const proPlan = plansByActivity[sub.activity]?.find(p => p.id === "pro");
   const completionPercent = getProfileCompletionPercent(profileCompletion);
@@ -166,7 +167,7 @@ const DoctorDashboard = () => {
         </div>
 
         {/* Renewal requests */}
-        {pendingRenewals.length > 0 && (
+        {pendingRenewals.length > 0 && isEnabled("doctor.handle_renewal") && (
           <div className="rounded-xl border bg-card shadow-card p-4">
             <div className="flex items-center gap-2 mb-3">
               <RotateCcw className="h-4 w-4 text-primary" />
@@ -183,11 +184,11 @@ const DoctorDashboard = () => {
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     <Button size="sm" className="h-7 text-xs gradient-primary text-primary-foreground"
-                      onClick={() => { handleRenewal(req.id, "approved"); toast({ title: "Renouvellement accepté", description: `Ordonnance renouvelée pour ${req.patientName}.` }); }}>
+                      onClick={() => { const ok = handleRenewal(req.id, "approved"); if (!ok) { toast({ title: "Action désactivée" }); return; } toast({ title: "Renouvellement accepté", description: `Ordonnance renouvelée pour ${req.patientName}.` }); }}>
                       <CheckCircle2 className="h-3 w-3 mr-1" />Accepter
                     </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs"
-                      onClick={() => { handleRenewal(req.id, "rejected"); toast({ title: "Refusé", description: `Demande de ${req.patientName} refusée.` }); }}>
+                      onClick={() => { const ok = handleRenewal(req.id, "rejected"); if (!ok) { toast({ title: "Action désactivée" }); return; } toast({ title: "Refusé", description: `Demande de ${req.patientName} refusée.` }); }}>
                       <X className="h-3 w-3 mr-1" />Refuser
                     </Button>
                   </div>

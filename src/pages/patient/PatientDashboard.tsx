@@ -20,7 +20,7 @@ import { useHealth } from "@/stores/healthStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useFavoriteDoctors } from "@/stores/favoriteDoctorsStore";
 import type { SharedAppointment } from "@/types/appointment";
-import type { HealthDocument } from "@/types";
+import { useActionGating } from "@/hooks/useActionGating";
 
 const isTeleconsult = (a: SharedAppointment) => a.type === "Téléconsultation" || a.teleconsultation;
 
@@ -34,6 +34,7 @@ const PatientDashboard = () => {
   const [health] = useHealth();
   const [doctorRx] = useDoctorPrescriptions();
   const [favoriteDoctors] = useFavoriteDoctors();
+  const { isEnabled } = useActionGating();
 
   const PATIENT_ID = 1;
   const appointments = useMemo(() => 
@@ -96,13 +97,24 @@ const PatientDashboard = () => {
   };
 
   const handleRenewal = (prescId: string) => {
+    if (!isEnabled("patient.request_renewal")) {
+      toast({ title: "Action désactivée", description: "Le renouvellement d’ordonnance est désactivé par l’administrateur." });
+      return;
+    }
+
     const prescription = recentPrescriptions.find(p => p.id === prescId);
-    requestRenewal({
+    const renewalId = requestRenewal({
       patientName: `${profile.firstName} ${profile.lastName}`,
       patientAvatar: `${profile.firstName[0]}${profile.lastName[0]}`,
       prescriptionId: prescId,
       items: prescription ? [prescription.id] : [prescId],
     });
+
+    if (!renewalId) {
+      toast({ title: "Action désactivée", description: "Le renouvellement d’ordonnance est désactivé par l’administrateur." });
+      return;
+    }
+
     toast({ title: "Demande envoyée", description: "Votre demande de renouvellement a été envoyée au médecin." });
   };
 
@@ -221,9 +233,11 @@ const PatientDashboard = () => {
                         </div>
                       </Link>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <Button variant="ghost" size="sm" className="h-7 text-[11px] text-primary" onClick={() => handleRenewal(p.id)}>
-                          <RefreshCw className="h-3 w-3 mr-1" />Renouveler
-                        </Button>
+                        {isEnabled("patient.request_renewal") && (
+                          <Button variant="ghost" size="sm" className="h-7 text-[11px] text-primary" onClick={() => handleRenewal(p.id)}>
+                            <RefreshCw className="h-3 w-3 mr-1" />Renouveler
+                          </Button>
+                        )}
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>

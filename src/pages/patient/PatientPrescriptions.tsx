@@ -12,6 +12,7 @@ import { requestRenewal } from "@/stores/doctorStore";
 import { mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useSharedPrescriptions, sendPrescriptionToPharmacies } from "@/stores/prescriptionsStore";
+import { useActionGating } from "@/hooks/useActionGating";
 
 const MAX_PHARMACIES = 6;
 
@@ -25,6 +26,7 @@ const statusConfig: Record<PharmacyResponse["status"], { label: string; class: s
 const PatientPrescriptions = () => {
   const [filter, setFilter] = useState("all");
   const [doctorRx] = useDoctorPrescriptions();
+  const { isEnabled } = useActionGating();
   
   // Build prescriptions from doctor prescriptions store
   const prescriptions: PrescriptionWithPharmacies[] = doctorRx.map(rx => ({
@@ -90,6 +92,11 @@ const PatientPrescriptions = () => {
   };
 
   const handleSendToPharmacies = (id: string) => {
+    if (!isEnabled("patient.send_to_pharmacy")) {
+      toast({ title: "Action désactivée", description: "L’envoi vers pharmacie est désactivé par l’administrateur." });
+      return;
+    }
+
     const p = mergedPrescriptions.find((rx) => rx.id === id);
     if (!p) return;
 
@@ -181,19 +188,23 @@ const PatientPrescriptions = () => {
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Aperçu ordonnance (mock)" })}><Eye className="h-4 w-4 mr-1" />Voir le détail</Button>
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Téléchargement PDF (mock)" })}><Download className="h-4 w-4 mr-1" />Télécharger PDF</Button>
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Impression (mock)" })}><Printer className="h-4 w-4 mr-1" />Imprimer</Button>
-                    {p.status === "active" && canSendMore(p) && sendingToPharmacy !== p.id && (
+                    {p.status === "active" && canSendMore(p) && sendingToPharmacy !== p.id && isEnabled("patient.send_to_pharmacy") && (
                       <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => setSendingToPharmacy(p.id)}>
                         <Send className="h-4 w-4 mr-1" />Envoyer à une pharmacie
                       </Button>
                     )}
-                    {p.status === "active" && (
+                    {p.status === "active" && isEnabled("patient.request_renewal") && (
                       <Button variant="outline" size="sm" onClick={() => {
-                        requestRenewal({
+                        const renewalId = requestRenewal({
                           patientName: "Amine Ben Ali",
                           patientAvatar: "AB",
                           prescriptionId: p.id,
                           items: p.items,
                         });
+                        if (!renewalId) {
+                          toast({ title: "Action désactivée", description: "Le renouvellement est désactivé par l’administrateur." });
+                          return;
+                        }
                         toast({ title: "Demande envoyée", description: `Demande de renouvellement de ${p.id} envoyée à ${p.doctor}. Visible dans son dashboard.` });
                       }}>
                         <RotateCcw className="h-4 w-4 mr-1" />Demander un renouvellement
@@ -237,7 +248,7 @@ const PatientPrescriptions = () => {
                   )}
 
                   {/* Pharmacy search/selection panel */}
-                  {sendingToPharmacy === p.id && (
+                  {sendingToPharmacy === p.id && isEnabled("patient.send_to_pharmacy") && (
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">

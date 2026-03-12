@@ -15,6 +15,7 @@ import type { Prescription } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { isModuleEnabled } from "@/stores/adminModulesStore";
+import { useActionGating } from "@/hooks/useActionGating";
 
 /** Check if pharmacy send feature is enabled (module + feature flag) */
 function isPharmacySendEnabled(): boolean {
@@ -50,6 +51,8 @@ function StatPill({ label, value }: { label: string; value: string }) {
 /* ── Toolbar ── */
 export function PrescriptionsToolbar() {
   const { filter, setFilter, q, setQ } = usePrescriptions();
+  const { isEnabled } = useActionGating();
+  const canSendToPharmacy = isEnabled("doctor.send_prescription_pharmacy");
   const filters: Array<{ key: PrescriptionFilter; label: string }> = [
     { key: "all", label: "Toutes" },
     { key: "active", label: "Actives" },
@@ -74,7 +77,7 @@ export function PrescriptionsToolbar() {
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher patient, ordonnance…" className="h-9 pl-9 text-sm" />
           </div>
-          <PrescriptionsActionButton />
+          {canSendToPharmacy && <PrescriptionsActionButton />}
         </div>
       </div>
     </div>
@@ -135,6 +138,9 @@ export function PrescriptionsList() {
 
 function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void }) {
   const { handleResend, handlePrint } = usePrescriptions();
+  const { isEnabled } = useActionGating();
+  const canSendToPharmacy = isEnabled("doctor.send_prescription_pharmacy");
+
   return (
     <div className="rounded-xl border bg-card shadow-card hover:shadow-card-hover transition-all p-3 sm:p-4 cursor-pointer" onClick={onOpen}>
       <div className="flex items-center justify-between gap-3">
@@ -161,7 +167,7 @@ function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void 
           <Button variant="outline" size="sm" className="text-xs" onClick={() => handlePrint(rx.id)}>
             <Printer className="h-3.5 w-3.5" />
           </Button>
-          {!rx.sent && isPharmacySendEnabled() && (
+          {!rx.sent && canSendToPharmacy && isPharmacySendEnabled() && (
             <Button variant="outline" size="sm" className="text-xs" onClick={() => handleResend(rx.id)}>
               <Send className="h-3.5 w-3.5" />
             </Button>
@@ -175,6 +181,8 @@ function PrescriptionRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void 
 /* ── Detail Sheet ── */
 export function PrescriptionDetail() {
   const { selected, detailOpen, setDetailOpen, handlePrint, handleResend, handleDuplicate } = usePrescriptions();
+  const { isEnabled } = useActionGating();
+  const canSendToPharmacy = isEnabled("doctor.send_prescription_pharmacy");
 
   return (
     <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
@@ -228,7 +236,7 @@ export function PrescriptionDetail() {
                 <Button variant="outline" size="sm" className="text-xs" onClick={() => handleDuplicate(selected.id)}>
                   <Copy className="mr-1 h-3.5 w-3.5" /> Dupliquer
                 </Button>
-                {!selected.sent && isPharmacySendEnabled() && (
+                {!selected.sent && canSendToPharmacy && isPharmacySendEnabled() && (
                   <Button size="sm" className="text-xs bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleResend(selected.id)}>
                     <Send className="mr-1 h-3.5 w-3.5" /> Envoyer à la pharmacie
                   </Button>
