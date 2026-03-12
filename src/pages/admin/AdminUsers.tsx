@@ -273,6 +273,11 @@ const AdminUsers = () => {
                     </td>
                   </tr>
                 ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={7}>
+                    <EmptyState icon={Inbox} title="Aucun utilisateur" description="Aucun résultat pour cette recherche ou ce filtre." compact />
+                  </td></tr>
+                )}
               </tbody>
             </table>
           </div>
