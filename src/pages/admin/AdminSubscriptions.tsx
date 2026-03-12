@@ -129,7 +129,7 @@ const AdminSubscriptions = () => {
       if (type === "reactivate") {
         appendLog("subscription_reactivated", "subscription", subId, `${s.doctorName} réactivé — ${motif}`);
         toast({ title: "Abonnement réactivé", description: s.doctorName });
-        return { ...s, status: "active" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Réactivé — ${motif}` }] };
+        return { ...s, status: "active" as SubscriptionStatus, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Réactivé — ${motif}` }] };
       }
 
       if (type === "mark_unpaid") {
