@@ -26,6 +26,7 @@ const statusConfig: Record<PharmacyResponse["status"], { label: string; class: s
 const PatientPrescriptions = () => {
   const [filter, setFilter] = useState("all");
   const [doctorRx] = useDoctorPrescriptions();
+  const { isEnabled } = useActionGating();
   
   // Build prescriptions from doctor prescriptions store
   const prescriptions: PrescriptionWithPharmacies[] = doctorRx.map(rx => ({
