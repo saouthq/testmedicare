@@ -124,13 +124,12 @@ const adminSections: NavSection[] = [
     ],
   },
   {
-    label: "Gouvernance",
+    label: "Utilisateurs",
     items: [
-      { title: "Gestion Admin", url: "/dashboard/admin/iam", icon: ShieldCheck },
       { title: "Utilisateurs", url: "/dashboard/admin/users", icon: Users },
       { title: "Organisations", url: "/dashboard/admin/organizations", icon: Building2 },
       { title: "Validations KYC", url: "/dashboard/admin/verifications", icon: ShieldCheck },
-      { title: "Suivi onboarding", url: "/dashboard/admin/onboarding", icon: Activity },
+      { title: "Gestion Admin (IAM)", url: "/dashboard/admin/iam", icon: ShieldCheck },
     ],
   },
   {
@@ -138,16 +137,14 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Supervision RDV", url: "/dashboard/admin/appointments", icon: Calendar },
       { title: "Centre de résolution", url: "/dashboard/admin/resolution", icon: Gavel },
-      { title: "Pharmacies garde", url: "/dashboard/admin/guard-pharmacies", icon: Pill },
+      { title: "Pharmacies de garde", url: "/dashboard/admin/guard-pharmacies", icon: Pill },
     ],
   },
   {
-    label: "Finance & Offres",
+    label: "Finance",
     items: [
       { title: "Plans & Tarifs", url: "/dashboard/admin/plans", icon: Crown },
       { title: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
-      { title: "Matrice features", url: "/dashboard/admin/feature-matrix", icon: Activity },
-      { title: "Overrides", url: "/dashboard/admin/overrides", icon: UserCog },
       { title: "Paiements", url: "/dashboard/admin/payments", icon: Banknote },
       { title: "Promotions", url: "/dashboard/admin/promotions", icon: CreditCard },
     ],
@@ -155,29 +152,26 @@ const adminSections: NavSection[] = [
   {
     label: "Configuration",
     items: [
-      { title: "Configuration", url: "/dashboard/admin/configuration", icon: Power },
-      { title: "Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
-      { title: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
+      { title: "Fonctionnalités", url: "/dashboard/admin/configuration", icon: Power },
+      { title: "Spécialités & Référentiels", url: "/dashboard/admin/specialties", icon: Stethoscope },
       { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
+      { title: "Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
     ],
   },
   {
     label: "Contenu & Comm.",
     items: [
+      { title: "Notifications & Emails", url: "/dashboard/admin/email-config", icon: MessageSquare },
       { title: "Pages & Contenu", url: "/dashboard/admin/content", icon: ScrollText },
-      { title: "Email & SMS", url: "/dashboard/admin/email-config", icon: MessageSquare },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
-      { title: "Templates notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
-      { title: "Référentiels", url: "/dashboard/admin/reference-data", icon: ClipboardList },
     ],
   },
   {
     label: "Système",
     items: [
-      { title: "RGPD", url: "/dashboard/admin/compliance", icon: ShieldCheck },
+      { title: "RGPD & Conformité", url: "/dashboard/admin/compliance", icon: ShieldCheck },
       { title: "Journaux", url: "/dashboard/admin/logs", icon: Activity },
       { title: "API & Partenaires", url: "/dashboard/admin/api-partners", icon: Key },
-      { title: "Rapports", url: "/dashboard/admin/reports", icon: FileDown },
       { title: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
     ],
   },
