@@ -223,8 +223,8 @@ const AdminSettings = () => {
                     <p className="text-xs text-muted-foreground">{n.desc}</p>
                   </div>
                   <Toggle
-                    enabled={notifConfig[n.key as keyof typeof notifConfig] as boolean}
-                    onToggle={() => setNotifConfig(prev => ({ ...prev, [n.key]: !prev[n.key as keyof typeof notifConfig] }))}
+                    enabled={!!(notifConfig as Record<string, boolean | string>)[n.key]}
+                    onToggle={() => update({ notifConfig: { ...notifConfig, [n.key]: !(notifConfig as Record<string, boolean | string>)[n.key] } })}
                   />
                 </div>
               ))}
