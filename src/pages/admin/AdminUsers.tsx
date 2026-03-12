@@ -284,68 +284,159 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* User detail drawer (replaces side panel — works on mobile too) */}
+      {/* User 360° detail drawer */}
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent className="sm:max-w-md flex flex-col p-0">
-          {selectedUser && (
-            <>
+        <SheetContent className="sm:max-w-lg flex flex-col p-0">
+          {selectedUser && (() => {
+            const org = lookups.getOrgByUserId(selectedUser.id);
+            const sub = lookups.getSubByUserId(selectedUser.id);
+            const payments = lookups.getPaymentsByUserId(selectedUser.id);
+            const tickets = lookups.getTicketsByUserId(selectedUser.id);
+            const disputes = lookups.getDisputesByUserId(selectedUser.id);
+            const onboarding = lookups.getOnboardingByUserId(selectedUser.id);
+
+            return (<>
               <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-                <SheetTitle className="sr-only">Détail utilisateur</SheetTitle>
-                <SheetDescription className="sr-only">Profil et actions</SheetDescription>
+                <SheetTitle className="sr-only">Vue 360° utilisateur</SheetTitle>
+                <SheetDescription className="sr-only">Profil complet et entités liées</SheetDescription>
                 <div className="text-center">
                   <div className="h-16 w-16 mx-auto rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xl font-bold">
                     {selectedUser.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
                   </div>
                   <h3 className="font-bold text-foreground mt-3">{selectedUser.name}</h3>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${roleColors[selectedUser.role] || "bg-muted text-muted-foreground"}`}>{roleLabels[selectedUser.role] || selectedUser.role}</span>
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${roleColors[selectedUser.role] || "bg-muted text-muted-foreground"}`}>{roleLabels[selectedUser.role] || selectedUser.role}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[selectedUser.status]}`}>{statusLabels[selectedUser.status]}</span>
+                  </div>
                 </div>
               </SheetHeader>
 
-              <ScrollArea className="flex-1 px-6 py-4">
-                <div className="space-y-4">
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4 shrink-0" /><span className="truncate">{selectedUser.email}</span></div>
-                    <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4 shrink-0" /><span>{selectedUser.phone}</span></div>
-                    <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4 shrink-0" /><span>Inscrit le {selectedUser.joined}</span></div>
-                    <div className="flex items-center gap-2 text-muted-foreground"><Shield className="h-4 w-4 shrink-0" /><span>Dernière connexion : {selectedUser.lastLogin}</span></div>
-                  </div>
+              <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
+                <TabsList className="mx-6 mt-3 shrink-0">
+                  <TabsTrigger value="info" className="text-xs">Profil</TabsTrigger>
+                  <TabsTrigger value="billing" className="text-xs">Facturation {payments.length > 0 && <span className="ml-1 text-[9px] bg-muted px-1.5 rounded-full">{payments.length}</span>}</TabsTrigger>
+                  <TabsTrigger value="support" className="text-xs">Support {(tickets.length + disputes.length) > 0 && <span className="ml-1 text-[9px] bg-warning/20 text-warning px-1.5 rounded-full">{tickets.length + disputes.length}</span>}</TabsTrigger>
+                </TabsList>
 
-                  <div className="pt-3 border-t space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Statut</span>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[selectedUser.status]}`}>{statusLabels[selectedUser.status]}</span>
+                <ScrollArea className="flex-1 px-6 py-4">
+                  {/* ── PROFIL TAB ── */}
+                  <TabsContent value="info" className="mt-0 space-y-4">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4 shrink-0" /><span className="truncate">{selectedUser.email}</span></div>
+                      <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4 shrink-0" /><span>{selectedUser.phone}</span></div>
+                      <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4 shrink-0" /><span>Inscrit le {selectedUser.joined}</span></div>
+                      <div className="flex items-center gap-2 text-muted-foreground"><Shield className="h-4 w-4 shrink-0" /><span>Dernière connexion : {selectedUser.lastLogin}</span></div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Vérifié</span>
-                      <span>{selectedUser.verified ? <CheckCircle className="h-4 w-4 text-accent" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Abonnement</span>
-                      <span className="text-xs font-medium text-foreground">{selectedUser.subscription}</span>
-                    </div>
-                  </div>
 
-                  {/* Historique non-médical (mock) */}
-                  <div className="pt-3 border-t">
-                    <p className="text-xs font-semibold text-foreground mb-2">Historique non-médical</p>
-                    <div className="space-y-2">
-                      {[
-                        { event: "Inscription", date: selectedUser.joined },
-                        { event: "Dernière connexion", date: selectedUser.lastLogin },
-                        { event: "Email vérifié", date: selectedUser.verified ? selectedUser.joined : "—" },
-                      ].map((h, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
-                          <div>
-                            <p className="text-xs text-foreground">{h.event}</p>
-                            <p className="text-[10px] text-muted-foreground">{h.date}</p>
+                    {/* Organisation */}
+                    {org && (
+                      <div className="pt-3 border-t">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />Organisation</p>
+                        <div className="rounded-lg border bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors" onClick={() => { setDrawerOpen(false); navigate("/dashboard/admin/organizations"); }}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{org.name}</p>
+                              <p className="text-xs text-muted-foreground">{org.type} · {org.city}</p>
+                            </div>
+                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                           </div>
                         </div>
-                      ))}
+                      </div>
+                    )}
+
+                    {/* Abonnement */}
+                    <div className="pt-3 border-t">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><CreditCard className="h-3.5 w-3.5" />Abonnement</p>
+                      {sub ? (
+                        <div className="rounded-lg border bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors" onClick={() => { setDrawerOpen(false); navigate("/dashboard/admin/subscriptions"); }}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{sub.plan}</p>
+                              <p className="text-xs text-muted-foreground">{sub.monthlyPrice} TND/mois · {sub.status}</p>
+                            </div>
+                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">Aucun abonnement</p>
+                      )}
                     </div>
-                  </div>
-                </div>
-              </ScrollArea>
+
+                    {/* KYC */}
+                    {onboarding && (
+                      <div className="pt-3 border-t">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><FileText className="h-3.5 w-3.5" />Onboarding KYC</p>
+                        <div className="rounded-lg border bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors" onClick={() => { setDrawerOpen(false); navigate("/dashboard/admin/onboarding"); }}>
+                          <p className="text-sm text-foreground">{onboarding.currentStep}</p>
+                          <p className="text-xs text-muted-foreground">Statut : {onboarding.status} · {onboarding.docs.length} doc(s)</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Notes internes */}
+                    {selectedUser.internalNotes.length > 0 && (
+                      <div className="pt-3 border-t">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Notes internes</p>
+                        {selectedUser.internalNotes.map(n => (
+                          <div key={n.id} className="rounded-lg p-2 bg-muted/40 border mb-1.5">
+                            <p className="text-[10px] text-muted-foreground">{n.author} · {n.createdAt}</p>
+                            <p className="text-xs text-foreground">{n.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* ── FACTURATION TAB ── */}
+                  <TabsContent value="billing" className="mt-0 space-y-4">
+                    {payments.length === 0 ? (
+                      <EmptyState icon={CreditCard} title="Aucun paiement" description="Cet utilisateur n'a aucun paiement enregistré." compact />
+                    ) : (
+                      <div className="space-y-2">
+                        {payments.slice(0, 10).map(p => (
+                          <div key={p.id} className="rounded-lg border p-3 flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{p.amount} {p.currency}</p>
+                              <p className="text-xs text-muted-foreground">{p.type} · {p.createdAt}</p>
+                            </div>
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${p.status === "paid" ? "bg-accent/10 text-accent" : p.status === "failed" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>{p.status}</span>
+                          </div>
+                        ))}
+                        {payments.length > 10 && <p className="text-xs text-muted-foreground text-center">+ {payments.length - 10} autres</p>}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* ── SUPPORT TAB ── */}
+                  <TabsContent value="support" className="mt-0 space-y-4">
+                    {tickets.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" />Tickets ({tickets.length})</p>
+                        {tickets.slice(0, 5).map(t => (
+                          <div key={t.id} className="rounded-lg border p-3 mb-1.5 cursor-pointer hover:bg-muted/20" onClick={() => { setDrawerOpen(false); navigate("/dashboard/admin/resolution"); }}>
+                            <p className="text-sm text-foreground">{t.subject}</p>
+                            <p className="text-xs text-muted-foreground">{t.status} · {t.priority}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {disputes.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><Gavel className="h-3.5 w-3.5" />Litiges ({disputes.length})</p>
+                        {disputes.slice(0, 5).map(d => (
+                          <div key={d.id} className="rounded-lg border p-3 mb-1.5 cursor-pointer hover:bg-muted/20" onClick={() => { setDrawerOpen(false); navigate("/dashboard/admin/resolution"); }}>
+                            <p className="text-sm text-foreground">{d.subject}</p>
+                            <p className="text-xs text-muted-foreground">{d.status} · {d.priority}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {tickets.length === 0 && disputes.length === 0 && (
+                      <EmptyState icon={MessageSquare} title="Aucun ticket" description="Cet utilisateur n'a aucun ticket ni litige." compact />
+                    )}
+                  </TabsContent>
+                </ScrollArea>
+              </Tabs>
 
               {/* Actions */}
               <div className="border-t px-6 py-4 space-y-2 shrink-0">
@@ -378,8 +469,8 @@ const AdminUsers = () => {
                   </Button>
                 )}
               </div>
-            </>
-          )}
+            </>);
+          })()}
         </SheetContent>
       </Sheet>
 
