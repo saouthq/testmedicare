@@ -32,10 +32,6 @@ const priorityLabels: Record<string, string> = { high: "Urgent", medium: "Moyen"
 
 // ══════════════════════════════════════════
 // MODERATION
-// ══════════════════════════════════════════
-// Moderation uses store data
-import type { AdminModerationReport } from "@/types/admin";
-import EmptyState from "@/components/shared/EmptyState";
 
 // ══════════════════════════════════════════
 // DISPUTES
