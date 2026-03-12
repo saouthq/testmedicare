@@ -87,7 +87,7 @@ const AdminUsers = () => {
       toast({ title: `${userName} réactivé` });
     } else if (type === "reject") {
       setUsers(prev => prev.filter(u => u.id !== userId));
-      appendLog("user_rejected", "user", String(userId), `Inscription de ${userName} refusée — Motif : ${motif}`);
+      appendLog("user_rejected", "user", userId, `Inscription de ${userName} refusée — Motif : ${motif}`);
       toast({ title: `${userName} refusé(e)`, variant: "destructive" });
       if (selectedUser?.id === userId) { setSelectedUser(null); setDrawerOpen(false); }
     } else if (type === "reset_password") {
