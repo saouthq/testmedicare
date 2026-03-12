@@ -316,6 +316,7 @@ const AdminResolution = () => {
               </div>
             ))}
           </div>
+        </TabsContent>
 
         {/* ════ SUPPORT ════ */}
         <TabsContent value="support" className="space-y-6">
