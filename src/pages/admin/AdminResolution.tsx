@@ -16,7 +16,8 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import { useAdminTickets, useAdminDisputes, useAdminModerationReports } from "@/stores/adminStore";
-import type { AdminTicket } from "@/types/admin";
+import type { AdminModerationReport, AdminTicket, ModerationNote } from "@/types/admin";
+import EmptyState from "@/components/shared/EmptyState";
 import {
   AlertTriangle, Flag, CheckCircle, XCircle, User, Shield, Ban, Gavel,
   Send, Clock, FileText, Image, MessageSquare, ArrowRight, Search,
@@ -31,17 +32,6 @@ const priorityLabels: Record<string, string> = { high: "Urgent", medium: "Moyen"
 
 // ══════════════════════════════════════════
 // MODERATION
-// ══════════════════════════════════════════
-interface ModerationNote { id: string; author: string; text: string; type: "note" | "action" | "escalation"; createdAt: string; }
-interface Report { id: number; type: string; reason: string; reporter: string; reporterRole: string; target: string; targetRole: string; date: string; priority: string; status: string; details: string; evidence: string[]; notes: ModerationNote[]; }
-
-const initialReports: Report[] = [
-  { id: 1, type: "profil", reason: "Profil médecin non vérifié", reporter: "Système auto", reporterRole: "system", target: "Dr. Fathi Mejri", targetRole: "doctor", date: "08 Mar 2026", priority: "high", status: "pending", details: "Compte créé il y a 3 jours avec 15 consultations. Diplôme suspect.", evidence: ["Capture d'écran", "Diplôme (PDF)"], notes: [{ id: "n1", author: "Système", text: "Alerte automatique", type: "note", createdAt: "2026-03-08T08:00:00" }] },
-  { id: 2, type: "comportement", reason: "Comportement inapproprié en téléconsultation", reporter: "Fatma Trabelsi", reporterRole: "patient", target: "Dr. Inconnu", targetRole: "doctor", date: "07 Mar 2026", priority: "medium", status: "pending", details: "Remarques déplacées et raccroché avant la fin.", evidence: ["Témoignage patient"], notes: [] },
-  { id: 3, type: "contenu", reason: "Photo de profil inappropriée", reporter: "Système auto", reporterRole: "system", target: "Utilisateur #4521", targetRole: "patient", date: "05 Mar 2026", priority: "low", status: "resolved", details: "Image non-médicale détectée.", evidence: ["Image signalée"], notes: [{ id: "n2", author: "Admin", text: "Photo retirée", type: "action", createdAt: "2026-03-06T10:00:00" }] },
-  { id: 4, type: "avis", reason: "Avis diffamatoire sur un médecin", reporter: "Dr. Bouazizi", reporterRole: "doctor", target: "Avis #7832", targetRole: "review", date: "06 Mar 2026", priority: "medium", status: "pending", details: "Propos diffamatoires. L'auteur n'a jamais consulté.", evidence: ["Texte de l'avis"], notes: [] },
-  { id: 5, type: "fraude", reason: "Suspicion de faux profil pharmacie", reporter: "Système auto", reporterRole: "system", target: "Pharmacie Fictive", targetRole: "pharmacy", date: "09 Mar 2026", priority: "high", status: "pending", details: "Licence DPHM inexistante.", evidence: ["Licence (PDF)"], notes: [] },
-];
 
 // ══════════════════════════════════════════
 // DISPUTES
@@ -97,11 +87,12 @@ const mockSupportMacros = [
 ];
 
 const AdminResolution = () => {
-  // ── Moderation (local — will be connected to store in next phase) ──
-  const [reports, setReports] = useState<Report[]>(initialReports);
+  // ── Moderation — from store ──
+  const { reports: storeReports, setReports: setStoreReports } = useAdminModerationReports();
+  const [reports, setReports] = useState<AdminModerationReport[]>(storeReports);
   const [modFilter, setModFilter] = useState("all");
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [modMotifAction, setModMotifAction] = useState<{ id: number; type: string } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<AdminModerationReport | null>(null);
+  const [modMotifAction, setModMotifAction] = useState<{ id: string; type: string } | null>(null);
   const [adminNote, setAdminNote] = useState("");
 
   // ── Disputes — from store ──
@@ -263,6 +254,7 @@ const AdminResolution = () => {
             ))}
           </div>
           <div className="space-y-3">
+            {modFiltered.length === 0 && <EmptyState icon={Flag} title="Aucun signalement" description="Aucun signalement ne correspond à ce filtre." compact />}
             {modFiltered.map(r => (
               <div key={r.id} className={`rounded-xl border bg-card shadow-card p-4 cursor-pointer hover:shadow-md transition-all ${r.priority === "high" && r.status === "pending" ? "border-destructive/30" : ""}`} onClick={() => setSelectedReport(r)}>
                 <div className="flex items-start gap-3">
@@ -306,6 +298,7 @@ const AdminResolution = () => {
             </div>
           </div>
           <div className="space-y-3">
+            {dispFiltered.length === 0 && <EmptyState icon={Gavel} title="Aucun litige" description="Aucun litige ne correspond à ce filtre." compact />}
             {dispFiltered.map(d => (
               <div key={d.id} className={`rounded-xl border bg-card shadow-card p-4 cursor-pointer hover:shadow-md transition-all ${d.priority === "high" && d.status === "open" ? "border-destructive/30" : ""}`} onClick={() => setSelectedDispute(d)}>
                 <div className="flex items-start gap-3">
@@ -344,6 +337,7 @@ const AdminResolution = () => {
             </Select>
           </div>
           <div className="space-y-3">
+            {supportFiltered.length === 0 && <EmptyState icon={MessageSquare} title="Aucun ticket" description="Aucun ticket ne correspond à ce filtre." compact />}
             {supportFiltered.map(t => (
               <div key={t.id} className={`rounded-xl border bg-card p-5 shadow-card cursor-pointer hover:bg-muted/20 transition-colors ${t.priority === "high" && t.status !== "closed" ? "border-destructive/30" : ""}`} onClick={() => setSelectedTicket(t)}>
                 <div className="flex items-start justify-between gap-3">
