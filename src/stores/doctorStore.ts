@@ -116,6 +116,8 @@ export function requestRenewal(data: {
   items: string[];
 }) {
   // TODO BACKEND: POST /api/renewals
+  if (!isActionEnabled("patient.request_renewal")) return null;
+
   const id = `ren-${Date.now()}`;
   renewalRequestsStore.set(prev => [
     {
