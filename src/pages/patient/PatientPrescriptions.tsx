@@ -248,7 +248,7 @@ const PatientPrescriptions = () => {
                   )}
 
                   {/* Pharmacy search/selection panel */}
-                  {sendingToPharmacy === p.id && (
+                  {sendingToPharmacy === p.id && isEnabled("patient.send_to_pharmacy") && (
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">

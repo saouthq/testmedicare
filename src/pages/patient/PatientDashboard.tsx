@@ -233,9 +233,11 @@ const PatientDashboard = () => {
                         </div>
                       </Link>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <Button variant="ghost" size="sm" className="h-7 text-[11px] text-primary" onClick={() => handleRenewal(p.id)}>
-                          <RefreshCw className="h-3 w-3 mr-1" />Renouveler
-                        </Button>
+                        {isEnabled("patient.request_renewal") && (
+                          <Button variant="ghost" size="sm" className="h-7 text-[11px] text-primary" onClick={() => handleRenewal(p.id)}>
+                            <RefreshCw className="h-3 w-3 mr-1" />Renouveler
+                          </Button>
+                        )}
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
