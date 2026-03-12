@@ -48,7 +48,7 @@ const AdminUsers = () => {
     .sort((a, b) => sortBy === "name" ? a.name.localeCompare(b.name) : 0)
   , [users, search, filter, sortBy]);
 
-  const toggleSelect = (id: number) => {
+  const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -189,7 +189,7 @@ const AdminUsers = () => {
           <div className="rounded-lg border bg-primary/5 border-primary/20 p-3 flex items-center justify-between flex-wrap gap-2">
             <span className="text-sm font-medium text-foreground">{selectedIds.size} sélectionné(s)</span>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30" onClick={() => setMotifAction({ type: "bulk_suspend", userId: 0, userName: `${selectedIds.size} utilisateurs` })}>
+              <Button size="sm" variant="outline" className="text-xs text-destructive border-destructive/30" onClick={() => setMotifAction({ type: "bulk_suspend", userId: "bulk", userName: `${selectedIds.size} utilisateurs` })}>
                 <Ban className="h-3.5 w-3.5 mr-1" />Suspendre
               </Button>
               <Button size="sm" variant="outline" className="text-xs" onClick={() => setSelectedIds(new Set())}>
