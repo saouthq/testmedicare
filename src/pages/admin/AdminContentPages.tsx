@@ -24,7 +24,7 @@ const typeIcons: Record<string, any> = { legal: Shield, faq: HelpCircle, announc
 const AdminContentPages = () => {
   const { pages, setPages } = useAdminContentPages();
   const [filterType, setFilterType] = useState<string>("all");
-  const [editing, setEditing] = useState<ContentPage | null>(null);
+  const [editing, setEditing] = useState<AdminContentPage | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
