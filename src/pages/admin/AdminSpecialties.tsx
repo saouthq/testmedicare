@@ -207,9 +207,9 @@ const AdminSpecialties = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          {s.teleconsultEnabled && <Video className="h-3.5 w-3.5 text-primary" title="Téléconsultation" />}
-                          {s.aiEnabled && <Bot className="h-3.5 w-3.5 text-accent" title="IA" />}
-                          <FileText className="h-3.5 w-3.5 text-muted-foreground" title={`${s.requiredDocs.length} docs KYC`} />
+                          {s.teleconsultEnabled && <span title="Téléconsultation"><Video className="h-3.5 w-3.5 text-primary" /></span>}
+                          {s.aiEnabled && <span title="IA"><Bot className="h-3.5 w-3.5 text-accent" /></span>}
+                          <span title={`${s.requiredDocs.length} docs KYC`}><FileText className="h-3.5 w-3.5 text-muted-foreground" /></span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
