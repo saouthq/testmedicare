@@ -119,7 +119,7 @@ const AdminUsers = () => {
     toast({ title: "Export CSV téléchargé", description: `${filtered.length} utilisateur(s)` });
   };
 
-  const openUserDrawer = (u: typeof mockAdminUsers[0]) => {
+  const openUserDrawer = (u: AdminUser) => {
     setSelectedUser(u);
     setDrawerOpen(true);
   };

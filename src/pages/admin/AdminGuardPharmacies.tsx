@@ -15,7 +15,7 @@ const AdminGuardPharmacies = () => {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("all");
-  const [pharmacies, setPharmacies] = useState(mockGuardPharmacies);
+  const { pharmacies, setPharmacies } = useAdminGuardPharmacies();
 
   const cities = useMemo(() => Array.from(new Set(pharmacies.map(p => p.city))).sort(), [pharmacies]);
 

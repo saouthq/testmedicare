@@ -1,7 +1,6 @@
 /**
- * Admin Notification Campaigns — Full CRUD: create, edit, duplicate, cancel, resend
- * With segments, scheduling, preview, motif + audit
- * TODO BACKEND: Replace with real API
+ * Admin Notification Campaigns — Full CRUD
+ * Connected to central admin store
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
@@ -19,33 +18,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
+import { useAdminCampaigns } from "@/stores/adminStore";
+import type { AdminCampaign, CampaignStatus } from "@/types/admin";
 
-type CampaignStatus = "draft" | "sent" | "scheduled" | "cancelled";
-
-interface Campaign {
-  id: string;
-  title: string;
-  target: string;
-  channel: string;
-  message: string;
-  status: CampaignStatus;
-  sentAt?: string;
-  scheduledAt?: string;
-  recipientCount?: number;
-  segmentCity?: string;
-  segmentSpecialty?: string;
-  openRate?: number;
-  clickRate?: number;
-  deliveryRate?: number;
-}
-
-const initialCampaigns: Campaign[] = [
-  { id: "c-1", title: "Mise à jour conditions", target: "all", channel: "email", message: "Nos conditions d'utilisation ont été mises à jour. Veuillez les consulter sur votre espace.", status: "sent", sentAt: "15 Fév 2026", recipientCount: 12458, openRate: 42, clickRate: 12, deliveryRate: 98 },
-  { id: "c-2", title: "Rappel vaccin grippe", target: "patients", channel: "sms", message: "Pensez à vous faire vacciner contre la grippe saisonnière. Consultez votre médecin sur Medicare.tn", status: "sent", sentAt: "10 Fév 2026", recipientCount: 8500, segmentCity: "Tunis", openRate: 68, clickRate: 18, deliveryRate: 96 },
-  { id: "c-3", title: "Nouvelle fonctionnalité téléconsultation", target: "doctors", channel: "push", message: "La téléconsultation est maintenant disponible sur votre espace. Activez-la dans vos paramètres.", status: "sent", sentAt: "5 Fév 2026", recipientCount: 1245, openRate: 55, clickRate: 22, deliveryRate: 99 },
-  { id: "c-4", title: "Promotion printemps médecins", target: "doctors", channel: "email", message: "Profitez de 3 mois offerts sur votre abonnement Pro jusqu'au 31 mars 2026 !", status: "scheduled", scheduledAt: "15 Mar 2026 09:00", recipientCount: 1245, segmentSpecialty: "Généraliste" },
-  { id: "c-5", title: "Rappel analyse en attente", target: "patients", channel: "sms", message: "Vous avez des résultats d'analyses en attente de consultation. Connectez-vous à Medicare.tn", status: "draft", recipientCount: 3200 },
-];
+type Campaign = AdminCampaign;
 
 const targetLabels: Record<string, string> = { all: "Tous", patients: "Patients", doctors: "Médecins", pharmacies: "Pharmacies", laboratories: "Laboratoires" };
 const channelLabels: Record<string, string> = { email: "Email", sms: "SMS", push: "Push" };
@@ -61,7 +37,7 @@ const CITIES = ["Tunis", "Ariana", "Sousse", "Sfax", "Monastir", "Nabeul", "Bize
 const SPECIALTIES = ["Généraliste", "Cardiologue", "Dermatologue", "Pédiatre", "Ophtalmologue"];
 
 const AdminCampaigns = () => {
-  const [campaigns, setCampaigns] = useState(initialCampaigns);
+  const { campaigns, setCampaigns } = useAdminCampaigns();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");

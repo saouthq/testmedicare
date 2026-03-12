@@ -56,7 +56,7 @@ const AdminContentPages = () => {
   };
 
   const addPage = () => {
-    const newPage: ContentPage = {
+    const newPage: AdminContentPage = {
       id: `cp-${Date.now()}`,
       title: "Nouveau contenu",
       type: "faq",
