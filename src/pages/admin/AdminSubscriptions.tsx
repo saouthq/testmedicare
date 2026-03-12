@@ -78,8 +78,8 @@ const AdminSubscriptions = () => {
     totalRev: subs.filter(s => s.status === "active").reduce((sum, s) => sum + s.monthlyPrice, 0),
     active: subs.filter(s => s.status === "active").length,
     trial: subs.filter(s => s.status === "trial").length,
-    unpaid: subs.filter(s => (s.status as string) === "unpaid").length,
-    suspended: subs.filter(s => (s.status as string) === "suspended").length,
+    unpaid: subs.filter(s => s.status === "unpaid").length,
+    suspended: subs.filter(s => s.status === "suspended").length,
     expired: subs.filter(s => s.status === "expired").length,
   }), [subs]);
 
