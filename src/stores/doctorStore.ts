@@ -7,6 +7,7 @@
 import { createStore, useStore } from "./crossRoleStore";
 import { notifyPatient, notifyDoctor } from "./notificationsStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { isActionEnabled } from "@/stores/actionGatingStore";
 export interface RenewalRequest {
   id: string;
   patientName: string;
