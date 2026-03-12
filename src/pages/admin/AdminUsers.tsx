@@ -64,7 +64,7 @@ const AdminUsers = () => {
     }
   };
 
-  const handleApprove = (id: number) => {
+  const handleApprove = (id: string) => {
     const u = users.find(x => x.id === id);
     if (!u) return;
     setUsers(prev => prev.map(x => x.id === id ? { ...x, status: "active", verified: true } : x));
