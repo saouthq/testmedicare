@@ -32,6 +32,8 @@ import { mockDoctorPrescriptions } from "@/data/mocks/doctor";
 import { mockPharmacyStock, mockPharmacyPrescriptions } from "@/data/mocks/pharmacy";
 import { mockSecretaryBillingInvoices } from "@/data/mocks/secretary";
 import { mockLabDemands } from "@/data/mocks/lab";
+import { seedAdminStoreIfEmpty, adminStore } from "./adminStore";
+import { adminSeedData } from "@/data/mocks/adminSeed";
 
 let seeded = false;
 
