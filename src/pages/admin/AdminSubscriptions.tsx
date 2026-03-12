@@ -123,7 +123,7 @@ const AdminSubscriptions = () => {
       if (type === "suspend") {
         appendLog("subscription_suspended", "subscription", subId, `${s.doctorName} suspendu — ${motif}`);
         toast({ title: "Abonnement suspendu", description: s.doctorName });
-        return { ...s, status: "suspended" as any, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Suspendu — ${motif}` }] };
+        return { ...s, status: "suspended" as SubscriptionStatus, history: [...s.history, { date: new Date().toISOString().slice(0, 10), event: `Suspendu — ${motif}` }] };
       }
 
       if (type === "reactivate") {
