@@ -12,7 +12,6 @@ import {
   AlertTriangle, CalendarPlus, DollarSign,
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { mockAdminRevenue } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,13 +20,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getDoctorSubscriptions } from "@/services/admin/adminPromotionsService";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
-import { subscriptionStatusConfig, type SubscriptionStatus } from "@/stores/entitlementStore";
-import { getPlansByRole, type AdminPlan } from "@/stores/adminPlanStore";
-import type { DoctorSubscription } from "@/types/promotion";
+import { useAdminSubscriptions } from "@/stores/adminStore";
+import type { AdminSubscription, SubscriptionStatus } from "@/types/admin";
 
 // Extended status config (merge with entitlementStore)
 type ExtendedStatus = SubscriptionStatus;
