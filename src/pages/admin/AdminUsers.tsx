@@ -83,7 +83,7 @@ const AdminUsers = () => {
       toast({ title: `${userName} suspendu` });
     } else if (type === "reactivate") {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "active" as const } : u));
-      appendLog("user_reactivated", "user", String(userId), `${userName} réactivé — Motif : ${motif}`);
+      appendLog("user_reactivated", "user", userId, `${userName} réactivé — Motif : ${motif}`);
       toast({ title: `${userName} réactivé` });
     } else if (type === "reject") {
       setUsers(prev => prev.filter(u => u.id !== userId));
