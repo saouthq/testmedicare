@@ -201,11 +201,35 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
   const [searchParams] = useSearchParams();
   const isTeleconsult = searchParams.get("teleconsult") === "true";
 
-  // Load patient from query param or fallback to default
+  // Load patient from query param — first try shared patients store, then fallback to mockPatients
   const patient = useMemo(() => {
-    const patientId = searchParams.get("patient");
-    if (patientId) {
-      const found = mockPatients.find((p) => p.id === parseInt(patientId));
+    const patientIdParam = searchParams.get("patient");
+    if (patientIdParam) {
+      // Try shared patients store first (works in both demo & production)
+      const sharedPatients = sharedPatientsStore.read();
+      const numId = parseInt(patientIdParam);
+      const sharedFound = sharedPatients.find(p => p.id === numId);
+      if (sharedFound) {
+        const ageParts = sharedFound.dob ? sharedFound.dob.split("/") : [];
+        const birthYear = ageParts.length === 3 ? parseInt(ageParts[2]) : null;
+        const age = birthYear ? new Date().getFullYear() - birthYear : null;
+        return {
+          name: sharedFound.name,
+          age: age ?? "-",
+          gender: "—",
+          bloodType: "—",
+          allergies: [] as string[],
+          conditions: [] as string[],
+          lastVisit: sharedFound.lastVisit || "—",
+          ssn: sharedFound.numAssure || "—",
+          mutuelle: sharedFound.assurance || "—",
+          medecinTraitant: sharedFound.doctor || "—",
+          phone: sharedFound.phone || "—",
+          email: sharedFound.email || "—",
+        };
+      }
+      // Fallback to mockPatients for backward compat
+      const found = mockPatients.find((p) => p.id === numId);
       if (found) {
         return {
           name: found.name,
