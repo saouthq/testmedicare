@@ -2328,6 +2328,14 @@ const DoctorSchedule = () => {
     setSlotCtx({ date: fmtDate(date), time, x, y });
   };
 
+  if (aptsLoading) {
+    return (
+      <DashboardLayout role="doctor" title="Planning">
+        <LoadingSkeleton type="dashboard" />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="doctor" title="Planning">
       <div className="space-y-4">

@@ -1056,10 +1056,13 @@ const DoctorConsultations = () => {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <ClipboardList className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">Aucune consultation pour cette période</p>
-          </div>
+          <EmptyState
+            icon={ClipboardList}
+            title="Aucune consultation"
+            description="Aucune consultation pour cette période. Créez un rendez-vous pour commencer."
+            actionLabel="Nouveau RDV"
+            actionLink="/dashboard/doctor/schedule"
+          />
         ) : (
           <div className="space-y-3">
             {!isHistoryMode ? (
