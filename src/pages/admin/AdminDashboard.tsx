@@ -179,7 +179,7 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             <div className="rounded-xl border bg-card p-4 shadow-card">
               <div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-foreground flex items-center gap-2 text-sm"><Pill className="h-4 w-4 text-accent" />Garde</h3><span className="text-xs font-bold text-accent">{guardCount}</span></div>
-              <div className="space-y-1">{state.guardPharmacies.filter(p => p.isGuard).slice(0, 2).map(p => (<p key={p.id} className="text-xs text-muted-foreground truncate">{p.name} — {p.city}</p>))}</div>
+              <div className="space-y-1">{guardList.map((p: any) => (<p key={p.id} className="text-xs text-muted-foreground truncate">{p.name} — {p.city}</p>))}</div>
               <Link to="/dashboard/admin/guard-pharmacies" className="text-xs text-primary hover:underline mt-2 inline-block">Gérer →</Link>
             </div>
             <div className="rounded-xl border bg-card p-4 shadow-card">
