@@ -80,15 +80,11 @@ export function useDualQuery<TLocal, TRow = any>({
   });
 
   if (isProduction) {
-    const hasLocalFallback = Array.isArray(localData)
-      ? localData.length > 0
-      : Boolean(localData);
-
-    const data = (!isAuthenticated && hasLocalFallback)
-      ? (localData as TLocal)
-      : (query.data ?? (Array.isArray(localData) ? [] : localData)) as TLocal;
-
-    return [data, store.set, { isLoading: query.isLoading, isProduction: true }];
+    // In production, NEVER fall back to localStorage seeds.
+    // If Supabase has no data yet, return empty (not mock data).
+    const emptyValue = (Array.isArray(localData) ? [] : localData) as TLocal;
+    const data = (query.data ?? emptyValue) as TLocal;
+    return [data, store.set, { isLoading: query.isLoading && !query.data, isProduction: true }];
   }
 
   return [localData, store.set, { isLoading: false, isProduction: false }];

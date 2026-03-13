@@ -6,14 +6,8 @@
  */
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  mockConsultationPatient,
-  mockPatientAnalyses,
-  mockPatientConsultations,
-  mockPatientDetailPrescriptions,
-  mockVitalsHistory,
-} from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { getAppMode } from "@/lib/appConfig";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
@@ -159,13 +153,12 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
   const [allAppointments] = useSharedAppointments();
   const [allRx] = useDoctorPrescriptions();
 
-  // Resolve patient from route param — fallback to mock for backward compat
+  // Resolve patient from route param — no mock fallback in production
   const resolvedPatient = useMemo(() => {
     if (routeId) {
       const numId = Number(routeId);
       const found = allPatients.find(p => p.id === numId || String(p.id) === routeId);
       if (found) {
-        // Build a patient object compatible with the existing UI shape
         const ageParts = found.dob ? found.dob.split("/") : [];
         const birthYear = ageParts.length === 3 ? parseInt(ageParts[2]) : null;
         const age = birthYear ? new Date().getFullYear() - birthYear : null;
@@ -190,7 +183,15 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
         };
       }
     }
-    return { ...mockConsultationPatient, phone: "+216 71 234 567", email: "amine@email.tn", city: "Tunis" } as any;
+    // In production: return a minimal empty patient, never mock data
+    if (getAppMode() === "production") {
+      return { id: Number(routeId) || 0, name: "Patient inconnu", age: "-", gender: "—", bloodType: "—", allergies: [], conditions: [], lastVisit: "—", ssn: "—", mutuelle: "—", medecinTraitant: "—", phone: "—", email: "—", city: "—", avatar: "", dob: "—", notes: "" };
+    }
+    // Demo: lazy-import mock for backward compat
+    try {
+      const { mockConsultationPatient } = require("@/data/mockData");
+      return { ...mockConsultationPatient, phone: "+216 71 234 567", email: "amine@email.tn", city: "Tunis" } as any;
+    } catch { return { id: 0, name: "Patient", age: "-", gender: "—", bloodType: "—", allergies: [], conditions: [], lastVisit: "—", ssn: "—", mutuelle: "—", medecinTraitant: "—", phone: "—", email: "—", city: "—", avatar: "", dob: "—", notes: "" }; }
   }, [routeId, allPatients]);
 
   const patient = resolvedPatient;
@@ -204,19 +205,25 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
   );
 
   const patientRxRecords = useMemo(() => {
-    // Filter prescriptions that belong to this patient (if possible)
-    if (!numPatientId) return mockPatientDetailPrescriptions || [];
+    if (!numPatientId) {
+      if (getAppMode() === "production") return [];
+      try { const { mockPatientDetailPrescriptions } = require("@/data/mockData"); return mockPatientDetailPrescriptions || []; } catch { return []; }
+    }
     const filtered = allRx.filter((rx: any) => rx.patientId === numPatientId || rx.patient === patient?.name);
-    return filtered.length > 0 ? filtered.map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` })) : (mockPatientDetailPrescriptions || []).map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` }));
+    if (filtered.length > 0) return filtered.map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` }));
+    if (getAppMode() === "production") return [];
+    try { const { mockPatientDetailPrescriptions } = require("@/data/mockData"); return (mockPatientDetailPrescriptions || []).map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` })); } catch { return []; }
   }, [allRx, numPatientId, patient?.name]);
 
-  const [consultRecords, setConsultRecords] = useState<any[]>(() =>
-    (mockPatientConsultations || []).map((c: any, idx: number) => ({ ...c, _id: c.id ?? `CONS-${idx}` })),
-  );
+  const [consultRecords, setConsultRecords] = useState<any[]>(() => {
+    if (getAppMode() === "production") return [];
+    try { const { mockPatientConsultations } = require("@/data/mockData"); return (mockPatientConsultations || []).map((c: any, idx: number) => ({ ...c, _id: c.id ?? `CONS-${idx}` })); } catch { return []; }
+  });
   const [rxRecords, setRxRecords] = useState<any[]>(patientRxRecords);
-  const [labRecords, setLabRecords] = useState<any[]>(() =>
-    (mockPatientAnalyses || []).map((a: any, idx: number) => ({ ...a, _id: a.id ?? `LAB-${idx}` })),
-  );
+  const [labRecords, setLabRecords] = useState<any[]>(() => {
+    if (getAppMode() === "production") return [];
+    try { const { mockPatientAnalyses } = require("@/data/mockData"); return (mockPatientAnalyses || []).map((a: any, idx: number) => ({ ...a, _id: a.id ?? `LAB-${idx}` })); } catch { return []; }
+  });
 
   // Sync rx records when patient changes
   useEffect(() => {
@@ -373,19 +380,26 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
   const saveAnte = () => { const ts = Date.now(); const at = new Date().toLocaleString(); setAnteHistory((p) => [{ id: `a-${ts}`, at, ts, data: { ...ante } }, ...p]); };
 
   // ── Vitals ──
-  const lastVitals = useMemo(() => (mockVitalsHistory || [])[0], []);
+  const lastVitals = useMemo(() => {
+    if (getAppMode() === "production") return null;
+    try { const { mockVitalsHistory } = require("@/data/mockData"); return (mockVitalsHistory || [])[0] || null; } catch { return null; }
+  }, []);
   const [vitals, setVitals] = useState<VitalsData>({
     ta: lastVitals ? `${lastVitals.systolic}/${lastVitals.diastolic}` : "130/80",
     fc: String(lastVitals?.heartRate ?? "72"),
     weight: String(lastVitals?.weight ?? "75"),
     gly: String(lastVitals?.glycemia ?? "1.05 g/L"),
   });
-  const [vitalsHistory, setVitalsHistory] = useState<VersionVitals[]>(() =>
-    (mockVitalsHistory || []).map((v: any, i: number) => ({
-      id: `vh-${i}`, at: v.date, ts: Date.parse(v.date) || Date.now() - i * 1000,
-      data: { ta: `${v.systolic ?? ""}/${v.diastolic ?? ""}`, fc: String(v.heartRate ?? ""), weight: String(v.weight ?? ""), gly: String(v.glycemia ?? "") },
-    })),
-  );
+  const [vitalsHistory, setVitalsHistory] = useState<VersionVitals[]>(() => {
+    if (getAppMode() === "production") return [];
+    try {
+      const { mockVitalsHistory } = require("@/data/mockData");
+      return (mockVitalsHistory || []).map((v: any, i: number) => ({
+        id: `vh-${i}`, at: v.date, ts: Date.parse(v.date) || Date.now() - i * 1000,
+        data: { ta: `${v.systolic ?? ""}/${v.diastolic ?? ""}`, fc: String(v.heartRate ?? ""), weight: String(v.weight ?? ""), gly: String(v.glycemia ?? "") },
+      }));
+    } catch { return []; }
+  });
   const saveVitals = () => { const ts = Date.now(); const at = new Date().toLocaleString(); setVitalsHistory((p) => [{ id: `vh-${ts}`, at, ts, data: { ...vitals } }, ...p]); };
 
   // ── Documents ──
