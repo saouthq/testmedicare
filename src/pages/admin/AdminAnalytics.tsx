@@ -333,7 +333,7 @@ const AdminAnalytics = () => {
                     ))}
                   </div>
                 </div>
-              ) : <BackendPlaceholder label="Aucun abonnement actif" />}
+              ) : <EmptyDataState label="Aucun abonnement actif" />}
             </div>
             <div className="rounded-xl border bg-card p-6 shadow-card">
               <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4"><CreditCard className="h-4 w-4 text-accent" />Revenus par rôle</h3>
