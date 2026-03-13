@@ -57,6 +57,10 @@ const Register = () => {
         role: selectedRole as any || "patient",
       });
       toast({ title: "Compte créé !", description: "Vérifiez votre email pour confirmer votre inscription." });
+      // Redirect doctors to onboarding after email confirmation
+      if (selectedRole === "doctor") {
+        localStorage.setItem("medicare_post_confirm_redirect", "/dashboard/doctor/onboarding");
+      }
       setStep("confirm");
     } catch (err: any) {
       const msg = err?.message || "";

@@ -13,6 +13,7 @@
  */
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -2242,7 +2243,7 @@ const DoctorSchedule = () => {
 
   const [view, setView] = useState<ViewMode>("week");
   const [current, setCurrent] = useState(() => new Date());
-  const [allApts] = useSharedAppointments();
+  const [allApts, , { isLoading: aptsLoading }] = useSharedAppointments();
   const [allBlocks] = useSharedBlockedSlots();
   const apts = useMemo(() => allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
   const blocks = useMemo(() => allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
@@ -2326,6 +2327,14 @@ const DoctorSchedule = () => {
   const handleSlotClick = (date: Date, time: string, x: number, y: number) => {
     setSlotCtx({ date: fmtDate(date), time, x, y });
   };
+
+  if (aptsLoading) {
+    return (
+      <DashboardLayout role="doctor" title="Planning">
+        <LoadingSkeleton type="dashboard" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="doctor" title="Planning">

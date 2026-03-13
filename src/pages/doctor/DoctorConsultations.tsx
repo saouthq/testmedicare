@@ -3,6 +3,8 @@
  * V4 design — FIX workflow (anti click-through, scroll OK, palette actions).
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
+import EmptyState from "@/components/shared/EmptyState";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -938,6 +940,14 @@ const DoctorConsultations = () => {
 
   const selectionLabel = selected ? `${selected.patient} • ${selected.date} ${selected.time}` : "Aucune sélection";
 
+  if (aptsLoading) {
+    return (
+      <DashboardLayout role="doctor" title="Consultations">
+        <LoadingSkeleton type="table" />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="doctor" title="Consultations">
       <div className="space-y-6">
@@ -1046,10 +1056,13 @@ const DoctorConsultations = () => {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <ClipboardList className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">Aucune consultation pour cette période</p>
-          </div>
+          <EmptyState
+            icon={ClipboardList}
+            title="Aucune consultation"
+            description="Aucune consultation pour cette période. Créez un rendez-vous pour commencer."
+            actionLabel="Nouveau RDV"
+            actionLink="/dashboard/doctor/schedule"
+          />
         ) : (
           <div className="space-y-3">
             {!isHistoryMode ? (

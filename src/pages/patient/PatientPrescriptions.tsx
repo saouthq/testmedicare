@@ -4,6 +4,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { FileText, Download, Eye, Pill, Shield, Send, Printer, ChevronDown, X, Search, MapPin, Clock, Phone, CheckCircle2, AlertCircle, Package, RefreshCw, RotateCcw } from "lucide-react";
+import EmptyState from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
@@ -159,6 +160,15 @@ const PatientPrescriptions = () => {
           </div>
         </div>
 
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="Aucune ordonnance"
+            description="Vos ordonnances apparaîtront ici après une consultation avec votre médecin."
+            actionLabel="Prendre RDV"
+            actionLink="/search"
+          />
+        ) : (
         <div className="space-y-4">
           {filtered.map((p) => (
             <div key={p.id} className="rounded-xl border bg-card shadow-card overflow-hidden">
@@ -361,6 +371,7 @@ const PatientPrescriptions = () => {
             </div>
           ))}
         </div>
+        )}
       </div>
     </DashboardLayout>
   );
