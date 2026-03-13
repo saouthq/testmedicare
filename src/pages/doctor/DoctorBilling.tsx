@@ -27,6 +27,43 @@ const DoctorBilling = () => {
   const activePromo = getMyActivePromo(1);
   const [sharedInvoices] = useSharedBilling();
   const cabinetStats = getBillingStats(sharedInvoices);
+  const [subscription] = useDoctorSubscription();
+  const { plans } = useAdminPlans();
+
+  // Derive subscription info from stores
+  const currentPlanName = subscription.plan === "pro" ? "Pro" : "Basic";
+  const currentPlan = plans.find(p => p.name.toLowerCase().includes(currentPlanName.toLowerCase()));
+  const subscriptionInfo = {
+    plan: currentPlanName,
+    price: currentPlan ? `${currentPlan.price} DT/mois` : "39 DT/mois",
+    cardBrand: "VISA",
+    cardLast4: "4242",
+    renewDate: "1 Mar 2026",
+  };
+
+  // Build plans display from adminPlanStore
+  const displayPlans = useMemo(() => {
+    if (plans.length === 0) return [
+      { key: "basic", name: "Basic", price: "39", period: "DT/mois", popular: false, features: ["Agenda en ligne", "Gestion patients", "Ordonnances PDF"], notIncluded: ["Téléconsultation", "SMS illimités", "Multi-cabinet"] },
+      { key: "pro", name: "Pro", price: "129", period: "DT/mois", popular: true, features: ["Tout Basic +", "Téléconsultation vidéo", "SMS illimités", "Multi-cabinet", "Statistiques avancées", "Secrétaire virtuelle"], notIncluded: [] },
+    ];
+    return plans.filter(p => p.activity === subscription.activity || p.activity === "generaliste").map(p => ({
+      key: p.name.toLowerCase(),
+      name: p.name,
+      price: String(p.price),
+      period: "DT/mois",
+      popular: p.name.toLowerCase() === "pro",
+      features: p.features || [],
+      notIncluded: [] as string[],
+    }));
+  }, [plans, subscription.activity]);
+
+  // Subscription invoices (mock — TODO: connect to billing when teleconsult payments are implemented)
+  const subscriptionInvoices = [
+    { id: "SUB-2026-02", month: "Février 2026", amount: parseInt(subscriptionInfo.price) || 39, status: "paid" as InvoiceStatus, date: "1 Fév 2026" },
+    { id: "SUB-2026-01", month: "Janvier 2026", amount: parseInt(subscriptionInfo.price) || 39, status: "paid" as InvoiceStatus, date: "1 Jan 2026" },
+    { id: "SUB-2025-12", month: "Décembre 2025", amount: parseInt(subscriptionInfo.price) || 39, status: "paid" as InvoiceStatus, date: "1 Déc 2025" },
+  ];
 
   const filteredTx = mockTeleconsultTransactions.filter(tx =>
     !search || tx.patient.toLowerCase().includes(search.toLowerCase()) || tx.ref.toLowerCase().includes(search.toLowerCase())
