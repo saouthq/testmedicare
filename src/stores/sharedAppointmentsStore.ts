@@ -106,7 +106,13 @@ const store = createStore<SharedAppointment[]>("medicare_shared_appointments", S
 export const sharedAppointmentsStore = store;
 
 export function useSharedAppointments() {
-  return useStore(store);
+  return useDualQuery<SharedAppointment[]>({
+    store,
+    tableName: "appointments",
+    queryKey: ["appointments"],
+    mapRowToLocal: mapAppointmentRow,
+    orderBy: { column: "date", ascending: true },
+  });
 }
 
 /** Update appointment status */
