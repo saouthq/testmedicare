@@ -15,6 +15,7 @@ import { ReportButton } from "@/components/shared/ReportButton";
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
 import { useSharedAppointments, cancelAppointment as sharedCancelAppointment, rescheduleAppointment as sharedRescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import { readAuthUser } from "@/stores/authStore";
 import type { SharedAppointment } from "@/types/appointment";
 import { canCancel as checkCanCancel, canReschedule as checkCanReschedule } from "@/lib/appointmentRules";
 
@@ -155,12 +156,13 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: SharedAppointment; onClos
   );
 };
 
-const PATIENT_ID = 1;
+const PATIENT_ID_FALLBACK = 1;
 
 const PatientAppointments = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("upcoming");
   const [allAppointments, , { isLoading }] = useSharedAppointments();
+  const PATIENT_ID = readAuthUser()?.patientId ?? PATIENT_ID_FALLBACK;
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState<string | null>(null);

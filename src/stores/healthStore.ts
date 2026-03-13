@@ -2,10 +2,12 @@
  * healthStore.ts — Patient health data (documents, treatments, allergies, etc.).
  * Cross-role: Doctor adds prescriptions/documents → Patient sees them.
  *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: localStorage in Demo, Supabase patients table (allergies/antecedents) in Production.
  */
 import { createStore } from "./crossRoleStore";
 import { useDemoOnlyStore } from "@/hooks/useDualData";
+import { getAppMode, readAuthUser } from "./authStore";
+import { supabase } from "@/integrations/supabase/client";
 import type { HealthDocument, Antecedent, Treatment, Allergy, Habit, FamilyHistory, Surgery, Vaccination, HealthMeasure } from "@/types";
 
 export interface HealthState {
@@ -40,6 +42,42 @@ export function initHealthStoreIfEmpty(data: HealthState) {
   }
 }
 
+// ─── Supabase sync helpers ──────────────────────────────────
+async function syncAllergiesToSupabase(allergies: Allergy[]) {
+  if (getAppMode() !== "production") return;
+  try {
+    const user = readAuthUser();
+    if (!user) return;
+    // Update patient record with allergies
+    const { data: patients } = await (supabase.from as any)("patients")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1);
+    if (patients?.[0]) {
+      await (supabase.from as any)("patients")
+        .update({ allergies: allergies.map(a => ({ name: a.name, severity: a.severity, reaction: a.reaction })) })
+        .eq("id", patients[0].id);
+    }
+  } catch {}
+}
+
+async function syncAntecedentsToSupabase(antecedents: Antecedent[]) {
+  if (getAppMode() !== "production") return;
+  try {
+    const user = readAuthUser();
+    if (!user) return;
+    const { data: patients } = await (supabase.from as any)("patients")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1);
+    if (patients?.[0]) {
+      await (supabase.from as any)("patients")
+        .update({ antecedents: antecedents.map(a => ({ name: a.name, date: a.date, details: a.details })) })
+        .eq("id", patients[0].id);
+    }
+  } catch {}
+}
+
 // ─── Actions ─────────────────────────────────────────────────
 
 export function addDocument(doc: HealthDocument) {
@@ -58,15 +96,27 @@ export function updateTreatment(name: string, update: Partial<Treatment>) {
 }
 
 export function addAllergy(a: Allergy) {
-  store.set(prev => ({ ...prev, allergies: [...prev.allergies, a] }));
+  store.set(prev => {
+    const updated = { ...prev, allergies: [...prev.allergies, a] };
+    syncAllergiesToSupabase(updated.allergies);
+    return updated;
+  });
 }
 
 export function removeAllergy(name: string) {
-  store.set(prev => ({ ...prev, allergies: prev.allergies.filter(a => a.name !== name) }));
+  store.set(prev => {
+    const updated = { ...prev, allergies: prev.allergies.filter(a => a.name !== name) };
+    syncAllergiesToSupabase(updated.allergies);
+    return updated;
+  });
 }
 
 export function addAntecedent(a: Antecedent) {
-  store.set(prev => ({ ...prev, antecedents: [...prev.antecedents, a] }));
+  store.set(prev => {
+    const updated = { ...prev, antecedents: [...prev.antecedents, a] };
+    syncAntecedentsToSupabase(updated.antecedents);
+    return updated;
+  });
 }
 
 export function addVaccination(v: Vaccination) {

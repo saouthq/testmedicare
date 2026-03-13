@@ -11,8 +11,9 @@ import { sharedTarifsStore } from "./sharedTarifsStore";
 import type { SharedAppointment, AppointmentStatus, AppointmentType } from "@/types/appointment";
 import { computeEndTime } from "@/types/appointment";
 import { useDualQuery } from "@/hooks/useDualData";
-import { mapAppointmentRow } from "@/lib/supabaseMappers";
-import { readAuthUser } from "@/stores/authStore";
+import { mapAppointmentRow, mapAppointmentToRow } from "@/lib/supabaseMappers";
+import { readAuthUser, getAppMode } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── Helper: generate YYYY-MM-DD relative to today ──────────
 function relDate(offset: number): string {
@@ -51,45 +52,45 @@ const SEED_APPOINTMENTS: SharedAppointment[] = [
   { id: "apt-019", date: relDate(2), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Post-opératoire J+30", status: "confirmed", phone: "+216 55 456 789", assurance: "Sans assurance" },
   { id: "apt-020", date: relDate(2), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Gharbi", type: "Suivi", motif: "Suivi tension", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
 
-  // ── Day +3 ──────────────────────────────
+  // ── Day +3
   { id: "apt-021", date: relDate(3), startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Douleur thoracique", status: "confirmed", phone: "+216 71 111 111", assurance: "Assurance publique" },
   { id: "apt-022", date: relDate(3), startTime: "14:30", endTime: "15:00", duration: 30, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Résultats mammographie", status: "confirmed", phone: "+216 71 222 222", assurance: "CNRPS" },
 
-  // ── Day +4 ──────────────────────────────
+  // ── Day +4
   { id: "apt-023", date: relDate(4), startTime: "09:30", endTime: "10:00", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Suivi Rx", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
   { id: "apt-024", date: relDate(4), startTime: "14:00", endTime: "15:00", duration: 60, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Bilan thyroïdien", status: "confirmed", phone: "+216 71 901 234", assurance: "Assurance publique" },
 
-  // ── Day +5 ──────────────────────────────
+  // ── Day +5
   { id: "apt-025", date: relDate(5), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Rania Meddeb", patientId: 6, avatar: "RM", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Consultation générale", status: "confirmed", phone: "+216 71 123 456", assurance: "CNRPS" },
 
-  // ── Day +6 ──────────────────────────────
+  // ── Day +6
   { id: "apt-026", date: relDate(6), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Amine Ben Ali", patientId: 1, avatar: "AB", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi HbA1c", status: "confirmed", phone: "+216 71 234 567", assurance: "Maghrebia" },
   { id: "apt-027", date: relDate(6), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Hana Kammoun", patientId: null, avatar: "HK", doctor: "Dr. Gharbi", type: "Suivi", motif: "ECG de contrôle", status: "confirmed", phone: "+216 71 333 333", assurance: "Assurance publique" },
   { id: "apt-028", date: relDate(6), startTime: "14:00", endTime: "14:30", duration: 30, patient: "Fatma Trabelsi", patientId: 2, avatar: "FT", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan lipidique", status: "confirmed", phone: "+216 22 345 678", assurance: "Assurance publique" },
 
-  // ── Day +7 ──────────────────────────────
+  // ── Day +7
   { id: "apt-029", date: relDate(7), startTime: "08:30", endTime: "09:00", duration: 30, patient: "Sami Ayari", patientId: 5, avatar: "SA", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Check-up annuel", status: "confirmed", phone: "+216 29 678 901", assurance: "Assurance publique" },
   { id: "apt-030", date: relDate(7), startTime: "11:00", endTime: "11:30", duration: 30, patient: "Mohamed Sfar", patientId: 3, avatar: "MS", doctor: "Dr. Hammami", type: "Consultation", motif: "Suivi dermatologique", status: "confirmed", phone: "+216 55 456 789", assurance: "Sans assurance" },
 
-  // ── Day +8 ──────────────────────────────
+  // ── Day +8
   { id: "apt-031", date: relDate(8), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Nadia Jemni", patientId: 4, avatar: "NJ", doctor: "Dr. Bouazizi", type: "Suivi", motif: "Résultats thyroïde", status: "confirmed", phone: "+216 98 567 890", assurance: "Assurance publique" },
   { id: "apt-032", date: relDate(8), startTime: "15:00", endTime: "15:30", duration: 30, patient: "Olfa Ben Salah", patientId: null, avatar: "OB", doctor: "Dr. Gharbi", type: "Téléconsultation", motif: "Renouvellement traitement", status: "confirmed", phone: "+216 55 012 345", assurance: "GAT Assurances", teleconsultation: true },
 
-  // ── Day +10 ──────────────────────────────
+  // ── Day +10
   { id: "apt-033", date: relDate(10), startTime: "08:00", endTime: "08:30", duration: 30, patient: "Karim Mansour", patientId: 9, avatar: "KM", doctor: "Dr. Bouazizi", type: "Contrôle", motif: "Suivi diabète mensuel", status: "confirmed", phone: "+216 71 111 111", assurance: "Assurance publique" },
   { id: "apt-034", date: relDate(10), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Bilel Nasri", patientId: null, avatar: "BN", doctor: "Dr. Bouazizi", type: "Première visite", motif: "Consultation initiale", status: "confirmed", phone: "+216 50 789 012", assurance: "STAR Assurances" },
 
-  // ── Day +11 ──────────────────────────────
+  // ── Day +11
   { id: "apt-035", date: relDate(11), startTime: "09:30", endTime: "10:00", duration: 30, patient: "Walid Jlassi", patientId: null, avatar: "WJ", doctor: "Dr. Hammami", type: "Suivi", motif: "Eczéma — évolution", status: "confirmed", phone: "+216 22 345 678", assurance: "Sans assurance" },
   { id: "apt-036", date: relDate(11), startTime: "14:00", endTime: "15:00", duration: 60, patient: "Leila Chahed", patientId: 10, avatar: "LC", doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan complet annuel", status: "confirmed", phone: "+216 71 222 222", assurance: "CNRPS" },
 
-  // ── Day +12 ──────────────────────────────
+  // ── Day +12
   { id: "apt-037", date: relDate(12), startTime: "09:00", endTime: "09:30", duration: 30, patient: "Youssef Belhadj", patientId: 7, avatar: "YB", doctor: "Dr. Bouazizi", type: "Téléconsultation", motif: "Suivi traitement", status: "confirmed", phone: "+216 71 890 123", assurance: "Sans assurance", teleconsultation: true },
 
-  // ── Day +13 ──────────────────────────────
+  // ── Day +13
   { id: "apt-038", date: relDate(13), startTime: "10:00", endTime: "10:30", duration: 30, patient: "Salma Dridi", patientId: 8, avatar: "SD", doctor: "Dr. Gharbi", type: "Suivi", motif: "Cardio — résultats", status: "confirmed", phone: "+216 71 901 234", assurance: "Assurance publique" },
 
-  // ── Day +14 ──────────────────────────────
+  // ── Day +14
   { id: "apt-039", date: relDate(14), startTime: "08:30", endTime: "09:00", duration: 30, patient: "Imen Bouhlel", patientId: null, avatar: "IB", doctor: "Dr. Bouazizi", type: "Urgence", motif: "Céphalées sévères", status: "confirmed", phone: "+216 50 234 567", assurance: "Assurance publique" },
 
   // ── Past days (history) ──────────────────────────────
@@ -116,20 +117,51 @@ export function useSharedAppointments() {
   });
 }
 
+// ─── Supabase write helper ──────────────────────────────────
+async function supabaseUpdateAppointment(id: string, update: Partial<SharedAppointment>) {
+  if (getAppMode() !== "production") return;
+  try {
+    const row = mapAppointmentToRow(update);
+    delete row.id;
+    if (Object.keys(row).length > 0) {
+      await (supabase.from as any)("appointments").update(row).eq("id", id);
+    }
+  } catch (e) {
+    console.warn("[sharedAppointmentsStore] Supabase update failed:", e);
+  }
+}
+
+async function supabaseInsertAppointment(apt: SharedAppointment) {
+  if (getAppMode() !== "production") return;
+  try {
+    const currentUser = readAuthUser();
+    const row = mapAppointmentToRow(apt);
+    if (!row.doctor_id && currentUser?.role === "doctor") {
+      row.doctor_id = currentUser.id;
+    }
+    await (supabase.from as any)("appointments").insert(row);
+  } catch (e) {
+    console.warn("[sharedAppointmentsStore] Supabase insert failed:", e);
+  }
+}
+
 /** Update appointment status */
 export function updateAppointmentStatus(id: string, status: AppointmentStatus, extra?: Partial<SharedAppointment>) {
   store.set(prev => prev.map(a => a.id === id ? { ...a, status, ...extra } : a));
+  supabaseUpdateAppointment(id, { status, ...extra });
 }
 
 /** Create a new appointment */
 export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">) {
   const id = `apt-${Date.now()}`;
   const endTime = computeEndTime(apt.startTime, apt.duration);
-  // Auto-populate doctorId from auth if not provided
   const currentUser = readAuthUser();
   const doctorId = apt.doctorId || (currentUser?.role === "doctor" ? currentUser.id : undefined);
   const newApt: SharedAppointment = { ...apt, id, endTime, doctorId };
   store.set(prev => [...prev, newApt].sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)));
+
+  // Persist to Supabase
+  supabaseInsertAppointment(newApt);
 
   // Notify doctor
   pushNotification({
@@ -166,10 +198,13 @@ export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">
 /** Reschedule an appointment */
 export function rescheduleAppointment(id: string, newDate: string, newTime: string) {
   const apt = store.read().find(a => a.id === id);
+  const endTime = apt ? computeEndTime(newTime, apt.duration) : newTime;
   store.set(prev => prev.map(a => {
     if (a.id !== id) return a;
     return { ...a, date: newDate, startTime: newTime, endTime: computeEndTime(newTime, a.duration) };
   }));
+
+  supabaseUpdateAppointment(id, { date: newDate, startTime: newTime, endTime } as any);
 
   if (apt) {
     pushNotification({
@@ -259,7 +294,6 @@ export function completeAppointmentConsultation(id: string) {
   if (apt) {
     try {
       const allTarifs = sharedTarifsStore.read();
-      // Match by appointment type
       const typeMap: Record<string, string> = {
         "Consultation": "CS", "Première visite": "CS-P", "Suivi": "CS-S",
         "Contrôle": "CS-S", "Téléconsultation": "TC", "Certificat": "CERT",
@@ -305,13 +339,18 @@ export function toggleAppointmentTag(id: string, tag: "urgent" | "retard") {
   store.set(prev => prev.map(a => {
     if (a.id !== id) return a;
     const tags = a.tags || [];
-    return { ...a, tags: tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag] };
+    const newTags = tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag];
+    return { ...a, tags: newTags };
   }));
+  // Read updated tags
+  const apt = store.read().find(a => a.id === id);
+  if (apt) supabaseUpdateAppointment(id, { tags: apt.tags } as any);
 }
 
 /** Save internal note on appointment */
 export function saveAppointmentNote(id: string, note: string) {
   store.set(prev => prev.map(a => a.id === id ? { ...a, internalNote: note } : a));
+  supabaseUpdateAppointment(id, { internalNote: note } as any);
 }
 
 /** Get appointments for a specific date */
@@ -336,25 +375,22 @@ export function getAppointmentsForPatient(appointments: SharedAppointment[], pat
 
 /**
  * Check if teleconsultation payment is completed.
- * // TODO BACKEND: Verify payment status server-side
  */
 export function isTeleconsultPaid(appointment: SharedAppointment): boolean {
-  if (!appointment.teleconsultation) return true; // Non-teleconsult don't need payment
+  if (!appointment.teleconsultation) return true;
   return appointment.paymentStatus === "paid";
 }
 
 /**
- * Mark appointment as paid (mock payment).
- * // TODO BACKEND: POST /api/payments/:appointmentId/confirm
+ * Mark appointment as paid.
  */
 export function markAppointmentPaid(id: string, amount: number) {
   store.set(prev => prev.map(a => a.id === id ? { ...a, paymentStatus: "paid" as const, paidAmount: amount } : a));
+  supabaseUpdateAppointment(id, { paymentStatus: "paid", paidAmount: amount } as any);
 }
 
 /**
  * Book an appointment — high-level business action.
- * Validates no double-booking, creates the appointment, notifies all roles.
- * // TODO BACKEND: POST /api/appointments
  */
 export function bookAppointment(payload: {
   date: string;
@@ -382,15 +418,9 @@ export function bookAppointment(payload: {
   return { success: true, id };
 }
 
-/**
- * Block a time slot on the schedule (not an appointment — just a blocked period).
- * Delegates to sharedBlockedSlotsStore for actual storage.
- * // TODO BACKEND: POST /api/schedule/block
- */
 export { addBlockedSlot as blockSlot } from "./sharedBlockedSlotsStore";
 
-
-/** Get booked slots for a given date and doctor (for booking conflict check) */
+/** Get booked slots for a given date and doctor */
 export function getBookedSlotsForDate(date: string, doctor?: string): string[] {
   const apts = store.read().filter(a => 
     a.date === date && 
@@ -400,7 +430,7 @@ export function getBookedSlotsForDate(date: string, doctor?: string): string[] {
   return apts.map(a => a.startTime);
 }
 
-/** Cancel appointments that conflict with new availability (break times / closed hours) */
+/** Cancel appointments that conflict with new availability */
 export function cancelConflictingAppointments(dayName: string, newStart: string, newEnd: string, breakStart?: string, breakEnd?: string): number {
   const dayMap: Record<string, number> = { "Dimanche": 0, "Lundi": 1, "Mardi": 2, "Mercredi": 3, "Jeudi": 4, "Vendredi": 5, "Samedi": 6 };
   const jsDay = dayMap[dayName];
@@ -413,7 +443,6 @@ export function cancelConflictingAppointments(dayName: string, newStart: string,
     if (["cancelled", "absent", "done"].includes(a.status)) return false;
     const aptDate = new Date(a.date + "T00:00:00");
     if (aptDate.getDay() !== jsDay) return false;
-    // Only future appointments
     if (a.date < getTodayDate()) return false;
 
     const aptStartMin = timeToMin(a.startTime);
@@ -421,10 +450,8 @@ export function cancelConflictingAppointments(dayName: string, newStart: string,
     const dayStartMin = timeToMin(newStart);
     const dayEndMin = timeToMin(newEnd);
 
-    // Outside working hours
     if (aptStartMin < dayStartMin || aptEndMin > dayEndMin) return true;
 
-    // During break
     if (breakStart && breakEnd) {
       const bsMin = timeToMin(breakStart);
       const beMin = timeToMin(breakEnd);
@@ -449,7 +476,6 @@ function timeToMin(t: string): number {
 
 /**
  * Check upcoming appointments in next 24h and send reminder notifications.
- * Called from seedStores.ts at startup (simulating a cron job).
  */
 export function checkUpcomingReminders() {
   const now = new Date();
@@ -467,7 +493,6 @@ export function checkUpcomingReminders() {
   if (upcomingApts.length === 0) return;
 
   for (const apt of upcomingApts) {
-    // Notify patient
     if (apt.patientId) {
       pushNotification({
         type: "reminder",
@@ -478,7 +503,6 @@ export function checkUpcomingReminders() {
       });
     }
 
-    // Mark as reminded
     store.set(prev => prev.map(a =>
       a.id === apt.id ? { ...a, reminderSent: true } as any : a
     ));

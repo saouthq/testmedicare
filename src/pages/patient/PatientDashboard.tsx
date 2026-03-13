@@ -17,6 +17,7 @@ import { usePatientProfile } from "@/stores/patientStore";
 import { useNotifications } from "@/stores/notificationsStore";
 import { requestRenewal } from "@/stores/doctorStore";
 import { useSharedAppointments, cancelAppointment } from "@/stores/sharedAppointmentsStore";
+import { readAuthUser } from "@/stores/authStore";
 import { useHealth } from "@/stores/healthStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useFavoriteDoctors } from "@/stores/favoriteDoctorsStore";
@@ -38,8 +39,8 @@ const PatientDashboard = () => {
   const [favoriteDoctors] = useFavoriteDoctors();
   const { isEnabled } = useActionGating();
 
-  const PATIENT_ID = 1;
-  const appointments = useMemo(() => 
+  const PATIENT_ID = readAuthUser()?.patientId ?? 1;
+  const appointments = useMemo(() =>
     allAppointments.filter(a => a.patientId === PATIENT_ID && !["done", "cancelled", "absent"].includes(a.status))
       .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)),
     [allAppointments]
@@ -92,7 +93,6 @@ const PatientDashboard = () => {
   const nextVaccination = (health?.vaccinations ?? []).find(v => v.nextDate);
 
   const handleCancel = (id: string) => {
-    cancelAppointment(id);
     cancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);
