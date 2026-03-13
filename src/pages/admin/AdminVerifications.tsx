@@ -133,6 +133,9 @@ const getActivityLabel = (activity?: string): string => {
 
 const AdminVerifications = () => {
   const [tab, setTab] = useState<Tab>("doctors");
+  const isProduction = getAppMode() === "production";
+  const supabaseQuery = useAdminVerificationsSupabase();
+  const verificationUpdate = useAdminVerificationUpdate();
 
   const buildVerifications = (): Verification[] => {
     const base = [...initialVerifications];
