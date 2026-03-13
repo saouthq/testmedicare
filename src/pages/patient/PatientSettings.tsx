@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Bell, Shield, Save, Globe, Trash2, Eye, FileCheck, CheckCircle2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { mockAssurances, mockPatientConsents } from "@/data/mockData";
+import { mockPatientConsents } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { usePatientProfile, updatePatientProfile } from "@/stores/patientStore";
 import { updatePatient } from "@/stores/sharedPatientsStore";

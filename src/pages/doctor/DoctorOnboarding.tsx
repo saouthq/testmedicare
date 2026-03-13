@@ -7,7 +7,8 @@ import {
   Calendar, Shield, Plus, Trash2, AlertTriangle
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { specialties, languages, mockDefaultMotifs, mockDefaultHoraires } from "@/data/mockData";
+import { mockDefaultMotifs, mockDefaultHoraires, languages } from "@/data/mockData";
+import { getEnabledSpecialtyLabels } from "@/stores/specialtyStore";
 
 type Step = "identity" | "cabinet" | "motifs" | "rules";
 

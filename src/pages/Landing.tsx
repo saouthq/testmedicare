@@ -21,6 +21,10 @@ const Landing = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [cityQuery, setCityQuery] = useState("");
   const [deGarde, setDeGarde] = useState(false);
+  const mockClinics = useClinicsDirectory();
+  const mockHospitals = useHospitalsDirectory();
+  const mockPublicPharmacies = usePharmaciesDirectory();
+  const mockTopMedicines = useMedicinesDirectory();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
