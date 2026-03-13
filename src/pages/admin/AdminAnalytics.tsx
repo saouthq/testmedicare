@@ -88,8 +88,8 @@ const AdminAnalytics = () => {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const subs = state.payments.filter(p => p.status === "paid" && p.type === "subscription" && p.date?.startsWith(mStr)).reduce((s, p) => s + p.amount, 0);
-      const tele = state.payments.filter(p => p.status === "paid" && p.type === "teleconsultation" && p.date?.startsWith(mStr)).reduce((s, p) => s + p.amount, 0);
+      const subs = state.payments.filter(p => p.status === "paid" && p.type === "subscription" && p.createdAt?.startsWith(mStr)).reduce((s, p) => s + p.amount, 0);
+      const tele = state.payments.filter(p => p.status === "paid" && p.type === "teleconsult" && p.createdAt?.startsWith(mStr)).reduce((s, p) => s + p.amount, 0);
       months.push({ month: monthNames[d.getMonth()], subscriptions: subs, teleconsult: tele });
     }
     return months;
