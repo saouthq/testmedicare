@@ -103,11 +103,13 @@ function ConsultationInner() {
           : "lg:grid-cols-[280px_minmax(0,1fr)_360px]"
       }`}>
         {!ctx.leftCollapsed && (
-          <div className="lg:sticky lg:top-[88px] lg:self-start">
+          <div className="lg:sticky lg:top-[88px] lg:self-start space-y-3">
+            {ctx.isTeleconsult && <TeleconsultPanel />}
             <PatientSidebar />
           </div>
         )}
         <div className="space-y-3">
+          {ctx.isTeleconsult && ctx.leftCollapsed && <TeleconsultPanel />}
           <ConsultationNotes />
           <SpecialtyTools />
         </div>
