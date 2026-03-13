@@ -26,6 +26,26 @@ const AdminSettings = () => {
   const [saved, setSaved] = useState(false);
   const { settings, setSettings } = useAdminSettings();
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const initialSettingsRef = useRef(JSON.stringify(settings));
+
+  // isDirty tracking
+  const isDirty = useMemo(() => {
+    return JSON.stringify(settings) !== initialSettingsRef.current;
+  }, [settings]);
+
+  // Update ref after save
+  const markClean = useCallback(() => {
+    initialSettingsRef.current = JSON.stringify(settings);
+  }, [settings]);
+
+  // beforeunload warning
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) { e.preventDefault(); e.returnValue = ""; }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const { platformName, supportEmail, supportPhone, maxFileSize, autoApprovePatients,
     defaultLanguage, timezone, termsUrl, privacyUrl, features, notifConfig, security,
