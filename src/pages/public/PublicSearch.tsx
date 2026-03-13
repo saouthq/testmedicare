@@ -22,6 +22,8 @@ import { getEnabledSpecialtyLabels } from "@/stores/specialtyStore";
 const PublicSearch = () => {
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
+  const doctors = useDoctorsDirectory();
+  const specialties = ["Tous", ...getEnabledSpecialtyLabels()];
 
   // Initialize from query params
   const [selectedSpecialty, setSelectedSpecialty] = useState(searchParams.get("specialty") || "Tous");

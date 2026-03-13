@@ -9,8 +9,7 @@ import {
   Search, Shield, Clock, Users, Stethoscope, Pill, FlaskConical, ChevronRight, Building2,
   Video, MapPin, Hospital, Moon, CheckCircle, Lock, Heart,
 } from "lucide-react";
-import { mockClinics, mockHospitals, mockPublicPharmacies } from "@/data/mocks/establishments";
-import { mockTopMedicines } from "@/data/mocks/medicines";
+import { useClinicsDirectory, useHospitalsDirectory, usePharmaciesDirectory, useMedicinesDirectory } from "@/stores/directoryStore";
 
 const specialties = ["Médecin généraliste", "Dentiste", "Ophtalmologue", "Dermatologue", "Gynécologue", "Pédiatre", "Kinésithérapeute", "Cardiologue"];
 

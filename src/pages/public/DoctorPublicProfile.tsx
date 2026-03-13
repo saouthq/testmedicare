@@ -9,22 +9,21 @@ import {
   AlertCircle, User,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDoctorsDirectory } from "@/stores/directoryStore";
+import { getReviewsForDoctor } from "@/stores/reviewsStore";
 import {
   mockDoctorProfile as defaultProfile,
   mockAvailableSlots as availableSlots,
-  mockReviews as reviews,
   mockFaqItems as faqItems,
-  mockDoctors,
 } from "@/data/mockData";
 import { ReportButton } from "@/components/shared/ReportButton";
 import PublicHeader from "@/components/public/PublicHeader";
 
 // Build profile variants for different doctor IDs
-const buildProfileForDoctor = (id: string) => {
+const buildProfileForDoctor = (id: string, doctors: any[]) => {
   const numId = parseInt(id);
-  const doctor = mockDoctors.find(d => d.id === numId);
-  if (!doctor || numId === 1) return defaultProfile; // ID 1 = Bouazizi = default
-  // Build a variant profile from the search doctor data
+  const doctor = doctors.find(d => d.id === numId);
+  if (!doctor || numId === 1) return defaultProfile;
   return {
     ...defaultProfile,
     name: doctor.name,
@@ -44,16 +43,26 @@ const buildProfileForDoctor = (id: string) => {
 const DoctorPublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const doctorData = useMemo(() => buildProfileForDoctor(id || "1"), [id]);
+  const doctors = useDoctorsDirectory();
+  const doctorData = useMemo(() => buildProfileForDoctor(id || "1", doctors), [id, doctors]);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reviews" | "faq">("info");
   const [openSection, setOpenSection] = useState<string | null>("presentation");
   const isMobile = useIsMobile();
-  
-  // 404 fallback: if doctor not found for the given ID
+
+  // Reviews from store
   const numId = parseInt(id || "1");
-  const doctorExists = numId === 1 || mockDoctors.some(d => d.id === numId);
+  const storeReviews = useMemo(() => getReviewsForDoctor(numId), [numId]);
+  const reviews = storeReviews.map(r => ({
+    author: r.patientName,
+    text: r.text,
+    date: new Date(r.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
+    verified: r.verified,
+    helpful: Math.floor(Math.random() * 10) + 1,
+  }));
+  
+  const doctorExists = numId === 1 || doctors.some(d => d.id === numId);
   if (!doctorExists) {
     return (
       <div className="min-h-screen bg-background">
@@ -167,7 +176,7 @@ const DoctorPublicProfile = () => {
                   <div className="rounded-lg bg-primary/5 border border-primary/20 p-1.5 sm:p-2 text-center">
                     <div className="flex items-center justify-center gap-0.5">
                       <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
-                      <span className="text-sm sm:text-base font-bold text-foreground">{doctorData.verifiedReviewCount}</span>
+                      <span className="text-sm sm:text-base font-bold text-foreground">{verifiedCount || doctorData.verifiedReviewCount}</span>
                     </div>
                     <p className="text-[9px] sm:text-[10px] text-muted-foreground">Avis vérifiés</p>
                   </div>
@@ -199,7 +208,7 @@ const DoctorPublicProfile = () => {
             <div className="flex gap-1 rounded-lg border bg-card p-0.5 overflow-x-auto">
               {([
                 { key: "info" as const, label: "Informations" },
-                { key: "reviews" as const, label: `Avis (${doctorData.reviewCount})` },
+                { key: "reviews" as const, label: `Avis (${reviews.length || doctorData.reviewCount})` },
                 { key: "faq" as const, label: "FAQ" },
               ]).map((t) => (
                 <button key={t.key} onClick={() => setActiveTab(t.key)}
@@ -303,8 +312,8 @@ const DoctorPublicProfile = () => {
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-primary" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{doctorData.verifiedReviewCount} <span className="text-sm font-medium text-muted-foreground">avis vérifiés</span></p>
-                      <p className="text-xs text-muted-foreground">sur {doctorData.reviewCount} avis au total · Seuls les patients ayant consulté peuvent laisser un avis</p>
+                      <p className="text-2xl font-bold text-foreground">{verifiedCount || doctorData.verifiedReviewCount} <span className="text-sm font-medium text-muted-foreground">avis vérifiés</span></p>
+                      <p className="text-xs text-muted-foreground">sur {reviews.length || doctorData.reviewCount} avis au total · Seuls les patients ayant consulté peuvent laisser un avis</p>
                     </div>
                   </div>
                 </div>
@@ -333,7 +342,7 @@ const DoctorPublicProfile = () => {
                 </div>
                 {reviews.length > 3 && (
                   <Button variant="outline" className="w-full" onClick={() => setShowAllReviews(!showAllReviews)}>
-                    {showAllReviews ? "Voir moins" : `Voir tous les avis (${doctorData.reviewCount})`}
+                    {showAllReviews ? "Voir moins" : `Voir tous les avis (${reviews.length})`}
                   </Button>
                 )}
               </div>
