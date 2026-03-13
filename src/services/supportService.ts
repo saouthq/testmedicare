@@ -33,10 +33,10 @@ export function createSupportTicket(payload: {
     conversation: [
       {
         id: `msg-${Date.now()}`,
-        sender: payload.name,
-        senderRole: "user",
+        sender: "user" as const,
+        senderName: payload.name,
         text: payload.message,
-        date: now,
+        time: now,
       },
     ],
   };
