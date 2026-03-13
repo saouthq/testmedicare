@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAdminOrganizations, useAdminLookups } from "@/stores/adminStore";
+import { useAdminOrganizations, useAdminLookups, suspendOrganizationWithCascade } from "@/stores/adminStore";
 import type { AdminOrganization, OrgType, OrgStatus } from "@/types/admin";
 
 const availableSecretaries = ["Sonia Gharbi", "Amira Bouzid", "Mariem Kaabi"];
