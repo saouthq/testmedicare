@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { FileDown, Clock, Calendar, Play, Pause, Download, FileText, Users, Banknote, BarChart3, Stethoscope, AlertTriangle, Info } from "lucide-react";
+import { useAdminStore } from "@/stores/adminStore";
 
 const STORAGE_KEY = "medicare_admin_reports";
 
@@ -46,6 +47,7 @@ const loadReports = (): ReportDef[] => {
 const saveReports = (reports: ReportDef[]) => localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
 
 const AdminReports = () => {
+  const [state] = useAdminStore();
   const [reports, setReports] = useState(loadReports);
   const [history] = useState<ExportHistory[]>([
     { id: "1", reportName: "KPIs plateforme", generatedAt: "11 Mar 2026 08:00", format: "CSV", size: "245 Ko", status: "ready" },
@@ -72,8 +74,33 @@ const AdminReports = () => {
     toast({ title: "Fréquence mise à jour" });
   };
 
-  const runNow = (name: string) => {
-    toast({ title: `Export non disponible`, description: "Nécessite backend pour générer le rapport." });
+  const runNow = (report: ReportDef) => {
+    // Generate real CSV from admin store
+    let csv = "";
+    const now = new Date().toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    
+    if (report.iconName === "Users") {
+      csv = "Nom,Email,Rôle,Statut,Inscription\n" + state.users.map(u => `"${u.name}","${u.email}","${u.role}","${u.status}","${u.joined}"`).join("\n");
+    } else if (report.iconName === "Banknote") {
+      csv = "Payeur,Montant,Devise,Statut,Type,Date\n" + state.payments.map(p => `"${p.payerName}","${p.amount}","${p.currency}","${p.status}","${p.type}","${p.createdAt}"`).join("\n");
+    } else if (report.iconName === "Calendar") {
+      csv = "ID,Statut,Date\n" + `Total: ${state.users.length} utilisateurs`;
+    } else if (report.iconName === "Stethoscope") {
+      csv = "Médecin,Abonnement,Statut\n" + state.users.filter(u => u.role === "doctor").map(u => `"${u.name}","${u.subscription}","${u.status}"`).join("\n");
+    } else if (report.iconName === "FileText") {
+      csv = "Demande,Utilisateur,Email,Type,Statut,Date\n" + state.dataRequests.map(r => `"${r.id}","${r.userName}","${r.userEmail}","${r.type}","${r.status}","${r.createdAt}"`).join("\n");
+    } else {
+      csv = "Métrique,Valeur\n" + `Utilisateurs,${state.users.length}\nAbonnements actifs,${state.subscriptions.filter(s => s.status === "active").length}\nMRR,${state.subscriptions.filter(s => s.status === "active").reduce((s, sub) => s + sub.monthlyPrice, 0)} DT`;
+    }
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `${report.name.replace(/\s/g, "_").toLowerCase()}_${new Date().toISOString().split("T")[0]}.${report.format}`; a.click();
+    URL.revokeObjectURL(url);
+
+    updateReports(prev => prev.map(r => r.id === report.id ? { ...r, lastGenerated: now } : r));
+    appendLog("report_generated", "reports", report.id, `Rapport "${report.name}" généré et téléchargé`);
+    toast({ title: `Rapport "${report.name}" téléchargé`, description: `Format ${report.format.toUpperCase()}` });
   };
 
   return (
@@ -121,7 +148,7 @@ const AdminReports = () => {
                     <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>{Object.entries(freqLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
                   </Select>
-                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => runNow(r.name)}>
+                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => runNow(r)}>
                     <Play className="h-3 w-3 mr-1" />Lancer
                   </Button>
                   <Switch checked={r.active} onCheckedChange={() => toggleReport(r.id)} />
@@ -159,7 +186,11 @@ const AdminReports = () => {
                   </TableCell>
                   <TableCell>
                     {h.status === "ready" && (
-                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => toast({ title: "Export non disponible", description: "Nécessite backend" })}>
+                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => {
+                        const matchReport = reports.find(r => r.name === h.reportName);
+                        if (matchReport) runNow(matchReport);
+                        else toast({ title: "Rapport non trouvé" });
+                      }}>
                         <Download className="h-3.5 w-3.5 mr-1" />Télécharger
                       </Button>
                     )}

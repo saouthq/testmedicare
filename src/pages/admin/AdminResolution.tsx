@@ -141,7 +141,9 @@ const AdminResolution = () => {
     const noteType = modMotifAction.type === "escalate" ? "escalation" : "action";
     const newStatus = modMotifAction.type === "resolve" ? "resolved" : modMotifAction.type === "reject" ? "rejected" : r.status;
     const note: ModerationNote = { id: `n-${Date.now()}`, author: "Admin", text: `${modMotifAction.type === "resolve" ? "Résolu" : modMotifAction.type === "reject" ? "Rejeté" : modMotifAction.type === "suspend" ? "Compte suspendu" : "Escaladé"} — ${motif}`, type: noteType as any, createdAt: new Date().toISOString() };
-    setReports(prev => prev.map(x => x.id === modMotifAction.id ? { ...x, status: newStatus, notes: [...x.notes, note] } : x));
+    const updated = reports.map(x => x.id === modMotifAction.id ? { ...x, status: newStatus, notes: [...x.notes, note] } : x);
+    setReports(updated);
+    setStoreReports(updated); // sync back to store
     appendLog(`report_${modMotifAction.type}`, "moderation", String(modMotifAction.id), `${note.text}`);
     toast({ title: note.text.split(" — ")[0] });
     setModMotifAction(null);
@@ -150,7 +152,9 @@ const AdminResolution = () => {
   const handleAddNote = () => {
     if (!selectedReport || !adminNote.trim()) return;
     const note: ModerationNote = { id: `n-${Date.now()}`, author: "Admin", text: adminNote.trim(), type: "note", createdAt: new Date().toISOString() };
-    setReports(prev => prev.map(x => x.id === selectedReport.id ? { ...x, notes: [...x.notes, note] } : x));
+    const updated = reports.map(x => x.id === selectedReport.id ? { ...x, notes: [...x.notes, note] } : x);
+    setReports(updated);
+    setStoreReports(updated); // sync back
     setSelectedReport(prev => prev ? { ...prev, notes: [...prev.notes, note] } : null);
     setAdminNote("");
     toast({ title: "Note ajoutée" });
@@ -168,9 +172,12 @@ const AdminResolution = () => {
   const handleDispSendMsg = () => {
     if (!selectedDispute || !newMsg.trim()) return;
     const msg: DisputeMessage = { id: `m-${Date.now()}`, author: "Admin", authorRole: "admin", text: newMsg.trim(), createdAt: new Date().toISOString() };
-    setDisputes(prev => prev.map(d => d.id === selectedDispute.id ? { ...d, messages: [...d.messages, msg], updatedAt: new Date().toISOString() } : d));
+    const updated = disputes.map(d => d.id === selectedDispute.id ? { ...d, messages: [...d.messages, msg], updatedAt: new Date().toISOString() } : d);
+    setDisputes(updated);
+    setStoreDisputes(updated as any); // sync back
     setSelectedDispute(prev => prev ? { ...prev, messages: [...prev.messages, msg] } : null);
     setNewMsg("");
+    appendLog("dispute_message", "dispute", selectedDispute.id, `Message admin envoyé dans litige "${selectedDispute.subject}"`);
     toast({ title: "Message envoyé" });
   };
 
@@ -178,7 +185,10 @@ const AdminResolution = () => {
     if (!dispMotifAction) return;
     const newStatus = dispMotifAction.type === "resolve" ? "resolved" : dispMotifAction.type === "close" ? "closed" : "investigating";
     const sysMsg: DisputeMessage = { id: `m-${Date.now()}`, author: "Admin", authorRole: "admin", text: `[Action] Litige ${newStatus}. Motif : ${motif}`, createdAt: new Date().toISOString() };
-    setDisputes(prev => prev.map(x => x.id === dispMotifAction.id ? { ...x, status: newStatus, messages: [...x.messages, sysMsg], updatedAt: new Date().toISOString() } : x));
+    const updated = disputes.map(x => x.id === dispMotifAction.id ? { ...x, status: newStatus, messages: [...x.messages, sysMsg], updatedAt: new Date().toISOString() } : x);
+    setDisputes(updated);
+    setStoreDisputes(updated as any); // sync back
+    appendLog(`dispute_${newStatus}`, "dispute", dispMotifAction.id, `Litige ${newStatus} — ${motif}`);
     toast({ title: `Litige ${newStatus}` });
     setDispMotifAction(null);
   };
@@ -194,14 +204,16 @@ const AdminResolution = () => {
     if (!reply.trim() || !selectedTicket) return;
     const msg: TicketMessage = { id: `msg-${Date.now()}`, sender: "admin", senderName: "Admin Support", text: reply.trim(), time: new Date().toLocaleString("fr-TN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) };
     setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: [...t.conversation, msg] } : t));
+    // sync back to store
+    setStoreTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: [...t.conversation, { id: msg.id, sender: msg.sender, senderName: msg.senderName, text: msg.text, time: msg.time }] } : t));
     setSelectedTicket(prev => prev ? { ...prev, conversation: [...prev.conversation, msg] } : null);
     setReply("");
     toast({ title: "Réponse envoyée" });
   };
 
-  const handleTicketClose = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" } : t)); toast({ title: "Ticket clôturé" }); };
-  const handleTicketReopen = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" } : t)); toast({ title: "Ticket réouvert" }); };
-  const handleTicketTake = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress", assignedTo: "Admin Support" } : t)); toast({ title: "Pris en charge" }); };
+  const handleTicketClose = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" as any } : t)); appendLog("ticket_closed", "support", id, "Ticket clôturé"); toast({ title: "Ticket clôturé" }); };
+  const handleTicketReopen = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" as any } : t)); appendLog("ticket_reopened", "support", id, "Ticket réouvert"); toast({ title: "Ticket réouvert" }); };
+  const handleTicketTake = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress", assignedTo: "Admin Support" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress" as any, assignedTo: "Admin Support" } : t)); appendLog("ticket_taken", "support", id, "Ticket pris en charge"); toast({ title: "Pris en charge" }); };
 
   // Global counts for tab badges
   const totalOpen = modStats.pending + dispStats.open + tickets.filter(t => t.status === "open").length;
