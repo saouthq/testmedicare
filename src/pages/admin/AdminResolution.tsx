@@ -204,6 +204,8 @@ const AdminResolution = () => {
     if (!reply.trim() || !selectedTicket) return;
     const msg: TicketMessage = { id: `msg-${Date.now()}`, sender: "admin", senderName: "Admin Support", text: reply.trim(), time: new Date().toLocaleString("fr-TN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) };
     setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: [...t.conversation, msg] } : t));
+    // sync back to store
+    setStoreTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: [...t.conversation, { id: msg.id, sender: msg.sender, senderName: msg.senderName, text: msg.text, time: msg.time }] } : t));
     setSelectedTicket(prev => prev ? { ...prev, conversation: [...prev.conversation, msg] } : null);
     setReply("");
     toast({ title: "Réponse envoyée" });
