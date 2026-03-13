@@ -19,6 +19,7 @@ import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityS
 import { sharedBlockedSlotsStore } from "@/stores/sharedBlockedSlotsStore";
 import { sharedLeavesStore } from "@/stores/sharedLeavesStore";
 import { doctorProfileStore, readDoctorProfile } from "@/stores/doctorProfileStore";
+import { useDoctorsDirectory } from "@/stores/directoryStore";
 import { validateBooking } from "@/lib/appointmentRules";
 import { getCurrentRole, readAuthUser } from "@/stores/authStore";
 import { toast } from "@/hooks/use-toast";
