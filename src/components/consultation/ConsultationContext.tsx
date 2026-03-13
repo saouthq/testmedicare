@@ -701,18 +701,18 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
 
     // Record vitals as health measures
     if (vitals.systolic && vitals.diastolic) {
-      addMeasure({ type: "Tension artérielle", value: `${vitals.systolic}/${vitals.diastolic} mmHg`, date: today, source: doctorName });
+      addMeasure({ label: "Tension artérielle", value: `${vitals.systolic}/${vitals.diastolic} mmHg`, date: today });
     }
     if (vitals.weight) {
-      addMeasure({ type: "Poids", value: `${vitals.weight} kg`, date: today, source: doctorName });
+      addMeasure({ label: "Poids", value: `${vitals.weight} kg`, date: today });
     }
     if (vitals.heartRate) {
-      addMeasure({ type: "Fréquence cardiaque", value: `${vitals.heartRate} bpm`, date: today, source: doctorName });
+      addMeasure({ label: "Fréquence cardiaque", value: `${vitals.heartRate} bpm`, date: today });
     }
 
     // Record diagnosis as antecedent
     if (diagnosis.trim()) {
-      addAntecedent({ name: diagnosis.trim(), date: today, type: "Médical", notes: `Motif: ${motif}. ${conclusion}`.trim() });
+      addAntecedent({ name: diagnosis.trim(), date: today, details: `Motif: ${motif}. ${conclusion}`.trim() });
     }
   };
 

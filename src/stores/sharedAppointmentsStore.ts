@@ -248,8 +248,7 @@ export function completeAppointmentConsultation(id: string) {
   // Auto-create invoice from tarifs
   if (apt) {
     try {
-      const tarifs = sharedTarifsStore.read();
-      const tarifs = sharedTarifsStore.read();
+      const allTarifs = sharedTarifsStore.read();
       // Match by appointment type
       const typeMap: Record<string, string> = {
         "Consultation": "CS", "Première visite": "CS-P", "Suivi": "CS-S",
