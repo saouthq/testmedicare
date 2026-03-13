@@ -110,8 +110,26 @@ const BecomePartner = () => {
   };
 
   const requiredDocs = useMemo(() => {
-    if (["generaliste", "specialiste", "dentiste", "kine"].includes(activity))
+    if (["generaliste", "specialiste"].includes(activity))
       return ["Diplôme de médecine / d'exercice", "CIN recto/verso", "Attestation d'inscription à l'Ordre"];
+    if (activity === "dentiste")
+      return ["Diplôme de chirurgie dentaire", "CIN recto/verso", "Inscription Ordre des dentistes"];
+    if (activity === "kine")
+      return ["Diplôme de kinésithérapie", "CIN recto/verso", "Inscription Ordre des kinés"];
+    if (activity === "osteopathe")
+      return ["Diplôme d'ostéopathie", "CIN recto/verso", "Inscription registre ADELI"];
+    if (activity === "sage_femme")
+      return ["Diplôme de sage-femme", "CIN recto/verso", "Inscription Ordre des sages-femmes"];
+    if (activity === "orthophoniste")
+      return ["Certificat de capacité d'orthophonie", "CIN recto/verso", "Inscription ADELI"];
+    if (activity === "psychologue")
+      return ["Master en psychologie", "CIN recto/verso", "Inscription ADELI"];
+    if (activity === "nutritionniste")
+      return ["BTS Diététique ou DU Nutrition", "CIN recto/verso", "Inscription ADELI"];
+    if (activity === "podologue")
+      return ["Diplôme de podologie", "CIN recto/verso", "Inscription ADELI"];
+    if (activity === "orthoptiste")
+      return ["Certificat d'orthoptie", "CIN recto/verso", "Inscription ADELI"];
     if (activity === "laboratory")
       return ["Autorisation d'exercice", "Registre de commerce", "CIN du gérant"];
     if (activity === "pharmacy")
