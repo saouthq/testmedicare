@@ -354,7 +354,7 @@ const AdminAnalytics = () => {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                ) : <BackendPlaceholder label="Données insuffisantes" />;
+                ) : <EmptyDataState label="Données insuffisantes" />;
               })()}
             </div>
           </div>
