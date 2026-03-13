@@ -61,12 +61,12 @@ const PatientDashboard = () => {
       upcomingCount: appointments.length,
       activePrescriptions,
       pendingResults,
-      patientName: `${profile.firstName} ${profile.lastName}`,
+      patientName: `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`,
       todayCount: todayApts.length,
       healthSummary: {
-        bloodType: profile.bloodType || "Non renseigné",
-        treatingDoctor: profile.treatingDoctor || "Non renseigné",
-        insurance: profile.insurance || "Aucune",
+        bloodType: profile?.bloodType || "Non renseigné",
+        treatingDoctor: profile?.treatingDoctor || "Non renseigné",
+        insurance: profile?.insurance || "Aucune",
         allergies: profile?.allergies || [],
       },
     };
