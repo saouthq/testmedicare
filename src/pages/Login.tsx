@@ -42,7 +42,6 @@ const Login = () => {
       const data = await signInWithEmail(email, password);
       // Wait for store to update then navigate
       setTimeout(() => {
-        const { readAuthUser } = require("@/stores/authStore");
         const currentUser = readAuthUser();
         navigate(`/dashboard/${currentUser?.role || "patient"}`);
       }, 300);
