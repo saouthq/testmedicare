@@ -334,17 +334,22 @@ export function switchDemoRole(role: UserRole) {
 /**
  * Logout — clear auth state (both demo and Supabase).
  */
+/** Track if we're in the process of logging out to prevent redirect loops */
+let _loggingOut = false;
+export function isLoggingOut() { return _loggingOut; }
+
 export async function logout() {
+  _loggingOut = true;
   const current = store.read();
+  // Clear store FIRST (synchronously) so no component sees stale user
+  store.set(null);
+  syncLegacyRole(null);
+  // Then sign out from Supabase
   if (current && !current.isDemo) {
     try { await supabase.auth.signOut(); } catch {}
   }
-  // Use setTimeout to defer store clearing, allowing the redirect to happen first
-  // This prevents React re-render crashes when components access null user properties
-  setTimeout(() => {
-    store.set(null);
-    syncLegacyRole(null);
-  }, 0);
+  // Reset flag after a tick
+  setTimeout(() => { _loggingOut = false; }, 100);
 }
 
 /**
