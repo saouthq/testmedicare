@@ -906,6 +906,8 @@ function WeekView({
   apts,
   blocks,
   typeColors,
+  getDayConfig,
+  getLeaveForDate,
   onSlot,
   onApt,
   onBlock,
@@ -2285,8 +2287,21 @@ const DoctorSchedule = () => {
   const [current, setCurrent] = useState(() => new Date());
   const [allApts, , { isLoading: aptsLoading }] = useSharedAppointments();
   const [allBlocks] = useSharedBlockedSlots();
+  const [availConfig] = useSharedAvailability();
+  const [allLeaves] = useSharedLeaves();
   const apts = useMemo(() => allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
   const blocks = useMemo(() => allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
+
+  const getDayConfig = useCallback((date: Date): AvailabilityDay | undefined => {
+    const DAYS_MAP = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+    const dayName = DAYS_MAP[date.getDay()];
+    return availConfig.days[dayName];
+  }, [availConfig]);
+
+  const getLeaveForDate = useCallback((date: Date): SharedLeave | undefined => {
+    const ds = fmtDate(date);
+    return allLeaves.find(l => l.status === "upcoming" && ds >= l.startDate && ds <= l.endDate);
+  }, [allLeaves]);
   const [typeColors, setTypeColors] = useState<Record<ApptType, ColorKey>>(DEFAULT_TYPE_COLORS);
 
   // Modal state
@@ -2484,6 +2499,8 @@ const DoctorSchedule = () => {
             apts={apts}
             blocks={blocks}
             typeColors={typeColors}
+            getDayConfig={getDayConfig}
+            getLeaveForDate={getLeaveForDate}
             onSlot={handleSlotClick}
             onApt={setSelApt}
             onBlock={setEditBlock}
