@@ -23,8 +23,8 @@ const DoctorConnect = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Use messagesStore threads/messages
-  const [threads] = useThreads();
-  const [allMessages] = useMessages();
+  const [threads] = useChatThreads();
+  const [allMessages] = useChatMessages();
 
   // Filter threads by type: "cabinet" or regular messages for "professionals"
   const filteredThreads = useMemo(() => {
