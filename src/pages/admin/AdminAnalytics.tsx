@@ -420,7 +420,7 @@ const AdminAnalytics = () => {
         {/* ════ SATISFACTION ════ */}
         <TabsContent value="satisfaction" className="space-y-6">
           {(() => {
-            const reviews = isProduction ? (reviewsQuery.data || []) : [];
+            const reviews = isProduction ? (reviewsQuery.data || []) : (reviewsQuery.data || []);
             const avgRating = reviews.length > 0 ? (reviews.reduce((s: number, r: any) => s + (r.rating || 0), 0) / reviews.length).toFixed(1) : "—";
             const totalReviews = reviews.length;
             const ratingDist = [5, 4, 3, 2, 1].map(r => ({ rating: `${r}★`, count: reviews.filter((rv: any) => rv.rating === r).length }));
