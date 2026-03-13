@@ -22,8 +22,9 @@ import {
 import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { useActionGating } from "@/hooks/useActionGating";
+import { readAuthUser } from "@/stores/authStore";
 
-const CURRENT_DOCTOR = "Dr. Bouazizi";
+const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 const DoctorDashboard = () => {
   const teleconsultSessions = useTeleconsultSessions();
@@ -45,7 +46,7 @@ const DoctorDashboard = () => {
   // Derive waiting room from shared appointments store
   const todayAppointments = useMemo(() =>
     allAppointments
-      .filter(a => a.date === today && a.doctor === CURRENT_DOCTOR)
+      .filter(a => a.date === today && a.doctor === getCurrentDoctor())
       .sort((a, b) => a.startTime.localeCompare(b.startTime)),
     [allAppointments, today]
   );
@@ -119,11 +120,11 @@ const DoctorDashboard = () => {
           <div className="lg:col-span-2 relative overflow-hidden rounded-2xl gradient-primary p-5 text-primary-foreground min-h-0">
             <div className="relative z-10">
               <p className="text-primary-foreground/70 text-sm">Bonjour,</p>
-              <h2 className="text-xl font-bold mt-0.5">{CURRENT_DOCTOR.replace("Dr. ", "Dr. Ahmed ")}</h2>
+              <h2 className="text-xl font-bold mt-0.5">Dr. {readAuthUser()?.firstName || "Ahmed"} {readAuthUser()?.lastName || "Bouazizi"}</h2>
               <p className="text-primary-foreground/60 text-xs mt-0.5">{config.dashboardSubtitle}</p>
               <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} {config.kpiLabels?.done?.toLowerCase() || "consultations"} · Prochain : <span className="font-semibold">{nextRdv?.startTime || "—"}</span></p>
               <div className="flex gap-3 mt-3 flex-wrap">
-                <Link to={`/dashboard/doctor/consultation/new?patient=${currentRdv ? getPatientId(currentRdv.patient) : 1}`}>
+                <Link to={`/dashboard/doctor/consultation/new?patient=${currentRdv ? getPatientId(currentRdv.patient) : 1}${currentRdv?.teleconsultation ? "&teleconsult=true" : ""}`}>
                   <Button size="sm" variant="secondary" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0"><Play className="h-4 w-4 mr-1.5" />Démarrer {sub.activity === "kine" ? "séance" : "consultation"}</Button>
                 </Link>
                 <Link to="/dashboard/doctor/waiting-room">

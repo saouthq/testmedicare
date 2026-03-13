@@ -126,7 +126,8 @@ type LogItem = {
   meta?: string;
 };
 
-const CURRENT_DOCTOR = "Dr. Bouazizi";
+import { readAuthUser } from "@/stores/authStore";
+const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 // Map shared appointment status to local ConsultStatus
 function mapStatus(s: string): ConsultStatus {
@@ -615,8 +616,9 @@ const DoctorConsultations = () => {
 
   // Sync from shared store
   useEffect(() => {
+    const currentDoc = getCurrentDoctor();
     const doctorApts = allSharedAppointments.filter(a =>
-      a.doctor.includes("Bouazizi") || a.doctor === CURRENT_DOCTOR
+      a.doctor === currentDoc || a.doctor.includes(readAuthUser()?.lastName || "Bouazizi")
     );
     const mapped = doctorApts.map((a, i) => mapAppointmentToConsult(a, i));
     setConsultations(mapped);

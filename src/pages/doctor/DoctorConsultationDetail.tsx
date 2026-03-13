@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { ArrowLeft, CheckCircle2, ClipboardList, Clock, Printer, Save, Search, Stethoscope } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardList, Clock, Printer, Save, Search, Stethoscope, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ConsultationProvider, useConsultation } from "@/components/consultation/ConsultationContext";
@@ -9,6 +9,7 @@ import { ActionDock } from "@/components/consultation/ActionDock";
 import { SlidePanel } from "@/components/consultation/SlidePanel";
 import { CloseModal, HistoryDrawer, CommandPalette, ClosedView } from "@/components/consultation/ConsultationModals";
 import SpecialtyTools from "@/components/consultation/SpecialtyTools";
+import TeleconsultPanel from "@/components/consultation/TeleconsultPanel";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { getSpecialtyConfig } from "@/components/consultation/specialtyConfig";
 
@@ -58,6 +59,11 @@ function ConsultationInner() {
                 <h2 className="text-base font-bold text-foreground">{ctx.patient.name}</h2>
                 <span className="text-xs text-muted-foreground">{ctx.patient.age} ans · {ctx.patient.gender}</span>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{config.label}</span>
+                {ctx.isTeleconsult && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium inline-flex items-center gap-1">
+                    <Video className="h-3 w-3" /> Téléconsultation
+                  </span>
+                )}
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">En cours</span>
               </div>
               <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
@@ -97,11 +103,13 @@ function ConsultationInner() {
           : "lg:grid-cols-[280px_minmax(0,1fr)_360px]"
       }`}>
         {!ctx.leftCollapsed && (
-          <div className="lg:sticky lg:top-[88px] lg:self-start">
+          <div className="lg:sticky lg:top-[88px] lg:self-start space-y-3">
+            {ctx.isTeleconsult && <TeleconsultPanel />}
             <PatientSidebar />
           </div>
         )}
         <div className="space-y-3">
+          {ctx.isTeleconsult && ctx.leftCollapsed && <TeleconsultPanel />}
           <ConsultationNotes />
           <SpecialtyTools />
         </div>

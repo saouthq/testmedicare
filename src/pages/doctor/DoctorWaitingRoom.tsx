@@ -23,8 +23,9 @@ import {
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import type { AppointmentStatus, SharedAppointment } from "@/types/appointment";
 import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
+import { readAuthUser } from "@/stores/authStore";
 
-const CURRENT_DOCTOR = "Dr. Bouazizi";
+const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 const statusLabels: Record<AppointmentStatus, string> = {
   pending: "À venir",
@@ -49,7 +50,7 @@ const DoctorWaitingRoom = () => {
 
   // Today's appointments for current doctor = waiting room
   const entries = useMemo(() =>
-    allAppointments.filter(a => a.date === today && a.doctor === CURRENT_DOCTOR),
+    allAppointments.filter(a => a.date === today && a.doctor === getCurrentDoctor()),
     [allAppointments, today]
   );
 
@@ -208,7 +209,7 @@ const DoctorWaitingRoom = () => {
                     </Button>
                   )}
                   {(entry.status === "in_waiting" || entry.status === "arrived") && (
-                    <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(entry.patient)}`}>
+                    <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(entry.patient)}${entry.teleconsultation ? "&teleconsult=true" : ""}`}>
                       <Button size="sm" className="h-8 text-xs gradient-primary text-primary-foreground">
                         <Play className="h-3.5 w-3.5 mr-1" />Appeler
                       </Button>

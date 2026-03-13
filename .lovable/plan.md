@@ -1,104 +1,250 @@
+# Plan : Pages Publiques + Annuaires + Médicaments SEO + Booking OTP invité + Admin Complet
 
+Ce plan est découpé en **5 blocs indépendants**. L’implémentation des 5 bloc se fera en une fois simultanement, obligation de finir les 5 blocs avant de me donner une reponse 
 
-# Audit complet Medicare — Frontend, Backend, UI/UX, Workflow
+  
+Bloc 0 (pré-requis) : Conventions mocks + SEO framework + utilitaires
 
-## Constat principal : Téléconsultation isolée du workflow consultation
+## Conventions mocks (IMPORTANT)
 
-La téléconsultation est actuellement une page **séparée** (`/teleconsultation`) avec son propre contexte (`TeleconsultationContext`), son propre store (`teleconsultSessionStore`), et **aucun lien** avec le système de consultation standard (`ConsultationContext`, `DoctorConsultationDetail`). Quand un médecin termine une téléconsultation, rien ne se passe dans le dossier patient, la facturation, ou les ordonnances.
+- Choisir **UNE seule source** de mocks pour éviter la dispersion.
+- **Décision appliquée dans ce plan :** centraliser dans `src/data/mockData.ts`
+- Donc : **ne pas créer** `src/data/mocks/*` (ou si déjà créé, migrer le contenu vers `src/data/mockData.ts` et supprimer les doublons).
 
----
+## SEO (IMPORTANT pour l’objectif “notice Google → mon site”)
 
-## 1. Téléconsultation → intégrée au workflow consultation
-
-**Problème** : Deux systèmes parallèles et déconnectés.
-
-**Plan** :
-- Quand un RDV de type `Téléconsultation` est démarré (depuis `DoctorWaitingRoom` ou `DoctorDashboard`), ouvrir la page consultation standard (`DoctorConsultationDetail`) avec un flag `isTeleconsult: true`
-- Ajouter un panneau vidéo intégré dans `CallScreen` directement dans le layout de `DoctorConsultationDetail` (en remplacement ou overlay du sidebar patient)
-- Le `SummaryScreen` actuel doit être supprimé au profit de la clôture standard de consultation (qui génère déjà ordonnance, feuille de soins, facture, etc.)
-- Le `PreCheckScreen` reste pour le patient uniquement
-- Côté patient : garder la page `/dashboard/patient/teleconsultation` comme point d'entrée (precheck → waiting → call → summary simplifié)
-- Côté médecin : rediriger `/dashboard/doctor/teleconsultation` vers `/dashboard/doctor/consultation/new?teleconsult=true&appointmentId=X`
-
----
-
-## 2. Audit Frontend — Pages incomplètes ou cassées
-
-| Page | Problème | Correction |
-|------|----------|------------|
-| **PatientDashboard** | Crash `undefined.length` en mode Production (déjà partiellement fixé) | Ajouter `?.` et `?? []` sur TOUTES les propriétés dérivées de stores |
-| **PatientSettings** | Crash `profile?.insurance` — encore fragile | Null-safety complète |
-| **PatientPrescriptions** | Pas de lien avec Supabase `prescriptions` table | Brancher `useDualQuery` |
-| **DoctorConsultations** | 1588 lignes, hardcode `CURRENT_DOCTOR = "Dr. Bouazizi"` | Utiliser `readAuthUser()?.doctorName` |
-| **DoctorWaitingRoom** | Hardcode `CURRENT_DOCTOR = "Dr. Bouazizi"` | Idem |
-| **DoctorDashboard** | Hardcode `CURRENT_DOCTOR = "Dr. Bouazizi"` | Idem |
-| **DoctorSchedule** | 2581 lignes, hardcode doctor name | Idem |
-| **Register** | Role toujours forcé à `"patient"` même si doctor/pharmacy sélectionné | Passer `selectedRole` à `signUpWithEmail` |
-| **SecretarySettings** | Mock sessions hardcodées | Acceptable en démo, marquer clairement |
-| **Teleconsultation** | Store interne isolé, pas lié aux appointments | Fusionner avec consultation |
+- Installer et utiliser `react-helmet-async` pour gérer proprement :
+  - `<title>`
+  - `<meta name="description">`
+  - (option) canonical
+- Ajouter **robots.txt** + **sitemap.xml** (génération simple mock) :
+  - inclure routes : `/medicaments`, `/medicament/:slug`, `/clinics`, `/clinic/:slug`, `/hospitals`, `/hospital/:slug`, `/pharmacies`, `/pharmacy/:slug`, `/search`, `/doctor/:id`
+- Ajouter **JSON-LD [schema.org](http://schema.org)** :
+  - Médicament : `Drug`
+  - Pharmacie : `Pharmacy`
+  - Clinique : `MedicalClinic`
+  - Hôpital : `Hospital`
+- Ajouter un composant `Breadcrumbs` réutilisable pour pages détail (UX + SEO).
 
 ---
 
-## 3. Audit Backend — Tables et données manquantes
+# Bloc 1 : Landing publique améliorée + Recherche multi-annuaires
 
-| Élément | Statut | Action |
-|---------|--------|--------|
-| **`appointments.doctor_id`** | Existe mais jamais peuplé par le frontend | Peupler `doctor_id = auth.uid()` à la création |
-| **`patients.user_id`** | Rarement peuplé | Auto-lier lors de la création de compte patient |
-| **`teleconsult-session` Edge Function** | Placeholder (retourne des tokens fictifs) | Acceptable pour MVP, documenter |
-| **`profiles.assurance_number`** | Colonne existe mais jamais affichée côté patient settings | Afficher dans PatientSettings |
-| **Pas de table `teleconsult_sessions`** | Le store est en localStorage uniquement | Créer une table ou utiliser `appointments` avec `teleconsultation=true` |
-| **RLS `appointments`** | Patient ne peut voir que via `patients.user_id` — souvent null | Ajouter policy basée sur email ou phone fallback |
-| **`doctors_directory.id`** | Doit être le même UUID que `auth.users.id` | Vérifier que l'onboarding doctor crée l'entrée |
+## Fichiers modifiés
 
----
+- `src/pages/Landing.tsx` — refonte complète avec header public enrichi + hero multi-onglets + sections
 
-## 4. Audit UI/UX — Problèmes d'expérience
+## Design Landing
 
-| Problème | Impact | Correction |
-|----------|--------|------------|
-| **Logout ne redirige pas** | Critique — l'utilisateur reste sur le dashboard | Déjà fixé, mais ajouter un guard `useEffect` dans `DashboardLayout` |
-| **Toggle Demo/Production** | Parfois ne réagit pas | Simplifier : `setAppMode` + `window.location.href = "/login"` |
-| **`ProfileSectionEditor` ref warning** | Console warning pollue les logs | Ajouter `React.forwardRef` |
-| **Hardcoded "Dr. Bouazizi" partout** | En production, tous les médecins voient les mêmes données | Remplacer par user authentifié |
-| **Pas de loading states** | En mode Production, les pages sont vides sans indication | Ajouter `LoadingSkeleton` dans les pages qui utilisent `useDualQuery` |
-| **Pas de empty states Production** | Pages vides sans message en Production | Ajouter `EmptyState` avec CTA (ex: "Créez votre premier RDV") |
-| **Sidebar "Téléconsultation" lien séparé** | Confusion médecin : 2 entrées pour consulter | Fusionner dans "Consultations" avec badge vidéo |
+**Header :**  
+Logo | Rechercher | Annuaire (dropdown: Médecins, Cliniques, Hôpitaux, Pharmacies) | Médicaments | Comment ça marche | Devenir partenaire | Aide | Connexion
 
----
+**Hero :**  
+Tabs recherche : **Médecins | Cliniques | Hôpitaux | Pharmacies | Médicaments**  
+Chaque onglet avec champs adaptés (spécialité+ville, ville+service, ville+de garde toggle, nom médicament…)
 
-## 5. Audit Workflow — Flux cassés ou incomplets
+**Sections :**  
+Spécialités populaires (cards vers /search) | Établissements recommandés (cards cliniques/hôpitaux) | Pharmacies proches/de garde | Médicaments recherchés (chips links /medicament/:slug) | Comment ça marche (3 étapes) | Confiance & confidentialité | CTA Devenir partenaire | Footer enrichi
 
-| Workflow | Problème | Fix |
-|----------|----------|-----|
-| **Patient prend RDV téléconsult → Médecin consulte** | Aucun lien entre booking et téléconsultation | Le RDV doit porter `teleconsultation: true` et le bouton "Démarrer" ouvre la consultation avec vidéo |
-| **Médecin termine téléconsult** | Pas de facture, pas d'ordonnance, pas de feuille de soins | Utiliser le workflow `ConsultationContext.closeConsultation()` standard |
-| **Patient voit résumé téléconsult** | Summary screen isolé, pas de trace dans le dossier | Le patient doit voir les documents dans `/health` |
-| **Inscription médecin** | Role forcé à `patient` dans `Register.tsx` | Passer le role sélectionné |
-| **Inscription → onboarding doctor** | Pas de redirection automatique vers `/dashboard/doctor/onboarding` | Ajouter la redirection post-register pour role `doctor` |
-| **Secretary → Téléconsultation** | Le panneau `SecretaryTeleconsultPanel` existe mais n'est pas branché | Intégrer dans SecretaryDashboard |
+## Mock data (dans `src/data/mockData.ts`)
+
+- `mockClinics[]` : id, name, slug, city, address, phone, services[], image(placeholder), rating
+- `mockHospitals[]` : id, name, slug, city, address, phone, services[], urgences(bool)
+- `mockPublicPharmacies[]` : id, name, slug, city, address, phone, horaires, deGarde(bool)
+- `mockTopMedicines[]` : id, name, slug, form
 
 ---
 
-## Plan d'implémentation (priorité)
+# Bloc 2 : Annuaires publics (Cliniques, Hôpitaux, Pharmacies) + Fiches
 
-### Phase 1 — Corrections critiques (stabilité)
-1. **Fix hardcoded doctor name** : Remplacer `"Dr. Bouazizi"` par `readAuthUser()?.doctorName` dans 4 pages
-2. **Fix Register role** : Passer `selectedRole` au lieu de `"patient"` dans `signUpWithEmail`
-3. **Null-safety complète** : Auditer toutes les pages pour `undefined.length`, `undefined.map`, etc.
-4. **Fix `ProfileSectionEditor`** : Ajouter `forwardRef`
-5. **Peupler `doctor_id`** dans les créations d'appointments
+## Fichiers créés (~6 pages)
 
-### Phase 2 — Fusion téléconsultation (workflow)
-6. **Ajouter flag `isTeleconsult` dans ConsultationContext** pour activer le panneau vidéo
-7. **Intégrer `CallScreen` simplifié** dans le layout de `DoctorConsultationDetail`
-8. **Rediriger `/doctor/teleconsultation`** vers la consultation standard avec paramètre
-9. **Garder la page patient teleconsultation** (precheck + waiting + call) mais connecter la fin au dossier patient
 
-### Phase 3 — Production-readiness (backend)
-10. **Loading & empty states** sur toutes les pages en mode Production
-11. **Brancher `doctor_id = auth.uid()`** dans toutes les queries Supabase
-12. **Auto-lier `patients.user_id`** lors du signup patient
+| Fichier                                    | Route             | Description                                                |
+| ------------------------------------------ | ----------------- | ---------------------------------------------------------- |
+| `src/pages/public/ClinicsDirectory.tsx`    | `/clinics`        | Liste + filtres ville/service                              |
+| `src/pages/public/ClinicDetail.tsx`        | `/clinic/:slug`   | Fiche clinique (infos, services, contact, map placeholder) |
+| `src/pages/public/HospitalsDirectory.tsx`  | `/hospitals`      | Liste + filtres ville/service                              |
+| `src/pages/public/HospitalDetail.tsx`      | `/hospital/:slug` | Fiche hôpital                                              |
+| `src/pages/public/PharmaciesDirectory.tsx` | `/pharmacies`     | Liste + filtres ville + “de garde” toggle                  |
+| `src/pages/public/PharmacyDetail.tsx`      | `/pharmacy/:slug` | Fiche pharmacie                                            |
 
-**Estimation** : ~3-4 itérations d'implémentation.
 
+## Composants partagés
+
+- `src/components/public/PublicHeader.tsx` — header public réutilisable (même nav que Landing)
+- `src/components/public/DirectoryCard.tsx` — card générique (nom, ville, services, CTA)
+- `src/components/public/EntityDetailLayout.tsx` — layout fiche (infos structurées, CTA, breadcrumbs)
+- `src/components/seo/SeoHelmet.tsx` — wrapper Helmet (title/description)
+- `src/components/seo/JsonLd.tsx` — injection JSON-LD
+- `src/components/ui/Breadcrumbs.tsx`
+
+## SEO (IMPORTANT)
+
+- Chaque page détail utilise `react-helmet-async` (pas document.title + useEffect).
+- Ajouter meta description dynamique.
+- Ajouter JSON-LD :
+  - ClinicDetail => MedicalClinic
+  - HospitalDetail => Hospital
+  - PharmacyDetail => Pharmacy
+
+## Routes ajoutées dans `App.tsx`
+
+- `/clinics`, `/clinic/:slug`, `/hospitals`, `/hospital/:slug`, `/pharmacies`, `/pharmacy/:slug`
+
+---
+
+# Bloc 3 : Annuaire Médicaments SEO (objectif Google)
+
+## Mock data (dans `src/data/mockData.ts`)
+
+`mockMedicines[]` : ~10 médicaments avec :  
+id, name, slug, dosage, form, category, summary,  
+indications[], dosageText, contraindications[], sideEffects[],  
+interactions[], warnings[], pregnancyInfo, storage,  
+faq[{q,a}], similarSlugs[]
+
+## Fichiers créés
+
+
+| Fichier                                   | Route               | Description                                    |
+| ----------------------------------------- | ------------------- | ---------------------------------------------- |
+| `src/pages/public/MedicinesDirectory.tsx` | `/medicaments`      | Liste + recherche + filtres (forme, catégorie) |
+| `src/pages/public/MedicineDetail.tsx`     | `/medicament/:slug` | Page notice complète + FAQ + similaires        |
+
+
+## Contenu page /medicament/:slug
+
+Header : Nom + dosage + forme + badge catégorie  
+Sections (accordéon) : Résumé | Indications | Posologie | Contre-indications | Effets indésirables | Interactions | Grossesse/allaitement | Mise en garde | Conservation  
+FAQ + Avertissement légal + Médicaments similaires
+
+## SEO Médicaments (IMPORTANT)
+
+- Helmet : title + meta description
+- JSON-LD : `Drug`
+- Breadcrumbs
+- (option) alias `/medicament/:slug/notice` → redirect vers `/medicament/:slug`
+
+## Routes dans `App.tsx`
+
+- `/medicaments`, `/medicament/:slug` (+ option `/medicament/:slug/notice`)
+
+---
+
+# Bloc 4 : Booking invité OTP (visiteur → RDV sans compte initial)
+
+## Correction clé : booking visiteur sur route publique
+
+➡️ **Ne pas modifier une page “patient” pour un visiteur.**  
+Créer une route publique dédiée :
+
+- **Nouvelle page** : `src/pages/public/PublicBooking.tsx`  
+Route : `/booking/:doctorId`
+
+## Flow
+
+- Visiteur choisit motif + créneau + saisit infos (nom/prénom/téléphone/email optionnel)
+- OTP téléphone (mock) :
+  - envoi OTP => toast “OTP envoyé (code: 123456)”
+  - validation si code == 123456
+- Après OTP validé :
+  - création automatique “session patient mock” dans localStorage (ex: userRole=patient + patientId)
+  - création RDV mock
+  - redirection vers confirmation + “Voir mes RDV”
+
+## Fichiers créés
+
+- `src/components/booking/GuestOtpFlow.tsx` — OTP inline (téléphone → code → validation)
+- `src/services/authOtpService.ts` — mock (sendOtp, verifyOtp) avec TODO endpoints backend
+- `src/pages/public/PublicBooking.tsx` — page booking visiteur
+
+## Intégration
+
+- Depuis `/doctor/:id` et `/search` : bouton “Prendre RDV” renvoie vers `/booking/:doctorId`
+
+---
+
+# Bloc 5 : Admin plateforme complet (avec audit logs persistants + RBAC)
+
+## Services mock : `src/services/admin/`
+
+
+| Fichier                       | Fonctions                                                    |
+| ----------------------------- | ------------------------------------------------------------ |
+| `adminAuditService.ts`        | appendLog(...) + getLogs(filters) + **persist localStorage** |
+| `adminUsersService.ts`        | updateUserStatus(...) → appelle audit                        |
+| `adminVerificationService.ts` | approve/reject(reason) → appelle audit                       |
+| `adminPaymentsService.ts`     | refund(...) → appelle audit                                  |
+| `adminModerationService.ts`   | hideReview/restoreReview/closeReport → appelle audit         |
+
+
+⚠️ **Audit logs** : pas “store en mémoire uniquement”.  
+➡️ Persister dans `localStorage` pour survivre aux refresh.
+
+## Mock data (dans `src/data/mockData.ts`)
+
+Ajouter :
+
+- `mockAdminOrganizations[]` : id, type, name, city, status, membersCount
+- `mockAdminAppointments[]` : id, patientName, doctorName, date, type, status, city
+- `mockAdminVerifications[]` : id, entityType, entityName, city, submittedAt, status, docsCount
+- `mockAdminPlans[]` : id, name, priceMonthly, features[], isActive
+- `mockAdminSubscriptionsDetailed[]` : id, doctorName, planName, status, startedAt, renewalAt
+- `mockAdminPayments[]` : id, type, amount, currency, status, createdAt, payerName
+- `mockAdminReviews[]` : id, doctorName, patientName, rating, comment, status, createdAt
+- `mockAdminReports[]` : id, targetType, reason, status, createdAt
+- `mockAdminAuditLogs[]` : id, actorAdminName, actorRole, actionType, targetType, targetId, summary, createdAt
+- `mockAdminNotificationTemplates[]` : id, name, channel, subject, body, variables[]
+- `mockAdminReferenceData` : specialties[], cities[], languages[], motifs[]
+- (AJOUT) `mockAdminSupportTickets[]` : id, requester, category, status, priority, createdAt, assignedTo
+
+## Pages admin créées / modifiées
+
+### Nouvelles pages
+
+- `src/pages/admin/AdminOrganizations.tsx` → `/dashboard/admin/organizations`
+- `src/pages/admin/AdminAppointments.tsx` → `/dashboard/admin/appointments`
+- `src/pages/admin/AdminVerifications.tsx` → `/dashboard/admin/verifications` (tabs Médecins/Labos/Pharmacies)
+- `src/pages/admin/AdminPayments.tsx` → `/dashboard/admin/payments`
+- `src/pages/admin/AdminAuditLogs.tsx` → `/dashboard/admin/audit-logs`
+- `src/pages/admin/AdminReferenceData.tsx` → `/dashboard/admin/reference-data`
+- `src/pages/admin/AdminNotificationTemplates.tsx` → `/dashboard/admin/notification-templates`
+- (AJOUT) `src/pages/admin/AdminSupport.tsx` → `/dashboard/admin/support` (tickets)
+
+### Pages existantes enrichies
+
+- `AdminDashboard.tsx` — KPIs + validations en attente + derniers audit logs
+- `AdminUsers.tsx` — actions + audit
+- `AdminModeration.tsx` — tabs Avis/Signalements + audit
+- `AdminSubscriptions.tsx` — abonnements détaillés + actions + audit
+- `AdminSettings.tsx` — feature flags + mode maintenance + audit
+- `AdminAnalytics.tsx` — KPIs + funnels mock
+
+## Sidebar admin : `DashboardLayout.tsx`
+
+Mettre à jour `navItems.admin` avec :  
+Dashboard, Utilisateurs, Organisations, Rendez-vous, Validations, Abonnements, Paiements, Modération, Audit logs, Référentiels, Templates notifs, Analytics, Support, Paramètres
+
+## RBAC guard mock (amélioré)
+
+- `src/components/admin/AdminGuard.tsx`
+- Vérifie d’abord la session auth/store existant (si présent), sinon fallback localStorage.
+- Condition minimale : role === "admin"
+- Préparer sous-rôles (option mock) : support/verification/finance/moderation/compliance/superadmin (même si pas encore appliqués partout)
+
+## Routes admin dans `App.tsx`
+
+Wrapper toutes les routes `/dashboard/admin/*` avec `AdminGuard`.
+
+---
+
+# Ordre d’exécution recommandé
+
+1. Mettre en place **convention mocks unique** (`src/data/mockData.ts`) + SEO utils (Helmet/JSON-LD/robots/sitemap)
+2. PublicHeader + refonte Landing + mocks établissements/top meds
+3. Annuaires publics + pages détail + SEO Helmet + JSON-LD
+4. Médicaments SEO (directory + notice) + SEO complet
+5. Booking visiteur OTP sur `/booking/:doctorId`
+6. Admin : services mock + audit logs persistants + AdminGuard
+7. Pages admin nouvelles + enrichir existantes + sidebar + routes

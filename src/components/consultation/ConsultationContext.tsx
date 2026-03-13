@@ -39,6 +39,7 @@ import type { SharedAppointment } from "@/types/appointment";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
+  isTeleconsult: boolean;
   patient: typeof mockConsultationPatient;
   navigate: ReturnType<typeof useNavigate>;
   // Notes
@@ -195,6 +196,7 @@ export function useConsultation() {
 export function ConsultationProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const isTeleconsult = searchParams.get("teleconsult") === "true";
 
   // Load patient from query param or fallback to default
   const patient = useMemo(() => {
@@ -1006,6 +1008,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
   ]);
 
   const value: Ctx = {
+    isTeleconsult,
     patient,
     navigate,
     motif,

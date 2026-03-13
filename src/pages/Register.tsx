@@ -54,7 +54,7 @@ const Register = () => {
         lastName: formData.lastName,
         phone: formData.phone,
         gouvernorat: formData.gouvernorat,
-        role: "patient",
+        role: selectedRole as any || "patient",
       });
       toast({ title: "Compte créé !", description: "Vérifiez votre email pour confirmer votre inscription." });
       setStep("confirm");
