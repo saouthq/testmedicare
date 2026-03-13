@@ -23,7 +23,8 @@ import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType } from "@/stores/featureMatrixStore";
 import { useNavigate, useLocation } from "react-router-dom";
-import { switchDemoRole, loginDemoAs, type UserRole } from "@/stores/authStore";
+import { switchDemoRole, loginDemoAs, useAppMode, setAppMode, logout, type UserRole } from "@/stores/authStore";
+import { Switch } from "@/components/ui/switch";
 import { pushNotification, notifyPatient, notifyDoctor } from "@/stores/notificationsStore";
 import { useAdminModules, toggleModule, platformModules } from "@/stores/adminModulesStore";
 
