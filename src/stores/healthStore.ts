@@ -72,7 +72,7 @@ async function syncAntecedentsToSupabase(antecedents: Antecedent[]) {
       .limit(1);
     if (patients?.[0]) {
       await (supabase.from as any)("patients")
-        .update({ antecedents: antecedents.map(a => ({ name: a.name, year: a.year, details: a.details })) })
+        .update({ antecedents: antecedents.map(a => ({ name: a.name, date: a.date, details: a.details })) })
         .eq("id", patients[0].id);
     }
   } catch {}
