@@ -22,6 +22,10 @@ import { sharedTarifsStore } from "./sharedTarifsStore";
 import { doctorProfileStore } from "./doctorProfileStore";
 import { reportsStore, seedReportsIfEmpty } from "./reportsStore";
 import { threadsStore, messagesItemsStore, seedMessagesIfEmpty } from "./messagesStore";
+import { seedReviewsIfEmpty, reviewsStore } from "./reviewsStore";
+import { seedDirectoryIfEmpty, directoryStore } from "./directoryStore";
+import { seedProtocolsIfEmpty, doctorProtocolsStore } from "./doctorProtocolsStore";
+import { seedDocTemplatesIfEmpty, doctorDocumentsStore } from "./doctorDocumentsStore";
 
 // Mock data imports (used only for seeding)
 import {
