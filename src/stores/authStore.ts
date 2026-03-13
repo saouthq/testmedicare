@@ -162,8 +162,9 @@ export function initSupabaseAuth() {
   _authInitialized = true;
 
   supabase.auth.onAuthStateChange(async (event, session) => {
+    if (_loggingOut) return; // Don't process auth events during logout
+
     if (event === "SIGNED_OUT" || !session?.user) {
-      // Only clear if not a demo user
       const current = store.read();
       if (current && !current.isDemo) {
         store.set(null);
@@ -174,7 +175,6 @@ export function initSupabaseAuth() {
 
     if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
       const current = store.read();
-      // Don't override demo user
       if (current?.isDemo) return;
       await loadSupabaseUser(session.user.id);
     }
@@ -182,6 +182,7 @@ export function initSupabaseAuth() {
 
   // Check existing session on init
   supabase.auth.getSession().then(({ data: { session } }) => {
+    if (_loggingOut) return;
     if (session?.user) {
       const current = store.read();
       if (!current?.isDemo) {
