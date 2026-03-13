@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
@@ -6,10 +6,7 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Search, Pill, ChevronRight } from "lucide-react";
-import { mockMedicines } from "@/data/mocks/medicines";
-
-const forms = ["Toutes", ...Array.from(new Set(mockMedicines.map(m => m.form)))];
-const categories = ["Toutes", ...Array.from(new Set(mockMedicines.map(m => m.category)))];
+import { useMedicinesDirectory } from "@/stores/directoryStore";
 
 const MedicinesDirectory = () => {
   const [search, setSearch] = useState("");
