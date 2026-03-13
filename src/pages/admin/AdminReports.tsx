@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { FileDown, Clock, Calendar, Play, Pause, Download, FileText, Users, Banknote, BarChart3, Stethoscope, AlertTriangle, Info } from "lucide-react";
+import { useAdminStore } from "@/stores/adminStore";
 
 const STORAGE_KEY = "medicare_admin_reports";
 
