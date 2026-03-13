@@ -28,9 +28,9 @@ const Login = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // If already logged in, redirect (useEffect to avoid navigate during render)
+  // If already logged in (and not in the process of logging out), redirect
   useEffect(() => {
-    if (user) {
+    if (user && !isLoggingOut()) {
       navigate(`/dashboard/${user.role}`, { replace: true });
     }
   }, [user, navigate]);

@@ -431,8 +431,8 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
           <button
             onClick={async () => {
               const { logout } = await import("@/stores/authStore");
-              window.location.href = "/login";
               await logout();
+              window.location.href = "/login";
             }}
             className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap active-scale w-full"
           >
