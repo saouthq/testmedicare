@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
+import { useAppMode } from "@/stores/authStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
 import AdminSpotlight from "@/components/admin/AdminSpotlight";
@@ -32,6 +33,23 @@ interface NavItem {
 interface NavSection {
   label: string;
   items: NavItem[];
+}
+
+/** Small badge showing current app mode */
+function ModeBadge() {
+  const [mode] = useAppMode();
+  if (mode === "production") {
+    return (
+      <span className="ml-2 hidden sm:inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/30 px-2 py-0.5 text-[9px] font-semibold text-accent uppercase tracking-wider">
+        🔗 Production
+      </span>
+    );
+  }
+  return (
+    <span className="ml-2 hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 text-[9px] font-semibold text-primary uppercase tracking-wider">
+      🎭 Démo
+    </span>
+  );
 }
 
 interface DashboardLayoutProps {
@@ -444,6 +462,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
               </button>
             )}
             <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h1>
+            <ModeBadge />
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Admin spotlight trigger */}

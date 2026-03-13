@@ -38,6 +38,7 @@ import { mockSecretaryBillingInvoices } from "@/data/mocks/secretary";
 import { mockLabDemands } from "@/data/mocks/lab";
 import { seedAdminStoreIfEmpty, adminStore } from "./adminStore";
 import { adminSeedData } from "@/data/mocks/adminSeed";
+import { getAppMode } from "./authStore";
 
 let seeded = false;
 
@@ -98,7 +99,11 @@ export function seedAllStores() {
   if (seeded) return;
   seeded = true;
 
-  // ── Auto-refresh appointments when day changes ──
+  // ── In Production mode, skip ALL mock data seeding ──
+  if (getAppMode() === "production") {
+    console.log("[seedStores] Production mode — skipping mock data");
+    return;
+  }
   const today = new Date().toISOString().slice(0, 10);
   const lastSeedDate = localStorage.getItem(SEED_DATE_KEY);
   if (lastSeedDate !== today) {
@@ -194,4 +199,15 @@ export function resetDemo() {
   // Force re-seed
   seeded = false;
   seedAllStores();
+}
+
+/**
+ * Clear ALL mock data from localStorage and stores.
+ * Used when switching to Production mode.
+ */
+export function clearAllMockData() {
+  ALL_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+  ALL_STORES.forEach(s => s.reset());
+  seeded = false;
+  console.log("[seedStores] All mock data cleared for Production mode");
 }

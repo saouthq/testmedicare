@@ -18,7 +18,7 @@ import {
   sendToWaitingRoom, startAppointmentConsultation, createAppointment, getTodayDate,
   cancelAppointment, rescheduleAppointment,
 } from "@/stores/sharedAppointmentsStore";
-import { resetDemo } from "@/stores/seedStores";
+import { resetDemo, clearAllMockData } from "@/stores/seedStores";
 import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType } from "@/stores/featureMatrixStore";
@@ -356,9 +356,11 @@ const SimulationPanel = () => {
   };
 
   const goTo = (url: string, role?: string) => {
-    const resolved = role || resolveRole(url);
-    if (resolved && resolved !== "public") {
-      switchDemoRole(resolved as UserRole);
+    if (!isProduction) {
+      const resolved = role || resolveRole(url);
+      if (resolved && resolved !== "public") {
+        switchDemoRole(resolved as UserRole);
+      }
     }
     navigate(url);
   };
@@ -421,16 +423,25 @@ const SimulationPanel = () => {
             <span className="text-[10px]">{isProduction ? "🔗" : "🎭"}</span>
             <span className="text-[11px] font-medium text-foreground">{isProduction ? "Production (Supabase)" : "Mode Démo"}</span>
           </div>
-          <Switch
-            checked={isProduction}
-            onCheckedChange={async (checked) => {
-              await logout();
-              setAppMode(checked ? "production" : "demo");
-              toast.success(checked ? "Mode Production activé — connectez-vous via Supabase" : "Mode Démo activé");
-              navigate("/login");
-            }}
-            className="scale-75"
-          />
+           <Switch
+             checked={isProduction}
+             onCheckedChange={async (checked) => {
+               await logout();
+               if (checked) {
+                 // Switching to Production: clear all mock data
+                 clearAllMockData();
+                 setAppMode("production");
+                 toast.success("Mode Production activé — données vides, connectez-vous via Supabase");
+               } else {
+                 // Switching to Demo: set mode then reseed
+                 setAppMode("demo");
+                 resetDemo();
+                 toast.success("Mode Démo activé — données fictives chargées");
+               }
+               navigate("/login");
+             }}
+             className="scale-75"
+           />
         </div>
 
         {/* ═══ Navigation tab ═══ */}
@@ -442,7 +453,14 @@ const SimulationPanel = () => {
               <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{currentRole}</span>
             </div>
 
-            {/* Quick role grid */}
+            {/* Quick role grid — Demo only */}
+            {isProduction ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 text-center">
+                <span className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                  🔒 Mode Production — connectez-vous avec un vrai compte Supabase
+                </span>
+              </div>
+            ) : (
             <div className="grid grid-cols-4 gap-1.5">
               {[
                 { label: "Patient", role: "patient", url: "/dashboard/patient", color: "text-primary" },
@@ -462,6 +480,7 @@ const SimulationPanel = () => {
                 </button>
               ))}
             </div>
+            )}
 
             {/* Expandable role groups */}
             <div className="space-y-0.5">
@@ -507,8 +526,18 @@ const SimulationPanel = () => {
 
         {/* ═══ Workflows tab ═══ */}
         {tab === "simulation" && (
+          isProduction ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-4 text-center space-y-2">
+              <Lock className="h-5 w-5 mx-auto text-amber-600 dark:text-amber-400" />
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                Les simulations sont désactivées en mode Production.
+              </p>
+              <p className="text-[10px] text-amber-600/70 dark:text-amber-500/70">
+                Passez en mode Démo pour tester les workflows.
+              </p>
+            </div>
+          ) :
           <>
-            {/* Full workflow */}
             <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-3">
               <p className="text-[10px] font-semibold text-primary uppercase mb-2">⚡ Workflow complet</p>
               <Button size="sm" className="w-full text-xs gradient-primary text-primary-foreground" onClick={simulateFullWorkflow}>
