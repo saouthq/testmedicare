@@ -253,7 +253,7 @@ const App = () => (
           <Route path="/dashboard/doctor/connect" element={<AuthGuard allowedRoles={["doctor"]}><DoctorConnect /></AuthGuard>} />
           <Route path="/dashboard/doctor/billing" element={<AuthGuard allowedRoles={["doctor"]}><DoctorBilling /></AuthGuard>} />
           <Route path="/dashboard/doctor/ai-assistant" element={<AuthGuard allowedRoles={["doctor"]}><DoctorAIAssistant /></AuthGuard>} />
-          <Route path="/dashboard/doctor/teleconsultation" element={<AuthGuard allowedRoles={["doctor"]}><Teleconsultation role="doctor" /></AuthGuard>} />
+          <Route path="/dashboard/doctor/teleconsultation" element={<AuthGuard allowedRoles={["doctor"]}><Navigate to="/dashboard/doctor/consultation/new?teleconsult=true" replace /></AuthGuard>} />
           <Route path="/dashboard/doctor/waiting-room" element={<AuthGuard allowedRoles={["doctor"]}><DoctorWaitingRoom /></AuthGuard>} />
           <Route path="/dashboard/doctor/protocols" element={<AuthGuard allowedRoles={["doctor"]}><DoctorProtocols /></AuthGuard>} />
           <Route path="/dashboard/doctor/leaves" element={<AuthGuard allowedRoles={["doctor"]}><DoctorLeaves /></AuthGuard>} />
