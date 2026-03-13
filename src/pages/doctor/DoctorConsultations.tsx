@@ -940,6 +940,14 @@ const DoctorConsultations = () => {
 
   const selectionLabel = selected ? `${selected.patient} • ${selected.date} ${selected.time}` : "Aucune sélection";
 
+  if (aptsLoading) {
+    return (
+      <DashboardLayout role="doctor" title="Consultations">
+        <LoadingSkeleton type="table" />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="doctor" title="Consultations">
       <div className="space-y-6">
