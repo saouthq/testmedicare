@@ -56,7 +56,7 @@ export const getPendingCount = (): number =>
 
 /** Map activity to entity type */
 const activityToType = (activity: string): PartnerType => {
-  if (["generaliste", "specialiste", "dentiste", "kine"].includes(activity)) return "doctor";
+  if (["generaliste", "specialiste", "dentiste", "kine", "osteopathe", "sage_femme", "orthophoniste", "psychologue", "nutritionniste", "podologue", "orthoptiste"].includes(activity)) return "doctor";
   if (activity === "laboratory") return "lab";
   if (activity === "pharmacy") return "pharmacy";
   return "clinic";

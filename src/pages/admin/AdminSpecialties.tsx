@@ -22,11 +22,12 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 
 const categoryLabels: Record<SpecialtyCategory, string> = {
-  generaliste: "Généraliste", specialiste: "Spécialiste", dentiste: "Dentaire", paramedical: "Paramédical",
+  generaliste: "Généraliste", specialiste: "Spécialiste", dentiste: "Dentaire", paramedical: "Paramédical", chirurgien: "Chirurgien",
 };
 const categoryColors: Record<SpecialtyCategory, string> = {
   generaliste: "bg-primary/10 text-primary", specialiste: "bg-accent/10 text-accent",
   dentiste: "bg-warning/10 text-warning", paramedical: "bg-muted text-muted-foreground",
+  chirurgien: "bg-destructive/10 text-destructive",
 };
 
 const emptySpec: Omit<ManagedSpecialty, "id" | "createdAt" | "updatedAt" | "activeDoctors"> = {
@@ -38,7 +39,7 @@ const emptySpec: Omit<ManagedSpecialty, "id" | "createdAt" | "updatedAt" | "acti
 };
 
 const AdminSpecialties = () => {
-  const [specs] = useSpecialties();
+  const [specs] = useSpecialties() as [ManagedSpecialty[], (v: ManagedSpecialty[] | ((prev: ManagedSpecialty[]) => ManagedSpecialty[])) => void];
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<SpecialtyCategory | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);

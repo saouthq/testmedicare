@@ -10,7 +10,7 @@ const MATRIX_KEY = "medicare_feature_matrix";
 const OVERRIDES_KEY = "medicare_feature_overrides";
 
 // ── Types ──
-export type ActivityType = "generaliste" | "specialiste" | "dentiste" | "kine" | "laboratory" | "pharmacy" | "clinic";
+export type ActivityType = "generaliste" | "specialiste" | "dentiste" | "kine" | "osteopathe" | "sage_femme" | "orthophoniste" | "psychologue" | "nutritionniste" | "podologue" | "orthoptiste" | "laboratory" | "pharmacy" | "clinic";
 export type PlanTier = "essentiel" | "pro" | "cabinet";
 
 export interface FeatureDef {
@@ -45,10 +45,26 @@ export const activities: ActivityConfig[] = [
   { id: "generaliste", label: "Médecin généraliste" },
   {
     id: "specialiste", label: "Médecin spécialiste",
-    specialties: ["Cardiologue", "Dermatologue", "Gynécologue", "Ophtalmologue", "ORL", "Pédiatre", "Pneumologue", "Rhumatologue", "Urologue", "Neurologue", "Psychiatre", "Endocrinologue"],
+    specialties: [
+      "Cardiologue", "Dermatologue", "Gynécologue", "Ophtalmologue", "ORL",
+      "Pédiatre", "Pneumologue", "Rhumatologue", "Urologue", "Neurologue",
+      "Psychiatre", "Endocrinologue", "Gastro-entérologue", "Néphrologue",
+      "Allergologue", "Infectiologue", "Hématologue", "Oncologue",
+      "Chirurgien", "Chirurgien orthopédiste", "Chirurgien plastique", "Chirurgien vasculaire",
+      "Anesthésiste-réanimateur", "Radiologue", "Médecin interniste",
+      "Médecin du sport", "Médecin du travail", "Gériatre",
+      "Phlébologue", "Médecin esthétique",
+    ],
   },
-  { id: "dentiste", label: "Dentiste" },
+  { id: "dentiste", label: "Chirurgien-Dentiste / Orthodontiste" },
   { id: "kine", label: "Kinésithérapeute" },
+  { id: "osteopathe", label: "Ostéopathe" },
+  { id: "sage_femme", label: "Sage-femme" },
+  { id: "orthophoniste", label: "Orthophoniste" },
+  { id: "psychologue", label: "Psychologue" },
+  { id: "nutritionniste", label: "Nutritionniste / Diététicien" },
+  { id: "podologue", label: "Podologue" },
+  { id: "orthoptiste", label: "Orthoptiste" },
   { id: "laboratory", label: "Laboratoire d'analyses" },
   { id: "pharmacy", label: "Pharmacie" },
   { id: "clinic", label: "Clinique / Établissement" },
@@ -69,8 +85,37 @@ export const plansByActivity: Record<ActivityType, PlanConfig[]> = {
   dentiste: [
     { id: "essentiel", label: "Essentiel", price: 49 },
     { id: "pro", label: "Pro", price: 149 },
+    { id: "cabinet", label: "Cabinet+", price: 299 },
   ],
   kine: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  osteopathe: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  sage_femme: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  orthophoniste: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  psychologue: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  nutritionniste: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 99 },
+  ],
+  podologue: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 99 },
+  ],
+  orthoptiste: [
     { id: "essentiel", label: "Essentiel", price: 39 },
     { id: "pro", label: "Pro", price: 119 },
   ],
@@ -111,10 +156,39 @@ export const publicPlansByActivity: Record<ActivityType, PublicPlanConfig[]> = {
   dentiste: [
     { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 49, yearlyPrice: 39, planTier: "essentiel" },
     { name: "Pro", subtitle: "Gestion complète", monthlyPrice: 149, yearlyPrice: 129, planTier: "pro", highlighted: true },
+    { name: "Cabinet +", subtitle: "Multi-praticiens", monthlyPrice: 299, yearlyPrice: 249, planTier: "cabinet" },
   ],
   kine: [
     { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
     { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  osteopathe: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  sage_femme: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  orthophoniste: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  psychologue: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  nutritionniste: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi nutrition", monthlyPrice: 99, yearlyPrice: 79, planTier: "pro", highlighted: true },
+  ],
+  podologue: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 99, yearlyPrice: 79, planTier: "pro", highlighted: true },
+  ],
+  orthoptiste: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi visuel", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
   ],
   laboratory: [
     { name: "Standard", subtitle: "Gestion labo", monthlyPrice: 79, yearlyPrice: 59, planTier: "essentiel" },
@@ -165,6 +239,20 @@ export const featureCatalog: FeatureDef[] = [
   { id: "kine_balance", label: "Bilan kinésithérapie", description: "Formulaire de bilan kiné structuré", category: "Outils spécialisés" },
   { id: "ophtalmo_exam", label: "Examen ophtalmologique", description: "Examen ophtalmo avec acuité visuelle", category: "Outils spécialisés" },
   { id: "cardio_ecg", label: "Interprétation ECG", description: "Module d'interprétation ECG intégré", category: "Outils spécialisés" },
+  { id: "osteo_schema", label: "Schéma ostéopathique", description: "Schéma corporel interactif", category: "Outils spécialisés" },
+  { id: "osteo_tests", label: "Tests ostéo structurés", description: "Tests palpatoires et fonctionnels documentés", category: "Outils spécialisés" },
+  { id: "ortho_bilan", label: "Bilan orthophonique", description: "Bilan de langage standardisé", category: "Outils spécialisés" },
+  { id: "ortho_exercices", label: "Exercices orthophoniques", description: "Programme d'exercices à domicile", category: "Outils spécialisés" },
+  { id: "psy_echelles", label: "Échelles psychométriques", description: "PHQ-9, GAD-7, BDI, STAI", category: "Outils spécialisés" },
+  { id: "psy_notes_conf", label: "Notes confidentielles", description: "Notes de séance chiffrées", category: "Outils spécialisés" },
+  { id: "nutri_plan", label: "Plan alimentaire", description: "Générateur de plans nutritionnels", category: "Outils spécialisés" },
+  { id: "nutri_journal", label: "Journal alimentaire", description: "Suivi alimentation patient", category: "Outils spécialisés" },
+  { id: "podo_schema", label: "Schéma podologique", description: "Cartographie plantaire interactive", category: "Outils spécialisés" },
+  { id: "podo_semelles", label: "Prescriptions semelles", description: "Prescription d'orthèses plantaires", category: "Outils spécialisés" },
+  { id: "sf_suivi_grossesse", label: "Suivi grossesse", description: "Carnet de grossesse numérique", category: "Outils spécialisés" },
+  { id: "sf_monitoring", label: "Monitoring fœtal", description: "Documentation monitoring & RCF", category: "Outils spécialisés" },
+  { id: "orthoptiste_bilan", label: "Bilan orthoptique", description: "Bilan oculomoteur complet", category: "Outils spécialisés" },
+  { id: "orthoptiste_exercices", label: "Exercices visuels", description: "Programme de rééducation visuelle", category: "Outils spécialisés" },
   // Pharmacie
   { id: "rx_reception", label: "Réception ordonnances", description: "Réception ordonnances numériques", category: "Pharmacie" },
   { id: "stock_basic", label: "Gestion de stock basique", description: "Suivi du stock avec alertes", category: "Pharmacie" },
@@ -226,13 +314,19 @@ export const buildDefaultState = (activityId: ActivityType): FeatureState => {
       // Activity-specific
       if (activityId === "dentiste" && ["dental_chart", "dental_quote"].includes(f.id) && plan !== "essentiel") enabled = true;
       if (activityId === "kine" && ["kine_exercises", "kine_balance"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "osteopathe" && ["osteo_schema", "osteo_tests"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "orthophoniste" && ["ortho_bilan", "ortho_exercices"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "psychologue" && ["psy_echelles", "psy_notes_conf"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "nutritionniste" && ["nutri_plan", "nutri_journal"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "podologue" && ["podo_schema", "podo_semelles"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "sage_femme" && ["sf_suivi_grossesse", "sf_monitoring"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "orthoptiste" && ["orthoptiste_bilan", "orthoptiste_exercices"].includes(f.id) && plan !== "essentiel") enabled = true;
       if (activityId === "specialiste" && f.id === "prescription_specialized" && plan !== "essentiel") enabled = true;
       if (activityId === "laboratory" && ["lab_auto_integration", "lab_results_view", "lab_request"].includes(f.id)) enabled = true;
       if (activityId === "pharmacy" && ["rx_reception", "stock_basic", "guard_schedule"].includes(f.id)) enabled = true;
       if (activityId === "pharmacy" && plan !== "essentiel" && ["stock_advanced", "substitution_auto"].includes(f.id)) enabled = true;
 
       // Specialty-specific: disable teleconsult for ophtalmo
-      // (Ophtalmo needs in-person exams: acuité visuelle, fond d'oeil, etc.)
       if (activityId === "specialiste" && ["teleconsult_video", "teleconsult_chat", "teleconsult_screen_share", "teleconsult_recording"].includes(f.id)) {
         // Keep enabled by default but overrides will disable for specific specialties
       }
@@ -343,9 +437,10 @@ export const planNameToTier = (name: string, activity: ActivityType): PlanTier =
  * Used in onboarding to show what's unique to each specialty.
  */
 export const specialtyFeatureHighlights: Record<string, { highlights: string[]; disabledFeatures: string[]; extraTools: string[] }> = {
+  // ── Spécialistes médicaux ──
   "Ophtalmologue": {
     highlights: ["Examen ophtalmologique intégré", "Acuité visuelle numérique", "Fond d'œil documenté", "Prescription lunettes/lentilles"],
-    disabledFeatures: ["teleconsult_video", "teleconsult_chat"], // Ophtalmo needs in-person
+    disabledFeatures: ["teleconsult_video", "teleconsult_chat"],
     extraTools: ["ophtalmo_exam"],
   },
   "Cardiologue": {
@@ -380,6 +475,76 @@ export const specialtyFeatureHighlights: Record<string, { highlights: string[]; 
   },
   "Neurologue": {
     highlights: ["EEG documenté", "Bilan neurologique structuré", "Suivi épilepsie"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Pneumologue": {
+    highlights: ["Spirométrie intégrée", "Suivi asthme/BPCO", "Oxymétrie nocturne"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Rhumatologue": {
+    highlights: ["Scores DAS28/HAQ", "Suivi biothérapies", "Bilan articulaire structuré"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Urologue": {
+    highlights: ["Score IPSS intégré", "Suivi PSA", "Bilan urodynamique"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Endocrinologue": {
+    highlights: ["Suivi diabète (HbA1c)", "Bilan thyroïdien", "Courbes glycémiques"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Gastro-entérologue": {
+    highlights: ["Compte-rendu endoscopie", "Suivi MICI", "Score de fibrose"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Néphrologue": {
+    highlights: ["Suivi DFG/créatinine", "Bilan dialyse", "Suivi greffe rénale"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Allergologue": {
+    highlights: ["Prick-tests documentés", "Désensibilisation suivi", "Bilan allergologique"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Oncologue": {
+    highlights: ["Protocoles chimiothérapie", "Suivi effets secondaires", "Score OMS/Karnofsky"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Chirurgien": {
+    highlights: ["Planning opératoire", "Compte-rendu opératoire", "Suivi post-opératoire"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Chirurgien orthopédiste": {
+    highlights: ["Bilan articulaire", "Planning chirurgical", "Suivi prothèses"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Radiologue": {
+    highlights: ["Compte-rendu structuré", "Intégration PACS", "Dictée vocale"],
+    disabledFeatures: ["teleconsult_video"],
+    extraTools: [],
+  },
+  "Gériatre": {
+    highlights: ["Évaluation gériatrique (MMS, ADL)", "Suivi polymédication", "Grille d'autonomie"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Médecin du sport": {
+    highlights: ["Certificats d'aptitude sportive", "Tests d'effort", "Suivi blessures"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Médecin esthétique": {
+    highlights: ["Photos avant/après", "Suivi injections", "Devis esthétiques"],
     disabledFeatures: [],
     extraTools: [],
   },

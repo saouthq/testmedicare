@@ -317,6 +317,192 @@ export const specialtyConfigs: Record<string, SpecialtyWorkspaceConfig> = {
     defaultAmount: "25",
     motifs: ["Rééducation post-opératoire", "Lombalgie", "Cervicalgie", "Entorse", "Rééducation épaule", "Rééducation périnéale", "Bilan initial"],
   },
+
+  // ─── Ostéopathe ────────────────────────────────
+  osteopathe: {
+    label: "Ostéopathe",
+    dashboardSubtitle: "Ostéopathie",
+    accentColor: "teal-500",
+    hideTeleconsult: true,
+    sidebarLabels: {
+      "/dashboard/doctor/consultations": "Séances",
+      "/dashboard/doctor/prescriptions": "Conseils",
+    },
+    sidebarHidden: ["/dashboard/doctor/connect"],
+    kpiLabels: { done: "Séances terminées", waiting: "En attente", renewals: "Suivis prévus", teleconsult: "Téléconsultations" },
+    hideAnalysesTab: true,
+    noteSections: [
+      { id: "motif", label: "Motif de consultation", accent: "blue", placeholder: "Ex : Lombalgie · Cervicalgie · Douleur articulaire · Bilan postural…", singleLine: true, required: true },
+      { id: "symptoms", label: "Anamnèse ostéopathique", hint: "Plaintes et contexte", accent: "amber", placeholder: "Douleur (localisation, irradiation, facteurs aggravants/soulageants), ATCD, mode de vie, sport…", rows: 4, required: true },
+      { id: "examination", label: "Bilan palpatoire & tests", hint: "Tests fonctionnels", accent: "teal", placeholder: "Tests de mobilité, restrictions, tests orthopédiques, palpatoire tissulaire, posture…", rows: 5, required: true },
+      { id: "diagnosis", label: "Diagnostic ostéopathique", accent: "violet", placeholder: "Dysfonction somatique, restriction de mobilité, tension myofasciale…", rows: 3, required: true },
+      { id: "conclusion", label: "Techniques & Conseils", accent: "emerald", placeholder: "Techniques structurelles/fonctionnelles/crâniennes, conseils posturaux, exercices, suivi recommandé…", rows: 4 },
+    ],
+    vitals: [
+      { key: "bp", label: "TA (mmHg)", icon: "Gauge" },
+    ],
+    extraVitals: [
+      { key: "painEVA", label: "EVA Douleur", placeholder: "6/10" },
+    ],
+    defaultAmount: "50",
+    motifs: ["Lombalgie", "Cervicalgie", "Douleur d'épaule", "Bilan postural", "Migraine cervicogénique", "Suivi nourrisson", "Sciatique", "Douleur de hanche"],
+  },
+
+  // ─── Sage-femme ────────────────────────────────
+  sage_femme: {
+    label: "Sage-femme",
+    dashboardSubtitle: "Maïeutique",
+    accentColor: "pink-500",
+    sidebarLabels: {
+      "/dashboard/doctor/patients": "Mes patientes",
+      "/dashboard/doctor/consultations": "Consultations",
+    },
+    noteSections: [
+      { id: "motif", label: "Motif de consultation", accent: "blue", placeholder: "Ex : Suivi grossesse T2 · Préparation accouchement · Post-partum · Rééducation périnéale…", singleLine: true, required: true },
+      { id: "symptoms", label: "Anamnèse obstétricale", hint: "ATCD & grossesse actuelle", accent: "amber", placeholder: "Gestité/Parité, DDR, SA, mouvements fœtaux, contractions, signes fonctionnels…", rows: 4, required: true },
+      { id: "examination", label: "Examen clinique", hint: "Obstétrical + monitoring", accent: "teal", placeholder: "HU, BDC fœtaux, présentation, TV si indiqué, monitoring, bandelette urinaire…", rows: 4, required: true },
+      { id: "diagnosis", label: "Diagnostic", accent: "violet", placeholder: "Grossesse normale, menace d'accouchement prématuré, pré-éclampsie…", rows: 3, required: true },
+      { id: "conclusion", label: "Conduite à tenir", accent: "emerald", placeholder: "Suivi, échographies, préparation à la naissance, conseils allaitement…", rows: 4 },
+    ],
+    vitals: [
+      { key: "bp", label: "TA (mmHg)", icon: "Gauge" },
+      { key: "weight", label: "Poids", unit: "kg", icon: "Scale" },
+    ],
+    extraVitals: [
+      { key: "pregnancyWeek", label: "SA", placeholder: "32" },
+      { key: "fetalHR", label: "RCF (bpm)", placeholder: "140" },
+      { key: "uterineHeight", label: "HU (cm)", placeholder: "30" },
+    ],
+    defaultAmount: "35",
+    motifs: ["Suivi mensuel grossesse", "Préparation accouchement", "Suivi post-partum", "Rééducation périnéale", "Consultation allaitement", "Contraception"],
+  },
+
+  // ─── Orthophoniste ─────────────────────────────
+  orthophoniste: {
+    label: "Orthophoniste",
+    dashboardSubtitle: "Orthophonie",
+    accentColor: "indigo-500",
+    sidebarLabels: {
+      "/dashboard/doctor/consultations": "Séances",
+      "/dashboard/doctor/prescriptions": "Programmes",
+    },
+    kpiLabels: { done: "Séances terminées", waiting: "En attente", renewals: "Renouvellements", teleconsult: "Télé-rééducation" },
+    noteSections: [
+      { id: "motif", label: "Motif de consultation", accent: "blue", placeholder: "Ex : Bilan de langage · Retard de parole · Dyslexie · Bégaiement…", singleLine: true, required: true },
+      { id: "symptoms", label: "Bilan orthophonique", hint: "Évaluation & tests", accent: "amber", placeholder: "Tests réalisés (EVALO, BALE, NEEL…), résultats, observations spontanées, comportement communicatif…", rows: 5, required: true },
+      { id: "examination", label: "Analyse des capacités", hint: "Langage oral/écrit", accent: "teal", placeholder: "Articulation, phonologie, syntaxe, lexique, compréhension, pragmatique, lecture, écriture, logique…", rows: 5, required: true },
+      { id: "diagnosis", label: "Diagnostic orthophonique", accent: "violet", placeholder: "Retard simple, trouble spécifique du langage, dyslexie-dysorthographie, trouble articulatoire…", rows: 3, required: true },
+      { id: "conclusion", label: "Plan de rééducation", accent: "emerald", placeholder: "Objectifs, fréquence des séances, exercices à domicile, orientation…", rows: 4 },
+    ],
+    vitals: [],
+    defaultAmount: "30",
+    motifs: ["Bilan initial", "Séance de rééducation", "Retard de parole", "Dyslexie", "Bégaiement", "Déglutition atypique", "Trouble articulatoire"],
+  },
+
+  // ─── Psychologue ───────────────────────────────
+  psychologue: {
+    label: "Psychologue",
+    dashboardSubtitle: "Psychologie",
+    accentColor: "purple-500",
+    sidebarLabels: {
+      "/dashboard/doctor/consultations": "Séances",
+      "/dashboard/doctor/prescriptions": "Bilans",
+    },
+    kpiLabels: { done: "Séances terminées", waiting: "En attente", renewals: "Suivis en cours", teleconsult: "Téléconsultations" },
+    hideAnalysesTab: true,
+    noteSections: [
+      { id: "motif", label: "Motif de consultation", accent: "blue", placeholder: "Ex : Première consultation · Anxiété · Deuil · Thérapie de couple…", singleLine: true, required: true },
+      { id: "symptoms", label: "Entretien clinique", hint: "Anamnèse & contexte", accent: "amber", placeholder: "Demande du patient, contexte de vie, événements récents, symptômes, vécu émotionnel…", rows: 5, required: true },
+      { id: "examination", label: "Observations cliniques", hint: "État psychique", accent: "teal", placeholder: "Présentation, affect, discours, mécanismes de défense, ressources, alliance thérapeutique…", rows: 5, required: true },
+      { id: "diagnosis", label: "Hypothèses / Formulation", accent: "violet", placeholder: "Hypothèse diagnostique, formulation de cas, axes de travail…", rows: 3, required: true },
+      { id: "conclusion", label: "Plan thérapeutique", accent: "emerald", placeholder: "Approche thérapeutique (TCC, systémique, humaniste…), fréquence, objectifs, orientation si nécessaire…", rows: 4 },
+    ],
+    vitals: [],
+    defaultAmount: "50",
+    motifs: ["Première consultation", "Suivi thérapie", "Anxiété", "Dépression", "Gestion du stress", "Deuil", "Thérapie de couple", "Bilan psychométrique"],
+  },
+
+  // ─── Nutritionniste ────────────────────────────
+  nutritionniste: {
+    label: "Nutritionniste / Diététicien",
+    dashboardSubtitle: "Nutrition & Diététique",
+    accentColor: "green-500",
+    sidebarLabels: {
+      "/dashboard/doctor/consultations": "Consultations",
+      "/dashboard/doctor/prescriptions": "Plans alimentaires",
+    },
+    kpiLabels: { done: "Consultations", waiting: "En attente", renewals: "Suivis", teleconsult: "Téléconsultations" },
+    hideAnalysesTab: true,
+    noteSections: [
+      { id: "motif", label: "Motif de consultation", accent: "blue", placeholder: "Ex : Perte de poids · Rééquilibrage · Diabète · TCA · Suivi grossesse…", singleLine: true, required: true },
+      { id: "symptoms", label: "Enquête alimentaire", hint: "Habitudes & antécédents", accent: "amber", placeholder: "Rappel des 24h, habitudes alimentaires, ATCD pondéraux, traitements, activité physique, objectifs du patient…", rows: 5, required: true },
+      { id: "examination", label: "Mesures anthropométriques", hint: "Poids, taille, composition", accent: "teal", placeholder: "Poids actuel, poids de forme, taille, IMC, tour de taille, masse grasse %, impédancemétrie…", rows: 3, required: true },
+      { id: "diagnosis", label: "Diagnostic nutritionnel", accent: "violet", placeholder: "Déséquilibre alimentaire, surpoids, obésité, dénutrition, TCA, syndrome métabolique…", rows: 3, required: true },
+      { id: "conclusion", label: "Plan alimentaire & Objectifs", accent: "emerald", placeholder: "Apports caloriques, répartition macronutriments, menus, compléments, objectifs à court/moyen terme…", rows: 4 },
+    ],
+    vitals: [
+      { key: "weight", label: "Poids", unit: "kg", icon: "Scale" },
+      { key: "bmi", label: "IMC", icon: "Activity" },
+    ],
+    extraVitals: [
+      { key: "waistCirc", label: "Tour de taille (cm)", placeholder: "85" },
+      { key: "bodyFat", label: "Masse grasse (%)", placeholder: "25" },
+    ],
+    defaultAmount: "40",
+    motifs: ["Perte de poids", "Rééquilibrage alimentaire", "Diabète nutrition", "Suivi grossesse", "TCA", "Intolérances alimentaires", "Alimentation sportive"],
+  },
+
+  // ─── Podologue ─────────────────────────────────
+  podologue: {
+    label: "Podologue",
+    dashboardSubtitle: "Podologie",
+    accentColor: "amber-500",
+    hideTeleconsult: true,
+    sidebarLabels: {
+      "/dashboard/doctor/consultations": "Soins & Bilans",
+      "/dashboard/doctor/prescriptions": "Prescriptions",
+    },
+    sidebarHidden: ["/dashboard/doctor/connect"],
+    hideAnalysesTab: true,
+    noteSections: [
+      { id: "motif", label: "Motif de consultation", accent: "blue", placeholder: "Ex : Douleur plantaire · Ongle incarné · Semelles · Bilan biomécanique…", singleLine: true, required: true },
+      { id: "symptoms", label: "Anamnèse podologique", hint: "Plaintes & ATCD", accent: "amber", placeholder: "Douleur (localisation, type, chaussage), ATCD podologiques, sport pratiqué, type de sol…", rows: 4, required: true },
+      { id: "examination", label: "Examen podologique", hint: "Bilan biomécanique", accent: "teal", placeholder: "Examen statique/dynamique, empreintes plantaires, podoscopie, test de marche, usure chaussures…", rows: 5, required: true },
+      { id: "diagnosis", label: "Diagnostic podologique", accent: "violet", placeholder: "Hallux valgus, épine calcanéenne, métatarsalgie, onychopathie, pied plat/creux…", rows: 3, required: true },
+      { id: "conclusion", label: "Plan de soins", accent: "emerald", placeholder: "Soins de pédicurie, semelles orthopédiques, orthoplasties, conseils de chaussage…", rows: 4 },
+    ],
+    vitals: [],
+    defaultAmount: "35",
+    motifs: ["Douleur plantaire", "Ongle incarné", "Semelles orthopédiques", "Bilan podologique", "Épine calcanéenne", "Hallux valgus", "Soins diabétique"],
+  },
+
+  // ─── Orthoptiste ───────────────────────────────
+  orthoptiste: {
+    label: "Orthoptiste",
+    dashboardSubtitle: "Orthoptie",
+    accentColor: "blue-500",
+    hideTeleconsult: true,
+    sidebarLabels: {
+      "/dashboard/doctor/consultations": "Séances",
+      "/dashboard/doctor/prescriptions": "Programmes visuels",
+    },
+    sidebarHidden: ["/dashboard/doctor/connect"],
+    noteSections: [
+      { id: "motif", label: "Motif de consultation", accent: "blue", placeholder: "Ex : Bilan orthoptique · Fatigue visuelle · Strabisme · Troubles de convergence…", singleLine: true, required: true },
+      { id: "symptoms", label: "Anamnèse visuelle", hint: "Plaintes & contexte", accent: "amber", placeholder: "Fatigue visuelle, maux de tête, diplopie, difficultés de lecture, écrans, ATCD ophtalmologiques…", rows: 4, required: true },
+      { id: "examination", label: "Bilan orthoptique", hint: "Tests oculomoteurs", accent: "teal", placeholder: "Cover test, motilité oculaire, convergence, divergence, vision binoculaire, stéréoscopie, PPC…", rows: 5, required: true },
+      { id: "diagnosis", label: "Diagnostic orthoptique", accent: "violet", placeholder: "Insuffisance de convergence, strabisme, trouble accommodatif, paralysie oculomotrice…", rows: 3, required: true },
+      { id: "conclusion", label: "Programme de rééducation", accent: "emerald", placeholder: "Exercices de convergence, prismes, séances de rééducation, fréquence, contrôle prévu…", rows: 4 },
+    ],
+    vitals: [],
+    extraVitals: [
+      { key: "acuityOD", label: "AV OD", placeholder: "10/10" },
+      { key: "acuityOG", label: "AV OG", placeholder: "10/10" },
+      { key: "ppc", label: "PPC (cm)", placeholder: "5" },
+    ],
+    defaultAmount: "30",
+    motifs: ["Bilan orthoptique", "Strabisme", "Fatigue visuelle", "Troubles de convergence", "Rééducation post-chirurgie", "Dépistage enfant"],
+  },
 };
 
 /**
@@ -325,6 +511,13 @@ export const specialtyConfigs: Record<string, SpecialtyWorkspaceConfig> = {
 export function getSpecialtyConfig(activity: ActivityType, specialty?: string): SpecialtyWorkspaceConfig {
   if (activity === "dentiste") return specialtyConfigs.dentiste;
   if (activity === "kine") return specialtyConfigs.kine;
+  if (activity === "osteopathe") return specialtyConfigs.osteopathe;
+  if (activity === "sage_femme") return specialtyConfigs.sage_femme;
+  if (activity === "orthophoniste") return specialtyConfigs.orthophoniste;
+  if (activity === "psychologue") return specialtyConfigs.psychologue;
+  if (activity === "nutritionniste") return specialtyConfigs.nutritionniste;
+  if (activity === "podologue") return specialtyConfigs.podologue;
+  if (activity === "orthoptiste") return specialtyConfigs.orthoptiste;
   if (specialty && specialtyConfigs[specialty]) return specialtyConfigs[specialty];
   return specialtyConfigs.default;
 }
