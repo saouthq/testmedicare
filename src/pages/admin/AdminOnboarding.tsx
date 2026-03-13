@@ -224,10 +224,42 @@ const AdminOnboarding = () => {
                   </div>
 
                   {selected.currentStep !== "activated" && selected.stuckDays >= 2 && (
-                    <Button className="w-full gradient-primary text-primary-foreground">
+                    <Button className="w-full gradient-primary text-primary-foreground" onClick={() => {
+                      const event = { id: `e-${Date.now()}`, type: "relance" as const, text: `Relance email envoyée automatiquement`, author: "Admin", createdAt: new Date().toISOString() };
+                      setRecords(prev => prev.map(r => r.id === selected.id ? { ...r, events: [...r.events, event], lastActivity: new Date().toISOString().slice(0, 10) } : r));
+                      appendLog("onboarding_relance", "onboarding", selected.id, `Relance email envoyée à ${selected.entityName} (${selected.email})`);
+                      toast({ title: "Relance envoyée", description: `Email envoyé à ${selected.email}` });
+                      setSelected(prev => prev ? { ...prev, events: [...prev.events, event] } : null);
+                    }}>
                       Envoyer une relance email
                     </Button>
                   )}
+                  {selected.currentStep !== "activated" && (
+                    <div className="flex gap-2">
+                      {selected.status === "pending" && (
+                        <>
+                          <Button size="sm" variant="outline" className="flex-1 text-accent" onClick={() => {
+                            const event = { id: `e-${Date.now()}`, type: "approved" as const, text: "Dossier approuvé par l'admin", author: "Admin", createdAt: new Date().toISOString() };
+                            setRecords(prev => prev.map(r => r.id === selected.id ? { ...r, status: "approved" as const, currentStep: "activated" as const, stuckDays: 0, events: [...r.events, event] } : r));
+                            appendLog("onboarding_approved", "onboarding", selected.id, `${selected.entityName} approuvé`);
+                            toast({ title: "Partenaire approuvé", description: selected.entityName });
+                            setSelected(null);
+                          }}>
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />Approuver
+                          </Button>
+                          <Button size="sm" variant="outline" className="flex-1 text-destructive" onClick={() => {
+                            const event = { id: `e-${Date.now()}`, type: "rejected" as const, text: "Dossier refusé par l'admin", author: "Admin", createdAt: new Date().toISOString() };
+                            setRecords(prev => prev.map(r => r.id === selected.id ? { ...r, status: "rejected" as const, events: [...r.events, event] } : r));
+                            appendLog("onboarding_rejected", "onboarding", selected.id, `${selected.entityName} refusé`);
+                            toast({ title: "Partenaire refusé", description: selected.entityName });
+                            setSelected(null);
+                          }}>
+                            Refuser
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )
                 </div>
               </ScrollArea>
             </>
