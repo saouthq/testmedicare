@@ -5,7 +5,9 @@
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
 import { useDualQuery } from "@/hooks/useDualData";
-import { mapPatientRow } from "@/lib/supabaseMappers";
+import { mapPatientRow, mapPatientToRow } from "@/lib/supabaseMappers";
+import { getAppMode, readAuthUser } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface SharedPatient {
   id: number;
@@ -25,6 +27,7 @@ export interface SharedPatient {
   history: { date: string; type: string; doctor: string; motif: string; amount: string; paid: boolean }[];
 }
 
+// ─── Seed data (demo mode) ──────────────────────────────────
 const initialPatients: SharedPatient[] = [
   {
     id: 1, name: "Amine Ben Ali", phone: "+216 71 234 567", email: "amine@email.tn", avatar: "AB",
@@ -119,9 +122,25 @@ export function useSharedPatients() {
   });
 }
 
-export function addPatient(patient: Omit<SharedPatient, "id">) {
+export async function addPatient(patient: Omit<SharedPatient, "id">) {
   const id = Date.now();
   store.set(prev => [...prev, { ...patient, id }]);
+
+  // Persist to Supabase
+  if (getAppMode() === "production") {
+    try {
+      const currentUser = readAuthUser();
+      const row = mapPatientToRow({ ...patient } as any);
+      row.treating_doctor_id = currentUser?.id || null;
+      row.treating_doctor_name = currentUser?.doctorName || patient.doctor || "";
+      // Don't send local-only fields
+      delete row.id;
+      await (supabase.from as any)("patients").insert(row);
+    } catch (e) {
+      console.warn("[sharedPatientsStore] Supabase insert failed:", e);
+    }
+  }
+
   pushNotification({
     type: "generic",
     title: "Nouveau patient enregistré",
@@ -132,6 +151,19 @@ export function addPatient(patient: Omit<SharedPatient, "id">) {
   return id;
 }
 
-export function updatePatient(id: number, update: Partial<SharedPatient>) {
+export async function updatePatient(id: number, update: Partial<SharedPatient>) {
   store.set(prev => prev.map(p => p.id === id ? { ...p, ...update } : p));
+
+  // Persist to Supabase
+  if (getAppMode() === "production") {
+    try {
+      const row = mapPatientToRow(update as any);
+      delete row.id;
+      if (Object.keys(row).length > 0) {
+        await (supabase.from as any)("patients").update(row).eq("id", id);
+      }
+    } catch (e) {
+      console.warn("[sharedPatientsStore] Supabase update failed:", e);
+    }
+  }
 }

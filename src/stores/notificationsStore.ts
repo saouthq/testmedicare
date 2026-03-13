@@ -4,7 +4,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { toast } from "sonner";
-import { getCurrentRole, getAppMode } from "./authStore";
+import { getCurrentRole, getAppMode, readAuthUser } from "./authStore";
 import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
 import { useDualQuery } from "@/hooks/useDualData";
@@ -56,20 +56,38 @@ export function useNotificationsSupabase() {
   return query;
 }
 
-/** Push a new notification */
-export function pushNotification(notif: Omit<CrossNotification, "id" | "createdAt" | "read">) {
+/** Push a new notification — writes to both local + Supabase in production */
+export async function pushNotification(notif: Omit<CrossNotification, "id" | "createdAt" | "read">) {
+  const id = `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const createdAt = new Date().toISOString();
+
   store.set((prev) => [
-    {
-      ...notif,
-      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      createdAt: new Date().toISOString(),
-      read: false,
-    },
+    { ...notif, id, createdAt, read: false },
     ...prev,
   ]);
+
   const currentRole = getCurrentRole();
   if (currentRole === notif.targetRole) {
     toast.info(notif.title, { description: notif.message });
+  }
+
+  // Persist to Supabase in production
+  if (getAppMode() === "production") {
+    try {
+      const currentUser = readAuthUser();
+      if (currentUser?.id) {
+        await (supabase.from as any)("notifications").insert({
+          id,
+          user_id: currentUser.id,
+          type: notif.type,
+          title: notif.title,
+          message: notif.message,
+          target_role: notif.targetRole,
+          action_link: notif.actionLink || "",
+          read: false,
+        });
+      }
+    } catch {}
   }
 }
 
