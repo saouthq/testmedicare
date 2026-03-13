@@ -15,9 +15,16 @@
 8. ✅ `assurance_number` déjà affiché dans PatientSettings (vérifié)
 9. ✅ Type `SharedAppointment` enrichi avec `doctorId` + mappers Supabase mis à jour
 
-## Phase 3 — À faire (prochaine itération)
+## Phase 3 — UX & redirections ✅ DONE
 
-- Empty states avec CTA pour les listes vides en Production
-- Intégrer SecretaryTeleconsultPanel dans SecretaryDashboard
-- Redirection post-register vers onboarding doctor
-- Loading states sur DoctorConsultations, DoctorSchedule, et pages pharmacy/lab
+10. ✅ Loading skeletons sur DoctorConsultations, DoctorSchedule
+11. ✅ Empty states avec CTA sur DoctorConsultations (liste vide), PatientPrescriptions
+12. ✅ SecretaryTeleconsultPanel déjà intégré dans SecretaryDashboard (vérifié)
+13. ✅ Redirection post-register vers /dashboard/doctor/onboarding pour les médecins
+14. ✅ Post-confirm redirect dans Login.tsx via localStorage flag
+
+## Phase 4 — À faire (prochaine itération)
+
+- Empty states sur les pages pharmacy/lab en mode Production (inline déjà présents)
+- Loading states sur pages pharmacy/lab
+- Null-safety audit complet sur toutes les pages restantes
