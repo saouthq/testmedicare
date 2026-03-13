@@ -1,5 +1,5 @@
 /**
- * Admin Dashboard — All KPIs derived from central admin store
+ * Admin Dashboard — All KPIs derived from central admin store + Supabase in production
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Link } from "react-router-dom";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { getLogs } from "@/services/admin/adminAuditService";
 import { useAdminDashboardStats, useAdminStore } from "@/stores/adminStore";
-import { useAdminDashboardStatsSupabase } from "@/hooks/useAdminData";
+import { useAdminDashboardStatsSupabase, useAdminTicketsSupabase, useAdminGuardPharmaciesSupabase } from "@/hooks/useAdminData";
 import { getAppMode } from "@/stores/authStore";
 
 const revenueChartData = [
@@ -37,10 +37,39 @@ const AdminDashboard = () => {
   const [state] = useAdminStore();
   const recentLogs = useMemo(() => getLogs().slice(0, 5), []);
 
+  // Production: pull real tickets and guard pharmacies from Supabase
+  const ticketsQuery = useAdminTicketsSupabase();
+  const guardQuery = useAdminGuardPharmaciesSupabase();
+
   const pendingApps = state.onboardingApplications.filter(a => a.status === "pending").slice(0, 3);
-  const openTickets = state.tickets.filter(t => t.status === "open");
+
+  // Dual-mode: tickets
+  const openTickets = useMemo(() => {
+    if (isProduction && ticketsQuery.data) {
+      return ticketsQuery.data.filter((t: any) => t.status === "open").map((t: any) => ({
+        id: t.id, subject: t.subject, requester: "Utilisateur", priority: "medium",
+      }));
+    }
+    return state.tickets.filter(t => t.status === "open");
+  }, [isProduction, ticketsQuery.data, state.tickets]);
+
+  // Dual-mode: disputes (no Supabase table — from store)
   const openDisputes = state.disputes.filter(d => d.status === "open" || d.status === "investigating");
-  const guardCount = state.guardPharmacies.filter(p => p.isGuard).length;
+
+  // Dual-mode: guard pharmacies
+  const guardCount = useMemo(() => {
+    if (isProduction && guardQuery.data) {
+      return guardQuery.data.filter((p: any) => p.is_guard).length;
+    }
+    return state.guardPharmacies.filter(p => p.isGuard).length;
+  }, [isProduction, guardQuery.data, state.guardPharmacies]);
+
+  const guardList = useMemo(() => {
+    if (isProduction && guardQuery.data) {
+      return guardQuery.data.filter((p: any) => p.is_guard).slice(0, 2).map((p: any) => ({ id: p.id, name: p.name, city: p.city }));
+    }
+    return state.guardPharmacies.filter(p => p.isGuard).slice(0, 2);
+  }, [isProduction, guardQuery.data, state.guardPharmacies]);
 
   const recentActivity = useMemo(() => [
     { desc: `${stats.activeUsers} utilisateurs actifs`, time: "Maintenant", status: "success" },
@@ -49,7 +78,6 @@ const AdminDashboard = () => {
     { desc: `MRR : ${stats.mrr.toLocaleString()} DT`, time: "Ce mois", status: "info" },
     { desc: `${stats.failedPayments} paiement(s) échoué(s)`, time: "Ce mois", status: stats.failedPayments > 0 ? "warning" : "success" },
   ], [stats]);
-
   return (
     <DashboardLayout role="admin" title="Administration">
       <div className="space-y-6">
