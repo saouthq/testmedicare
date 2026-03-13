@@ -28,7 +28,13 @@ const store = createStore<SharedInvoice[]>("medicare_billing", []);
 export const billingStore = store;
 
 export function useSharedBilling() {
-  return useStore(store);
+  return useDualQuery<SharedInvoice[]>({
+    store,
+    tableName: "invoices",
+    queryKey: ["invoices"],
+    mapRowToLocal: mapInvoiceRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 /** Supabase-aware hook */
