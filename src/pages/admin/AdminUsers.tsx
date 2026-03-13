@@ -110,15 +110,15 @@ const AdminUsers = () => {
     const { type, userId, userName } = motifAction;
 
     if (type === "suspend") {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "suspended" as const } : u));
+      if (!isProduction) setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "suspended" as const } : u));
       appendLog("user_suspended", "user", userId, `${userName} suspendu — Motif : ${motif}`);
       toast({ title: `${userName} suspendu` });
     } else if (type === "reactivate") {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "active" as const } : u));
+      if (!isProduction) setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "active" as const } : u));
       appendLog("user_reactivated", "user", userId, `${userName} réactivé — Motif : ${motif}`);
       toast({ title: `${userName} réactivé` });
     } else if (type === "reject") {
-      setUsers(prev => prev.filter(u => u.id !== userId));
+      if (!isProduction) setUsers(prev => prev.filter(u => u.id !== userId));
       appendLog("user_rejected", "user", userId, `Inscription de ${userName} refusée — Motif : ${motif}`);
       toast({ title: `${userName} refusé(e)`, variant: "destructive" });
       if (selectedUser?.id === userId) { setSelectedUser(null); setDrawerOpen(false); }
@@ -130,16 +130,26 @@ const AdminUsers = () => {
       toast({ title: `${userName} déconnecté de force` });
     } else if (type === "bulk_suspend") {
       const ids = Array.from(selectedIds);
-      setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: "suspended" as const } : u));
+      if (!isProduction) setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: "suspended" as const } : u));
       appendLog("bulk_suspend", "user", ids.join(","), `Suspension en masse de ${ids.length} utilisateurs — Motif : ${motif}`);
       toast({ title: `${ids.length} utilisateur(s) suspendu(s)` });
       setSelectedIds(new Set());
     } else if (type === "edit_user" && editUserId) {
-      setUsers(prev => prev.map(u => u.id === editUserId ? { ...u, name: editForm.name, email: editForm.email, phone: editForm.phone, role: editForm.role, subscription: editForm.subscription } : u));
+      if (isProduction) {
+        const [firstName, ...lastParts] = editForm.name.split(" ");
+        userUpdateMutation.mutate({
+          userId: editUserId,
+          updates: { first_name: firstName || "", last_name: lastParts.join(" ") || "", email: editForm.email, phone: editForm.phone },
+        });
+        if (editForm.role) {
+          roleUpdateMutation.mutate({ userId: editUserId, role: editForm.role });
+        }
+      } else {
+        setUsers(prev => prev.map(u => u.id === editUserId ? { ...u, name: editForm.name, email: editForm.email, phone: editForm.phone, role: editForm.role, subscription: editForm.subscription } : u));
+      }
       appendLog("user_edited", "user", editUserId, `Profil de ${editForm.name} modifié — Motif : ${motif}`);
       toast({ title: `${editForm.name} mis à jour` });
       setEditOpen(false);
-      // Refresh drawer
       if (selectedUser?.id === editUserId) {
         setSelectedUser(prev => prev ? { ...prev, name: editForm.name, email: editForm.email, phone: editForm.phone, role: editForm.role, subscription: editForm.subscription } : prev);
       }
