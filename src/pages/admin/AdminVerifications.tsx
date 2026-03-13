@@ -230,8 +230,12 @@ const AdminVerifications = () => {
             available: true,
             languages: ["Français", "Arabe"],
             teleconsultation: false,
+            acceptsInsurance: true,
+            nextSlot: "",
+            availAM: true,
+            availPM: true,
           };
-          directoryStore.set({ ...dir, doctors: [...dir.doctors, newDoc] });
+          directoryStore.set({ ...dir, doctors: [...dir.doctors, newDoc as any] });
         } else if (v.entityType === "pharmacy") {
           const newPharmacy = {
             id: Date.now(),
