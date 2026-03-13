@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 function relDate(offset: number): string {
   const d = new Date();
   d.setDate(d.getDate() + offset);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 const TODAY = relDate(0);
@@ -365,7 +365,8 @@ export function getAppointmentsForDoctor(appointments: SharedAppointment[], doct
 
 /** Get today's date as YYYY-MM-DD */
 export function getTodayDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /** Get appointments for a patient by patientId */
@@ -482,7 +483,7 @@ export function checkUpcomingReminders() {
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+  const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
 
   const apts = store.read();
   const upcomingApts = apts.filter(a =>

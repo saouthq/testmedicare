@@ -104,7 +104,7 @@ export function seedAllStores() {
     console.log("[seedStores] Production mode — skipping mock data");
     return;
   }
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
   const lastSeedDate = localStorage.getItem(SEED_DATE_KEY);
   if (lastSeedDate !== today) {
     localStorage.removeItem("medicare_shared_appointments");

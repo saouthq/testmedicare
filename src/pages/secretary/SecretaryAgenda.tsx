@@ -30,7 +30,7 @@ const typeColors: Record<string, string> = {
   "Urgence": "bg-destructive/10 text-destructive",
 };
 
-const fmtDateStr = (d: Date) => d.toISOString().slice(0, 10);
+const fmtDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const DAYS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 

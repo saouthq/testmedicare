@@ -8,7 +8,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthReady } from "@/hooks/useSupabaseQuery";
-import { getAppMode } from "@/stores/authStore";
+import { getAppMode } from "@/lib/appConfig";
 import { useSyncExternalStore } from "react";
 
 /**

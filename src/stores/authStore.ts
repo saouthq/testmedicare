@@ -13,7 +13,12 @@ export type AppMode = "demo" | "production";
 const modeStore = createStore<AppMode>("medicare_app_mode", "demo");
 export function useAppMode() { return useStore(modeStore); }
 export function setAppMode(mode: AppMode) { modeStore.set(mode); }
-export function getAppMode(): AppMode { return modeStore.read(); }
+/** Get effective app mode: VITE_APP_MODE=production is always authoritative */
+export function getAppMode(): AppMode {
+  const envMode = import.meta.env.VITE_APP_MODE as string | undefined;
+  if (envMode === "production") return "production";
+  return modeStore.read();
+}
 
 export interface AppUser {
   id: string;
