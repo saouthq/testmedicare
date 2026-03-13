@@ -88,7 +88,7 @@ const PatientDashboard = () => {
     return Math.round((done / total) * 100);
   }, [profile, health]);
 
-  const nextVaccination = health.vaccinations.find(v => v.nextDate);
+  const nextVaccination = (health?.vaccinations ?? []).find(v => v.nextDate);
 
   const handleCancel = (id: string) => {
     cancelAppointment(id);
