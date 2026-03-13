@@ -84,9 +84,9 @@ const AdminAppointments = () => {
   const [detailApt, setDetailApt] = useState<AdminApt | null>(null);
   const [page, setPage] = useState(0);
 
-  const cities = useMemo(() => Array.from(new Set(apts.map(a => a.city))), [apts]);
+  const cities = useMemo(() => Array.from(new Set(displayApts.map(a => a.city).filter(Boolean))), [displayApts]);
 
-  const filtered = useMemo(() => apts.filter(a => {
+  const filtered = useMemo(() => displayApts.filter(a => {
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
     if (typeFilter !== "all" && a.type !== typeFilter) return false;
     if (cityFilter !== "all" && a.city !== cityFilter) return false;
@@ -95,7 +95,7 @@ const AdminAppointments = () => {
       return a.patientName.toLowerCase().includes(q) || a.doctorName.toLowerCase().includes(q) || a.specialty.toLowerCase().includes(q);
     }
     return true;
-  }), [apts, statusFilter, typeFilter, cityFilter, search]);
+  }), [displayApts, statusFilter, typeFilter, cityFilter, search]);
 
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
