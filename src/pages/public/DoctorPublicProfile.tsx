@@ -11,6 +11,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDoctorsDirectory } from "@/stores/directoryStore";
 import { getReviewsForDoctor } from "@/stores/reviewsStore";
+import { useFavoriteDoctors, addFavoriteDoctor, removeFavoriteDoctor } from "@/stores/favoriteDoctorsStore";
 import {
   mockDoctorProfile as defaultProfile,
   mockAvailableSlots as availableSlots,
