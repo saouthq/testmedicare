@@ -82,7 +82,7 @@ const AdminSubscriptions = () => {
 
   const openChangePlan = (sub: AdminSubscription) => {
     setChangePlanSub(sub);
-    setNewPlan(planNames.find(n => n !== sub.plan) || sub.plan);
+    setNewPlan(planNames.find((n: string) => n !== sub.plan) || sub.plan);
   };
 
   const handleChangePlanConfirm = () => {
