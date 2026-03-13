@@ -1,15 +1,14 @@
 /**
- * Admin Promotions Service — mock with localStorage persistence
- * TODO BACKEND: Replace with real API calls
+ * Admin Promotions Service — dual-mode: localStorage + Supabase promotions table
  */
 import type { Promotion, DoctorSubscription } from "@/types/promotion";
 import { mockAdminPromotions, mockDoctorSubscriptions } from "@/data/mocks/promotions";
 import { appendLog } from "./adminAuditService";
+import { supabase } from "@/integrations/supabase/client";
+import { getAppMode } from "@/stores/authStore";
 
 const PROMO_KEY = "medicare_admin_promotions";
 const SUB_KEY = "medicare_doctor_subscriptions";
-
-// ─── Persistence helpers ──────────────────────────────────────
 
 const getStored = <T>(key: string, fallback: T[]): T[] => {
   try {
@@ -20,6 +19,48 @@ const getStored = <T>(key: string, fallback: T[]): T[] => {
 
 const save = <T>(key: string, data: T[]) => localStorage.setItem(key, JSON.stringify(data));
 
+// ─── Supabase sync helpers ────────────────────────────────────
+
+function mapPromoToRow(p: Partial<Promotion>) {
+  return {
+    name: p.name || "",
+    type: p.type || "free_months",
+    value: p.value || 0,
+    start_date: p.startDate || "",
+    end_date: p.endDate || "",
+    target: p.target || "all",
+    status: p.status || "inactive",
+    new_doctors_only: p.newDoctorsOnly ?? true,
+    require_signup_during_period: p.requireSignupDuringPeriod ?? true,
+    auto_apply: p.autoApply ?? true,
+    require_code: p.requireCode ?? false,
+    promo_code: p.promoCode || "",
+    notes: p.notes || "",
+    usage_count: p.usageCount || 0,
+  };
+}
+
+function mapRowToPromo(row: any): Promotion {
+  return {
+    id: row.id,
+    name: row.name || "",
+    type: row.type || "free_months",
+    value: row.value || 0,
+    startDate: row.start_date || "",
+    endDate: row.end_date || "",
+    target: row.target || "all",
+    status: row.status || "inactive",
+    newDoctorsOnly: row.new_doctors_only ?? true,
+    requireSignupDuringPeriod: row.require_signup_during_period ?? true,
+    autoApply: row.auto_apply ?? true,
+    requireCode: row.require_code ?? false,
+    promoCode: row.promo_code || "",
+    notes: row.notes || "",
+    usageCount: row.usage_count || 0,
+    createdAt: row.created_at || new Date().toISOString(),
+  };
+}
+
 // ─── Promotions CRUD ──────────────────────────────────────────
 
 export const getPromotions = (): Promotion[] => getStored(PROMO_KEY, mockAdminPromotions);
@@ -27,7 +68,7 @@ export const getPromotions = (): Promotion[] => getStored(PROMO_KEY, mockAdminPr
 export const getPromotionById = (id: string): Promotion | undefined =>
   getPromotions().find(p => p.id === id);
 
-export const createPromotion = (promo: Omit<Promotion, "id" | "usageCount" | "createdAt" | "status">, motif: string): Promotion => {
+export const createPromotion = async (promo: Omit<Promotion, "id" | "usageCount" | "createdAt" | "status">, motif: string): Promise<Promotion> => {
   const entry: Promotion = {
     ...promo,
     id: `promo-${Date.now()}`,
@@ -39,30 +80,51 @@ export const createPromotion = (promo: Omit<Promotion, "id" | "usageCount" | "cr
   list.unshift(entry);
   save(PROMO_KEY, list);
   appendLog("create_promotion", "promotion", entry.id, `Création promo "${entry.name}" — ${motif}`);
+
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("promotions").insert({ id: entry.id, ...mapPromoToRow(entry) });
+    } catch {}
+  }
+
   return entry;
 };
 
-export const updatePromotion = (id: string, updates: Partial<Promotion>, motif: string): Promotion | null => {
+export const updatePromotion = async (id: string, updates: Partial<Promotion>, motif: string): Promise<Promotion | null> => {
   const list = getPromotions();
   const idx = list.findIndex(p => p.id === id);
   if (idx === -1) return null;
   list[idx] = { ...list[idx], ...updates };
   save(PROMO_KEY, list);
   appendLog("update_promotion", "promotion", id, `Modification promo "${list[idx].name}" — ${motif}`);
+
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("promotions").update(mapPromoToRow(list[idx])).eq("id", id);
+    } catch {}
+  }
+
   return list[idx];
 };
 
-export const togglePromotion = (id: string, motif: string): Promotion | null => {
+export const togglePromotion = async (id: string, motif: string): Promise<Promotion | null> => {
   const list = getPromotions();
   const idx = list.findIndex(p => p.id === id);
   if (idx === -1) return null;
   list[idx].status = list[idx].status === "active" ? "inactive" : "active";
   save(PROMO_KEY, list);
   appendLog("toggle_promotion", "promotion", id, `${list[idx].status === "active" ? "Activation" : "Désactivation"} promo "${list[idx].name}" — ${motif}`);
+
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("promotions").update({ status: list[idx].status }).eq("id", id);
+    } catch {}
+  }
+
   return list[idx];
 };
 
-export const duplicatePromotion = (id: string): Promotion | null => {
+export const duplicatePromotion = async (id: string): Promise<Promotion | null> => {
   const source = getPromotionById(id);
   if (!source) return null;
   const copy: Promotion = {
@@ -77,7 +139,37 @@ export const duplicatePromotion = (id: string): Promotion | null => {
   list.unshift(copy);
   save(PROMO_KEY, list);
   appendLog("duplicate_promotion", "promotion", copy.id, `Duplication de "${source.name}"`);
+
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("promotions").insert({ id: copy.id, ...mapPromoToRow(copy) });
+    } catch {}
+  }
+
   return copy;
+};
+
+export const deletePromotion = async (id: string, motif: string) => {
+  const list = getPromotions().filter(p => p.id !== id);
+  save(PROMO_KEY, list);
+  appendLog("delete_promotion", "promotion", id, `Promotion supprimée — ${motif}`);
+
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("promotions").delete().eq("id", id);
+    } catch {}
+  }
+};
+
+/** Load promotions from Supabase into localStorage */
+export const loadPromotionsFromSupabase = async () => {
+  if (getAppMode() !== "production") return;
+  try {
+    const { data } = await (supabase.from as any)("promotions").select("*").order("created_at", { ascending: false });
+    if (data && data.length > 0) {
+      save(PROMO_KEY, data.map(mapRowToPromo));
+    }
+  } catch {}
 };
 
 // ─── Doctor Subscriptions ─────────────────────────────────────
@@ -93,13 +185,11 @@ export const applyPromotionToDoctor = (subId: string, promoId: string, motif: st
 
   subs[idx].promoId = promo.id;
   subs[idx].promoName = promo.name;
-  // Mock: promo end = start + value months
   const end = new Date(subs[idx].startDate);
   end.setMonth(end.getMonth() + promo.value);
   subs[idx].promoEndDate = end.toISOString().slice(0, 10);
   subs[idx].history.push({ date: new Date().toISOString().slice(0, 10), event: `Promo "${promo.name}" appliquée manuellement` });
 
-  // Increment promo usage
   const pIdx = promos.findIndex(p => p.id === promoId);
   if (pIdx !== -1) { promos[pIdx].usageCount++; save(PROMO_KEY, promos); }
 
@@ -108,7 +198,6 @@ export const applyPromotionToDoctor = (subId: string, promoId: string, motif: st
   return subs[idx];
 };
 
-/** Get the active promotion for the current doctor (mock: doctorId=1) */
 export const getMyActivePromo = (doctorId = 1): { promoName: string; promoEndDate: string } | null => {
   const subs = getDoctorSubscriptions();
   const sub = subs.find(s => s.doctorId === doctorId && s.promoId);
