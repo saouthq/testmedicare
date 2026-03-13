@@ -141,7 +141,9 @@ const AdminResolution = () => {
     const noteType = modMotifAction.type === "escalate" ? "escalation" : "action";
     const newStatus = modMotifAction.type === "resolve" ? "resolved" : modMotifAction.type === "reject" ? "rejected" : r.status;
     const note: ModerationNote = { id: `n-${Date.now()}`, author: "Admin", text: `${modMotifAction.type === "resolve" ? "Résolu" : modMotifAction.type === "reject" ? "Rejeté" : modMotifAction.type === "suspend" ? "Compte suspendu" : "Escaladé"} — ${motif}`, type: noteType as any, createdAt: new Date().toISOString() };
-    setReports(prev => prev.map(x => x.id === modMotifAction.id ? { ...x, status: newStatus, notes: [...x.notes, note] } : x));
+    const updated = reports.map(x => x.id === modMotifAction.id ? { ...x, status: newStatus, notes: [...x.notes, note] } : x);
+    setReports(updated);
+    setStoreReports(updated); // sync back to store
     appendLog(`report_${modMotifAction.type}`, "moderation", String(modMotifAction.id), `${note.text}`);
     toast({ title: note.text.split(" — ")[0] });
     setModMotifAction(null);
