@@ -200,3 +200,14 @@ export function resetDemo() {
   seeded = false;
   seedAllStores();
 }
+
+/**
+ * Clear ALL mock data from localStorage and stores.
+ * Used when switching to Production mode.
+ */
+export function clearAllMockData() {
+  ALL_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+  ALL_STORES.forEach(s => s.reset());
+  seeded = false;
+  console.log("[seedStores] All mock data cleared for Production mode");
+}
