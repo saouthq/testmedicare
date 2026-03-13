@@ -84,8 +84,37 @@ export const plansByActivity: Record<ActivityType, PlanConfig[]> = {
   dentiste: [
     { id: "essentiel", label: "Essentiel", price: 49 },
     { id: "pro", label: "Pro", price: 149 },
+    { id: "cabinet", label: "Cabinet+", price: 299 },
   ],
   kine: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  osteopathe: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  sage_femme: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  orthophoniste: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  psychologue: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 119 },
+  ],
+  nutritionniste: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 99 },
+  ],
+  podologue: [
+    { id: "essentiel", label: "Essentiel", price: 39 },
+    { id: "pro", label: "Pro", price: 99 },
+  ],
+  orthoptiste: [
     { id: "essentiel", label: "Essentiel", price: 39 },
     { id: "pro", label: "Pro", price: 119 },
   ],
@@ -126,10 +155,39 @@ export const publicPlansByActivity: Record<ActivityType, PublicPlanConfig[]> = {
   dentiste: [
     { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 49, yearlyPrice: 39, planTier: "essentiel" },
     { name: "Pro", subtitle: "Gestion complète", monthlyPrice: 149, yearlyPrice: 129, planTier: "pro", highlighted: true },
+    { name: "Cabinet +", subtitle: "Multi-praticiens", monthlyPrice: 299, yearlyPrice: 249, planTier: "cabinet" },
   ],
   kine: [
     { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
     { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  osteopathe: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  sage_femme: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  orthophoniste: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  psychologue: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
+  ],
+  nutritionniste: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi nutrition", monthlyPrice: 99, yearlyPrice: 79, planTier: "pro", highlighted: true },
+  ],
+  podologue: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi complet", monthlyPrice: 99, yearlyPrice: 79, planTier: "pro", highlighted: true },
+  ],
+  orthoptiste: [
+    { name: "Essentiel", subtitle: "Gestion agenda", monthlyPrice: 39, yearlyPrice: 29, planTier: "essentiel" },
+    { name: "Pro", subtitle: "Suivi visuel", monthlyPrice: 119, yearlyPrice: 99, planTier: "pro", highlighted: true },
   ],
   laboratory: [
     { name: "Standard", subtitle: "Gestion labo", monthlyPrice: 79, yearlyPrice: 59, planTier: "essentiel" },
