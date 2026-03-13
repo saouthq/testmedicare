@@ -51,7 +51,7 @@ const DoctorConnect = () => {
     if (!selectedContact) return [];
     return allMessages.filter(m => m.threadId === selectedContact).map(m => ({
       id: m.id,
-      sender: m.senderId === "demo-doctor-1" ? "me" : m.senderId,
+      sender: (m.senderId === "demo-doctor-1" ? "me" : "them") as "me" | "them",
       senderName: m.senderName,
       text: m.text,
       time: new Date(m.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
