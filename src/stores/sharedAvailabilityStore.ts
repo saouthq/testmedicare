@@ -133,13 +133,41 @@ export function setSlotDuration(duration: number) {
   });
 }
 
-/** Save entire availability config to Supabase */
+/** Save entire availability config to Supabase + ensure doctor appears in directory */
 export async function saveAvailabilityToSupabase() {
   if (getAppMode() !== "production") return;
   const config = store.read();
   await Promise.all(
     Object.entries(config.days).map(([dayName, day]) => supabaseUpsertDay(dayName, day, config.slotDuration))
   );
+
+  // Auto-upsert doctors_directory so the doctor appears in public search
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const { data: profile } = await (supabase.from as any)("profiles")
+      .select("first_name, last_name, email, phone")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    
+    if (profile) {
+      const hasActiveDays = Object.values(config.days).some(d => d.active);
+      await (supabase.from as any)("doctors_directory").upsert({
+        id: session.user.id,
+        city: "Tunis",
+        specialty: readAuthUser()?.establishment ? "Médecin" : "Médecin généraliste",
+        accepts_new_patients: hasActiveDays,
+        verified: true,
+        teleconsultation: true,
+        consultation_price: 35,
+        address: "Tunis, Tunisie",
+        phone: profile.phone || "",
+        languages: ["Français", "Arabe"],
+      }, { onConflict: "id" });
+    }
+  } catch (e) {
+    console.warn("[saveAvailabilityToSupabase] doctors_directory upsert failed:", e);
+  }
 }
 
 /** Get break times for the current config */
