@@ -183,8 +183,8 @@ const DoctorConnect = () => {
                   <div className="border-t p-3">
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0"><Paperclip className="h-4 w-4 text-muted-foreground" /></Button>
-                      <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} className="flex-1" />
-                      <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendMessage} disabled={!newMessage.trim()}><Send className="h-4 w-4" /></Button>
+                      <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessageHandler()} className="flex-1" />
+                      <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendMessageHandler} disabled={!newMessage.trim()}><Send className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 </>
