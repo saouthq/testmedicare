@@ -38,7 +38,7 @@ const AdminGuardPharmacies = () => {
   }, [isProduction, supabaseQuery.data, demoPharmacies]);
 
   if (isProduction && supabaseQuery.isLoading) {
-    return <DashboardLayout role="admin" title="Pharmacies de garde"><LoadingSkeleton variant="table" /></DashboardLayout>;
+    return <DashboardLayout role="admin" title="Pharmacies de garde"><LoadingSkeleton type="table" /></DashboardLayout>;
   }
 
   const cities = Array.from(new Set(pharmacies.map(p => p.city))).sort();
