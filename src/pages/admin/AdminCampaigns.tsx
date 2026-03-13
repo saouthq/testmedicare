@@ -318,6 +318,36 @@ const AdminCampaigns = () => {
               </div>
             </div>
 
+            {/* Template selector */}
+            {templates.length > 0 && (
+              <div className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <Label className="text-xs font-semibold">Utiliser un template</Label>
+                  </div>
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/dashboard/admin/notification-templates")}>
+                    Voir les templates
+                  </Button>
+                </div>
+                <Select onValueChange={(tplId) => {
+                  const tpl = templates.find(t => t.id === tplId);
+                  if (tpl) {
+                    setMessage(tpl.body);
+                    if (!title.trim()) setTitle(tpl.name);
+                    toast({ title: "Template appliqué", description: `"${tpl.name}" chargé dans le message.` });
+                  }
+                }}>
+                  <SelectTrigger className="text-xs"><SelectValue placeholder="Sélectionner un template..." /></SelectTrigger>
+                  <SelectContent>
+                    {templates.filter(t => t.active).map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.name} ({t.channel})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <Label className="text-xs">Message *</Label>
               <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Contenu du message..." className="mt-1 min-h-[100px]" />
