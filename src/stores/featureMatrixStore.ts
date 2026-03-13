@@ -3,7 +3,7 @@
  * Used by: AdminFeatureMatrix (edit), BecomePartner (display), AdminVerifications (review)
  * Persists in localStorage so admin changes reflect everywhere.
  * TODO BACKEND: Replace with real API
- */
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 const MATRIX_KEY = "medicare_feature_matrix";
 const OVERRIDES_KEY = "medicare_feature_overrides";
