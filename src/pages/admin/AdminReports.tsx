@@ -74,8 +74,33 @@ const AdminReports = () => {
     toast({ title: "Fréquence mise à jour" });
   };
 
-  const runNow = (name: string) => {
-    toast({ title: `Export non disponible`, description: "Nécessite backend pour générer le rapport." });
+  const runNow = (report: ReportDef) => {
+    // Generate real CSV from admin store
+    let csv = "";
+    const now = new Date().toLocaleDateString("fr-TN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    
+    if (report.iconName === "Users") {
+      csv = "Nom,Email,Rôle,Statut,Inscription\n" + state.users.map(u => `"${u.name}","${u.email}","${u.role}","${u.status}","${u.joined}"`).join("\n");
+    } else if (report.iconName === "Banknote") {
+      csv = "Payeur,Montant,Devise,Statut,Type,Date\n" + state.payments.map(p => `"${p.payerName}","${p.amount}","${p.currency}","${p.status}","${p.type}","${p.createdAt}"`).join("\n");
+    } else if (report.iconName === "Calendar") {
+      csv = "ID,Statut,Date\n" + `Total: ${state.users.length} utilisateurs`;
+    } else if (report.iconName === "Stethoscope") {
+      csv = "Médecin,Abonnement,Statut\n" + state.users.filter(u => u.role === "doctor").map(u => `"${u.name}","${u.subscription}","${u.status}"`).join("\n");
+    } else if (report.iconName === "FileText") {
+      csv = "Demande,Utilisateur,Email,Type,Statut,Date\n" + state.dataRequests.map(r => `"${r.id}","${r.userName}","${r.userEmail}","${r.type}","${r.status}","${r.createdAt}"`).join("\n");
+    } else {
+      csv = "Métrique,Valeur\n" + `Utilisateurs,${state.users.length}\nAbonnements actifs,${state.subscriptions.filter(s => s.status === "active").length}\nMRR,${state.subscriptions.filter(s => s.status === "active").reduce((s, sub) => s + sub.monthlyPrice, 0)} DT`;
+    }
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `${report.name.replace(/\s/g, "_").toLowerCase()}_${new Date().toISOString().split("T")[0]}.${report.format}`; a.click();
+    URL.revokeObjectURL(url);
+
+    updateReports(prev => prev.map(r => r.id === report.id ? { ...r, lastGenerated: now } : r));
+    appendLog("report_generated", "reports", report.id, `Rapport "${report.name}" généré et téléchargé`);
+    toast({ title: `Rapport "${report.name}" téléchargé`, description: `Format ${report.format.toUpperCase()}` });
   };
 
   return (
