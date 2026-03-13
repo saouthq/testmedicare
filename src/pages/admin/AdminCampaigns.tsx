@@ -40,8 +40,10 @@ const CITIES = ["Tunis", "Ariana", "Sousse", "Sfax", "Monastir", "Nabeul", "Bize
 const SPECIALTIES = ["Généraliste", "Cardiologue", "Dermatologue", "Pédiatre", "Ophtalmologue"];
 
 const AdminCampaigns = () => {
+  const navigate = useNavigate();
   const { campaigns, setCampaigns } = useAdminCampaigns();
-  const [showForm, setShowForm] = useState(false);
+  const { templates } = useAdminNotificationTemplates();
+  const { users } = useAdminUsers();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [target, setTarget] = useState("patients");
