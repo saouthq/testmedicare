@@ -339,8 +339,12 @@ export async function logout() {
   if (current && !current.isDemo) {
     try { await supabase.auth.signOut(); } catch {}
   }
-  store.set(null);
-  syncLegacyRole(null);
+  // Use setTimeout to defer store clearing, allowing the redirect to happen first
+  // This prevents React re-render crashes when components access null user properties
+  setTimeout(() => {
+    store.set(null);
+    syncLegacyRole(null);
+  }, 0);
 }
 
 /**
