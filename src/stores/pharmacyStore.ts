@@ -1,11 +1,13 @@
 /**
- * pharmacyStore.ts — Pharmacy stock + prescriptions (localStorage).
+ * pharmacyStore.ts — Pharmacy stock + prescriptions (localStorage + Supabase).
  * Cross-role: Doctor prescribes → Patient sends → Pharmacy processes.
  *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: Supabase when authenticated, localStorage fallback for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
+import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { supabase } from "@/integrations/supabase/client";
 import type { PharmacyPrescription } from "@/types";
 
 // ─── Stock ───────────────────────────────────────────────────
@@ -55,12 +57,31 @@ export function usePharmacyPrescriptions() {
   return useStore(rxStore);
 }
 
+/** Supabase-aware hook for pharmacy prescriptions */
+export function usePharmacyPrescriptionsSupabase() {
+  const { userId, isAuthenticated } = useAuthReady();
+  const [localRx] = useStore(rxStore);
+
+  const query = useSupabaseTable<PharmacyPrescription>({
+    queryKey: ["pharmacy_prescriptions", userId || ""],
+    tableName: "pharmacy_prescriptions",
+    filters: userId ? { pharmacy_id: userId } : undefined,
+    orderBy: { column: "created_at", ascending: false },
+    enabled: isAuthenticated,
+    fallbackData: localRx,
+  });
+
+  useSupabaseRealtime("pharmacy_prescriptions", [["pharmacy_prescriptions", userId || ""]], userId ? `pharmacy_id=eq.${userId}` : undefined);
+
+  return query;
+}
+
 export function initPharmacyRxIfEmpty(items: PharmacyPrescription[]) {
   if (rxStore.read().length === 0) rxStore.set(items);
 }
 
 /** Update prescription status */
-export function updatePharmacyRxStatus(
+export async function updatePharmacyRxStatus(
   id: string,
   status: PharmacyPrescription["status"],
   extra?: { pickupTime?: string; comment?: string }
@@ -68,6 +89,16 @@ export function updatePharmacyRxStatus(
   rxStore.set(prev => prev.map(rx =>
     rx.id === id ? { ...rx, status, ...extra } : rx
   ));
+
+  // Try Supabase
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("pharmacy_prescriptions")
+        .update({ status, pickup_time: extra?.pickupTime, comment: extra?.comment })
+        .eq("id", id);
+    }
+  } catch {}
 
   // Notify patient
   const rx = rxStore.read().find(r => r.id === id);

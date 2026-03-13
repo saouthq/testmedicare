@@ -232,6 +232,83 @@ export type Database = {
         }
         Relationships: []
       }
+      lab_demands: {
+        Row: {
+          amount: string | null
+          assurance: string | null
+          created_at: string
+          date: string
+          doctor_id: string
+          examens: Json
+          id: string
+          lab_id: string | null
+          notes: string | null
+          num_assurance: string | null
+          patient_avatar: string | null
+          patient_dob: string | null
+          patient_id: number | null
+          patient_name: string
+          pdfs: Json
+          prescriber_name: string
+          priority: Database["public"]["Enums"]["lab_priority"]
+          results_url: string | null
+          status: Database["public"]["Enums"]["lab_demand_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: string | null
+          assurance?: string | null
+          created_at?: string
+          date?: string
+          doctor_id: string
+          examens?: Json
+          id?: string
+          lab_id?: string | null
+          notes?: string | null
+          num_assurance?: string | null
+          patient_avatar?: string | null
+          patient_dob?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          pdfs?: Json
+          prescriber_name?: string
+          priority?: Database["public"]["Enums"]["lab_priority"]
+          results_url?: string | null
+          status?: Database["public"]["Enums"]["lab_demand_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: string | null
+          assurance?: string | null
+          created_at?: string
+          date?: string
+          doctor_id?: string
+          examens?: Json
+          id?: string
+          lab_id?: string | null
+          notes?: string | null
+          num_assurance?: string | null
+          patient_avatar?: string | null
+          patient_dob?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          pdfs?: Json
+          prescriber_name?: string
+          priority?: Database["public"]["Enums"]["lab_priority"]
+          results_url?: string | null
+          status?: Database["public"]["Enums"]["lab_demand_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_demands_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           allergies: Json | null
@@ -300,6 +377,133 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      pharmacy_prescriptions: {
+        Row: {
+          assurance: string | null
+          comment: string | null
+          created_at: string
+          date: string
+          doctor_name: string
+          id: string
+          items: Json
+          patient_avatar: string | null
+          patient_name: string
+          patient_phone: string | null
+          pharmacy_id: string | null
+          pickup_time: string | null
+          prescription_id: string | null
+          status: Database["public"]["Enums"]["pharmacy_rx_status"]
+          total: string | null
+          updated_at: string
+          urgent: boolean | null
+        }
+        Insert: {
+          assurance?: string | null
+          comment?: string | null
+          created_at?: string
+          date?: string
+          doctor_name?: string
+          id?: string
+          items?: Json
+          patient_avatar?: string | null
+          patient_name?: string
+          patient_phone?: string | null
+          pharmacy_id?: string | null
+          pickup_time?: string | null
+          prescription_id?: string | null
+          status?: Database["public"]["Enums"]["pharmacy_rx_status"]
+          total?: string | null
+          updated_at?: string
+          urgent?: boolean | null
+        }
+        Update: {
+          assurance?: string | null
+          comment?: string | null
+          created_at?: string
+          date?: string
+          doctor_name?: string
+          id?: string
+          items?: Json
+          patient_avatar?: string | null
+          patient_name?: string
+          patient_phone?: string | null
+          pharmacy_id?: string | null
+          pickup_time?: string | null
+          prescription_id?: string | null
+          status?: Database["public"]["Enums"]["pharmacy_rx_status"]
+          total?: string | null
+          updated_at?: string
+          urgent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_prescriptions_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prescriptions: {
+        Row: {
+          assurance: string | null
+          created_at: string
+          date: string
+          doctor_id: string
+          doctor_name: string
+          id: string
+          items: Json
+          patient_id: number | null
+          patient_name: string
+          pharmacy: string | null
+          sent: boolean | null
+          status: Database["public"]["Enums"]["prescription_status"]
+          total: string
+          updated_at: string
+        }
+        Insert: {
+          assurance?: string | null
+          created_at?: string
+          date?: string
+          doctor_id: string
+          doctor_name?: string
+          id?: string
+          items?: Json
+          patient_id?: number | null
+          patient_name?: string
+          pharmacy?: string | null
+          sent?: boolean | null
+          status?: Database["public"]["Enums"]["prescription_status"]
+          total?: string
+          updated_at?: string
+        }
+        Update: {
+          assurance?: string | null
+          created_at?: string
+          date?: string
+          doctor_id?: string
+          doctor_name?: string
+          id?: string
+          items?: Json
+          patient_id?: number | null
+          patient_name?: string
+          pharmacy?: string | null
+          sent?: boolean | null
+          status?: Database["public"]["Enums"]["prescription_status"]
+          total?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -437,8 +641,22 @@ export type Database = {
         | "controle"
         | "teleconsultation"
         | "urgence"
+      lab_demand_status:
+        | "received"
+        | "in_progress"
+        | "results_ready"
+        | "transmitted"
+      lab_priority: "normal" | "urgent"
       leave_status: "upcoming" | "active" | "past"
       leave_type: "conge" | "formation" | "maladie" | "personnel"
+      pharmacy_rx_status:
+        | "received"
+        | "preparing"
+        | "ready_pickup"
+        | "dispensed"
+        | "unavailable"
+        | "cancelled"
+      prescription_status: "active" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -594,8 +812,24 @@ export const Constants = {
         "teleconsultation",
         "urgence",
       ],
+      lab_demand_status: [
+        "received",
+        "in_progress",
+        "results_ready",
+        "transmitted",
+      ],
+      lab_priority: ["normal", "urgent"],
       leave_status: ["upcoming", "active", "past"],
       leave_type: ["conge", "formation", "maladie", "personnel"],
+      pharmacy_rx_status: [
+        "received",
+        "preparing",
+        "ready_pickup",
+        "dispensed",
+        "unavailable",
+        "cancelled",
+      ],
+      prescription_status: ["active", "expired"],
     },
   },
 } as const
