@@ -1,7 +1,6 @@
 /**
- * DoctorWaitingRoom — Salle d'attente du cabinet (uses sharedAppointmentsStore)
- * 
- * // TODO BACKEND: GET /api/doctor/waiting-room, PUT /api/waiting-room/:id/status
+ * DoctorWaitingRoom — Salle d'attente du cabinet.
+ * Data source: sharedAppointmentsStore (dual-mode demo/production).
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import LoadingSkeleton from "@/components/shared/LoadingSkeleton";

@@ -1,8 +1,7 @@
 /**
  * ProfileTab — Refonte Doctolib-style.
  * 2 colonnes : aperçu profil + sections éditables avec indicateur de complétion.
- *
- * // TODO BACKEND: PUT /api/doctor/profile
+ * Data source: doctorProfileStore (dual-mode demo/production, syncs to Supabase).
  */
 import { useState, useMemo } from "react";
 import { Award, Briefcase, Camera, CreditCard, Globe, GraduationCap, MapPin, Navigation, Plus, Trash2, User, X } from "lucide-react";

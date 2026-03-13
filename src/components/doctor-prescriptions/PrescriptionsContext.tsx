@@ -1,7 +1,6 @@
 /**
  * PrescriptionsContext — State de la page Ordonnances.
- *
- * // TODO BACKEND: Remplacer mockDoctorPrescriptions par GET /api/prescriptions
+ * Data source: doctorPrescriptionsStore (dual-mode demo/production).
  */
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { useDoctorPrescriptions, markPrescriptionSent, duplicatePrescription } from "@/stores/doctorPrescriptionsStore";
