@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { mockPatients, type Patient } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { parseFrDate } from "@/components/consultation/helpers";
+import { useSharedPatients, addPatient } from "@/stores/sharedPatientsStore";
+import { readAuthUser } from "@/stores/authStore";
 
 // ── Types ──
 
@@ -93,7 +95,45 @@ export const usePatients = () => {
 
 export function PatientsProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  // Use shared store data + merge with mock for demo completeness
+  const [sharedPatients] = useSharedPatients();
+  const mergedPatients = useMemo(() => {
+    if (sharedPatients.length > 0) {
+      // Map SharedPatient → Patient format for this context
+      const fromStore: Patient[] = sharedPatients.map(sp => ({
+        id: sp.id,
+        name: sp.name,
+        age: sp.dob ? Math.floor((Date.now() - new Date(sp.dob.split("/").reverse().join("-")).getTime()) / 31557600000) : 0,
+        gender: "",
+        dob: sp.dob || "",
+        phone: sp.phone || "",
+        email: sp.email || "",
+        address: sp.gouvernorat || "",
+        avatar: sp.avatar || sp.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+        bloodType: "",
+        ssn: sp.numAssure || "",
+        mutuelle: sp.assurance || "",
+        insurance: sp.assurance || "",
+        treatingDoctor: sp.doctor || "",
+        registeredSince: "2026",
+        allergies: [],
+        conditions: [],
+        chronicConditions: [],
+        lastVisit: sp.lastVisit || null,
+        nextAppointment: sp.nextAppointment || null,
+        isNew: !sp.lastVisit,
+        lastVitals: { ta: "—", glycemia: "—" },
+        gouvernorat: sp.gouvernorat || "",
+        balance: sp.balance || 0,
+        notes: sp.notes || "",
+      }));
+      return fromStore;
+    }
+    return mockPatients;
+  }, [sharedPatients]);
+  const [patients, setPatients] = useState<Patient[]>(mergedPatients);
+  // Sync when store changes
+  useEffect(() => { setPatients(mergedPatients); }, [mergedPatients]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<PatientFilter>("all");
   const [sortBy, setSortBy] = useState<SortKey>("name");
@@ -211,15 +251,36 @@ export function PatientsProvider({ children }: { children: ReactNode }) {
   };
 
   // ── Add Patient ──
-  const handleAddPatient = () => {
+  const handleAddPatient = async () => {
     if (!newForm.firstName || !newForm.lastName) return;
     const name = `${newForm.firstName} ${newForm.lastName}`;
     const avatar = `${newForm.firstName[0]}${newForm.lastName[0]}`.toUpperCase();
+    const currentUser = readAuthUser();
+
+    // Persist via sharedPatientsStore (handles both localStorage & Supabase)
+    const newId = await addPatient({
+      name,
+      phone: newForm.phone,
+      email: newForm.email,
+      avatar,
+      dob: newForm.dob,
+      assurance: newForm.cnamId || "",
+      numAssure: "",
+      doctor: currentUser?.doctorName || "Dr. Bouazizi",
+      gouvernorat: "",
+      lastVisit: "",
+      nextAppointment: null,
+      balance: 0,
+      notes: "",
+      history: [],
+    });
+
+    // Also update local state for immediate UI
     const newP: Patient = {
-      id: patients.length + 100, name, avatar,
+      id: newId, name, avatar,
       age: newForm.dob ? Math.floor((Date.now() - new Date(newForm.dob).getTime()) / 31557600000) : 0,
-      gender: "", dob: newForm.dob, address: "", ssn: "", mutuelle: "", treatingDoctor: "",
-      registeredSince: "Fév 2026", conditions: [], gouvernorat: "", balance: 0, notes: "",
+      gender: "", dob: newForm.dob, address: "", ssn: "", mutuelle: "", treatingDoctor: currentUser?.doctorName || "",
+      registeredSince: "Mar 2026", conditions: [], gouvernorat: "", balance: 0, notes: "",
       phone: newForm.phone, email: newForm.email,
       chronicConditions: newForm.conditions ? newForm.conditions.split(",").map((s) => s.trim()).filter(Boolean) : [],
       allergies: newForm.allergies ? newForm.allergies.split(",").map((s) => s.trim()).filter(Boolean).map((name) => ({ name, severity: "Modéré" })) : [],
@@ -230,7 +291,7 @@ export function PatientsProvider({ children }: { children: ReactNode }) {
     setSelectedPatientId(newP.id);
     setShowNewPatient(false);
     setNewForm(emptyNewForm);
-    toast({ title: "Patient créé", description: `${newP.name} (mock).` });
+    toast({ title: "Patient créé", description: `${newP.name} enregistré avec succès.` });
   };
 
   // ── Palette ──
