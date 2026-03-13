@@ -371,6 +371,7 @@ const PatientPrescriptions = () => {
             </div>
           ))}
         </div>
+        )}
       </div>
     </DashboardLayout>
   );
