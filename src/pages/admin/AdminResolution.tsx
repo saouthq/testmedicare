@@ -172,9 +172,12 @@ const AdminResolution = () => {
   const handleDispSendMsg = () => {
     if (!selectedDispute || !newMsg.trim()) return;
     const msg: DisputeMessage = { id: `m-${Date.now()}`, author: "Admin", authorRole: "admin", text: newMsg.trim(), createdAt: new Date().toISOString() };
-    setDisputes(prev => prev.map(d => d.id === selectedDispute.id ? { ...d, messages: [...d.messages, msg], updatedAt: new Date().toISOString() } : d));
+    const updated = disputes.map(d => d.id === selectedDispute.id ? { ...d, messages: [...d.messages, msg], updatedAt: new Date().toISOString() } : d);
+    setDisputes(updated);
+    setStoreDisputes(updated as any); // sync back
     setSelectedDispute(prev => prev ? { ...prev, messages: [...prev.messages, msg] } : null);
     setNewMsg("");
+    appendLog("dispute_message", "dispute", selectedDispute.id, `Message admin envoyé dans litige "${selectedDispute.subject}"`);
     toast({ title: "Message envoyé" });
   };
 
