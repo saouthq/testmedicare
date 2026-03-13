@@ -42,7 +42,7 @@ const DoctorConnect = () => {
     const doctorId = "demo-doctor-1";
     return filteredThreads.map(t => {
       const other = t.participantA.id === doctorId ? t.participantB : t.participantA;
-      return { id: t.id, name: other.name, avatar: other.avatar, lastMessage: t.lastMessage, role: other.role };
+      return { id: t.id, name: other.name, avatar: other.avatar, lastMessage: t.lastMessage, role: other.role, online: false, specialty: other.role, time: "", unread: 0 };
     });
   }, [filteredThreads]);
 
