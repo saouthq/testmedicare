@@ -11,6 +11,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 // ── Action Definition ──
 export interface ActionDef {
