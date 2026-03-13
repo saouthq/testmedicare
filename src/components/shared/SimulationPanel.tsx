@@ -198,8 +198,10 @@ const SimulationPanel = () => {
   const [sub] = useDoctorSubscription();
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
   const [moduleStates] = useAdminModules();
+  const [appMode] = useAppMode();
   const navigate = useNavigate();
   const location = useLocation();
+  const isProduction = appMode === "production";
 
   // ─── Simulation actions ───────────────────────────────
 
