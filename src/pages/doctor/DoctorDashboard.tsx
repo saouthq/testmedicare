@@ -124,7 +124,7 @@ const DoctorDashboard = () => {
               <p className="text-primary-foreground/60 text-xs mt-0.5">{config.dashboardSubtitle}</p>
               <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} {config.kpiLabels?.done?.toLowerCase() || "consultations"} · Prochain : <span className="font-semibold">{nextRdv?.startTime || "—"}</span></p>
               <div className="flex gap-3 mt-3 flex-wrap">
-                <Link to={`/dashboard/doctor/consultation/new?patient=${currentRdv ? getPatientId(currentRdv.patient) : 1}`}>
+                <Link to={`/dashboard/doctor/consultation/new?patient=${currentRdv ? getPatientId(currentRdv.patient) : 1}${currentRdv?.teleconsultation ? "&teleconsult=true" : ""}`}>
                   <Button size="sm" variant="secondary" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-0"><Play className="h-4 w-4 mr-1.5" />Démarrer {sub.activity === "kine" ? "séance" : "consultation"}</Button>
                 </Link>
                 <Link to="/dashboard/doctor/waiting-room">
