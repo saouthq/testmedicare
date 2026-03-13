@@ -88,7 +88,14 @@ export function useSupabaseTable<T>({
         // Return fallback data on error (e.g., demo mode)
         return fallbackData || [];
       }
-      return (data as T[]) || [];
+
+      const rows = (data as T[]) || [];
+      // If Supabase table is empty but we have demo data, keep app testable in demo mode
+      if (rows.length === 0 && fallbackData && fallbackData.length > 0) {
+        return fallbackData;
+      }
+
+      return rows;
     },
     enabled: enabled && isReady,
     // If not authenticated, use fallback data immediately
