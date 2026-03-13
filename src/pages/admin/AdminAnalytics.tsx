@@ -50,9 +50,16 @@ const AdminAnalytics = () => {
   const [perfSort, setPerfSort] = useState<"rating" | "nps" | "cancelRate" | "revenue">("rating");
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
-  const stats = useAdminDashboardStats();
+  const isProduction = getAppMode() === "production";
+  const demoStats = useAdminDashboardStats();
+  const supabaseStatsQuery = useAdminDashboardStatsSupabase();
+  const stats = isProduction ? (supabaseStatsQuery.data || demoStats) : demoStats;
   const [state] = useAdminStore();
   const [plans] = useAdminPlans();
+  
+  // Production data for satisfaction tab
+  const reviewsQuery = useAdminReviewsSupabase();
+  const appointmentsQuery = useAdminAppointmentsSupabase();
 
   // ── Derive data from store ──
   const userGrowthData = useMemo(() => {
