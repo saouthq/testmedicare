@@ -160,6 +160,15 @@ const PatientPrescriptions = () => {
           </div>
         </div>
 
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="Aucune ordonnance"
+            description="Vos ordonnances apparaîtront ici après une consultation avec votre médecin."
+            actionLabel="Prendre RDV"
+            actionLink="/search"
+          />
+        ) : (
         <div className="space-y-4">
           {filtered.map((p) => (
             <div key={p.id} className="rounded-xl border bg-card shadow-card overflow-hidden">
