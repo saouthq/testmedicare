@@ -4,7 +4,8 @@
  *
  * // TODO BACKEND: Replace with real-time API + WebSocket subscriptions.
  */
-import { createStore, useStore } from "./crossRoleStore";
+import { createStore } from "./crossRoleStore";
+import { useDemoOnlyStore } from "@/hooks/useDualData";
 import { notifyPatient, notifyDoctor } from "./notificationsStore";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { isActionEnabled } from "@/stores/actionGatingStore";
@@ -65,8 +66,8 @@ export const renewalRequestsStore = createStore<RenewalRequest[]>("doctor_renewa
 export const profileCompletionStore = createStore<DoctorProfileCompletion>("doctor_profile_completion", initialProfileCompletion);
 
 // ─── Hooks ───────────────────────────────────────────────────
-export function useRenewalRequests() { return useStore(renewalRequestsStore); }
-export function useProfileCompletion() { return useStore(profileCompletionStore); }
+export function useRenewalRequests() { return useDemoOnlyStore(renewalRequestsStore, []); }
+export function useProfileCompletion() { return useDemoOnlyStore(profileCompletionStore, initialProfileCompletion); }
 
 // ─── Actions ─────────────────────────────────────────────────
 

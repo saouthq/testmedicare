@@ -4,7 +4,8 @@
  *
  * // TODO BACKEND: Replace with POST/GET /api/reports
  */
-import { createStore, useStore } from "./crossRoleStore";
+import { createStore } from "./crossRoleStore";
+import { useDemoOnlyStore } from "@/hooks/useDualData";
 import { appendLog } from "@/services/admin/adminAuditService";
 
 export type ReportStatus = "pending" | "investigating" | "resolved" | "archived";
@@ -50,7 +51,7 @@ const store = createStore<Report[]>("medicare_reports", SEED_REPORTS);
 export const reportsStore = store;
 
 export function useReports() {
-  return useStore(store);
+  return useDemoOnlyStore(store, []);
 }
 
 /** Submit a new report */

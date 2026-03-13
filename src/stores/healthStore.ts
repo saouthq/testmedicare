@@ -4,7 +4,8 @@
  *
  * // TODO BACKEND: Replace with API
  */
-import { createStore, useStore } from "./crossRoleStore";
+import { createStore } from "./crossRoleStore";
+import { useDemoOnlyStore } from "@/hooks/useDualData";
 import type { HealthDocument, Antecedent, Treatment, Allergy, Habit, FamilyHistory, Surgery, Vaccination, HealthMeasure } from "@/types";
 
 export interface HealthState {
@@ -19,22 +20,17 @@ export interface HealthState {
   measures: HealthMeasure[];
 }
 
-const store = createStore<HealthState>("medicare_health", {
-  documents: [],
-  antecedents: [],
-  treatments: [],
-  allergies: [],
-  habits: [],
-  familyHistory: [],
-  surgeries: [],
-  vaccinations: [],
-  measures: [],
-});
+const EMPTY: HealthState = {
+  documents: [], antecedents: [], treatments: [], allergies: [],
+  habits: [], familyHistory: [], surgeries: [], vaccinations: [], measures: [],
+};
+
+const store = createStore<HealthState>("medicare_health", EMPTY);
 
 export const healthStore = store;
 
 export function useHealth() {
-  return useStore(store);
+  return useDemoOnlyStore(store, EMPTY);
 }
 
 export function initHealthStoreIfEmpty(data: HealthState) {

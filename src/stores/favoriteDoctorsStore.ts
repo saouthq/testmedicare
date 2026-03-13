@@ -4,7 +4,8 @@
  *
  * // TODO BACKEND: Replace with API
  */
-import { createStore, useStore } from "./crossRoleStore";
+import { createStore } from "./crossRoleStore";
+import { useDemoOnlyStore } from "@/hooks/useDualData";
 
 export interface FavoriteDoctor {
   id: number;
@@ -23,7 +24,7 @@ const initialFavorites: FavoriteDoctor[] = [
 const store = createStore<FavoriteDoctor[]>("medicare_favorite_doctors", initialFavorites);
 
 export function useFavoriteDoctors() {
-  return useStore(store);
+  return useDemoOnlyStore(store, []);
 }
 
 export function addFavoriteDoctor(doc: FavoriteDoctor) {
