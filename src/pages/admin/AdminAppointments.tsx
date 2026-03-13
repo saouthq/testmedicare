@@ -55,8 +55,28 @@ const payLabels: Record<string, string> = { paid: "Payé", pending: "En attente"
 const PAGE_SIZE = 8;
 
 const AdminAppointments = () => {
+  const isProduction = getAppMode() === "production";
+  const supabaseAptsQuery = useAdminAppointmentsSupabase();
+  
+  // Map Supabase rows to local AdminApt format
+  const supabaseApts: AdminApt[] = (supabaseAptsQuery.data || []).map((row, i) => ({
+    id: i + 1,
+    patientName: row.patient_name || "",
+    doctorName: row.doctor_name || "",
+    specialty: "",
+    date: row.date,
+    time: row.start_time?.slice(0, 5) || "",
+    type: row.teleconsultation ? "teleconsultation" as const : "presentiel" as const,
+    status: row.status,
+    city: "",
+    amount: `${row.paid_amount || 0} DT`,
+    paymentStatus: (row.payment_status || "pending") as "paid" | "pending" | "refunded",
+    notes: row.notes || undefined,
+  }));
+
   const [search, setSearch] = useState("");
   const [apts, setApts] = useState(initialApts);
+  const displayApts = isProduction ? supabaseApts : apts;
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
