@@ -38,6 +38,7 @@ import { mockSecretaryBillingInvoices } from "@/data/mocks/secretary";
 import { mockLabDemands } from "@/data/mocks/lab";
 import { seedAdminStoreIfEmpty, adminStore } from "./adminStore";
 import { adminSeedData } from "@/data/mocks/adminSeed";
+import { getAppMode } from "./authStore";
 
 let seeded = false;
 
