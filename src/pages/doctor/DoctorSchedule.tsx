@@ -56,9 +56,11 @@ import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoi
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 import { useSharedAppointments, updateAppointmentStatus, createAppointment as storeCreateAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
 import { useSharedBlockedSlots, addBlockedSlot, updateBlockedSlot as storeUpdateBlock, removeBlockedSlot } from "@/stores/sharedBlockedSlotsStore";
+import { useSharedAvailability } from "@/stores/sharedAvailabilityStore";
+import { useSharedLeaves } from "@/stores/sharedLeavesStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { pushNotification } from "@/stores/notificationsStore";
-import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey } from "@/types/appointment";
+import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey, AvailabilityDay, SharedLeave } from "@/types/appointment";
 import { computeEndTime, DEFAULT_TYPE_COLORS as SHARED_TYPE_COLORS, type AppointmentStatus } from "@/types/appointment";
 
 // ─── Types (aliases to shared types) ──────────────────────────
@@ -218,6 +220,21 @@ const MONTHS_LONG = [
   "Décembre",
 ];
 const MONTHS_SH = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+const normalizeDoctorName = (value?: string) =>
+  (value || "")
+    .toLowerCase()
+    .replace(/dr\.?\s*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const doctorMatches = (a?: string, b?: string) => {
+  const na = normalizeDoctorName(a);
+  const nb = normalizeDoctorName(b);
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+};
 
 // ─── Date helpers ─────────────────────────────────────────────
 const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
@@ -773,6 +790,8 @@ function DayCol({
   apts,
   blocks,
   typeColors,
+  dayConfig,
+  leave,
   onSlotClick,
   onAptClick,
   onBlockClick,
@@ -781,6 +800,8 @@ function DayCol({
   apts: Appt[];
   blocks: BlockedSlot[];
   typeColors: Record<ApptType, ColorKey>;
+  dayConfig?: AvailabilityDay;
+  leave?: SharedLeave;
   onSlotClick: (t: string, x: number, y: number) => void;
   onAptClick: (a: Appt) => void;
   onBlockClick: (b: BlockedSlot) => void;
@@ -797,6 +818,21 @@ function DayCol({
       return slotMin >= st && slotMin < st + b.duration;
     });
     return aptOcc || blkOcc;
+  };
+
+  const isOpenByAvailability = (slotMin: number) => {
+    if (!dayConfig?.active || leave) return false;
+    const dayStart = t2min(dayConfig.start);
+    const dayEnd = t2min(dayConfig.end);
+    if (slotMin < dayStart || slotMin + 30 > dayEnd) return false;
+
+    if (dayConfig.breakStart && dayConfig.breakEnd) {
+      const breakStart = t2min(dayConfig.breakStart);
+      const breakEnd = t2min(dayConfig.breakEnd);
+      if (slotMin < breakEnd && slotMin + 30 > breakStart) return false;
+    }
+
+    return true;
   };
 
   return (
@@ -878,6 +914,8 @@ function WeekView({
   apts: Appt[];
   blocks: BlockedSlot[];
   typeColors: Record<ApptType, ColorKey>;
+  getDayConfig: (date: Date) => AvailabilityDay | undefined;
+  getLeaveForDate: (date: Date) => SharedLeave | undefined;
   onSlot: (date: Date, t: string, x: number, y: number) => void;
   onApt: (a: Appt) => void;
   onBlock: (b: BlockedSlot) => void;
@@ -943,6 +981,8 @@ function WeekView({
                 apts={apts.filter((a) => a.date === fmtDate(d))}
                 blocks={blocks.filter((b) => b.date === fmtDate(d))}
                 typeColors={typeColors}
+                dayConfig={getDayConfig(d)}
+                leave={getLeaveForDate(d)}
                 onSlotClick={(t, x, y) => onSlot(d, t, x, y)}
                 onAptClick={onApt}
                 onBlockClick={onBlock}

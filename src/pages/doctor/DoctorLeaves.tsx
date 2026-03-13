@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CalendarDays, Plus, Trash2, Bell, UserCheck, Clock, Calendar, AlertTriangle } from "lucide-react";
 import { useSharedLeaves, createLeave, deleteLeave } from "@/stores/sharedLeavesStore";
+import { readAuthUser } from "@/stores/authStore";
 
 const typeLabels: Record<string, string> = {
   conge: "Congé annuel", formation: "Formation", maladie: "Arrêt maladie", personnel: "Motif personnel",
@@ -48,11 +49,12 @@ const DoctorLeaves = () => {
     if (!form.startDate || !form.endDate || !form.motif) {
       toast.error("Veuillez remplir tous les champs obligatoires"); return;
     }
+    const currentDoctor = readAuthUser()?.doctorName || "Dr. Ahmed Bouazizi";
     createLeave({
       ...form,
       status: "upcoming",
       affectedAppointments: Math.floor(Math.random() * 10) + 2,
-      doctor: "Dr. Ahmed Bouazizi",
+      doctor: currentDoctor,
     });
     setDrawerOpen(false);
     setForm({ startDate: "", endDate: "", motif: "", type: "conge", replacementDoctor: "", notifyPatients: true });

@@ -80,7 +80,14 @@ export function useDualQuery<TLocal, TRow = any>({
   });
 
   if (isProduction) {
-    const data = (query.data ?? (Array.isArray(localData) ? [] : localData)) as TLocal;
+    const hasLocalFallback = Array.isArray(localData)
+      ? localData.length > 0
+      : Boolean(localData);
+
+    const data = (!isAuthenticated && hasLocalFallback)
+      ? (localData as TLocal)
+      : (query.data ?? (Array.isArray(localData) ? [] : localData)) as TLocal;
+
     return [data, store.set, { isLoading: query.isLoading, isProduction: true }];
   }
 
