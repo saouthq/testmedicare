@@ -426,7 +426,7 @@ const AdminAnalytics = () => {
             const ratingDist = [5, 4, 3, 2, 1].map(r => ({ rating: `${r}★`, count: reviews.filter((rv: any) => rv.rating === r).length }));
             
             if (totalReviews === 0) {
-              return <BackendPlaceholder label="Données NPS et satisfaction — Aucun avis collecté. Les statistiques apparaîtront quand des patients laisseront des avis." />;
+              return <EmptyDataState label="Aucun avis collecté. Les statistiques apparaîtront quand des patients laisseront des avis." />;
             }
             
             return (
