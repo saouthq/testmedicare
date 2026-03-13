@@ -604,7 +604,40 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     }
 
     const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-    const doctorName = "Dr. Bouazizi";
+    const user = readAuthUser();
+    const doctorName = user?.doctorName || "Dr. Bouazizi";
+
+    // 0) Persist consultation to repository
+    if (consultationIdRef.current) {
+      const repo = getConsultationRepo();
+      repo.update({
+        id: consultationIdRef.current,
+        symptoms,
+        examination,
+        diagnosis,
+        conclusion,
+        carePlan: conclusion,
+        notes: motif,
+        status: "completed",
+        durationMinutes: 0,
+      }).catch(e => console.warn("[ConsultationContext] Failed to close consultation:", e));
+
+      // Save vitals
+      const vitalEntries = [
+        vitals.systolic && { label: "Systolique", value: vitals.systolic, unit: "mmHg" },
+        vitals.diastolic && { label: "Diastolique", value: vitals.diastolic, unit: "mmHg" },
+        vitals.heartRate && { label: "FC", value: vitals.heartRate, unit: "bpm" },
+        vitals.temperature && { label: "Température", value: vitals.temperature, unit: "°C" },
+        vitals.oxygenSat && { label: "SpO2", value: vitals.oxygenSat, unit: "%" },
+        vitals.weight && { label: "Poids", value: vitals.weight, unit: "kg" },
+        vitals.height && { label: "Taille", value: vitals.height, unit: "cm" },
+      ].filter(Boolean) as { label: string; value: string; unit: string }[];
+
+      if (vitalEntries.length > 0) {
+        repo.saveVitals(consultationIdRef.current, vitalEntries)
+          .catch(e => console.warn("[ConsultationContext] Failed to save vitals:", e));
+      }
+    }
 
     // 1) Mark appointment as completed
     const searchParams2 = new URLSearchParams(window.location.search);
