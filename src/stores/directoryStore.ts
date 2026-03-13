@@ -80,7 +80,7 @@ export function seedDirectoryIfEmpty() {
         clinics: estMod.mockClinics,
         hospitals: estMod.mockHospitals,
         pharmacies: estMod.mockPublicPharmacies,
-        medicines: medMod.mockMedicines || medMod.mockTopMedicines || [],
+        medicines: (medMod as any).mockMedicines || (medMod as any).mockTopMedicines || [],
       });
     });
   }

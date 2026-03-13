@@ -255,7 +255,7 @@ export function completeAppointmentConsultation(id: string) {
         "Contrôle": "CS-S", "Téléconsultation": "TC", "Certificat": "CERT",
       };
       const code = typeMap[apt.type] || "CS";
-      const tarif = tarifs.find((t: any) => t.code === code && t.active);
+      const tarif = allTarifs.find((t: any) => t.code === code && t.active);
       if (tarif) {
         createInvoice({
           patient: apt.patient,

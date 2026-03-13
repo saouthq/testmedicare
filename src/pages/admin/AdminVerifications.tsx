@@ -238,7 +238,7 @@ const AdminVerifications = () => {
           directoryStore.set({ ...dir, doctors: [...dir.doctors, newDoc as any] });
         } else if (v.entityType === "pharmacy") {
           const newPharmacy = {
-            id: Date.now(),
+            id: String(Date.now()),
             name: v.entityName,
             slug: v.entityName.toLowerCase().replace(/\s+/g, "-"),
             city: v.city || "Tunis",
@@ -247,7 +247,7 @@ const AdminVerifications = () => {
             horaires: "08:00 - 20:00",
             deGarde: false,
           };
-          directoryStore.set({ ...dir, pharmacies: [...dir.pharmacies, newPharmacy] });
+          directoryStore.set({ ...dir, pharmacies: [...dir.pharmacies, newPharmacy as any] });
         }
       } catch { /* directoryStore not available */ }
 
