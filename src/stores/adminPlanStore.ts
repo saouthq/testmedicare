@@ -6,6 +6,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 export type PlanRole = "doctor" | "pharmacy" | "laboratory" | "clinic" | "hospital";
 export type PlanBillingCycle = "monthly" | "annual";
