@@ -4,7 +4,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 
 export type UserRole = "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin" | "hospital" | "clinic";
 
