@@ -6,6 +6,7 @@
  * // TODO BACKEND: Replace with GET/POST/PUT/DELETE /api/admin/specialties
  */
 import { createStore, useStore } from "./crossRoleStore";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 export type SpecialtyCategory = "generaliste" | "specialiste" | "dentiste" | "paramedical";
 
