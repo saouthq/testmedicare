@@ -164,5 +164,5 @@ export function updateHabit(label: string, value: string) {
 
 export function addFamilyHistory(f: FamilyHistory) {
   store.set(prev => ({ ...prev, familyHistory: [...prev.familyHistory, f] }));
-  syncHealthRecordToSupabase("family_history", f.condition || f.member, f);
+  syncHealthRecordToSupabase("family_history", f.name || f.details, f);
 }
