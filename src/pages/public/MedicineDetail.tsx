@@ -4,7 +4,7 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import JsonLd from "@/components/seo/JsonLd";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Pill, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
-import { mockMedicines } from "@/data/mocks/medicines";
+import { useMedicinesDirectory } from "@/stores/directoryStore";
 import { useState } from "react";
 
 const Section = ({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) => {
