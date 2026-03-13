@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
@@ -8,9 +8,7 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Search, Pill } from "lucide-react";
-import { mockPublicPharmacies } from "@/data/mocks/establishments";
-
-const cities = ["Toutes", ...Array.from(new Set(mockPublicPharmacies.map(p => p.city)))];
+import { usePharmaciesDirectory } from "@/stores/directoryStore";
 
 const PharmaciesDirectory = () => {
   const [searchParams] = useSearchParams();
