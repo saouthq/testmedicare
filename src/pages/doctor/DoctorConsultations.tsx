@@ -126,7 +126,8 @@ type LogItem = {
   meta?: string;
 };
 
-const CURRENT_DOCTOR = "Dr. Bouazizi";
+import { readAuthUser } from "@/stores/authStore";
+const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 // Map shared appointment status to local ConsultStatus
 function mapStatus(s: string): ConsultStatus {
