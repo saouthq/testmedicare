@@ -43,7 +43,7 @@ import { sharedPatientsStore } from "@/stores/sharedPatientsStore";
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
   isTeleconsult: boolean;
-  patient: typeof mockConsultationPatient;
+  patient: { name: string; age: number | string; gender: string; bloodType: string; allergies: string[]; conditions: string[]; lastVisit: string; ssn: string; mutuelle: string; medecinTraitant: string; phone?: string; email?: string };
   navigate: ReturnType<typeof useNavigate>;
   // Notes
   motif: string;
