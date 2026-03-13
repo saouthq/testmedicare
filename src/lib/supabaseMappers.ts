@@ -268,6 +268,23 @@ export function mapPrescriptionRow(row: any): any {
   };
 }
 
+export function mapPrescriptionToRow(rx: Partial<any>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (rx.id !== undefined) row.id = rx.id;
+  if (rx.patient !== undefined) row.patient_name = rx.patient;
+  if (rx.patientId !== undefined) row.patient_id = rx.patientId;
+  if (rx.doctor !== undefined) row.doctor_name = rx.doctor;
+  if (rx.doctorId !== undefined) row.doctor_id = rx.doctorId;
+  if (rx.date !== undefined) row.date = rx.date;
+  if (rx.items !== undefined) row.items = rx.items;
+  if (rx.status !== undefined) row.status = rx.status;
+  if (rx.total !== undefined) row.total = rx.total;
+  if (rx.assurance !== undefined) row.assurance = rx.assurance;
+  if (rx.pharmacy !== undefined) row.pharmacy = rx.pharmacy;
+  if (rx.sent !== undefined) row.sent = rx.sent;
+  return row;
+}
+
 // ─── Lab Demands ─────────────────────────────────────────────
 
 export function mapLabDemandRow(row: any): any {

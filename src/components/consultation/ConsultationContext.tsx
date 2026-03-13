@@ -36,6 +36,9 @@ import { createLabDemand } from "@/stores/labStore";
 import { createPrescription } from "@/stores/doctorPrescriptionsStore";
 import { addDocument as addHealthDocument } from "@/stores/healthStore";
 import type { SharedAppointment } from "@/types/appointment";
+import { getConsultationRepo } from "@/modules/consultations";
+import { readAuthUser } from "@/stores/authStore";
+import { sharedPatientsStore } from "@/stores/sharedPatientsStore";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
@@ -601,7 +604,40 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     }
 
     const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-    const doctorName = "Dr. Bouazizi";
+    const user = readAuthUser();
+    const doctorName = user?.doctorName || "Dr. Bouazizi";
+
+    // 0) Persist consultation to repository
+    if (consultationIdRef.current) {
+      const repo = getConsultationRepo();
+      repo.update({
+        id: consultationIdRef.current,
+        symptoms,
+        examination,
+        diagnosis,
+        conclusion,
+        carePlan: conclusion,
+        notes: motif,
+        status: "completed",
+        durationMinutes: 0,
+      }).catch(e => console.warn("[ConsultationContext] Failed to close consultation:", e));
+
+      // Save vitals
+      const vitalEntries = [
+        vitals.systolic && { label: "Systolique", value: vitals.systolic, unit: "mmHg" },
+        vitals.diastolic && { label: "Diastolique", value: vitals.diastolic, unit: "mmHg" },
+        vitals.heartRate && { label: "FC", value: vitals.heartRate, unit: "bpm" },
+        vitals.temperature && { label: "Température", value: vitals.temperature, unit: "°C" },
+        vitals.oxygenSat && { label: "SpO2", value: vitals.oxygenSat, unit: "%" },
+        vitals.weight && { label: "Poids", value: vitals.weight, unit: "kg" },
+        vitals.height && { label: "Taille", value: vitals.height, unit: "cm" },
+      ].filter(Boolean) as { label: string; value: string; unit: string }[];
+
+      if (vitalEntries.length > 0) {
+        repo.saveVitals(consultationIdRef.current, vitalEntries)
+          .catch(e => console.warn("[ConsultationContext] Failed to save vitals:", e));
+      }
+    }
 
     // 1) Mark appointment as completed
     const searchParams2 = new URLSearchParams(window.location.search);
@@ -882,14 +918,35 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     ).slice(0, 8);
   }, [paletteActions, paletteQuery]);
 
-  // Mark patient as in_progress in shared appointments store on mount
+  // Track consultation ID for persistence
+  const consultationIdRef = useRef<string | null>(null);
+
+  // Mark patient as in_progress in shared appointments store on mount + create consultation record
   useEffect(() => {
     const searchParams2 = new URLSearchParams(window.location.search);
     const aptId = searchParams2.get("aptId");
     if (aptId) {
       startAppointmentConsultation(aptId);
     }
-  }, []);
+
+    // Create a consultation record in the repository
+    const user = readAuthUser();
+    const patientIdParam = searchParams2.get("patient");
+    const patientIdNum = patientIdParam ? parseInt(patientIdParam) : null;
+    const repo = getConsultationRepo();
+    repo.create({
+      appointmentId: aptId || undefined,
+      doctorId: user?.id || "demo-doctor-1",
+      patientId: patientIdNum,
+      patientName: patient.name,
+      doctorName: user?.doctorName || "Dr. Bouazizi",
+      date: new Date().toISOString().slice(0, 10),
+      motif: motif || "",
+      specialty: "",
+    }).then(c => {
+      consultationIdRef.current = c.id;
+    }).catch(e => console.warn("[ConsultationContext] Failed to create consultation:", e));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keyboard
   useEffect(() => {

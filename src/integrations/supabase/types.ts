@@ -533,6 +533,122 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_vitals: {
+        Row: {
+          consultation_id: string
+          created_at: string
+          id: number
+          label: string
+          unit: string | null
+          value: string
+        }
+        Insert: {
+          consultation_id: string
+          created_at?: string
+          id?: never
+          label?: string
+          unit?: string | null
+          value?: string
+        }
+        Update: {
+          consultation_id?: string
+          created_at?: string
+          id?: never
+          label?: string
+          unit?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_vitals_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultations: {
+        Row: {
+          appointment_id: string | null
+          care_plan: string | null
+          conclusion: string | null
+          created_at: string
+          date: string
+          diagnosis: string | null
+          doctor_id: string
+          doctor_name: string
+          duration_minutes: number | null
+          examination: string | null
+          id: string
+          motif: string | null
+          notes: string | null
+          patient_id: number | null
+          patient_name: string
+          specialty: string | null
+          status: string
+          symptoms: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          care_plan?: string | null
+          conclusion?: string | null
+          created_at?: string
+          date?: string
+          diagnosis?: string | null
+          doctor_id: string
+          doctor_name?: string
+          duration_minutes?: number | null
+          examination?: string | null
+          id?: string
+          motif?: string | null
+          notes?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          specialty?: string | null
+          status?: string
+          symptoms?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          care_plan?: string | null
+          conclusion?: string | null
+          created_at?: string
+          date?: string
+          diagnosis?: string | null
+          doctor_id?: string
+          doctor_name?: string
+          duration_minutes?: number | null
+          examination?: string | null
+          id?: string
+          motif?: string | null
+          notes?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          specialty?: string | null
+          status?: string
+          symptoms?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_availability: {
         Row: {
           active: boolean | null
