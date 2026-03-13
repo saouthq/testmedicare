@@ -35,7 +35,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 
 const AdminSubscriptions = () => {
   const { subscriptions: subs, setSubscriptions: setSubs } = useAdminSubscriptions();
-  const { plans } = useAdminPlans();
+  const [plans] = useAdminPlans();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | string>("all");
   const [filterPlan, setFilterPlan] = useState<"all" | string>("all");
