@@ -17,21 +17,46 @@ const aiSuggestions = [
 
 const DoctorConnect = () => {
   const [tab, setTab] = useState<ConnectTab>("professionals");
-  const [selectedContact, setSelectedContact] = useState<string | null>("p1");
+  const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
-  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({ ...mockProMessages, ...mockCabinetMessages });
   const [searchQuery, setSearchQuery] = useState("");
 
-  // AI chat state
-  const [aiMessages, setAiMessages] = useState<ChatMessage[]>([
-    { id: "ai-1", sender: "ai", senderName: "Assistant IA", text: "Bonjour Dr. Bouazizi ! Je suis votre assistant IA. Posez-moi des questions sur vos patients, des interactions médicamenteuses, des protocoles ou demandez-moi de rédiger un courrier.", time: "09:00" },
-  ]);
-  const [aiInput, setAiInput] = useState("");
+  // Use messagesStore threads/messages
+  const [threads] = useThreads();
+  const [allMessages] = useMessages();
 
-  const contacts = tab === "professionals" ? mockProContacts : mockCabinetContacts;
+  // Filter threads by type: "cabinet" or regular messages for "professionals"
+  const filteredThreads = useMemo(() => {
+    const doctorId = "demo-doctor-1";
+    return threads.filter(t => {
+      const isParticipant = t.participantA.id === doctorId || t.participantB.id === doctorId;
+      if (!isParticipant) return false;
+      if (tab === "cabinet") return t.category === "cabinet";
+      return t.category !== "cabinet";
+    });
+  }, [threads, tab]);
+
+  // Build contact-like list from threads
+  const contacts = useMemo(() => {
+    const doctorId = "demo-doctor-1";
+    return filteredThreads.map(t => {
+      const other = t.participantA.id === doctorId ? t.participantB : t.participantA;
+      return { id: t.id, name: other.name, avatar: other.avatar, lastMessage: t.lastMessage, role: other.role };
+    });
+  }, [filteredThreads]);
+
   const currentContact = contacts.find(c => c.id === selectedContact);
-  const currentMessages = selectedContact ? messages[selectedContact] || [] : [];
+  const currentMessages: ChatMessage[] = useMemo(() => {
+    if (!selectedContact) return [];
+    return allMessages.filter(m => m.threadId === selectedContact).map(m => ({
+      id: m.id,
+      sender: m.senderId === "demo-doctor-1" ? "me" : m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      time: new Date(m.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+    }));
+  }, [allMessages, selectedContact]);
 
   const sendMessage = () => {
     if (!newMessage.trim() || !selectedContact) return;
