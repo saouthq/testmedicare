@@ -2,9 +2,7 @@
  * sharedAppointmentsStore.ts — Single source of truth for ALL appointments.
  * Used by: DoctorSchedule, SecretaryAgenda, SecretaryDashboard, PublicBooking
  *
- * Dates are generated dynamically relative to today so the demo always looks current.
- *
- * // TODO BACKEND: Replace with API + real-time subscriptions
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
@@ -12,6 +10,8 @@ import { createInvoice } from "./billingStore";
 import { sharedTarifsStore } from "./sharedTarifsStore";
 import type { SharedAppointment, AppointmentStatus, AppointmentType } from "@/types/appointment";
 import { computeEndTime } from "@/types/appointment";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapAppointmentRow } from "@/lib/supabaseMappers";
 
 // ─── Helper: generate YYYY-MM-DD relative to today ──────────
 function relDate(offset: number): string {
@@ -106,7 +106,13 @@ const store = createStore<SharedAppointment[]>("medicare_shared_appointments", S
 export const sharedAppointmentsStore = store;
 
 export function useSharedAppointments() {
-  return useStore(store);
+  return useDualQuery<SharedAppointment[]>({
+    store,
+    tableName: "appointments",
+    queryKey: ["appointments"],
+    mapRowToLocal: mapAppointmentRow,
+    orderBy: { column: "date", ascending: true },
+  });
 }
 
 /** Update appointment status */

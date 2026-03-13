@@ -1,10 +1,12 @@
 /**
  * reviewsStore.ts — Patient reviews for doctors.
- * Dual-mode: Supabase + localStorage fallback.
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { useSupabaseTable } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapReviewRow } from "@/lib/supabaseMappers";
 
 export interface Review {
   id: string;
@@ -24,7 +26,13 @@ const store = createStore<Review[]>("medicare_reviews", []);
 export const reviewsStore = store;
 
 export function useReviews() {
-  return useStore(store);
+  return useDualQuery<Review[]>({
+    store,
+    tableName: "reviews",
+    queryKey: ["reviews"],
+    mapRowToLocal: mapReviewRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 /** Supabase-aware reviews hook */

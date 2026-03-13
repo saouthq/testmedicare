@@ -1,11 +1,11 @@
 /**
  * sharedTarifsStore.ts — Centralized tarifs/actes configuration.
- * Used by: DoctorTarifs, DoctorBilling, SecretaryBilling, SecretaryDashboard
- *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import type { SharedActe } from "@/types/appointment";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapTarifRow } from "@/lib/supabaseMappers";
 
 const initialActes: SharedActe[] = [
   { id: 1, code: "CS", name: "Consultation standard", price: 35, conventionne: true, duration: 30, active: true },
@@ -25,7 +25,13 @@ const store = createStore<SharedActe[]>("medicare_tarifs", initialActes);
 export const sharedTarifsStore = store;
 
 export function useSharedTarifs() {
-  return useStore(store);
+  return useDualQuery<SharedActe[]>({
+    store,
+    tableName: "tarifs",
+    queryKey: ["tarifs"],
+    mapRowToLocal: mapTarifRow,
+    orderBy: { column: "created_at", ascending: true },
+  });
 }
 
 export function updateActe(id: number, update: Partial<SharedActe>) {

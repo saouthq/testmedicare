@@ -1,11 +1,11 @@
 /**
  * sharedBlockedSlotsStore.ts — Centralized blocked slots.
- * Used by: DoctorSchedule, SecretaryAgenda, PublicBooking
- *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import type { SharedBlockedSlot } from "@/types/appointment";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapBlockedSlotRow } from "@/lib/supabaseMappers";
 
 const initialBlocks: SharedBlockedSlot[] = [];
 
@@ -14,7 +14,12 @@ const store = createStore<SharedBlockedSlot[]>("medicare_blocked_slots", initial
 export const sharedBlockedSlotsStore = store;
 
 export function useSharedBlockedSlots() {
-  return useStore(store);
+  return useDualQuery<SharedBlockedSlot[]>({
+    store,
+    tableName: "blocked_slots",
+    queryKey: ["blocked_slots"],
+    mapRowToLocal: mapBlockedSlotRow,
+  });
 }
 
 export function addBlockedSlot(block: Omit<SharedBlockedSlot, "id">) {

@@ -1,14 +1,13 @@
 /**
  * sharedLeavesStore.ts — Centralized doctor leaves/absences.
- * Connected to blocked slots: creating a leave automatically blocks those dates.
- * Used by: DoctorLeaves, SecretaryAgenda, DoctorSchedule
- *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { sharedBlockedSlotsStore } from "./sharedBlockedSlotsStore";
 import { pushNotification } from "./notificationsStore";
 import type { SharedLeave } from "@/types/appointment";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapLeaveRow } from "@/lib/supabaseMappers";
 
 const initialLeaves: SharedLeave[] = [
   { id: 1, startDate: "2026-03-15", endDate: "2026-03-22", motif: "Vacances de printemps", type: "conge", replacementDoctor: "Dr. Sonia Gharbi", notifyPatients: true, status: "upcoming", affectedAppointments: 12, doctor: "Dr. Ahmed Bouazizi" },
@@ -22,7 +21,13 @@ const store = createStore<SharedLeave[]>("medicare_leaves", initialLeaves);
 export const sharedLeavesStore = store;
 
 export function useSharedLeaves() {
-  return useStore(store);
+  return useDualQuery<SharedLeave[]>({
+    store,
+    tableName: "doctor_leaves",
+    queryKey: ["doctor_leaves"],
+    mapRowToLocal: mapLeaveRow,
+    orderBy: { column: "start_date", ascending: false },
+  });
 }
 
 /** Create a leave and auto-generate blocked slots for each day */

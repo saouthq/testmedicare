@@ -1,11 +1,11 @@
 /**
  * sharedPatientsStore.ts — Centralized patients shared between doctor & secretary.
- * Used by: DoctorPatients, SecretaryPatients, DoctorSchedule, SecretaryAgenda
- *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapPatientRow } from "@/lib/supabaseMappers";
 
 export interface SharedPatient {
   id: number;
@@ -110,7 +110,13 @@ const store = createStore<SharedPatient[]>("medicare_shared_patients", initialPa
 export const sharedPatientsStore = store;
 
 export function useSharedPatients() {
-  return useStore(store);
+  return useDualQuery<SharedPatient[]>({
+    store,
+    tableName: "patients",
+    queryKey: ["patients"],
+    mapRowToLocal: mapPatientRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 export function addPatient(patient: Omit<SharedPatient, "id">) {
