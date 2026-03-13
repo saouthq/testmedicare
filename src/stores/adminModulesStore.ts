@@ -329,6 +329,7 @@ export function toggleModule(moduleId: string, enabled: boolean, adminName?: str
     moduleId,
     `Module "${mod?.label || moduleId}" ${enabled ? "activé" : "désactivé"} par ${adminName || "admin"}`
   );
+  saveAdminConfig("admin_modules", store.read());
 }
 
 /** Bulk update modules */
