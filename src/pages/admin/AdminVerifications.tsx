@@ -199,12 +199,17 @@ const AdminVerifications = () => {
   const [drawerItem, setDrawerItem] = useState<Verification | null>(null);
   const [adminNote, setAdminNote] = useState("");
 
+  // Refresh demo data periodically; for production, react to supabase query changes
   useEffect(() => {
+    if (isProduction) {
+      setVerifications(buildVerifications());
+      return;
+    }
     const interval = setInterval(() => {
       setVerifications(buildVerifications());
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isProduction, supabaseQuery.data]);
 
   const filtered = verifications.filter(v => v.entityType === tabMap[tab]);
 
