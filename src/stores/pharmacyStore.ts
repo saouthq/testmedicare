@@ -1,13 +1,12 @@
 /**
- * pharmacyStore.ts — Pharmacy stock + prescriptions (localStorage + Supabase).
- * Cross-role: Doctor prescribes → Patient sends → Pharmacy processes.
- *
- * Dual-mode: Supabase when authenticated, localStorage fallback for demo.
+ * pharmacyStore.ts — Pharmacy stock + prescriptions.
+ * Dual-mode: Supabase when production, localStorage for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
-import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { useDualQuery } from "@/hooks/useDualData";
 import { supabase } from "@/integrations/supabase/client";
+import { getAppMode } from "./authStore";
 import type { PharmacyPrescription } from "@/types";
 
 // ─── Stock ───────────────────────────────────────────────────
@@ -53,27 +52,38 @@ const rxStore = createStore<PharmacyPrescription[]>("medicare_pharmacy_prescript
 
 export const pharmacyRxStore = rxStore;
 
-export function usePharmacyPrescriptions() {
-  return useStore(rxStore);
+function mapPharmacyRxRow(row: any): PharmacyPrescription {
+  return {
+    id: row.id,
+    patient: row.patient_name || "",
+    avatar: row.patient_avatar || "",
+    doctor: row.doctor_name || "",
+    date: row.date || "",
+    items: row.items || [],
+    status: row.status || "received",
+    total: row.total || "0 DT",
+    assurance: row.assurance || "",
+    urgent: row.urgent || false,
+    patientPhone: row.patient_phone || "",
+    pickupTime: row.pickup_time || "",
+    comment: row.comment || "",
+  };
 }
 
-/** Supabase-aware hook for pharmacy prescriptions */
-export function usePharmacyPrescriptionsSupabase() {
-  const { userId, isAuthenticated } = useAuthReady();
-  const [localRx] = useStore(rxStore);
-
-  const query = useSupabaseTable<PharmacyPrescription>({
-    queryKey: ["pharmacy_prescriptions", userId || ""],
+export function usePharmacyPrescriptions(): [PharmacyPrescription[], (v: PharmacyPrescription[] | ((p: PharmacyPrescription[]) => PharmacyPrescription[])) => void] {
+  return useDualQuery<PharmacyPrescription[]>({
+    store: rxStore,
     tableName: "pharmacy_prescriptions",
-    filters: userId ? { pharmacy_id: userId } : undefined,
+    queryKey: ["pharmacy_prescriptions"],
+    mapRowToLocal: mapPharmacyRxRow,
     orderBy: { column: "created_at", ascending: false },
-    enabled: isAuthenticated,
-    fallbackData: localRx,
   });
+}
 
-  useSupabaseRealtime("pharmacy_prescriptions", [["pharmacy_prescriptions", userId || ""]], userId ? `pharmacy_id=eq.${userId}` : undefined);
-
-  return query;
+/** Legacy compat */
+export function usePharmacyPrescriptionsSupabase() {
+  const [data] = usePharmacyPrescriptions();
+  return { data, isLoading: false };
 }
 
 export function initPharmacyRxIfEmpty(items: PharmacyPrescription[]) {
@@ -90,17 +100,14 @@ export async function updatePharmacyRxStatus(
     rx.id === id ? { ...rx, status, ...extra } : rx
   ));
 
-  // Try Supabase
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
+  if (getAppMode() === "production") {
+    try {
       await (supabase.from as any)("pharmacy_prescriptions")
         .update({ status, pickup_time: extra?.pickupTime, comment: extra?.comment })
         .eq("id", id);
-    }
-  } catch {}
+    } catch {}
+  }
 
-  // Notify patient
   const rx = rxStore.read().find(r => r.id === id);
   if (rx && status === "ready_pickup") {
     pushNotification({
