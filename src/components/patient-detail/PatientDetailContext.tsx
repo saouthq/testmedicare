@@ -153,13 +153,12 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
   const [allAppointments] = useSharedAppointments();
   const [allRx] = useDoctorPrescriptions();
 
-  // Resolve patient from route param — fallback to mock for backward compat
+  // Resolve patient from route param — no mock fallback in production
   const resolvedPatient = useMemo(() => {
     if (routeId) {
       const numId = Number(routeId);
       const found = allPatients.find(p => p.id === numId || String(p.id) === routeId);
       if (found) {
-        // Build a patient object compatible with the existing UI shape
         const ageParts = found.dob ? found.dob.split("/") : [];
         const birthYear = ageParts.length === 3 ? parseInt(ageParts[2]) : null;
         const age = birthYear ? new Date().getFullYear() - birthYear : null;
@@ -184,7 +183,15 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
         };
       }
     }
-    return { ...mockConsultationPatient, phone: "+216 71 234 567", email: "amine@email.tn", city: "Tunis" } as any;
+    // In production: return a minimal empty patient, never mock data
+    if (getAppMode() === "production") {
+      return { id: Number(routeId) || 0, name: "Patient inconnu", age: "-", gender: "—", bloodType: "—", allergies: [], conditions: [], lastVisit: "—", ssn: "—", mutuelle: "—", medecinTraitant: "—", phone: "—", email: "—", city: "—", avatar: "", dob: "—", notes: "" };
+    }
+    // Demo: lazy-import mock for backward compat
+    try {
+      const { mockConsultationPatient } = require("@/data/mockData");
+      return { ...mockConsultationPatient, phone: "+216 71 234 567", email: "amine@email.tn", city: "Tunis" } as any;
+    } catch { return { id: 0, name: "Patient", age: "-", gender: "—", bloodType: "—", allergies: [], conditions: [], lastVisit: "—", ssn: "—", mutuelle: "—", medecinTraitant: "—", phone: "—", email: "—", city: "—", avatar: "", dob: "—", notes: "" }; }
   }, [routeId, allPatients]);
 
   const patient = resolvedPatient;
