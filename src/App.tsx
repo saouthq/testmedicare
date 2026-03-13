@@ -7,6 +7,7 @@ import { seedAllStores } from "@/stores/seedStores";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 
 // Seed all shared stores with mock data on first load
