@@ -28,7 +28,7 @@ const DoctorBilling = () => {
   const [sharedInvoices] = useSharedBilling();
   const cabinetStats = getBillingStats(sharedInvoices);
   const [subscription] = useDoctorSubscription();
-  const { plans } = useAdminPlans();
+  const [plans] = useAdminPlans();
 
   // Derive subscription info from stores
   const currentPlanName = subscription.plan === "pro" ? "Pro" : "Basic";
