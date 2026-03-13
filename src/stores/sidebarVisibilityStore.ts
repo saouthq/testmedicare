@@ -110,4 +110,11 @@ export function toggleSidebarItemBySpecialty(specialty: string, url: string, ena
  */
 export function resetSidebarVisibility() {
   store.set(defaultConfig);
+  saveAdminConfig("sidebar_visibility", defaultConfig);
+}
+
+/** Load from Supabase */
+export async function loadSidebarVisibility() {
+  const data = await loadAdminConfig<SidebarVisibilityConfig>("sidebar_visibility");
+  if (data) store.set(data);
 }

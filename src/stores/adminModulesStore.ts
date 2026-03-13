@@ -335,6 +335,13 @@ export function toggleModule(moduleId: string, enabled: boolean, adminName?: str
 /** Bulk update modules */
 export function setModuleStates(states: ModuleStates) {
   store.set(states);
+  saveAdminConfig("admin_modules", states);
+}
+
+/** Load module states from Supabase */
+export async function loadModuleStates() {
+  const data = await loadAdminConfig<ModuleStates>("admin_modules");
+  if (data) store.set(data);
 }
 
 /** Get count of disabled modules */
