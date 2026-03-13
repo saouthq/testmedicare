@@ -301,7 +301,7 @@ export function useAdminUserRoleUpdate() {
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
       const { error } = await supabase
         .from("user_roles")
-        .update({ role })
+        .update({ role: role as any })
         .eq("user_id", userId);
       if (error) throw error;
     },
