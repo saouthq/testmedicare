@@ -167,17 +167,27 @@ export function addSpecialty(spec: Omit<ManagedSpecialty, "id" | "createdAt" | "
   const id = spec.label.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
   const now = new Date().toISOString();
   store.set(prev => [...prev, { ...spec, id, activeDoctors: 0, createdAt: now, updatedAt: now }]);
+  saveAdminConfig("specialties", store.read());
   return id;
 }
 
 export function updateSpecialty(id: string, update: Partial<ManagedSpecialty>) {
   store.set(prev => prev.map(s => s.id === id ? { ...s, ...update, updatedAt: new Date().toISOString() } : s));
+  saveAdminConfig("specialties", store.read());
 }
 
 export function deleteSpecialty(id: string) {
   store.set(prev => prev.filter(s => s.id !== id));
+  saveAdminConfig("specialties", store.read());
 }
 
 export function toggleSpecialty(id: string) {
   store.set(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled, updatedAt: new Date().toISOString() } : s));
+  saveAdminConfig("specialties", store.read());
+}
+
+/** Load specialties from Supabase */
+export async function loadSpecialtiesFromSupabase() {
+  const data = await loadAdminConfig<ManagedSpecialty[]>("specialties");
+  if (data && data.length > 0) store.set(data);
 }

@@ -97,10 +97,18 @@ export function togglePlanStatus(id: string, status: PlanStatus, motif: string) 
   store.set(prev => prev.map(p => p.id === id ? { ...p, status, updatedAt: new Date().toISOString() } : p));
   const plan = getPlanById(id);
   appendLog("plan_status_changed", "plan", id, `Plan "${plan?.name}" → ${status} — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
 }
 
 export function deletePlan(id: string, motif: string) {
   const plan = getPlanById(id);
   store.set(prev => prev.filter(p => p.id !== id));
   appendLog("plan_deleted", "plan", id, `Plan "${plan?.name}" supprimé — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
+}
+
+/** Load plans from Supabase */
+export async function loadAdminPlansFromSupabase() {
+  const data = await loadAdminConfig<AdminPlan[]>("admin_plans");
+  if (data && data.length > 0) store.set(data);
 }
