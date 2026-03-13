@@ -16,6 +16,8 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import { useAdminTickets, useAdminDisputes, useAdminModerationReports } from "@/stores/adminStore";
+import { useAdminTicketsSupabase, useAdminTicketUpdateSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 import type { AdminModerationReport, AdminTicket, ModerationNote } from "@/types/admin";
 import EmptyState from "@/components/shared/EmptyState";
 import {
@@ -87,6 +89,10 @@ const mockSupportMacros = [
 ];
 
 const AdminResolution = () => {
+  const isProduction = getAppMode() === "production";
+  const supabaseTicketsQuery = useAdminTicketsSupabase();
+  const ticketUpdateMutation = useAdminTicketUpdateSupabase();
+
   // ── Moderation — from store ──
   const { reports: storeReports, setReports: setStoreReports } = useAdminModerationReports();
   const [reports, setReports] = useState<AdminModerationReport[]>(storeReports);
@@ -108,9 +114,33 @@ const AdminResolution = () => {
   const [newMsg, setNewMsg] = useState("");
   const [dispMotifAction, setDispMotifAction] = useState<{ id: string; type: string } | null>(null);
 
-  // ── Support — from store ──
+  // ── Support — dual-mode: demo store or Supabase ──
   const { tickets: storeTickets, setTickets: setStoreTickets } = useAdminTickets();
   const enrichedTickets = (): TicketExt[] => {
+    // Production: map Supabase support_tickets
+    if (isProduction && supabaseTicketsQuery.data && supabaseTicketsQuery.data.length > 0) {
+      return supabaseTicketsQuery.data.map((t: any) => ({
+        id: t.id,
+        subject: t.subject || "Ticket",
+        category: "support",
+        priority: "medium",
+        status: t.status || "open",
+        requester: t.user_id ? t.user_id.slice(0, 8) : "Utilisateur",
+        requesterRole: "patient",
+        assignedTo: "",
+        createdAt: new Date(t.created_at).toLocaleDateString("fr-TN"),
+        messages: Array.isArray(t.conversation) ? t.conversation.length : 0,
+        slaDeadline: "8h",
+        conversation: Array.isArray(t.conversation) ? (t.conversation as any[]).map((c: any, i: number) => ({
+          id: `msg-${i}`,
+          sender: c.sender || "user",
+          senderName: c.senderName || "Utilisateur",
+          text: c.text || "",
+          time: c.time || "",
+        })) : [],
+      }));
+    }
+    // Demo: from store
     if (storeTickets.length > 0) {
       return storeTickets.map(t => ({
         ...t,
@@ -121,6 +151,13 @@ const AdminResolution = () => {
     return [];
   };
   const [tickets, setTickets] = useState<TicketExt[]>(enrichedTickets);
+
+  // Re-sync tickets when supabase data arrives
+  useMemo(() => {
+    if (isProduction && supabaseTicketsQuery.data) {
+      setTickets(enrichedTickets());
+    }
+  }, [supabaseTicketsQuery.data]);
   const [ticketSearch, setTicketSearch] = useState("");
   const [ticketStatusFilter, setTicketStatusFilter] = useState("all");
   const [selectedTicket, setSelectedTicket] = useState<TicketExt | null>(null);
@@ -203,17 +240,41 @@ const AdminResolution = () => {
   const handleTicketReply = () => {
     if (!reply.trim() || !selectedTicket) return;
     const msg: TicketMessage = { id: `msg-${Date.now()}`, sender: "admin", senderName: "Admin Support", text: reply.trim(), time: new Date().toLocaleString("fr-TN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) };
-    setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: [...t.conversation, msg] } : t));
-    // sync back to store
-    setStoreTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: [...t.conversation, { id: msg.id, sender: msg.sender, senderName: msg.senderName, text: msg.text, time: msg.time }] } : t));
-    setSelectedTicket(prev => prev ? { ...prev, conversation: [...prev.conversation, msg] } : null);
+    const updatedConversation = [...selectedTicket.conversation, msg];
+    setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: updatedConversation } : t));
+    if (isProduction) {
+      // Persist updated conversation to Supabase
+      ticketUpdateMutation.mutate({ ticketId: selectedTicket.id, updates: { conversation: updatedConversation as any } });
+    } else {
+      setStoreTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, conversation: [...t.conversation, { id: msg.id, sender: msg.sender, senderName: msg.senderName, text: msg.text, time: msg.time }] } : t));
+    }
+    setSelectedTicket(prev => prev ? { ...prev, conversation: updatedConversation } : null);
     setReply("");
+    appendLog("ticket_reply", "support", selectedTicket.id, `Réponse admin envoyée dans ticket "${selectedTicket.subject}"`);
     toast({ title: "Réponse envoyée" });
   };
 
-  const handleTicketClose = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" as any } : t)); appendLog("ticket_closed", "support", id, "Ticket clôturé"); toast({ title: "Ticket clôturé" }); };
-  const handleTicketReopen = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" as any } : t)); appendLog("ticket_reopened", "support", id, "Ticket réouvert"); toast({ title: "Ticket réouvert" }); };
-  const handleTicketTake = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress", assignedTo: "Admin Support" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress" as any, assignedTo: "Admin Support" } : t)); appendLog("ticket_taken", "support", id, "Ticket pris en charge"); toast({ title: "Pris en charge" }); };
+  const handleTicketClose = (id: string) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" } : t));
+    if (!isProduction) setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" as any } : t));
+    if (isProduction) ticketUpdateMutation.mutate({ ticketId: id, updates: { status: "closed" } });
+    appendLog("ticket_closed", "support", id, "Ticket clôturé");
+    toast({ title: "Ticket clôturé" });
+  };
+  const handleTicketReopen = (id: string) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" } : t));
+    if (!isProduction) setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" as any } : t));
+    if (isProduction) ticketUpdateMutation.mutate({ ticketId: id, updates: { status: "open" } });
+    appendLog("ticket_reopened", "support", id, "Ticket réouvert");
+    toast({ title: "Ticket réouvert" });
+  };
+  const handleTicketTake = (id: string) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress", assignedTo: "Admin Support" } : t));
+    if (!isProduction) setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress" as any, assignedTo: "Admin Support" } : t));
+    if (isProduction) ticketUpdateMutation.mutate({ ticketId: id, updates: { status: "in_progress" } });
+    appendLog("ticket_taken", "support", id, "Ticket pris en charge");
+    toast({ title: "Pris en charge" });
+  };
 
   // Global counts for tab badges
   const totalOpen = modStats.pending + dispStats.open + tickets.filter(t => t.status === "open").length;
