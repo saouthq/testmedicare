@@ -173,6 +173,12 @@ export function seedAllStores() {
     { id: 4, name: "Certificat d'aptitude sportive", category: "certificat", content: "Je soussigné Dr. {{NOM_MEDECIN}}, certifie que M./Mme {{NOM_PATIENT}} a été examiné(e) ce jour et ne présente pas de contre-indication apparente à la pratique du sport en compétition / loisir.\n\nCertificat valable 1 an.", variables: ["NOM_MEDECIN", "NOM_PATIENT"], usageCount: 12, lastUsed: "1 Mar 2026", createdAt: "Mar 2025" },
     { id: 5, name: "Compte-rendu opératoire", category: "compte_rendu", content: "COMPTE-RENDU OPÉRATOIRE\n\nPatient : {{NOM_PATIENT}}\nDate : {{DATE}}\nIntervention : {{INTERVENTION}}\n\nDéroulement : {{DEROULEMENT}}\n\nSuites opératoires : {{SUITES}}\n\nDr. {{NOM_MEDECIN}}", variables: ["NOM_PATIENT", "DATE", "INTERVENTION", "DEROULEMENT", "SUITES", "NOM_MEDECIN"], usageCount: 7, lastUsed: "20 Fév 2026", createdAt: "Avr 2025" },
   ]);
+
+  // ── Appointment reminders (simulated cron) ──
+  try {
+    const { checkUpcomingReminders } = require("./sharedAppointmentsStore");
+    checkUpcomingReminders();
+  } catch { /* ignore */ }
 }
 
 /**

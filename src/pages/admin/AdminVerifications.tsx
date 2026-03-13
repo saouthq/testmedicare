@@ -211,9 +211,45 @@ const AdminVerifications = () => {
     appendLog(`verification_${newStatus}`, "verification", motifAction.id, `${v.entityName} ${statusText} — Motif : ${motif}`);
     
     if (newStatus === "approved") {
+      // Add to directoryStore so the professional appears in public search
+      try {
+        const { directoryStore } = require("@/stores/directoryStore");
+        const dir = directoryStore.read();
+        if (v.entityType === "doctor") {
+          const newDoc = {
+            id: Date.now(),
+            name: v.entityName,
+            specialty: v.specialty || "Généraliste",
+            city: v.city || "Tunis",
+            address: v.city || "Tunis",
+            phone: v.phone || "",
+            avatar: v.entityName.split(" ").filter((w: string) => w.length > 1).map((w: string) => w[0]).join("").toUpperCase(),
+            rating: 0,
+            reviewCount: 0,
+            price: (v as any)._planPrice || 35,
+            available: true,
+            languages: ["Français", "Arabe"],
+            teleconsultation: false,
+          };
+          directoryStore.set({ ...dir, doctors: [...dir.doctors, newDoc] });
+        } else if (v.entityType === "pharmacy") {
+          const newPharmacy = {
+            id: Date.now(),
+            name: v.entityName,
+            slug: v.entityName.toLowerCase().replace(/\s+/g, "-"),
+            city: v.city || "Tunis",
+            address: v.city || "Tunis",
+            phone: v.phone || "",
+            horaires: "08:00 - 20:00",
+            deGarde: false,
+          };
+          directoryStore.set({ ...dir, pharmacies: [...dir.pharmacies, newPharmacy] });
+        }
+      } catch { /* directoryStore not available */ }
+
       toast({
         title: `✅ ${v.entityName} approuvé(e)`,
-        description: `Compte ${getActivityLabel(v._activity)} activé — Plan ${v._plan || "N/A"}`,
+        description: `Compte ${getActivityLabel(v._activity)} activé — Plan ${v._plan || "N/A"} — Visible dans l'annuaire`,
       });
     } else {
       toast({ title: `${v.entityName} refusé(e)`, variant: "destructive" });

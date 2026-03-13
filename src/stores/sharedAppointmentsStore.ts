@@ -228,7 +228,7 @@ export function startAppointmentConsultation(id: string) {
   updateAppointmentStatus(id, "in_progress");
 }
 
-/** Complete consultation */
+/** Complete consultation — auto-creates invoice if tarif exists */
 export function completeAppointmentConsultation(id: string) {
   updateAppointmentStatus(id, "done");
 
@@ -241,6 +241,36 @@ export function completeAppointmentConsultation(id: string) {
       targetRole: "patient",
       actionLink: "/dashboard/patient/health",
     });
+  }
+
+  // Auto-create invoice from tarifs
+  if (apt) {
+    try {
+      const { createInvoice } = require("./billingStore");
+      const { sharedTarifsStore } = require("./sharedTarifsStore");
+      const tarifs = sharedTarifsStore.read();
+      // Match by appointment type
+      const typeMap: Record<string, string> = {
+        "Consultation": "CS", "Première visite": "CS-P", "Suivi": "CS-S",
+        "Contrôle": "CS-S", "Téléconsultation": "TC", "Certificat": "CERT",
+      };
+      const code = typeMap[apt.type] || "CS";
+      const tarif = tarifs.find((t: any) => t.code === code && t.active);
+      if (tarif) {
+        createInvoice({
+          patient: apt.patient,
+          avatar: apt.avatar || apt.patient.split(" ").map((w: string) => w[0]).join("").toUpperCase(),
+          doctor: apt.doctor,
+          date: apt.date,
+          amount: tarif.price,
+          type: tarif.name,
+          payment: "En attente",
+          status: "pending" as const,
+          assurance: apt.assurance || "Sans assurance",
+          createdBy: "system" as const,
+        });
+      }
+    } catch { /* billing store not available */ }
   }
 }
 
@@ -405,4 +435,42 @@ export function cancelConflictingAppointments(dayName: string, newStart: string,
 function timeToMin(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + (m || 0);
+}
+
+/**
+ * Check upcoming appointments in next 24h and send reminder notifications.
+ * Called from seedStores.ts at startup (simulating a cron job).
+ */
+export function checkUpcomingReminders() {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+  const apts = store.read();
+  const upcomingApts = apts.filter(a =>
+    a.date === tomorrowStr &&
+    !["cancelled", "absent", "done"].includes(a.status) &&
+    !(a as any).reminderSent
+  );
+
+  if (upcomingApts.length === 0) return;
+
+  for (const apt of upcomingApts) {
+    // Notify patient
+    if (apt.patientId) {
+      pushNotification({
+        type: "reminder",
+        title: "Rappel RDV demain",
+        message: `Votre RDV avec ${apt.doctor} est prévu demain à ${apt.startTime}.`,
+        targetRole: "patient",
+        actionLink: "/dashboard/patient/appointments",
+      });
+    }
+
+    // Mark as reminded
+    store.set(prev => prev.map(a =>
+      a.id === apt.id ? { ...a, reminderSent: true } as any : a
+    ));
+  }
 }
