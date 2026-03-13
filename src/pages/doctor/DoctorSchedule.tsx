@@ -914,6 +914,8 @@ function WeekView({
   apts: Appt[];
   blocks: BlockedSlot[];
   typeColors: Record<ApptType, ColorKey>;
+  getDayConfig: (date: Date) => AvailabilityDay | undefined;
+  getLeaveForDate: (date: Date) => SharedLeave | undefined;
   onSlot: (date: Date, t: string, x: number, y: number) => void;
   onApt: (a: Appt) => void;
   onBlock: (b: BlockedSlot) => void;
