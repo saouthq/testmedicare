@@ -36,7 +36,10 @@ const AdminUsers = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserFilter>("all");
-  const { users, setUsers } = useAdminUsers();
+  const { users: demoUsers, setUsers } = useAdminUsers();
+  const supabaseUsersQuery = useAdminUsersSupabase();
+  const isProduction = getAppMode() === "production";
+  const users = isProduction ? (supabaseUsersQuery.data || []) : demoUsers;
   const lookups = useAdminLookups();
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
