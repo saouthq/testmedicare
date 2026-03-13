@@ -44,6 +44,7 @@ const AdminCampaigns = () => {
   const { campaigns, setCampaigns } = useAdminCampaigns();
   const { templates } = useAdminNotificationTemplates();
   const { users } = useAdminUsers();
+  const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [target, setTarget] = useState("patients");
