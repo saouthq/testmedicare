@@ -43,17 +43,22 @@ const PatientDashboard = () => {
   const appointments = useMemo(() =>
     allAppointments.filter(a => a.patientId === PATIENT_ID && !["done", "cancelled", "absent"].includes(a.status))
       .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)),
-    [allAppointments]
+    [allAppointments, PATIENT_ID]
   );
 
   const patientName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
   const recentPrescriptions = useMemo(() =>
     doctorRx
-      .filter(rx => rx.status === "active" && (!patientName || (rx.patient || "").toLowerCase() === patientName.toLowerCase()))
+      .filter(rx => {
+        // Use patientId when available, fallback to name match
+        if (PATIENT_ID && (rx as any).patientId) return (rx as any).patientId === PATIENT_ID;
+        return rx.status === "active" && patientName && (rx.patient || "").toLowerCase() === patientName.toLowerCase();
+      })
+      .filter(rx => rx.status === "active")
       .slice(0, 3).map(rx => ({
         id: rx.id, doctor: rx.doctor, date: rx.date, items: rx.items.length, status: rx.status,
       })),
-    [doctorRx, patientName]
+    [doctorRx, patientName, PATIENT_ID]
   );
 
   const stats = useMemo(() => {
