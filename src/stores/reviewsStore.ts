@@ -7,6 +7,7 @@ import { useSupabaseTable } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
 import { useDualQuery } from "@/hooks/useDualData";
 import { mapReviewRow } from "@/lib/supabaseMappers";
+import { getAppMode } from "./authStore";
 
 export interface Review {
   id: string;
@@ -55,20 +56,36 @@ export async function submitReview(review: Omit<Review, "id" | "createdAt">) {
   };
   store.set(prev => [full, ...prev]);
 
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      await (supabase.from as any)("reviews").insert({
-        id: full.id,
-        appointment_id: review.appointmentId,
-        patient_name: review.patientName,
-        doctor_name: review.doctorName,
-        rating: review.rating,
-        text: review.text,
-        verified: review.verified,
-      });
+  if (getAppMode() === "production") {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Resolve patient_id from patients table
+        let patientId: number | null = null;
+        const { data: patients } = await (supabase.from as any)("patients")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .limit(1);
+        if (patients?.[0]) {
+          patientId = patients[0].id;
+        }
+
+        await (supabase.from as any)("reviews").insert({
+          id: full.id,
+          appointment_id: review.appointmentId || "",
+          patient_id: patientId,
+          patient_name: review.patientName,
+          doctor_name: review.doctorName,
+          doctor_id: review.doctorId ? String(review.doctorId) : null,
+          rating: review.rating,
+          text: review.text,
+          verified: false,
+        });
+      }
+    } catch (e) {
+      console.warn("[submitReview] Supabase insert failed:", e);
     }
-  } catch {}
+  }
 }
 
 export function getReviewsForDoctor(doctorId: number): Review[] {

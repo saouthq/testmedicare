@@ -120,8 +120,8 @@ export async function updatePharmacyRxStatus(
   }
 }
 
-/** Update individual item availability */
-export function updatePharmacyRxItemAvailability(
+/** Update individual item availability — syncs to Supabase */
+export async function updatePharmacyRxItemAvailability(
   rxId: string,
   itemName: string,
   availability: "available" | "unavailable" | "partial",
@@ -136,6 +136,19 @@ export function updatePharmacyRxItemAvailability(
       ),
     };
   }));
+
+  if (getAppMode() === "production") {
+    try {
+      const rx = rxStore.read().find(r => r.id === rxId);
+      if (rx) {
+        await (supabase.from as any)("pharmacy_prescriptions")
+          .update({ items: rx.items })
+          .eq("id", rxId);
+      }
+    } catch (e) {
+      console.warn("[updatePharmacyRxItemAvailability] Supabase update failed:", e);
+    }
+  }
 }
 
 // ─── Categories (static reference) ──────────────────────────

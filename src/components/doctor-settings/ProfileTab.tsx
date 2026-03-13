@@ -77,7 +77,21 @@ const ProfileTab = () => {
   };
 
   const handleSave = (section: EditingSection) => {
-    // TODO BACKEND: PUT /api/doctor/profile/{section}
+    // Persist all current state to doctorProfileStore (which handles Supabase sync)
+    updateDoctorProfile({
+      name: `Dr. ${firstName} ${lastName}`,
+      email,
+      phone,
+      address,
+      presentation,
+      subSpecialties,
+      languages,
+      diplomas,
+      actes,
+      memberships,
+      motifs,
+      accessInfo,
+    });
     setEditing(null);
     toast({ title: "Enregistré", description: "Modifications sauvegardées." });
   };
