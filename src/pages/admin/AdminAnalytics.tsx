@@ -378,7 +378,7 @@ const AdminAnalytics = () => {
                   </div>
                 ))}
               </div>
-              <Badge variant="outline" className="text-xs text-muted-foreground"><Info className="h-3 w-3 mr-1" />Notes et NPS simulés — Nécessite intégration backend</Badge>
+              {!isProduction && <Badge variant="outline" className="text-xs text-muted-foreground"><Info className="h-3 w-3 mr-1" />Données simulées en mode démo</Badge>}
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Rechercher un médecin..." value={perfSearch} onChange={e => setPerfSearch(e.target.value)} className="pl-10" /></div>
                 <div className="flex gap-1 rounded-lg border bg-card p-0.5">
