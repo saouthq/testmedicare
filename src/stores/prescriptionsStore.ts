@@ -6,6 +6,8 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
+import { pharmacyRxStore } from "./pharmacyStore";
+import type { PharmacyPrescription } from "@/types";
 
 export interface PharmacySentItem {
   prescriptionId: string;
