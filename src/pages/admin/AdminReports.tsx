@@ -47,6 +47,7 @@ const loadReports = (): ReportDef[] => {
 const saveReports = (reports: ReportDef[]) => localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
 
 const AdminReports = () => {
+  const [state] = useAdminStore();
   const [reports, setReports] = useState(loadReports);
   const [history] = useState<ExportHistory[]>([
     { id: "1", reportName: "KPIs plateforme", generatedAt: "11 Mar 2026 08:00", format: "CSV", size: "245 Ko", status: "ready" },
