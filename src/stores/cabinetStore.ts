@@ -1,17 +1,13 @@
 /**
  * cabinetStore.ts — Cabinet / practice management.
- * Manages: cabinets, doctor↔cabinet affiliations, secretary↔cabinet affiliations.
- *
- * A cabinet can have multiple doctors and multiple secretaries.
- * A secretary can be affiliated to multiple cabinets.
- * A doctor can belong to multiple cabinets.
- *
- * // TODO BACKEND: Replace with API — GET/POST /api/cabinets, /api/cabinets/:id/secretaries
+ * Dual-mode: localStorage (demo) / Supabase cabinets + cabinet_members (production).
  */
 import { createStore } from "./crossRoleStore";
 import { useDemoOnlyStore } from "@/hooks/useDualData";
 import { pushNotification } from "./notificationsStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { getAppMode } from "./authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Types ──
 
@@ -33,13 +29,12 @@ export interface Cabinet {
   name: string;
   address: string;
   phone: string;
-  doctorIds: string[];       // doctor names/IDs affiliated
+  doctorIds: string[];
   secretaries: CabinetSecretary[];
 }
 
 export interface CabinetState {
   cabinets: Cabinet[];
-  /** Currently selected cabinet ID (for secretary multi-cabinet context) */
   selectedCabinetId: string | null;
 }
 
@@ -84,7 +79,7 @@ const SEED: CabinetState = {
       doctorIds: ["Dr. Gharbi", "Dr. Bouazizi"],
       secretaries: [
         {
-          id: "sec-1", // Same secretary across cabinets (multi-cabinet)
+          id: "sec-1",
           name: "Leila Hammami",
           email: "leila@cabinet-bouazizi.tn",
           phone: "+216 71 234 568",
@@ -112,23 +107,14 @@ export function readCabinetState(): CabinetState {
 
 // ── Actions ──
 
-/**
- * Get all cabinets for a specific doctor.
- */
 export function getCabinetsForDoctor(doctorName: string): Cabinet[] {
   return store.read().cabinets.filter(c => c.doctorIds.includes(doctorName));
 }
 
-/**
- * Get all cabinets for a specific secretary.
- */
 export function getCabinetsForSecretary(secretaryId: string): Cabinet[] {
   return store.read().cabinets.filter(c => c.secretaries.some(s => s.id === secretaryId));
 }
 
-/**
- * Get all doctors across all cabinets that a secretary manages.
- */
 export function getDoctorsForSecretary(secretaryId: string): string[] {
   const cabinets = getCabinetsForSecretary(secretaryId);
   const doctors = new Set<string>();
@@ -136,26 +122,16 @@ export function getDoctorsForSecretary(secretaryId: string): string[] {
   return Array.from(doctors);
 }
 
-/**
- * Select active cabinet (for secretary context switching).
- */
 export function selectCabinet(cabinetId: string) {
   store.set(prev => ({ ...prev, selectedCabinetId: cabinetId }));
 }
 
-/**
- * Get the currently selected cabinet.
- */
 export function getSelectedCabinet(): Cabinet | null {
   const state = store.read();
   return state.cabinets.find(c => c.id === state.selectedCabinetId) || state.cabinets[0] || null;
 }
 
-/**
- * Invite a new secretary to a cabinet.
- * // TODO BACKEND: POST /api/cabinets/:cabinetId/secretaries/invite — send email
- */
-export function inviteSecretary(
+export async function inviteSecretary(
   cabinetId: string,
   data: { name: string; email: string; phone: string; permissions: string[] },
   invitedBy = "Dr. Bouazizi"
@@ -179,6 +155,22 @@ export function inviteSecretary(
     ),
   }));
 
+  // Persist to Supabase
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("cabinet_members").insert({
+        cabinet_id: cabinetId,
+        user_id: id, // placeholder — real user_id assigned on accept
+        user_name: data.name,
+        user_email: data.email,
+        user_phone: data.phone,
+        role: "secretary",
+        status: "invited",
+        permissions: data.permissions,
+      });
+    } catch {}
+  }
+
   pushNotification({
     type: "generic",
     title: "Nouvelle secrétaire invitée",
@@ -187,14 +179,10 @@ export function inviteSecretary(
   });
 
   appendLog("secretary_invited", "secretary", id, `Secrétaire "${data.name}" invitée au cabinet par ${invitedBy}`, invitedBy);
-
   return id;
 }
 
-/**
- * Update secretary status in a cabinet.
- */
-export function updateSecretaryStatus(cabinetId: string, secretaryId: string, status: SecretaryStatus, actorName = "Admin") {
+export async function updateSecretaryStatus(cabinetId: string, secretaryId: string, status: SecretaryStatus, actorName = "Admin") {
   store.set(prev => ({
     ...prev,
     cabinets: prev.cabinets.map(c =>
@@ -204,13 +192,19 @@ export function updateSecretaryStatus(cabinetId: string, secretaryId: string, st
     ),
   }));
 
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("cabinet_members")
+        .update({ status })
+        .eq("cabinet_id", cabinetId)
+        .eq("user_id", secretaryId);
+    } catch {}
+  }
+
   appendLog(`secretary_${status}`, "secretary", secretaryId, `Secrétaire ${secretaryId} → ${status} par ${actorName}`, actorName);
 }
 
-/**
- * Remove a secretary from a cabinet.
- */
-export function removeSecretary(cabinetId: string, secretaryId: string, actorName = "Admin") {
+export async function removeSecretary(cabinetId: string, secretaryId: string, actorName = "Admin") {
   store.set(prev => ({
     ...prev,
     cabinets: prev.cabinets.map(c =>
@@ -220,18 +214,38 @@ export function removeSecretary(cabinetId: string, secretaryId: string, actorNam
     ),
   }));
 
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("cabinet_members")
+        .delete()
+        .eq("cabinet_id", cabinetId)
+        .eq("user_id", secretaryId);
+    } catch {}
+  }
+
   appendLog("secretary_removed", "secretary", secretaryId, `Secrétaire ${secretaryId} retirée du cabinet ${cabinetId} par ${actorName}`, actorName);
 }
 
-/**
- * Create a new cabinet.
- * // TODO BACKEND: POST /api/cabinets
- */
-export function createCabinet(data: { name: string; address: string; phone: string; doctorIds: string[] }) {
+export async function createCabinet(data: { name: string; address: string; phone: string; doctorIds: string[] }) {
   const id = `cab-${Date.now()}`;
   store.set(prev => ({
     ...prev,
     cabinets: [...prev.cabinets, { ...data, id, secretaries: [] }],
   }));
+
+  if (getAppMode() === "production") {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return id;
+      await (supabase.from as any)("cabinets").insert({
+        id,
+        name: data.name,
+        address: data.address,
+        phone: data.phone,
+        owner_id: session.user.id,
+      });
+    } catch {}
+  }
+
   return id;
 }

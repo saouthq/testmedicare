@@ -2,7 +2,7 @@
  * healthStore.ts — Patient health data (documents, treatments, allergies, etc.).
  * Cross-role: Doctor adds prescriptions/documents → Patient sees them.
  *
- * Dual-mode: localStorage in Demo, Supabase patients table (allergies/antecedents) in Production.
+ * Dual-mode: localStorage in Demo, Supabase (patients + health_records) in Production.
  */
 import { createStore } from "./crossRoleStore";
 import { useDemoOnlyStore } from "@/hooks/useDualData";
@@ -43,49 +43,65 @@ export function initHealthStoreIfEmpty(data: HealthState) {
 }
 
 // ─── Supabase sync helpers ──────────────────────────────────
+async function getPatientId(): Promise<number | null> {
+  const user = readAuthUser();
+  if (!user) return null;
+  const { data: patients } = await (supabase.from as any)("patients")
+    .select("id")
+    .eq("user_id", user.id)
+    .limit(1);
+  return patients?.[0]?.id ?? null;
+}
+
 async function syncAllergiesToSupabase(allergies: Allergy[]) {
   if (getAppMode() !== "production") return;
   try {
-    const user = readAuthUser();
-    if (!user) return;
-    // Update patient record with allergies
-    const { data: patients } = await (supabase.from as any)("patients")
-      .select("id")
-      .eq("user_id", user.id)
-      .limit(1);
-    if (patients?.[0]) {
-      await (supabase.from as any)("patients")
-        .update({ allergies: allergies.map(a => ({ name: a.name, severity: a.severity, reaction: a.reaction })) })
-        .eq("id", patients[0].id);
-    }
+    const patientId = await getPatientId();
+    if (!patientId) return;
+    await (supabase.from as any)("patients")
+      .update({ allergies: allergies.map(a => ({ name: a.name, severity: a.severity, reaction: a.reaction })) })
+      .eq("id", patientId);
   } catch {}
 }
 
 async function syncAntecedentsToSupabase(antecedents: Antecedent[]) {
   if (getAppMode() !== "production") return;
   try {
+    const patientId = await getPatientId();
+    if (!patientId) return;
+    await (supabase.from as any)("patients")
+      .update({ antecedents: antecedents.map(a => ({ name: a.name, date: a.date, details: a.details })) })
+      .eq("id", patientId);
+  } catch {}
+}
+
+async function syncHealthRecordToSupabase(recordType: string, title: string, data: any, date?: string) {
+  if (getAppMode() !== "production") return;
+  try {
     const user = readAuthUser();
     if (!user) return;
-    const { data: patients } = await (supabase.from as any)("patients")
-      .select("id")
-      .eq("user_id", user.id)
-      .limit(1);
-    if (patients?.[0]) {
-      await (supabase.from as any)("patients")
-        .update({ antecedents: antecedents.map(a => ({ name: a.name, date: a.date, details: a.details })) })
-        .eq("id", patients[0].id);
-    }
-  } catch {}
+    await (supabase.from as any)("health_records").insert({
+      patient_user_id: user.id,
+      record_type: recordType,
+      title,
+      data,
+      date: date || new Date().toISOString().slice(0, 10),
+    });
+  } catch (e) {
+    console.warn("[syncHealthRecord] failed:", e);
+  }
 }
 
 // ─── Actions ─────────────────────────────────────────────────
 
 export function addDocument(doc: HealthDocument) {
   store.set(prev => ({ ...prev, documents: [doc, ...prev.documents] }));
+  syncHealthRecordToSupabase("document", doc.name || "Document", doc, doc.date);
 }
 
 export function addTreatment(t: Treatment) {
   store.set(prev => ({ ...prev, treatments: [...prev.treatments, t] }));
+  syncHealthRecordToSupabase("treatment", t.name, t);
 }
 
 export function updateTreatment(name: string, update: Partial<Treatment>) {
@@ -121,18 +137,22 @@ export function addAntecedent(a: Antecedent) {
 
 export function addVaccination(v: Vaccination) {
   store.set(prev => ({ ...prev, vaccinations: [...prev.vaccinations, v] }));
+  syncHealthRecordToSupabase("vaccination", v.name, v, v.lastDate);
 }
 
 export function addMeasure(m: HealthMeasure) {
   store.set(prev => ({ ...prev, measures: [m, ...prev.measures] }));
+  syncHealthRecordToSupabase("measure", m.label || "Mesure", m, m.date);
 }
 
 export function addSurgery(s: Surgery) {
   store.set(prev => ({ ...prev, surgeries: [...prev.surgeries, s] }));
+  syncHealthRecordToSupabase("surgery", s.name, s, s.date);
 }
 
 export function addHabit(h: Habit) {
   store.set(prev => ({ ...prev, habits: [...prev.habits, h] }));
+  syncHealthRecordToSupabase("habit", h.label, h);
 }
 
 export function updateHabit(label: string, value: string) {
@@ -144,4 +164,5 @@ export function updateHabit(label: string, value: string) {
 
 export function addFamilyHistory(f: FamilyHistory) {
   store.set(prev => ({ ...prev, familyHistory: [...prev.familyHistory, f] }));
+  syncHealthRecordToSupabase("family_history", f.name || f.details, f);
 }

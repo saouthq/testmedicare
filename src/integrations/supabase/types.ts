@@ -184,6 +184,89 @@ export type Database = {
         }
         Relationships: []
       }
+      cabinet_members: {
+        Row: {
+          cabinet_id: string
+          created_at: string
+          id: string
+          joined_at: string | null
+          last_login: string | null
+          permissions: Json | null
+          role: string
+          status: string
+          user_email: string | null
+          user_id: string
+          user_name: string
+          user_phone: string | null
+        }
+        Insert: {
+          cabinet_id: string
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          last_login?: string | null
+          permissions?: Json | null
+          role?: string
+          status?: string
+          user_email?: string | null
+          user_id: string
+          user_name?: string
+          user_phone?: string | null
+        }
+        Update: {
+          cabinet_id?: string
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          last_login?: string | null
+          permissions?: Json | null
+          role?: string
+          status?: string
+          user_email?: string | null
+          user_id?: string
+          user_name?: string
+          user_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabinet_members_cabinet_id_fkey"
+            columns: ["cabinet_id"]
+            isOneToOne: false
+            referencedRelation: "cabinets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cabinets: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -562,6 +645,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      favorite_doctors: {
+        Row: {
+          accepts_messages: boolean | null
+          avatar: string | null
+          created_at: string
+          doctor_id: string
+          doctor_name: string
+          id: number
+          patient_user_id: string
+          specialty: string | null
+        }
+        Insert: {
+          accepts_messages?: boolean | null
+          avatar?: string | null
+          created_at?: string
+          doctor_id: string
+          doctor_name?: string
+          id?: never
+          patient_user_id: string
+          specialty?: string | null
+        }
+        Update: {
+          accepts_messages?: boolean | null
+          avatar?: string | null
+          created_at?: string
+          doctor_id?: string
+          doctor_name?: string
+          id?: never
+          patient_user_id?: string
+          specialty?: string | null
+        }
+        Relationships: []
+      }
+      health_records: {
+        Row: {
+          created_at: string
+          data: Json
+          date: string | null
+          id: number
+          patient_user_id: string
+          record_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          date?: string | null
+          id?: never
+          patient_user_id: string
+          record_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          date?: string | null
+          id?: never
+          patient_user_id?: string
+          record_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       hospitals_directory: {
         Row: {
@@ -1037,6 +1186,51 @@ export type Database = {
           },
         ]
       }
+      pharmacy_stock: {
+        Row: {
+          category: string
+          created_at: string
+          expiry: string | null
+          id: number
+          name: string
+          pharmacy_id: string
+          price: string
+          quantity: number
+          status: string
+          supplier: string | null
+          threshold: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          expiry?: string | null
+          id?: never
+          name?: string
+          pharmacy_id: string
+          price?: string
+          quantity?: number
+          status?: string
+          supplier?: string | null
+          threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          expiry?: string | null
+          id?: never
+          name?: string
+          pharmacy_id?: string
+          price?: string
+          quantity?: number
+          status?: string
+          supplier?: string | null
+          threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prescriptions: {
         Row: {
           assurance: string | null
@@ -1181,6 +1375,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscriptions: {
+        Row: {
+          activity: string
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan: string
+          specialty: string | null
+          status: string
+          stripe_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity?: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan?: string
+          specialty?: string | null
+          status?: string
+          stripe_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity?: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan?: string
+          specialty?: string | null
+          status?: string
+          stripe_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       support_tickets: {
         Row: {
