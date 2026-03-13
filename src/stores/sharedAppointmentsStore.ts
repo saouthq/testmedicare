@@ -403,6 +403,7 @@ export function bookAppointment(payload: {
   motif: string;
   type: AppointmentType;
   doctor: string;
+  doctorId?: string;
   assurance: string;
   teleconsultation?: boolean;
   createdBy?: "doctor" | "secretary" | "patient" | "public";

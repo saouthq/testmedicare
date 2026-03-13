@@ -19,6 +19,7 @@ import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityS
 import { sharedBlockedSlotsStore } from "@/stores/sharedBlockedSlotsStore";
 import { sharedLeavesStore } from "@/stores/sharedLeavesStore";
 import { doctorProfileStore, readDoctorProfile } from "@/stores/doctorProfileStore";
+import { useDoctorsDirectory } from "@/stores/directoryStore";
 import { validateBooking } from "@/lib/appointmentRules";
 import { getCurrentRole, readAuthUser } from "@/stores/authStore";
 import { toast } from "@/hooks/use-toast";
@@ -41,13 +42,32 @@ function minToTime(m: number): string {
 const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 // ─── Doctor Data Builder ────────────────────────────────────
-const buildDoctor = (id: string) => {
-  const numId = parseInt(id);
-  const found = mockDoctors.find(d => d.id === numId);
+const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsDirectory>) => {
+  const fromDirectory = directoryDoctors.find(d => String(d.id) === String(id));
   const profile = readDoctorProfile();
 
+  if (fromDirectory) {
+    return {
+      id: String(fromDirectory.id),
+      doctorId: String(fromDirectory.id),
+      name: fromDirectory.name,
+      specialty: fromDirectory.specialty,
+      address: fromDirectory.address,
+      initials: fromDirectory.avatar || fromDirectory.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+      motifs: [
+        { name: "Consultation", duration: 30, price: fromDirectory.price || 35 },
+        { name: "Suivi", duration: 20, price: Math.round((fromDirectory.price || 35) * 0.75) },
+        { name: "Première visite", duration: 45, price: Math.round((fromDirectory.price || 35) * 1.35) },
+      ],
+      teleconsultation: fromDirectory.teleconsultation,
+      doctorRef: fromDirectory.name,
+    };
+  }
+
+  const numId = Number.parseInt(id, 10);
+  const found = mockDoctors.find(d => d.id === numId);
+
   if (found) {
-    // Use profile motifs for doctor 1 (Bouazizi), else use generic ones
     const motifs = numId === 1
       ? profile.motifs.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 }))
       : [
@@ -58,18 +78,20 @@ const buildDoctor = (id: string) => {
 
     return {
       id: String(found.id),
+      doctorId: undefined,
       name: found.name,
       specialty: found.specialty,
       address: found.address,
       initials: found.avatar,
       motifs,
       teleconsultation: found.teleconsultation,
-      doctorRef: found.name, // Used for store lookups
+      doctorRef: found.name,
     };
   }
 
   return {
     id: "1",
+    doctorId: undefined,
     name: profile.name,
     specialty: profile.specialty,
     address: profile.address,
@@ -81,7 +103,7 @@ const buildDoctor = (id: string) => {
 };
 
 // ─── Day Generation (checks availability + leaves + blocked slots) ───
-const generateDays = (weekOffset: number) => {
+const generateDays = (weekOffset: number, doctorRef: string) => {
   const today = new Date();
   const start = new Date(today);
   start.setDate(today.getDate() + (weekOffset * 7));
@@ -89,8 +111,8 @@ const generateDays = (weekOffset: number) => {
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
   const availability = sharedAvailabilityStore.read();
-  const leaves = sharedLeavesStore.read();
-  const blockedSlots = sharedBlockedSlotsStore.read();
+  const leaves = sharedLeavesStore.read().filter(l => l.doctor === doctorRef);
+  const blockedSlots = sharedBlockedSlotsStore.read().filter(b => b.doctor === doctorRef);
 
   const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string; leaveReason?: string }[] = [];
 
@@ -101,13 +123,8 @@ const generateDays = (weekOffset: number) => {
     const dayConfig = availability.days[frDayName];
     const dateStr = date.toISOString().slice(0, 10);
 
-    // Check if day is in the past
     const isPast = dateStr < today.toISOString().slice(0, 10);
-
-    // Check leaves
     const leave = leaves.find(l => l.status !== "past" && dateStr >= l.startDate && dateStr <= l.endDate);
-
-    // Check full-day blocks (duration >= 480 min = 8h)
     const fullDayBlock = blockedSlots.find(b => b.date === dateStr && b.duration >= 480);
 
     const isAvailable = !isPast && (dayConfig ? dayConfig.active : false) && !leave && !fullDayBlock;
@@ -135,7 +152,8 @@ type ConsultType = "cabinet" | "teleconsultation";
 const PublicBooking = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
-  const doctor = buildDoctor(doctorId || "1");
+  const doctorsDirectory = useDoctorsDirectory();
+  const doctor = useMemo(() => buildDoctor(doctorId || "1", doctorsDirectory), [doctorId, doctorsDirectory]);
 
   // Check if user is logged in
   const authUser = readAuthUser();
@@ -171,7 +189,7 @@ const PublicBooking = () => {
   // Payment state
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  const days = generateDays(weekOffset);
+  const days = generateDays(weekOffset, doctor.doctorRef);
   const isTeleconsult = consultType === "teleconsultation";
   const selectedMotifData = doctor.motifs.find(m => m.name === selectedMotif);
 
@@ -182,8 +200,7 @@ const PublicBooking = () => {
     const dayConfig = availability.days[selectedDayFr];
     if (!dayConfig || !dayConfig.active) return [];
 
-    // Check leaves
-    const leaves = sharedLeavesStore.read();
+    const leaves = sharedLeavesStore.read().filter(l => l.doctor === doctor.doctorRef);
     const isOnLeave = leaves.some(l => l.status !== "past" && selectedDayDateStr >= l.startDate && selectedDayDateStr <= l.endDate);
     if (isOnLeave) return [];
 
@@ -193,13 +210,14 @@ const PublicBooking = () => {
     const breakStartMin = dayConfig.breakStart ? timeToMin(dayConfig.breakStart) : -1;
     const breakEndMin = dayConfig.breakEnd ? timeToMin(dayConfig.breakEnd) : -1;
 
-    // Existing appointments
-    const existingApts = sharedAppointmentsStore.read()
-      .filter(a => a.date === selectedDayDateStr && !["cancelled", "absent"].includes(a.status) && a.doctor === doctor.doctorRef);
+    const existingApts = sharedAppointmentsStore.read().filter(a => {
+      if (a.date !== selectedDayDateStr || ["cancelled", "absent"].includes(a.status)) return false;
+      if (doctor.doctorId) return a.doctorId === doctor.doctorId || a.doctor === doctor.doctorRef;
+      return a.doctor === doctor.doctorRef;
+    });
 
-    // Blocked slots for this date
     const blockedSlots = sharedBlockedSlotsStore.read()
-      .filter(b => b.date === selectedDayDateStr);
+      .filter(b => b.date === selectedDayDateStr && b.doctor === doctor.doctorRef);
 
     const slots: string[] = [];
     const now = new Date();
@@ -317,6 +335,7 @@ const PublicBooking = () => {
       patientId: isLoggedIn && authUser?.patientId ? authUser.patientId : null,
       avatar: `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase(),
       doctor: doctor.doctorRef,
+      doctorId: doctor.doctorId,
       type: isTeleconsult ? "Téléconsultation" : (selectedMotifData?.name === "Première visite" ? "Première visite" : selectedMotifData?.name === "Suivi" || selectedMotifData?.name === "Suivi maladie chronique" ? "Suivi" : "Consultation"),
       motif: selectedMotif,
       phone: phone || phoneInput,

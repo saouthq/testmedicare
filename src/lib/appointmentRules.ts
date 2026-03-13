@@ -158,7 +158,7 @@ export function validateBooking(payload: {
   }
 
   // 3. Check blocked slots
-  const blockedSlots = sharedBlockedSlotsStore.read();
+  const blockedSlots = sharedBlockedSlotsStore.read().filter(b => b.doctor === payload.doctor);
   const hasBlocked = blockedSlots.some(b => {
     if (b.date !== payload.date && !b.recurring) return false;
     if (b.recurring && b.recurringDays) {
@@ -176,7 +176,7 @@ export function validateBooking(payload: {
   }
 
   // 4. Check leaves
-  const leaves = sharedLeavesStore.read();
+  const leaves = sharedLeavesStore.read().filter(l => l.doctor === payload.doctor);
   const isOnLeave = leaves.some(l =>
     l.status !== "past" && payload.date >= l.startDate && payload.date <= l.endDate
   );
