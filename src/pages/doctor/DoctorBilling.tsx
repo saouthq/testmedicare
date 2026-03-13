@@ -167,8 +167,8 @@ const DoctorBilling = () => {
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Méthode de paiement</h3>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-14 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">{mockSubscriptionInfo.cardBrand}</div>
-                  <div><p className="text-sm font-medium text-foreground">•••• •••• •••• {mockSubscriptionInfo.cardLast4}</p><p className="text-xs text-muted-foreground">Expire 12/2027</p></div>
+                   <div className="h-10 w-14 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">{subscriptionInfo.cardBrand}</div>
+                   <div><p className="text-sm font-medium text-foreground">•••• •••• •••• {subscriptionInfo.cardLast4}</p><p className="text-xs text-muted-foreground">Expire 12/2027</p></div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setShowChangeCard(true)}>Modifier</Button>
               </div>
