@@ -66,6 +66,7 @@ const AdminSettings = () => {
   const handleSave = () => {
     appendLog("settings_updated", "system", "settings", `Paramètres système mis à jour (onglet: ${tab})`);
     setSaved(true);
+    markClean();
     toast({ title: "Paramètres sauvegardés" });
     setTimeout(() => setSaved(false), 2000);
   };
