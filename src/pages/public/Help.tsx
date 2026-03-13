@@ -2,7 +2,7 @@
  * Help / FAQ Page — FAQ par thèmes + OTP troubleshooting + formulaire contact mock
  * // TODO BACKEND: POST /api/support/contact
  */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
