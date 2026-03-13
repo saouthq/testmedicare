@@ -57,6 +57,10 @@ const ALL_STORES = [
   threadsStore,
   messagesItemsStore,
   adminStore,
+  reviewsStore,
+  directoryStore,
+  doctorProtocolsStore,
+  doctorDocumentsStore,
 ];
 
 const ALL_STORAGE_KEYS = [
