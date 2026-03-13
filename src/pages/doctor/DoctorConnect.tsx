@@ -58,15 +58,17 @@ const DoctorConnect = () => {
     }));
   }, [allMessages, selectedContact]);
 
-  const sendMessage = () => {
+  const sendMessageHandler = () => {
     if (!newMessage.trim() || !selectedContact) return;
-    const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    const msg: ChatMessage = { id: Date.now().toString(), sender: "me", text: newMessage, time };
-    setMessages(prev => ({ ...prev, [selectedContact]: [...(prev[selectedContact] || []), msg] }));
+    storeSendMessage(selectedContact, "demo-doctor-1", "Dr. Ahmed Bouazizi", newMessage.trim());
     setNewMessage("");
   };
 
-  const sendAiMessage = (text?: string) => {
+  // AI chat state
+  const [aiMessages, setAiMessages] = useState<ChatMessage[]>([
+    { id: "ai-1", sender: "ai", senderName: "Assistant IA", text: "Bonjour Dr. Bouazizi ! Je suis votre assistant IA. Posez-moi des questions sur vos patients, des interactions médicamenteuses, des protocoles ou demandez-moi de rédiger un courrier.", time: "09:00" },
+  ]);
+  const [aiInput, setAiInput] = useState("");
     const msgText = text || aiInput;
     if (!msgText.trim()) return;
     const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
