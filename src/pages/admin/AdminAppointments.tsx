@@ -101,13 +101,13 @@ const AdminAppointments = () => {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 
   const stats = useMemo(() => ({
-    total: apts.length,
-    confirmed: apts.filter(a => a.status === "confirmed").length,
-    completed: apts.filter(a => a.status === "completed").length,
-    absent: apts.filter(a => a.status === "absent").length,
-    noShowRate: apts.length > 0 ? Math.round((apts.filter(a => a.status === "absent").length / apts.length) * 100) : 0,
-    teleRate: apts.length > 0 ? Math.round((apts.filter(a => a.type === "teleconsultation").length / apts.length) * 100) : 0,
-  }), [apts]);
+    total: displayApts.length,
+    confirmed: displayApts.filter(a => a.status === "confirmed").length,
+    completed: displayApts.filter(a => a.status === "completed" || a.status === "done").length,
+    absent: displayApts.filter(a => a.status === "absent").length,
+    noShowRate: displayApts.length > 0 ? Math.round((displayApts.filter(a => a.status === "absent").length / displayApts.length) * 100) : 0,
+    teleRate: displayApts.length > 0 ? Math.round((displayApts.filter(a => a.type === "teleconsultation").length / displayApts.length) * 100) : 0,
+  }), [displayApts]);
 
   const handleMotifConfirm = (motif: string) => {
     if (!motifAction) return;
