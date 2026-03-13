@@ -154,19 +154,74 @@ export function usePatientDetail() {
 
 export function PatientDetailProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const patient = mockConsultationPatient as any;
-  const patientId = String(patient?.id ?? patient?.email ?? patient?.name ?? "patient");
+  const { id: routeId } = useParams<{ id: string }>();
+  const [allPatients] = useSharedPatients();
+  const [allAppointments] = useSharedAppointments();
+  const [allRx] = useDoctorPrescriptions();
 
-  // ── Records ──
+  // Resolve patient from route param — fallback to mock for backward compat
+  const resolvedPatient = useMemo(() => {
+    if (routeId) {
+      const numId = Number(routeId);
+      const found = allPatients.find(p => p.id === numId || String(p.id) === routeId);
+      if (found) {
+        // Build a patient object compatible with the existing UI shape
+        const ageParts = found.dob ? found.dob.split("/") : [];
+        const birthYear = ageParts.length === 3 ? parseInt(ageParts[2]) : null;
+        const age = birthYear ? new Date().getFullYear() - birthYear : null;
+        return {
+          id: found.id,
+          name: found.name,
+          age: age ?? "-",
+          gender: "—",
+          bloodType: "—",
+          allergies: [],
+          conditions: [],
+          lastVisit: found.lastVisit || "—",
+          ssn: found.numAssure || "—",
+          mutuelle: found.assurance || "—",
+          medecinTraitant: found.doctor || "—",
+          phone: found.phone || "—",
+          email: found.email || "—",
+          city: found.gouvernorat || "Tunis",
+          avatar: found.avatar || "",
+          dob: found.dob || "—",
+          notes: found.notes || "",
+        };
+      }
+    }
+    return { ...mockConsultationPatient, phone: "+216 71 234 567", email: "amine@email.tn", city: "Tunis" } as any;
+  }, [routeId, allPatients]);
+
+  const patient = resolvedPatient;
+  const patientId = String(patient?.id ?? patient?.email ?? patient?.name ?? "patient");
+  const numPatientId = typeof patient?.id === "number" ? patient.id : Number(routeId) || null;
+
+  // ── Records — load from shared stores when available ──
+  const patientAppointments = useMemo(() =>
+    numPatientId ? allAppointments.filter(a => a.patientId === numPatientId) : [],
+    [allAppointments, numPatientId]
+  );
+
+  const patientRxRecords = useMemo(() => {
+    // Filter prescriptions that belong to this patient (if possible)
+    if (!numPatientId) return mockPatientDetailPrescriptions || [];
+    const filtered = allRx.filter((rx: any) => rx.patientId === numPatientId || rx.patient === patient?.name);
+    return filtered.length > 0 ? filtered.map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` })) : (mockPatientDetailPrescriptions || []).map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` }));
+  }, [allRx, numPatientId, patient?.name]);
+
   const [consultRecords, setConsultRecords] = useState<any[]>(() =>
     (mockPatientConsultations || []).map((c: any, idx: number) => ({ ...c, _id: c.id ?? `CONS-${idx}` })),
   );
-  const [rxRecords, setRxRecords] = useState<any[]>(() =>
-    (mockPatientDetailPrescriptions || []).map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` })),
-  );
+  const [rxRecords, setRxRecords] = useState<any[]>(patientRxRecords);
   const [labRecords, setLabRecords] = useState<any[]>(() =>
     (mockPatientAnalyses || []).map((a: any, idx: number) => ({ ...a, _id: a.id ?? `LAB-${idx}` })),
   );
+
+  // Sync rx records when patient changes
+  useEffect(() => {
+    setRxRecords(patientRxRecords);
+  }, [patientRxRecords]);
 
   // ── Quick notes (localStorage) ──
   const quickNotesRef = useRef<HTMLDivElement | null>(null);
