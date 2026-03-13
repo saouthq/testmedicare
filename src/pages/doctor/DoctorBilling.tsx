@@ -32,10 +32,10 @@ const DoctorBilling = () => {
 
   // Derive subscription info from stores
   const currentPlanName = subscription.plan === "pro" ? "Pro" : "Basic";
-  const currentPlan = plans.find(p => p.name.toLowerCase().includes(currentPlanName.toLowerCase()));
+  const currentPlan = plans.find(p => p.name.toLowerCase().includes(currentPlanName.toLowerCase()) && p.role === "doctor");
   const subscriptionInfo = {
     plan: currentPlanName,
-    price: currentPlan ? `${currentPlan.price} DT/mois` : "39 DT/mois",
+    price: currentPlan ? `${currentPlan.monthlyPrice} DT/mois` : "39 DT/mois",
     cardBrand: "VISA",
     cardLast4: "4242",
     renewDate: "1 Mar 2026",
@@ -43,20 +43,21 @@ const DoctorBilling = () => {
 
   // Build plans display from adminPlanStore
   const displayPlans = useMemo(() => {
-    if (plans.length === 0) return [
+    const doctorPlans = plans.filter(p => p.role === "doctor" && p.status === "active");
+    if (doctorPlans.length === 0) return [
       { key: "basic", name: "Basic", price: "39", period: "DT/mois", popular: false, features: ["Agenda en ligne", "Gestion patients", "Ordonnances PDF"], notIncluded: ["Téléconsultation", "SMS illimités", "Multi-cabinet"] },
       { key: "pro", name: "Pro", price: "129", period: "DT/mois", popular: true, features: ["Tout Basic +", "Téléconsultation vidéo", "SMS illimités", "Multi-cabinet", "Statistiques avancées", "Secrétaire virtuelle"], notIncluded: [] },
     ];
-    return plans.filter(p => p.activity === subscription.activity || p.activity === "generaliste").map(p => ({
+    return doctorPlans.map(p => ({
       key: p.name.toLowerCase(),
       name: p.name,
-      price: String(p.price),
+      price: String(p.monthlyPrice),
       period: "DT/mois",
-      popular: p.name.toLowerCase() === "pro",
+      popular: p.highlighted,
       features: p.features || [],
       notIncluded: [] as string[],
     }));
-  }, [plans, subscription.activity]);
+  }, [plans]);
 
   // Subscription invoices (mock — TODO: connect to billing when teleconsult payments are implemented)
   const subscriptionInvoices = [
