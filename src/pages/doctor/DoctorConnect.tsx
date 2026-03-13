@@ -69,12 +69,12 @@ const DoctorConnect = () => {
     { id: "ai-1", sender: "ai", senderName: "Assistant IA", text: "Bonjour Dr. Bouazizi ! Je suis votre assistant IA. Posez-moi des questions sur vos patients, des interactions médicamenteuses, des protocoles ou demandez-moi de rédiger un courrier.", time: "09:00" },
   ]);
   const [aiInput, setAiInput] = useState("");
+
+  const sendAiMessage = (text?: string) => {
     const msgText = text || aiInput;
     if (!msgText.trim()) return;
     const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
     const userMsg: ChatMessage = { id: Date.now().toString(), sender: "me", text: msgText, time };
-    
-    // Simulated AI response
     const aiResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
       sender: "ai",
@@ -82,7 +82,6 @@ const DoctorConnect = () => {
       text: `Je traite votre demande : "${msgText}"\n\nVoici une réponse simulée. En production, cette réponse proviendrait d'un modèle IA médical avec accès au dossier patient.`,
       time,
     };
-    
     setAiMessages(prev => [...prev, userMsg, aiResponse]);
     setAiInput("");
   };
