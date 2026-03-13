@@ -155,6 +155,33 @@ const Gated = ({ children, role }: { children: React.ReactNode; role?: string })
   <RouteModuleGate role={role}>{children}</RouteModuleGate>
 );
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error?: Error }> {
+  constructor(props: { children: React.ReactNode }) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background p-6">
+          <div className="text-center max-w-md">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
+              <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <h1 className="text-xl font-bold text-foreground mb-2">Une erreur inattendue s'est produite</h1>
+            <p className="text-sm text-muted-foreground mb-6">{this.state.error?.message || "L'application a rencontré un problème."}</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => window.location.reload()} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">Recharger la page</button>
+              <button onClick={() => { window.location.href = "/"; }} className="rounded-lg border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">Retour à l'accueil</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+import React from "react";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -162,10 +189,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
+        <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Public directories & pages */}
           <Route path="/search" element={<PublicSearch />} />
