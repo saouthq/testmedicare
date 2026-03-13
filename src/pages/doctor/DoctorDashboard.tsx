@@ -64,6 +64,14 @@ const DoctorDashboard = () => {
 
   const kpi = config.kpiLabels || { done: "Terminées aujourd'hui", waiting: "En attente", renewals: "Renouvellements", teleconsult: "Téléconsultations" };
 
+  if (aptsLoading) {
+    return (
+      <DashboardLayout role="doctor" title="Tableau de bord">
+        <LoadingSkeleton type="dashboard" />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="doctor" title="Tableau de bord">
       <div className="space-y-6">
