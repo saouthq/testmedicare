@@ -6,14 +6,8 @@
  */
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  mockConsultationPatient,
-  mockPatientAnalyses,
-  mockPatientConsultations,
-  mockPatientDetailPrescriptions,
-  mockVitalsHistory,
-} from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { getAppMode } from "@/lib/appConfig";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
