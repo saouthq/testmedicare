@@ -1,7 +1,10 @@
 /**
- * Admin Audit Log Service — persisted in localStorage
- * TODO BACKEND: Replace with real API calls to audit log endpoint
+ * Admin Audit Log Service — Dual mode:
+ * Demo: persisted in localStorage
+ * Production: writes to Supabase audit_logs table
  */
+import { supabase } from "@/integrations/supabase/client";
+import { getAppMode } from "@/stores/authStore";
 
 export interface AuditLogEntry {
   id: string;
@@ -45,9 +48,25 @@ export const appendLog = (
     summary,
     createdAt: new Date().toISOString(),
   };
+
+  // Always store locally for immediate display
   const logs = getStoredLogs();
   logs.unshift(entry);
-  saveLogs(logs.slice(0, 500)); // Keep last 500
+  saveLogs(logs.slice(0, 500));
+
+  // In production, also write to Supabase
+  if (getAppMode() === "production") {
+    supabase.from("audit_logs").insert({
+      action: actionType,
+      entity_type: targetType,
+      entity_id: targetId,
+      details: { summary } as any,
+      user_name: actorAdminName,
+    }).then(({ error }) => {
+      if (error) console.error("[audit] Supabase write failed:", error);
+    });
+  }
+
   return entry;
 };
 
