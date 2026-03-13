@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
@@ -7,9 +7,7 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Search, Building2 } from "lucide-react";
-import { mockClinics } from "@/data/mocks/establishments";
-
-const cities = ["Toutes", ...Array.from(new Set(mockClinics.map(c => c.city)))];
+import { useClinicsDirectory } from "@/stores/directoryStore";
 
 const ClinicsDirectory = () => {
   const [search, setSearch] = useState("");
