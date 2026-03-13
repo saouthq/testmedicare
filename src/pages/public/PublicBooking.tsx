@@ -200,8 +200,7 @@ const PublicBooking = () => {
     const dayConfig = availability.days[selectedDayFr];
     if (!dayConfig || !dayConfig.active) return [];
 
-    // Check leaves
-    const leaves = sharedLeavesStore.read();
+    const leaves = sharedLeavesStore.read().filter(l => l.doctor === doctor.doctorRef);
     const isOnLeave = leaves.some(l => l.status !== "past" && selectedDayDateStr >= l.startDate && selectedDayDateStr <= l.endDate);
     if (isOnLeave) return [];
 
@@ -211,13 +210,14 @@ const PublicBooking = () => {
     const breakStartMin = dayConfig.breakStart ? timeToMin(dayConfig.breakStart) : -1;
     const breakEndMin = dayConfig.breakEnd ? timeToMin(dayConfig.breakEnd) : -1;
 
-    // Existing appointments
-    const existingApts = sharedAppointmentsStore.read()
-      .filter(a => a.date === selectedDayDateStr && !["cancelled", "absent"].includes(a.status) && a.doctor === doctor.doctorRef);
+    const existingApts = sharedAppointmentsStore.read().filter(a => {
+      if (a.date !== selectedDayDateStr || ["cancelled", "absent"].includes(a.status)) return false;
+      if (doctor.doctorId) return a.doctorId === doctor.doctorId || a.doctor === doctor.doctorRef;
+      return a.doctor === doctor.doctorRef;
+    });
 
-    // Blocked slots for this date
     const blockedSlots = sharedBlockedSlotsStore.read()
-      .filter(b => b.date === selectedDayDateStr);
+      .filter(b => b.date === selectedDayDateStr && b.doctor === doctor.doctorRef);
 
     const slots: string[] = [];
     const now = new Date();
