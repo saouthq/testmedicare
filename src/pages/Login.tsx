@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,10 +28,12 @@ const Login = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // If already logged in, redirect
-  if (user) {
-    navigate(`/dashboard/${user.role}`, { replace: true });
-  }
+  // If already logged in, redirect (useEffect to avoid navigate during render)
+  useEffect(() => {
+    if (user) {
+      navigate(`/dashboard/${user.role}`, { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,12 +41,9 @@ const Login = () => {
     setError("");
 
     try {
-      const data = await signInWithEmail(email, password);
-      // Wait for store to update then navigate
-      setTimeout(() => {
-        const currentUser = readAuthUser();
-        navigate(`/dashboard/${currentUser?.role || "patient"}`);
-      }, 300);
+      await signInWithEmail(email, password);
+      const currentUser = readAuthUser();
+      navigate(`/dashboard/${currentUser?.role || "patient"}`);
     } catch (err: any) {
       const msg = err?.message || "";
       if (msg.includes("Invalid login")) {

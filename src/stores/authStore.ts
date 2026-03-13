@@ -8,6 +8,13 @@ import { useEffect, useState } from "react";
 
 export type UserRole = "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin" | "hospital" | "clinic";
 
+// ─── Dual mode: Demo (localStorage) vs Production (Supabase) ──
+export type AppMode = "demo" | "production";
+const modeStore = createStore<AppMode>("medicare_app_mode", "demo");
+export function useAppMode() { return useStore(modeStore); }
+export function setAppMode(mode: AppMode) { modeStore.set(mode); }
+export function getAppMode(): AppMode { return modeStore.read(); }
+
 export interface AppUser {
   id: string;
   firstName: string;

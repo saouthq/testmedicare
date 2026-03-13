@@ -410,14 +410,17 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
               <span>Paramètres</span>
             </Link>
           )}
-          <Link
-            to="/login"
-            onClick={() => localStorage.removeItem("userRole")}
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap active-scale"
+          <button
+            onClick={async () => {
+              const { logout } = await import("@/stores/authStore");
+              await logout();
+              window.location.href = "/login";
+            }}
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/10 transition-colors whitespace-nowrap active-scale w-full"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             <span>Déconnexion</span>
-          </Link>
+          </button>
         </div>
       </aside>
 

@@ -23,7 +23,8 @@ import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType } from "@/stores/featureMatrixStore";
 import { useNavigate, useLocation } from "react-router-dom";
-import { switchDemoRole, loginDemoAs, type UserRole } from "@/stores/authStore";
+import { switchDemoRole, loginDemoAs, useAppMode, setAppMode, logout, type UserRole } from "@/stores/authStore";
+import { Switch } from "@/components/ui/switch";
 import { pushNotification, notifyPatient, notifyDoctor } from "@/stores/notificationsStore";
 import { useAdminModules, toggleModule, platformModules } from "@/stores/adminModulesStore";
 
@@ -197,8 +198,10 @@ const SimulationPanel = () => {
   const [sub] = useDoctorSubscription();
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
   const [moduleStates] = useAdminModules();
+  const [appMode] = useAppMode();
   const navigate = useNavigate();
   const location = useLocation();
+  const isProduction = appMode === "production";
 
   // ─── Simulation actions ───────────────────────────────
 
@@ -412,6 +415,24 @@ const SimulationPanel = () => {
       </div>
 
       <div className="p-3 space-y-3 overflow-y-auto flex-1">
+        {/* ═══ Mode toggle ═══ */}
+        <div className="rounded-lg border bg-muted/30 p-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px]">{isProduction ? "🔗" : "🎭"}</span>
+            <span className="text-[11px] font-medium text-foreground">{isProduction ? "Production (Supabase)" : "Mode Démo"}</span>
+          </div>
+          <Switch
+            checked={isProduction}
+            onCheckedChange={async (checked) => {
+              await logout();
+              setAppMode(checked ? "production" : "demo");
+              toast.success(checked ? "Mode Production activé — connectez-vous via Supabase" : "Mode Démo activé");
+              navigate("/login");
+            }}
+            className="scale-75"
+          />
+        </div>
+
         {/* ═══ Navigation tab ═══ */}
         {tab === "navigation" && (
           <>
