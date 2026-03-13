@@ -5,7 +5,7 @@
  * // TODO BACKEND: Remplacer mockData par des appels API (React Query).
  */
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   mockConsultationPatient,
   mockPatientAnalyses,
@@ -14,6 +14,9 @@ import {
   mockVitalsHistory,
 } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
+import { useSharedPatients } from "@/stores/sharedPatientsStore";
+import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import type {
   MainTab, HistFilter, DrawerKind, DocFileKind, DocTemplate, WorkflowStep,
   TimelineEvent, PatientFile, Ante, VersionText, VersionAnte, VersionVitals,
