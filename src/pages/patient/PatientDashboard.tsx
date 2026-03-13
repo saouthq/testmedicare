@@ -17,6 +17,7 @@ import { usePatientProfile } from "@/stores/patientStore";
 import { useNotifications } from "@/stores/notificationsStore";
 import { requestRenewal } from "@/stores/doctorStore";
 import { useSharedAppointments, cancelAppointment } from "@/stores/sharedAppointmentsStore";
+import { readAuthUser } from "@/stores/authStore";
 import { useHealth } from "@/stores/healthStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useFavoriteDoctors } from "@/stores/favoriteDoctorsStore";
