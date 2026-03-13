@@ -616,8 +616,9 @@ const DoctorConsultations = () => {
 
   // Sync from shared store
   useEffect(() => {
+    const currentDoc = getCurrentDoctor();
     const doctorApts = allSharedAppointments.filter(a =>
-      a.doctor.includes("Bouazizi") || a.doctor === CURRENT_DOCTOR
+      a.doctor === currentDoc || a.doctor.includes(readAuthUser()?.lastName || "Bouazizi")
     );
     const mapped = doctorApts.map((a, i) => mapAppointmentToConsult(a, i));
     setConsultations(mapped);
