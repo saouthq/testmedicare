@@ -93,7 +93,6 @@ const PatientDashboard = () => {
 
   const handleCancel = (id: string) => {
     cancelAppointment(id);
-    cancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);
   };
