@@ -63,8 +63,8 @@ const AdminAnalytics = () => {
       const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       months.push({
         month: m,
-        patients: state.users.filter(u => u.role === "patient" && u.joinedAt?.startsWith(mStr)).length,
-        doctors: state.users.filter(u => u.role === "doctor" && u.joinedAt?.startsWith(mStr)).length,
+        patients: state.users.filter(u => u.role === "patient" && u.joined?.startsWith(mStr)).length,
+        doctors: state.users.filter(u => u.role === "doctor" && u.joined?.startsWith(mStr)).length,
       });
     }
     // If all zero, show cumulative growth approximation
