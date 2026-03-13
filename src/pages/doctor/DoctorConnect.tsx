@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { Search, Send, Paperclip, ChevronLeft, Users, Building2, Bot, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useThreads, useMessages, sendMessage as storeSendMessage, type ChatThread } from "@/stores/messagesStore";
+import { useChatThreads, useChatMessages, sendMessage as storeSendMessage, type ChatThread } from "@/stores/messagesStore";
 import type { ChatMessage } from "@/types";
 
 type ConnectTab = "professionals" | "cabinet" | "ai";
