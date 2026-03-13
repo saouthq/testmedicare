@@ -906,6 +906,8 @@ function WeekView({
   apts,
   blocks,
   typeColors,
+  getDayConfig,
+  getLeaveForDate,
   onSlot,
   onApt,
   onBlock,
