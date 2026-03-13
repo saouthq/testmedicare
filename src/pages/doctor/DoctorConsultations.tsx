@@ -597,7 +597,7 @@ const DoctorConsultations = () => {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<ConsultStatus | "all">("all");
 
-  const [allSharedAppointments] = useSharedAppointments();
+  const [allSharedAppointments, , { isLoading: aptsLoading }] = useSharedAppointments();
   const today = getTodayDate();
 
   // Build week dates (today + 6 days back)
