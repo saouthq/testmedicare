@@ -426,17 +426,15 @@ const SimulationPanel = () => {
            <Switch
              checked={isProduction}
              onCheckedChange={async (checked) => {
+               await logout();
                if (checked) {
                  clearAllMockData();
                  setAppMode("production");
-                 toast.success("Mode Production activé — données vides, connectez-vous via Supabase");
                } else {
                  setAppMode("demo");
                  resetDemo();
-                 toast.success("Mode Démo activé — données fictives chargées");
                }
-               await logout();
-               navigate("/login");
+               window.location.href = "/login";
              }}
              className="scale-75"
            />

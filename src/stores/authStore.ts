@@ -162,8 +162,9 @@ export function initSupabaseAuth() {
   _authInitialized = true;
 
   supabase.auth.onAuthStateChange(async (event, session) => {
+    if (_loggingOut) return; // Don't process auth events during logout
+
     if (event === "SIGNED_OUT" || !session?.user) {
-      // Only clear if not a demo user
       const current = store.read();
       if (current && !current.isDemo) {
         store.set(null);
@@ -174,7 +175,6 @@ export function initSupabaseAuth() {
 
     if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
       const current = store.read();
-      // Don't override demo user
       if (current?.isDemo) return;
       await loadSupabaseUser(session.user.id);
     }
@@ -182,6 +182,7 @@ export function initSupabaseAuth() {
 
   // Check existing session on init
   supabase.auth.getSession().then(({ data: { session } }) => {
+    if (_loggingOut) return;
     if (session?.user) {
       const current = store.read();
       if (!current?.isDemo) {
@@ -201,6 +202,12 @@ export function useAuth() {
     // Initialize auth listener
     initSupabaseAuth();
 
+    // If logging out, don't try to restore session
+    if (_loggingOut) {
+      setLoading(false);
+      return;
+    }
+
     // Check if we already have a user (demo or supabase)
     const current = store.read();
     if (current) {
@@ -210,6 +217,10 @@ export function useAuth() {
 
     // Check Supabase session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (_loggingOut) {
+        setLoading(false);
+        return;
+      }
       if (session?.user) {
         loadSupabaseUser(session.user.id).finally(() => setLoading(false));
       } else {
@@ -334,17 +345,22 @@ export function switchDemoRole(role: UserRole) {
 /**
  * Logout — clear auth state (both demo and Supabase).
  */
+/** Track if we're in the process of logging out to prevent redirect loops */
+let _loggingOut = false;
+export function isLoggingOut() { return _loggingOut; }
+
 export async function logout() {
+  _loggingOut = true;
   const current = store.read();
+  // Clear store FIRST (synchronously) so no component sees stale user
+  store.set(null);
+  syncLegacyRole(null);
+  // Then sign out from Supabase
   if (current && !current.isDemo) {
     try { await supabase.auth.signOut(); } catch {}
   }
-  // Use setTimeout to defer store clearing, allowing the redirect to happen first
-  // This prevents React re-render crashes when components access null user properties
-  setTimeout(() => {
-    store.set(null);
-    syncLegacyRole(null);
-  }, 0);
+  // Reset flag after a tick
+  setTimeout(() => { _loggingOut = false; }, 100);
 }
 
 /**
