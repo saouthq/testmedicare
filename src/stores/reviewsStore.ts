@@ -1,8 +1,10 @@
 /**
- * reviewsStore.ts — Patient reviews for doctors (crossRoleStore).
- * // TODO BACKEND: Replace with API
+ * reviewsStore.ts — Patient reviews for doctors.
+ * Dual-mode: Supabase + localStorage fallback.
  */
 import { createStore, useStore } from "./crossRoleStore";
+import { useSupabaseTable } from "@/hooks/useSupabaseQuery";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Review {
   id: string;
@@ -25,15 +27,40 @@ export function useReviews() {
   return useStore(store);
 }
 
-export function submitReview(review: Omit<Review, "id" | "createdAt">) {
-  store.set(prev => [
-    {
-      ...review,
-      id: `rev-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    },
-    ...prev,
-  ]);
+/** Supabase-aware reviews hook */
+export function useReviewsSupabase() {
+  const [localReviews] = useStore(store);
+  return useSupabaseTable<Review>({
+    queryKey: ["reviews"],
+    tableName: "reviews",
+    orderBy: { column: "created_at", ascending: false },
+    enabled: true,
+    fallbackData: localReviews,
+  });
+}
+
+export async function submitReview(review: Omit<Review, "id" | "createdAt">) {
+  const full = {
+    ...review,
+    id: `rev-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+  };
+  store.set(prev => [full, ...prev]);
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("reviews").insert({
+        id: full.id,
+        appointment_id: review.appointmentId,
+        patient_name: review.patientName,
+        doctor_name: review.doctorName,
+        rating: review.rating,
+        text: review.text,
+        verified: review.verified,
+      });
+    }
+  } catch {}
 }
 
 export function getReviewsForDoctor(doctorId: number): Review[] {
@@ -46,7 +73,6 @@ export function getAverageRating(doctorId: number): number {
   return Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
 }
 
-// Seed data
 const SEED_REVIEWS: Review[] = [
   { id: "rev-1", appointmentId: "apt-100", patientId: 1, patientName: "Amine B.", doctorId: 1, doctorName: "Dr. Ahmed Bouazizi", rating: 5, text: "Très bon médecin, à l'écoute et professionnel.", verified: true, createdAt: "2026-02-10T10:00:00Z" },
   { id: "rev-2", appointmentId: "apt-101", patientId: 2, patientName: "Fatma T.", doctorId: 1, doctorName: "Dr. Ahmed Bouazizi", rating: 5, text: "Ponctuel et efficace. Explique bien les traitements.", verified: true, createdAt: "2026-02-05T10:00:00Z" },

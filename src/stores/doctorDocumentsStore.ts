@@ -1,8 +1,10 @@
 /**
  * doctorDocumentsStore.ts — Persisted document templates store.
- * // TODO BACKEND: Replace with API
+ * Dual-mode: Supabase + localStorage fallback.
  */
 import { createStore, useStore } from "./crossRoleStore";
+import { useSupabaseTable, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface DocTemplate {
   id: number;
@@ -21,6 +23,20 @@ export const doctorDocumentsStore = store;
 
 export function useDoctorDocTemplates() {
   return useStore(store);
+}
+
+/** Supabase-aware hook */
+export function useDoctorDocTemplatesSupabase() {
+  const { userId, isAuthenticated } = useAuthReady();
+  const [localTemplates] = useStore(store);
+
+  return useSupabaseTable<DocTemplate>({
+    queryKey: ["doctor_documents", userId || ""],
+    tableName: "doctor_documents",
+    filters: userId ? { doctor_id: userId } : undefined,
+    enabled: isAuthenticated,
+    fallbackData: localTemplates,
+  });
 }
 
 export function seedDocTemplatesIfEmpty(templates: DocTemplate[]) {
