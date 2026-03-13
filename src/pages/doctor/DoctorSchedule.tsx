@@ -2243,7 +2243,7 @@ const DoctorSchedule = () => {
 
   const [view, setView] = useState<ViewMode>("week");
   const [current, setCurrent] = useState(() => new Date());
-  const [allApts] = useSharedAppointments();
+  const [allApts, , { isLoading: aptsLoading }] = useSharedAppointments();
   const [allBlocks] = useSharedBlockedSlots();
   const apts = useMemo(() => allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
   const blocks = useMemo(() => allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
