@@ -460,7 +460,7 @@ export function checkUpcomingReminders() {
     // Notify patient
     if (apt.patientId) {
       pushNotification({
-        type: "appointment_reminder",
+        type: "reminder",
         title: "Rappel RDV demain",
         message: `Votre RDV avec ${apt.doctor} est prévu demain à ${apt.startTime}.`,
         targetRole: "patient",

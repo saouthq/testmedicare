@@ -72,7 +72,7 @@ export function sendPrescriptionToPharmacies(
       phone: "",
       assurance: prescription.assurance || "Sans assurance",
       date: prescription.date,
-      items: prescription.items.map(name => ({ name, dosage: "", quantity: "1", availability: "available" as const })),
+      items: prescription.items.map(name => ({ name, dosage: "", quantity: 1, availability: "available" as const, price: "—" })),
       status: "received",
       doctor: prescription.doctorName,
     };
