@@ -93,7 +93,7 @@ const DoctorBilling = () => {
         {tab === "subscription" && (
           <div className="space-y-6">
             {/* Pro upgrade banner – eye-catching */}
-            {mockSubscriptionInfo.plan === "Basic" && (
+            {subscriptionInfo.plan === "Basic" && (
               <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 p-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/4" />
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
