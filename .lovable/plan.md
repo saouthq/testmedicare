@@ -41,8 +41,34 @@
 25. ✅ Hooks Supabase ajoutés: `useAdminVerificationsSupabase`, `useAdminGuardPharmaciesSupabase`, `useAdminGuardPharmacyToggle`, `useAdminVerificationUpdate`, `useAdminTicketUpdateSupabase`
 26. ✅ Isolation praticien via RLS (doctor_id, pharmacy_id, lab_id) — vérifié sur toutes les tables
 
-## Phase 6 — À faire (prochaine itération)
+## Phase 6 — Admin Analytics + Resolution ✅ DONE
 
-- Tables manquantes pour subscriptions, organizations, disputes, campaigns (besoin migration DB)
-- UI spécialité dynamique selon doctor profile (specialty-specific tools)
-- AdminAnalytics en production avec données réelles agrégées
+27. ✅ AdminAnalytics branché sur appointments + reviews (agrégation temps réel)
+28. ✅ AdminResolution branché sur support_tickets (CRUD conversation)
+29. ✅ AdminDashboard widgets tickets + pharmacies de garde en temps réel
+
+## Phase 7 — Mutations critiques médecin ✅ DONE
+
+30. ✅ Availability: updateAvailabilityDay/setSlotDuration → doctor_availability upsert
+31. ✅ Leaves: createLeave/deleteLeave → doctor_leaves insert/delete
+32. ✅ Blocked slots: addBlockedSlot/removeBlockedSlot → blocked_slots insert/delete
+33. ✅ Tarifs: addActe/updateActe/removeActe → tarifs CRUD
+34. ✅ Doctor profile: updateDoctorProfile → doctors_directory update (déjà fait phase précédente)
+
+## Phase 8 — Patient + transversal production-ready ✅ DONE
+
+35. ✅ Patient→Pharmacy Rx flow → pharmacy_prescriptions insert via Supabase
+36. ✅ Support tickets public → support_tickets insert via Supabase
+37. ✅ usePatientId production → useResolvedPatientId query patients table
+38. ✅ Doc templates CRUD → doctor_documents insert/update/delete
+39. ✅ Protocols CRUD → doctor_protocols insert/update/delete
+40. ✅ Lab PDFs sync → lab_demands.pdfs update via Supabase
+
+## Phase 9 — À faire (prochaine itération)
+
+- Tables manquantes pour subscriptions, organizations, campaigns (besoin migration DB)
+- pharmacy_stock table + pharmacyStore CRUD
+- cabinets table + cabinetStore
+- Guest OTP → wire to send-otp edge function
+- favoriteDoctorsStore → besoin table ou JSONB
+- Health docs/vaccins → besoin table ou JSONB
