@@ -1,8 +1,8 @@
 /**
- * Admin System Settings — with reset to defaults
+ * Admin System Settings — with reset to defaults + unsaved changes indicator
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle,
   Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound,
