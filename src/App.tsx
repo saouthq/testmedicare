@@ -13,7 +13,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 // Seed all shared stores with mock data on first load
-seedAllStores();
+try { seedAllStores(); } catch (e) { console.error("[App] seedAllStores failed:", e); }
 
 // Public pages
 import PublicSearch from "./pages/public/PublicSearch";
