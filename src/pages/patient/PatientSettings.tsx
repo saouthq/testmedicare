@@ -16,8 +16,8 @@ const PatientSettings = () => {
   const [tab, setTab] = useState<Tab>("profile");
   const isMobile = useIsMobile();
   const [profile] = usePatientProfile();
-  const [insurance, setInsurance] = useState(profile.insurance);
-  const [insuranceNumber, setInsuranceNumber] = useState(profile.insuranceNumber);
+  const [insurance, setInsurance] = useState(profile?.insurance ?? "");
+  const [insuranceNumber, setInsuranceNumber] = useState(profile?.insuranceNumber ?? "");
   const [consents, setConsents] = useState(mockPatientConsents);
 
   const tabs = [
