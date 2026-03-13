@@ -8,7 +8,7 @@ import { mockTeleconsultTransactions } from "@/data/mocks/doctor";
 import { getMyActivePromo } from "@/services/admin/adminPromotionsService";
 import { useSharedBilling, markInvoicePaid, getBillingStats, type SharedInvoice } from "@/stores/billingStore";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
-import { useAdminPlans } from "@/stores/adminPlanStore";
+import { useAdminPlans, type AdminPlan } from "@/stores/adminPlanStore";
 
 type BillingTab = "subscription" | "teleconsult" | "cabinet";
 
