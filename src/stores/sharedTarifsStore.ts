@@ -25,7 +25,13 @@ const store = createStore<SharedActe[]>("medicare_tarifs", initialActes);
 export const sharedTarifsStore = store;
 
 export function useSharedTarifs() {
-  return useStore(store);
+  return useDualQuery<SharedActe[]>({
+    store,
+    tableName: "tarifs",
+    queryKey: ["tarifs"],
+    mapRowToLocal: mapTarifRow,
+    orderBy: { column: "created_at", ascending: true },
+  });
 }
 
 export function updateActe(id: number, update: Partial<SharedActe>) {
