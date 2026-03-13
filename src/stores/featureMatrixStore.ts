@@ -11,6 +11,7 @@ const OVERRIDES_KEY = "medicare_feature_overrides";
 
 // ── Types ──
 export type ActivityType = "generaliste" | "specialiste" | "dentiste" | "kine" | "osteopathe" | "sage_femme" | "orthophoniste" | "psychologue" | "nutritionniste" | "podologue" | "orthoptiste" | "laboratory" | "pharmacy" | "clinic";
+export type PlanTier = "essentiel" | "pro" | "cabinet";
 
 export interface FeatureDef {
   id: string;

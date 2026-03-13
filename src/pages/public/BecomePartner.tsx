@@ -36,7 +36,10 @@ import type { Promotion } from "@/types/promotion";
 
 const activityIcons: Record<ActivityType, any> = {
   generaliste: Stethoscope, specialiste: Stethoscope, dentiste: Stethoscope,
-  kine: Stethoscope, laboratory: FlaskConical, pharmacy: Pill, clinic: Building2,
+  kine: Stethoscope, osteopathe: Stethoscope, sage_femme: Stethoscope,
+  orthophoniste: Stethoscope, psychologue: Stethoscope, nutritionniste: Stethoscope,
+  podologue: Stethoscope, orthoptiste: Stethoscope,
+  laboratory: FlaskConical, pharmacy: Pill, clinic: Building2,
 };
 
 const promoDescription = (p: Promotion): string => {
