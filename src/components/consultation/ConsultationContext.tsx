@@ -1008,6 +1008,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
   ]);
 
   const value: Ctx = {
+    isTeleconsult,
     patient,
     navigate,
     motif,
