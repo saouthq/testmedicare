@@ -220,6 +220,54 @@ const PatientHealth = () => {
   const completedCount = completionSections.filter(s => s.items.length > 0 || declaredEmpty[s.key]).length;
   const completionPct = Math.round((completedCount / completionSections.length) * 100);
 
+  const handleExportDossier = () => {
+    const lines: string[] = [
+      "═══ DOSSIER MÉDICAL — EXPORT ═══",
+      `Date d'export : ${new Date().toLocaleDateString("fr-FR")}`,
+      "",
+    ];
+    if (antecedents.length) {
+      lines.push("── Antécédents médicaux ──");
+      antecedents.forEach(a => lines.push(`• ${a.name} — ${a.date || ""} ${a.details || ""}`));
+      lines.push("");
+    }
+    if (allergies.length) {
+      lines.push("── Allergies ──");
+      allergies.forEach(a => lines.push(`• ${a.name} (${a.severity || ""})`));
+      lines.push("");
+    }
+    if (treatments.length) {
+      lines.push("── Traitements en cours ──");
+      treatments.forEach(t => lines.push(`• ${t.name} — ${t.dosage || ""} — ${t.frequency || ""}`));
+      lines.push("");
+    }
+    if (vaccinations.length) {
+      lines.push("── Vaccinations ──");
+      vaccinations.forEach(v => lines.push(`• ${v.name} — ${v.date || ""}`));
+      lines.push("");
+    }
+    if (measures.length) {
+      lines.push("── Dernières mesures ──");
+      measures.forEach(m => lines.push(`• ${m.type || m.name}: ${m.value} ${m.unit || ""} — ${m.date || ""}`));
+      lines.push("");
+    }
+    if (surgeries.length) {
+      lines.push("── Opérations chirurgicales ──");
+      surgeries.forEach(s => lines.push(`• ${s.name} — ${s.date || ""}`));
+      lines.push("");
+    }
+    lines.push("Ce document est un export de données patient à titre informatif.");
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dossier_medical_${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export réussi", description: "Votre dossier médical a été téléchargé." });
+  };
+
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
       <div className="max-w-2xl space-y-4">
