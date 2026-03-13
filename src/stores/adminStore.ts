@@ -1,12 +1,12 @@
 /**
  * adminStore.ts — Central persistent admin store (Zustand-like via crossRoleStore).
  * Single source of truth for all admin entities.
- * All admin pages consume data from here; no more inline useState with mocks.
- *
- * TODO BACKEND: Replace localStorage persistence with API calls.
+ * Syncs subscriptions, organizations, and campaigns with Supabase in production mode.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { getAppMode } from "./authStore";
+import { supabase } from "@/integrations/supabase/client";
 import type {
   AdminState, AdminUser, AdminOrganization, OnboardingApplication,
   AdminSubscription, AdminPayment, AdminTicket, AdminDispute,
@@ -75,6 +75,116 @@ const emptyState: AdminState = {
 export const adminStore = createStore<AdminState>("medicare_admin", emptyState);
 
 // ═══════════════════════════════════════════
+// SUPABASE SYNC HELPERS
+// ═══════════════════════════════════════════
+
+/** Sync subscriptions from Supabase */
+async function syncSubscriptionsFromSupabase() {
+  if (getAppMode() !== "production") return;
+  try {
+    const { data } = await (supabase.from as any)("subscriptions").select("*").order("created_at", { ascending: false });
+    if (data?.length) {
+      const mapped: AdminSubscription[] = data.map((s: any) => ({
+        id: s.id, userId: s.user_id, organizationId: "", doctorName: s.specialty || "Praticien",
+        plan: s.plan || "Essentiel", monthlyPrice: s.plan === "pro" ? 99 : s.plan === "cabinet_plus" ? 199 : 0,
+        status: s.status === "active" ? "active" : s.status === "trialing" ? "trial" : s.status as SubscriptionStatus,
+        startDate: s.current_period_start || s.created_at?.slice(0, 10) || "",
+        renewalDate: s.current_period_end || "",
+        promoName: "", history: [],
+      }));
+      adminStore.set(prev => ({ ...prev, subscriptions: mapped }));
+    }
+  } catch (e) {
+    console.warn("[syncSubscriptionsFromSupabase]", e);
+  }
+}
+
+/** Sync organizations from Supabase */
+async function syncOrganizationsFromSupabase() {
+  if (getAppMode() !== "production") return;
+  try {
+    const { data } = await (supabase.from as any)("organizations").select("*").order("created_at", { ascending: false });
+    if (data?.length) {
+      const mapped: AdminOrganization[] = data.map((o: any) => ({
+        id: o.id, name: o.name, type: o.type || "cabinet",
+        city: o.city || "Tunis", address: o.address || "", phone: o.phone || "", email: o.email || "",
+        status: o.status as any || "active", memberIds: [], secretaryNames: [],
+        membersCount: o.members_count || 0,
+        createdAt: new Date(o.created_at).toLocaleDateString("fr-TN", { month: "short", year: "numeric" }),
+        subscriptionId: o.subscription_id || "", internalNotes: [],
+      }));
+      adminStore.set(prev => ({ ...prev, organizations: mapped }));
+    }
+  } catch (e) {
+    console.warn("[syncOrganizationsFromSupabase]", e);
+  }
+}
+
+/** Sync campaigns from Supabase */
+async function syncCampaignsFromSupabase() {
+  if (getAppMode() !== "production") return;
+  try {
+    const { data } = await (supabase.from as any)("campaigns").select("*").order("created_at", { ascending: false });
+    if (data?.length) {
+      const mapped: AdminCampaign[] = data.map((c: any) => ({
+        id: c.id, title: c.name || c.subject || "", target: c.target || "all",
+        channel: c.type || "sms", message: c.content || "",
+        status: c.status as CampaignStatus || "draft",
+        sentAt: c.sent_at ? new Date(c.sent_at).toLocaleDateString("fr-TN") : undefined,
+        scheduledAt: c.scheduled_at ? new Date(c.scheduled_at).toISOString().slice(0, 16).replace("T", " ") : undefined,
+        recipientCount: c.recipients_count || 0,
+        openRate: c.open_rate || 0, clickRate: 0, deliveryRate: 0,
+      }));
+      adminStore.set(prev => ({ ...prev, campaigns: mapped }));
+    }
+  } catch (e) {
+    console.warn("[syncCampaignsFromSupabase]", e);
+  }
+}
+
+/** Persist organization to Supabase */
+async function upsertOrganizationToSupabase(org: AdminOrganization) {
+  if (getAppMode() !== "production") return;
+  try {
+    await (supabase.from as any)("organizations").upsert({
+      id: org.id, name: org.name, type: org.type, city: org.city,
+      address: org.address, phone: org.phone, email: org.email,
+      status: org.status, members_count: org.membersCount,
+      subscription_id: org.subscriptionId || null,
+    }, { onConflict: "id" });
+  } catch (e) {
+    console.warn("[upsertOrganizationToSupabase]", e);
+  }
+}
+
+/** Persist campaign to Supabase */
+async function upsertCampaignToSupabase(c: AdminCampaign) {
+  if (getAppMode() !== "production") return;
+  try {
+    await (supabase.from as any)("campaigns").upsert({
+      id: c.id, name: c.title, type: c.channel, target: c.target,
+      content: c.message, status: c.status,
+      recipients_count: c.recipientCount || 0,
+      open_rate: c.openRate || 0,
+      sent_at: c.sentAt ? new Date(c.sentAt).toISOString() : null,
+      scheduled_at: c.scheduledAt ? new Date(c.scheduledAt.replace(" ", "T")).toISOString() : null,
+    }, { onConflict: "id" });
+  } catch (e) {
+    console.warn("[upsertCampaignToSupabase]", e);
+  }
+}
+
+/** Load all admin Supabase data on init */
+export async function loadAdminSupabaseData() {
+  if (getAppMode() !== "production") return;
+  await Promise.all([
+    syncSubscriptionsFromSupabase(),
+    syncOrganizationsFromSupabase(),
+    syncCampaignsFromSupabase(),
+  ]);
+}
+
+// ═══════════════════════════════════════════
 // HOOKS
 // ═══════════════════════════════════════════
 export function useAdminStore(): [AdminState, (updater: AdminState | ((prev: AdminState) => AdminState)) => void] {
@@ -95,8 +205,17 @@ export function useAdminOrganizations() {
   const [state, set] = useAdminStore();
   return {
     organizations: state.organizations,
-    setOrganizations: (updater: AdminOrganization[] | ((prev: AdminOrganization[]) => AdminOrganization[])) =>
-      set(prev => ({ ...prev, organizations: typeof updater === "function" ? updater(prev.organizations) : updater })),
+    setOrganizations: (updater: AdminOrganization[] | ((prev: AdminOrganization[]) => AdminOrganization[])) => {
+      set(prev => {
+        const newOrgs = typeof updater === "function" ? updater(prev.organizations) : updater;
+        // Sync changed orgs to Supabase
+        if (getAppMode() === "production") {
+          const prevIds = new Set(prev.organizations.map(o => JSON.stringify(o)));
+          newOrgs.forEach(o => { if (!prevIds.has(JSON.stringify(o))) upsertOrganizationToSupabase(o); });
+        }
+        return { ...prev, organizations: newOrgs };
+      });
+    },
   };
 }
 
@@ -158,8 +277,17 @@ export function useAdminCampaigns() {
   const [state, set] = useAdminStore();
   return {
     campaigns: state.campaigns,
-    setCampaigns: (updater: AdminCampaign[] | ((prev: AdminCampaign[]) => AdminCampaign[])) =>
-      set(prev => ({ ...prev, campaigns: typeof updater === "function" ? updater(prev.campaigns) : updater })),
+    setCampaigns: (updater: AdminCampaign[] | ((prev: AdminCampaign[]) => AdminCampaign[])) => {
+      set(prev => {
+        const newCampaigns = typeof updater === "function" ? updater(prev.campaigns) : updater;
+        // Sync changed campaigns to Supabase
+        if (getAppMode() === "production") {
+          const prevIds = new Set(prev.campaigns.map(c => JSON.stringify(c)));
+          newCampaigns.forEach(c => { if (!prevIds.has(JSON.stringify(c))) upsertCampaignToSupabase(c); });
+        }
+        return { ...prev, campaigns: newCampaigns };
+      });
+    },
   };
 }
 
@@ -339,6 +467,11 @@ export function suspendOrganizationWithCascade(orgId: string, motif: string) {
     users: updatedUsers,
     subscriptions: updatedSubs,
   });
+
+  // Persist to Supabase
+  if (getAppMode() === "production") {
+    upsertOrganizationToSupabase({ ...org, status: "suspended" as any });
+  }
 
   // Audit
   appendLog("org_cascade_suspend", "organization", orgId,
