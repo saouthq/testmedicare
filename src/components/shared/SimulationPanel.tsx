@@ -421,16 +421,25 @@ const SimulationPanel = () => {
             <span className="text-[10px]">{isProduction ? "🔗" : "🎭"}</span>
             <span className="text-[11px] font-medium text-foreground">{isProduction ? "Production (Supabase)" : "Mode Démo"}</span>
           </div>
-          <Switch
-            checked={isProduction}
-            onCheckedChange={async (checked) => {
-              await logout();
-              setAppMode(checked ? "production" : "demo");
-              toast.success(checked ? "Mode Production activé — connectez-vous via Supabase" : "Mode Démo activé");
-              navigate("/login");
-            }}
-            className="scale-75"
-          />
+           <Switch
+             checked={isProduction}
+             onCheckedChange={async (checked) => {
+               await logout();
+               if (checked) {
+                 // Switching to Production: clear all mock data
+                 clearAllMockData();
+                 setAppMode("production");
+                 toast.success("Mode Production activé — données vides, connectez-vous via Supabase");
+               } else {
+                 // Switching to Demo: set mode then reseed
+                 setAppMode("demo");
+                 resetDemo();
+                 toast.success("Mode Démo activé — données fictives chargées");
+               }
+               navigate("/login");
+             }}
+             className="scale-75"
+           />
         </div>
 
         {/* ═══ Navigation tab ═══ */}
