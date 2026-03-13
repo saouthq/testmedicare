@@ -2,14 +2,14 @@
  * sharedAvailabilityStore.ts — Centralized doctor availability.
  * Dual-mode: localStorage in Demo, Supabase in Production.
  */
-import { createStore, useStore } from "./crossRoleStore";
+import { createStore } from "./crossRoleStore";
 import type { AvailabilityConfig, AvailabilityDay } from "@/types/appointment";
-import { getAppMode } from "./authStore";
+import { getAppMode, readAuthUser } from "./authStore";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthReady } from "@/hooks/useSupabaseQuery";
 import { mapAvailabilityRows } from "@/lib/supabaseMappers";
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useEffect } from "react";
 
 const defaultDays: Record<string, AvailabilityDay> = {
   Lundi:    { active: true,  start: "08:00", end: "18:00", breakStart: "12:00", breakEnd: "14:00" },
@@ -21,12 +21,21 @@ const defaultDays: Record<string, AvailabilityDay> = {
   Dimanche: { active: false, start: "09:00", end: "12:00", breakStart: "",      breakEnd: "" },
 };
 
-const initialConfig: AvailabilityConfig = {
-  days: defaultDays,
-  slotDuration: 30,
-  doctor: "Dr. Ahmed Bouazizi",
-};
+function cloneDefaultDays(): Record<string, AvailabilityDay> {
+  return Object.fromEntries(
+    Object.entries(defaultDays).map(([k, v]) => [k, { ...v }])
+  );
+}
 
+function normalizeConfig(partial?: Partial<AvailabilityConfig> | null): AvailabilityConfig {
+  return {
+    days: { ...cloneDefaultDays(), ...(partial?.days || {}) },
+    slotDuration: partial?.slotDuration || 30,
+    doctor: partial?.doctor || readAuthUser()?.doctorName || "Dr. Ahmed Bouazizi",
+  };
+}
+
+const initialConfig: AvailabilityConfig = normalizeConfig();
 const store = createStore<AvailabilityConfig>("medicare_availability", initialConfig);
 
 export const sharedAvailabilityStore = store;
@@ -37,20 +46,31 @@ export function useSharedAvailability(): [AvailabilityConfig, (v: AvailabilityCo
   const localData = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   const query = useQuery({
-    queryKey: ["doctor_availability"],
+    queryKey: ["doctor_availability", "me"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from as any)("doctor_availability").select("*");
-      if (error || !data || data.length === 0) return null;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return null;
+      const { data, error } = await (supabase.from as any)("doctor_availability")
+        .select("*")
+        .eq("doctor_id", session.user.id);
+      if (error || !data) return null;
       const days = mapAvailabilityRows(data);
       const slotDuration = data[0]?.slot_duration || 30;
-      return { days, slotDuration, doctor: "" } as AvailabilityConfig;
+      return normalizeConfig({ days, slotDuration });
     },
     enabled: mode === "production" && isReady,
   });
 
-  if (mode === "production" && query.data) {
-    return [query.data, store.set];
-  }
+  // Hydrate central store from Supabase once loaded so ALL workflows use the same source.
+  useEffect(() => {
+    if (mode !== "production" || !query.data) return;
+    store.set((prev) => {
+      const merged = normalizeConfig(query.data);
+      const prevStr = JSON.stringify(prev);
+      const nextStr = JSON.stringify(merged);
+      return prevStr === nextStr ? prev : merged;
+    });
+  }, [mode, query.data]);
 
   return [localData, store.set];
 }
@@ -61,16 +81,32 @@ async function supabaseUpsertDay(dayName: string, day: AvailabilityDay, slotDura
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
-    await (supabase.from as any)("doctor_availability").upsert({
-      doctor_id: session.user.id,
-      day_name: dayName,
+
+    const row = {
       active: day.active,
       start_time: day.start || "08:00",
       end_time: day.end || "18:00",
       break_start: day.breakStart || null,
       break_end: day.breakEnd || null,
       slot_duration: slotDuration,
-    }, { onConflict: "doctor_id,day_name" });
+    };
+
+    const { data: updatedRows, error: updateError } = await (supabase.from as any)("doctor_availability")
+      .update(row)
+      .eq("doctor_id", session.user.id)
+      .eq("day_name", dayName)
+      .select("id");
+
+    if (updateError) throw updateError;
+
+    if (!updatedRows || updatedRows.length === 0) {
+      const { error: insertError } = await (supabase.from as any)("doctor_availability").insert({
+        doctor_id: session.user.id,
+        day_name: dayName,
+        ...row,
+      });
+      if (insertError) throw insertError;
+    }
   } catch (e) {
     console.warn("[availability] Supabase upsert failed:", e);
   }
@@ -80,7 +116,6 @@ export function updateAvailabilityDay(dayName: string, update: Partial<Availabil
   store.set(prev => {
     const newDays = { ...prev.days, [dayName]: { ...prev.days[dayName], ...update } };
     const newConfig = { ...prev, days: newDays };
-    // Persist to Supabase
     supabaseUpsertDay(dayName, newDays[dayName], prev.slotDuration);
     return newConfig;
   });
@@ -89,7 +124,6 @@ export function updateAvailabilityDay(dayName: string, update: Partial<Availabil
 export function setSlotDuration(duration: number) {
   store.set(prev => {
     const newConfig = { ...prev, slotDuration: duration };
-    // Update all days in Supabase with new slot duration
     if (getAppMode() === "production") {
       Object.entries(prev.days).forEach(([dayName, day]) => {
         supabaseUpsertDay(dayName, day, duration);
@@ -103,9 +137,9 @@ export function setSlotDuration(duration: number) {
 export async function saveAvailabilityToSupabase() {
   if (getAppMode() !== "production") return;
   const config = store.read();
-  for (const [dayName, day] of Object.entries(config.days)) {
-    await supabaseUpsertDay(dayName, day, config.slotDuration);
-  }
+  await Promise.all(
+    Object.entries(config.days).map(([dayName, day]) => supabaseUpsertDay(dayName, day, config.slotDuration))
+  );
 }
 
 /** Get break times for the current config */
