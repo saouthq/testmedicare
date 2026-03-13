@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { mockPatients, type Patient } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 import { parseFrDate } from "@/components/consultation/helpers";
+import { useSharedPatients, addPatient } from "@/stores/sharedPatientsStore";
+import { readAuthUser } from "@/stores/authStore";
 
 // ── Types ──
 
