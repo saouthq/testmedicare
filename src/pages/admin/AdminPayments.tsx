@@ -12,7 +12,7 @@ import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { useAdminPayments } from "@/stores/adminStore";
-import { useAdminInvoicesSupabase } from "@/hooks/useAdminData";
+import { useAdminInvoicesSupabase, useAdminInvoiceUpdate } from "@/hooks/useAdminData";
 import { getAppMode } from "@/stores/authStore";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import type { AdminPayment } from "@/types/admin";
