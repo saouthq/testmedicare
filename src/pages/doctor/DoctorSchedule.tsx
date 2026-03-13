@@ -248,7 +248,10 @@ const addMonths = (d: Date, n: number) => {
   r.setMonth(r.getMonth() + n);
   return r;
 };
-const isToday = (s: string) => s === fmtDate(new Date());
+const isToday = (s: string) => {
+  const d = new Date();
+  return s === `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 const t2min = (t: string) => {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
