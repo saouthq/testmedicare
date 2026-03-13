@@ -18,7 +18,7 @@ import {
   sendToWaitingRoom, startAppointmentConsultation, createAppointment, getTodayDate,
   cancelAppointment, rescheduleAppointment,
 } from "@/stores/sharedAppointmentsStore";
-import { resetDemo } from "@/stores/seedStores";
+import { resetDemo, clearAllMockData } from "@/stores/seedStores";
 import { toast } from "sonner";
 import { useDoctorSubscription, setDoctorPlan, setDoctorActivity } from "@/stores/doctorSubscriptionStore";
 import { activities, plansByActivity, specialtyFeatureHighlights, type ActivityType } from "@/stores/featureMatrixStore";
