@@ -1,12 +1,14 @@
 /**
  * Admin Notification Campaigns — Full CRUD
- * Connected to central admin store
+ * Connected to central admin store + templates + push notifications
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Send, Eye, Bell, Users, CheckCircle, Clock, MapPin, Stethoscope,
   Shield, Filter, Copy, Pencil, XCircle, RotateCcw, Trash2, BarChart3,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +20,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
-import { useAdminCampaigns } from "@/stores/adminStore";
+import { useAdminCampaigns, useAdminNotificationTemplates, useAdminUsers } from "@/stores/adminStore";
+import { pushNotification } from "@/stores/notificationsStore";
 import type { AdminCampaign, CampaignStatus } from "@/types/admin";
 
 type Campaign = AdminCampaign;
