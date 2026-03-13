@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { createSupportTicket } from "@/services/supportService";
 import {
   Search, ChevronDown, ChevronUp, HelpCircle, Calendar, CreditCard,
   Video, Shield, User, Phone, Mail, AlertTriangle, MessageSquare, Pill, FlaskConical, Send,
