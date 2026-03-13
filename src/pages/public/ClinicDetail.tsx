@@ -5,11 +5,12 @@ import JsonLd from "@/components/seo/JsonLd";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, CheckCircle, Navigation, Building2 } from "lucide-react";
-import { mockClinics } from "@/data/mocks/establishments";
+import { useClinicsDirectory } from "@/stores/directoryStore";
 
 const ClinicDetail = () => {
   const { slug } = useParams();
-  const clinic = mockClinics.find(c => c.slug === slug);
+  const clinics = useClinicsDirectory();
+  const clinic = clinics.find(c => c.slug === slug);
 
   if (!clinic) return <div className="min-h-screen bg-background"><PublicHeader /><div className="container mx-auto px-4 py-20 text-center"><h1 className="text-xl font-bold">Clinique non trouvée</h1><Link to="/clinics" className="text-primary mt-4 inline-block">← Retour à l'annuaire</Link></div></div>;
 

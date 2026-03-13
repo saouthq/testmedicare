@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
@@ -6,17 +6,17 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Search, Pill, ChevronRight } from "lucide-react";
-import { mockMedicines } from "@/data/mocks/medicines";
-
-const forms = ["Toutes", ...Array.from(new Set(mockMedicines.map(m => m.form)))];
-const categories = ["Toutes", ...Array.from(new Set(mockMedicines.map(m => m.category)))];
+import { useMedicinesDirectory } from "@/stores/directoryStore";
 
 const MedicinesDirectory = () => {
+  const medicines = useMedicinesDirectory();
+  const forms = useMemo(() => ["Toutes", ...Array.from(new Set(medicines.map(m => m.form)))], [medicines]);
+  const categories = useMemo(() => ["Toutes", ...Array.from(new Set(medicines.map(m => m.category)))], [medicines]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState("Toutes");
   const [category, setCategory] = useState("Toutes");
 
-  const filtered = mockMedicines.filter(m => {
+  const filtered = medicines.filter(m => {
     if (form !== "Toutes" && m.form !== form) return false;
     if (category !== "Toutes" && m.category !== category) return false;
     if (search && !m.name.toLowerCase().includes(search.toLowerCase()) && !m.summary.toLowerCase().includes(search.toLowerCase())) return false;

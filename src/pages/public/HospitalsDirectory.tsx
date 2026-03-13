@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
@@ -7,16 +7,16 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Search, Hospital } from "lucide-react";
-import { mockHospitals } from "@/data/mocks/establishments";
-
-const cities = ["Toutes", ...Array.from(new Set(mockHospitals.map(h => h.city)))];
+import { useHospitalsDirectory } from "@/stores/directoryStore";
 
 const HospitalsDirectory = () => {
+  const hospitals = useHospitalsDirectory();
+  const cities = useMemo(() => ["Toutes", ...Array.from(new Set(hospitals.map(h => h.city)))], [hospitals]);
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
   const [showCount, setShowCount] = useState(10);
 
-  const filtered = mockHospitals.filter(h => {
+  const filtered = hospitals.filter(h => {
     if (city !== "Toutes" && h.city !== city) return false;
     if (search && !h.name.toLowerCase().includes(search.toLowerCase()) && !h.services.some(s => s.toLowerCase().includes(search.toLowerCase()))) return false;
     return true;

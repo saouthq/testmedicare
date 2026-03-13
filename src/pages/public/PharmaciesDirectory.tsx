@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
@@ -8,23 +8,22 @@ import SeoHelmet from "@/components/seo/SeoHelmet";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Search, Pill } from "lucide-react";
-import { mockPublicPharmacies } from "@/data/mocks/establishments";
-
-const cities = ["Toutes", ...Array.from(new Set(mockPublicPharmacies.map(p => p.city)))];
+import { usePharmaciesDirectory } from "@/stores/directoryStore";
 
 const PharmaciesDirectory = () => {
+  const pharmacies = usePharmaciesDirectory();
+  const cities = useMemo(() => ["Toutes", ...Array.from(new Set(pharmacies.map(p => p.city)))], [pharmacies]);
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
   const [deGarde, setDeGarde] = useState(false);
   const [showCount, setShowCount] = useState(10);
 
-  // Read ?garde=true from URL
   useEffect(() => {
     if (searchParams.get("garde") === "true") setDeGarde(true);
   }, [searchParams]);
 
-  const filtered = mockPublicPharmacies.filter(p => {
+  const filtered = pharmacies.filter(p => {
     if (city !== "Toutes" && p.city !== city) return false;
     if (deGarde && !p.deGarde) return false;
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
