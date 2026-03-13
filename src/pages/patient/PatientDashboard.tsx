@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import { 
   Calendar, Clock, FileText, Activity, ChevronRight, MapPin, 
   Video, Heart, Pill, Star, AlertTriangle,
