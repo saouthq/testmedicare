@@ -271,7 +271,7 @@ const AdminAnalytics = () => {
                     ))}
                   </div>
                 </div>
-              ) : <BackendPlaceholder label="Aucun utilisateur dans le store" />}
+              ) : <EmptyDataState label="Aucun utilisateur dans le store" />}
             </div>
           </div>
         </TabsContent>
