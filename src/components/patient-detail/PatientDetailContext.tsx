@@ -205,19 +205,25 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
   );
 
   const patientRxRecords = useMemo(() => {
-    // Filter prescriptions that belong to this patient (if possible)
-    if (!numPatientId) return mockPatientDetailPrescriptions || [];
+    if (!numPatientId) {
+      if (getAppMode() === "production") return [];
+      try { const { mockPatientDetailPrescriptions } = require("@/data/mockData"); return mockPatientDetailPrescriptions || []; } catch { return []; }
+    }
     const filtered = allRx.filter((rx: any) => rx.patientId === numPatientId || rx.patient === patient?.name);
-    return filtered.length > 0 ? filtered.map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` })) : (mockPatientDetailPrescriptions || []).map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` }));
+    if (filtered.length > 0) return filtered.map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` }));
+    if (getAppMode() === "production") return [];
+    try { const { mockPatientDetailPrescriptions } = require("@/data/mockData"); return (mockPatientDetailPrescriptions || []).map((r: any, idx: number) => ({ ...r, _id: r.id ?? `RX-${idx}` })); } catch { return []; }
   }, [allRx, numPatientId, patient?.name]);
 
-  const [consultRecords, setConsultRecords] = useState<any[]>(() =>
-    (mockPatientConsultations || []).map((c: any, idx: number) => ({ ...c, _id: c.id ?? `CONS-${idx}` })),
-  );
+  const [consultRecords, setConsultRecords] = useState<any[]>(() => {
+    if (getAppMode() === "production") return [];
+    try { const { mockPatientConsultations } = require("@/data/mockData"); return (mockPatientConsultations || []).map((c: any, idx: number) => ({ ...c, _id: c.id ?? `CONS-${idx}` })); } catch { return []; }
+  });
   const [rxRecords, setRxRecords] = useState<any[]>(patientRxRecords);
-  const [labRecords, setLabRecords] = useState<any[]>(() =>
-    (mockPatientAnalyses || []).map((a: any, idx: number) => ({ ...a, _id: a.id ?? `LAB-${idx}` })),
-  );
+  const [labRecords, setLabRecords] = useState<any[]>(() => {
+    if (getAppMode() === "production") return [];
+    try { const { mockPatientAnalyses } = require("@/data/mockData"); return (mockPatientAnalyses || []).map((a: any, idx: number) => ({ ...a, _id: a.id ?? `LAB-${idx}` })); } catch { return []; }
+  });
 
   // Sync rx records when patient changes
   useEffect(() => {

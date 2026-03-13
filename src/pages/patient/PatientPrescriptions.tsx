@@ -30,6 +30,7 @@ const statusConfig: Record<PharmacyResponse["status"], { label: string; class: s
 const PatientPrescriptions = () => {
   const { user } = useAuth();
   const patientName = user ? `${user.firstName} ${user.lastName}` : "Patient";
+  const patientId = readAuthUser()?.patientId ?? null;
   const [filter, setFilter] = useState("all");
   const [doctorRx] = useDoctorPrescriptions();
   const { isEnabled } = useActionGating();
@@ -43,9 +44,12 @@ const PatientPrescriptions = () => {
     openNow: true,
   }));
   
-  // Filter prescriptions for current patient
+  // Filter prescriptions for current patient — use patientId when available, fallback to name
   const prescriptions: PrescriptionWithPharmacies[] = doctorRx
-    .filter(rx => (rx.patient || "").toLowerCase() === patientName.toLowerCase())
+    .filter(rx => {
+      if (patientId && (rx as any).patientId) return (rx as any).patientId === patientId;
+      return (rx.patient || "").toLowerCase() === patientName.toLowerCase();
+    })
     .map(rx => ({
       ...rx,
       patient: rx.patient || "",
