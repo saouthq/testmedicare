@@ -46,7 +46,7 @@ const DoctorDashboard = () => {
   // Derive waiting room from shared appointments store
   const todayAppointments = useMemo(() =>
     allAppointments
-      .filter(a => a.date === today && a.doctor === CURRENT_DOCTOR)
+      .filter(a => a.date === today && a.doctor === getCurrentDoctor())
       .sort((a, b) => a.startTime.localeCompare(b.startTime)),
     [allAppointments, today]
   );
