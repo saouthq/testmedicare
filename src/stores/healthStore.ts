@@ -142,7 +142,7 @@ export function addVaccination(v: Vaccination) {
 
 export function addMeasure(m: HealthMeasure) {
   store.set(prev => ({ ...prev, measures: [m, ...prev.measures] }));
-  syncHealthRecordToSupabase("measure", m.type || "Mesure", m, m.date);
+  syncHealthRecordToSupabase("measure", m.label || "Mesure", m, m.date);
 }
 
 export function addSurgery(s: Surgery) {
