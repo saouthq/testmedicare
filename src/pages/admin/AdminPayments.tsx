@@ -33,14 +33,17 @@ const AdminPayments = () => {
   // Map Supabase invoices to AdminPayment format
   const supabasePayments: AdminPayment[] = (supabaseInvoicesQuery.data || []).map(row => ({
     id: row.id,
+    type: "teleconsult" as const,
     payerId: "",
     payerName: row.patient_name,
+    payerEmail: "",
     payerRole: "patient" as any,
     amount: row.amount,
     currency: "DT",
     method: row.payment || "especes",
     status: row.status as any,
     description: row.type,
+    reference: row.id,
     createdAt: row.created_at,
     organizationId: "",
   }));

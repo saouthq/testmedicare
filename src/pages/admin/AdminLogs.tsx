@@ -70,13 +70,13 @@ const AdminLogs = () => {
   // Audit tab — in production, map from Supabase; in demo, from local service
   const supabaseAuditMapped: AuditLogEntry[] = (supabaseLogsQuery.data || []).map(row => ({
     id: row.id,
-    timestamp: new Date(row.created_at).toLocaleString("fr-TN"),
-    userId: row.user_id || "",
-    userName: row.user_name || "Système",
+    actorAdminName: row.user_name || "Système",
+    actorRole: "admin",
     actionType: row.action || "",
     targetType: row.entity_type || "",
     targetId: row.entity_id || "",
-    description: typeof row.details === "string" ? row.details : JSON.stringify(row.details || {}),
+    summary: typeof row.details === "string" ? row.details : JSON.stringify(row.details || {}),
+    createdAt: new Date(row.created_at).toLocaleString("fr-TN"),
   }));
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
