@@ -478,6 +478,7 @@ const SimulationPanel = () => {
                 </button>
               ))}
             </div>
+            )}
 
             {/* Expandable role groups */}
             <div className="space-y-0.5">
