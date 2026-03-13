@@ -180,6 +180,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     }
     return this.props.children;
   }
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
