@@ -1,10 +1,9 @@
 /**
  * SecretarySMS — Gestion des rappels SMS automatiques et manuels.
- * Envoi en masse, templates, historique, programmation.
- * // TODO BACKEND: POST /api/secretary/sms
+ * Dual-mode: localStorage (demo) + Supabase sms_log (production).
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MessageSquare, Send, Clock, CheckCircle2, AlertCircle, Users,
   Plus, Search, Calendar, Bell, Settings, Eye, Trash2, X, Copy
@@ -17,6 +16,8 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { mockSecretaryTemplates } from "@/data/mockData";
 import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
+import { getAppMode } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 type SMSTab = "send" | "templates" | "history" | "auto";
 
@@ -41,19 +42,49 @@ const autoRules = [
   { id: 5, name: "Anniversaire patient", desc: "SMS de vœux le jour de l'anniversaire", enabled: false, timing: "08:00" },
 ];
 
+/** Map Supabase sms_log row to SMSHistory */
+function mapSmsRow(row: any): SMSHistory {
+  return {
+    id: row.id,
+    recipient: row.recipient || "",
+    phone: row.phone || "",
+    message: row.message || "",
+    sentAt: row.sent_at ? new Date(row.sent_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "",
+    status: (row.status === "sent" ? "delivered" : row.status) as SMSHistory["status"],
+    type: (row.sms_type || "manual") as "manual" | "auto",
+  };
+}
+
 const SecretarySMS = () => {
   const [tab, setTab] = useState<SMSTab>("send");
   const [templates, setTemplates] = useState(mockSecretaryTemplates);
-  const [history] = useState(mockHistory);
+  const [history, setHistory] = useState<SMSHistory[]>(mockHistory);
   const [rules, setRules] = useState(autoRules);
   const [allAppointments] = useSharedAppointments();
+  const [doctorId, setDoctorId] = useState<string | null>(null);
 
   // Send tab
   const [recipients, setRecipients] = useState<string[]>([]);
   const [messageText, setMessageText] = useState("");
-  const [showSelectPatients, setShowSelectPatients] = useState(false);
   const [scheduleSend, setScheduleSend] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
+
+  // Load SMS history from Supabase in production
+  useEffect(() => {
+    if (getAppMode() !== "production") return;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      setDoctorId(session.user.id);
+      const { data } = await (supabase.from as any)("sms_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (data && data.length > 0) {
+        setHistory(data.map(mapSmsRow));
+      }
+    })();
+  }, []);
 
   // Tomorrow's appointments from shared store
   const tomorrow = new Date();
@@ -61,15 +92,48 @@ const SecretarySMS = () => {
   const tomorrowStr = tomorrow.toISOString().slice(0, 10);
   const tomorrowAppts = allAppointments.filter(a => a.date === tomorrowStr && !["cancelled", "absent", "done"].includes(a.status));
 
-  const handleSendBulk = () => {
+  const handleSendBulk = async () => {
     if (recipients.length === 0 && !messageText.trim()) return;
     toast({ title: "SMS envoyés", description: `${recipients.length || 1} message(s) ${scheduleSend ? "programmé(s)" : "envoyé(s)"}.` });
+
+    // Persist each SMS to sms_log
+    if (getAppMode() === "production" && doctorId) {
+      for (const recipient of recipients) {
+        try {
+          await (supabase.from as any)("sms_log").insert({
+            doctor_id: doctorId,
+            recipient,
+            message: messageText,
+            sms_type: "manual",
+            status: scheduleSend ? "pending" : "sent",
+            sent_at: scheduleSend ? null : new Date().toISOString(),
+          });
+        } catch {}
+      }
+    }
+
     setRecipients([]);
     setMessageText("");
   };
 
-  const handleSendReminders = () => {
+  const handleSendReminders = async () => {
     toast({ title: "Rappels envoyés", description: `${tomorrowAppts.length} SMS de rappel envoyés pour les RDV de demain.` });
+
+    if (getAppMode() === "production" && doctorId) {
+      for (const apt of tomorrowAppts) {
+        try {
+          await (supabase.from as any)("sms_log").insert({
+            doctor_id: doctorId,
+            recipient: apt.patient,
+            phone: apt.phone || "",
+            message: `Rappel : RDV demain à ${apt.startTime} avec ${apt.doctor}.`,
+            sms_type: "auto",
+            status: "sent",
+            sent_at: new Date().toISOString(),
+          });
+        } catch {}
+      }
+    }
   };
 
   const toggleRule = (id: number) => {
@@ -227,7 +291,7 @@ const SecretarySMS = () => {
                     <td className="p-3 text-xs text-muted-foreground hidden sm:table-cell max-w-64 truncate">{h.message}</td>
                     <td className="p-3 text-xs text-muted-foreground">{h.sentAt}</td>
                     <td className="p-3"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${h.type === "auto" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{h.type === "auto" ? "Auto" : "Manuel"}</span></td>
-                    <td className="p-3"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusConfig[h.status].cls}`}>{statusConfig[h.status].label}</span></td>
+                    <td className="p-3"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusConfig[h.status]?.cls || "bg-muted text-muted-foreground"}`}>{statusConfig[h.status]?.label || h.status}</span></td>
                   </tr>
                 ))}
               </tbody>

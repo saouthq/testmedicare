@@ -1,14 +1,12 @@
 /**
  * SecretaryCallLog — Journal d'appels téléphoniques du cabinet.
- * Gestion complète des appels entrants/sortants avec rappels et templates SMS.
- * // TODO BACKEND: GET/POST /api/secretary/calls
+ * Dual-mode: localStorage (demo) + Supabase call_log (production).
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Clock, Search,
-  Plus, MessageSquare, Send, CheckCircle2, AlertCircle, User, Calendar,
-  X, Filter, RefreshCw, Voicemail, Star, ArrowRight
+  Plus, MessageSquare, Send, CheckCircle2, AlertCircle, X, Voicemail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { mockSecretaryTemplates } from "@/data/mockData";
+import { getAppMode } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 type CallType = "incoming" | "outgoing" | "missed" | "voicemail";
 type CallFilter = "all" | "incoming" | "outgoing" | "missed" | "voicemail";
@@ -55,6 +55,24 @@ const typeConfig: Record<CallType, { label: string; icon: any; cls: string }> = 
   voicemail: { label: "Vocal", icon: Voicemail, cls: "text-warning bg-warning/10" },
 };
 
+/** Map Supabase row to local CallEntry */
+function mapCallRow(row: any): CallEntry {
+  return {
+    id: row.id,
+    caller: row.caller || "",
+    phone: row.phone || "",
+    type: row.call_type as CallType,
+    time: row.time || "",
+    date: row.date || "",
+    duration: row.duration || undefined,
+    motif: row.motif || "",
+    handled: row.handled ?? false,
+    note: row.note || undefined,
+    followUp: row.follow_up || undefined,
+    priority: row.priority ?? false,
+  };
+}
+
 const SecretaryCallLog = () => {
   const [calls, setCalls] = useState(mockCalls);
   const [filter, setFilter] = useState<CallFilter>("all");
@@ -66,6 +84,24 @@ const SecretaryCallLog = () => {
   const [newCallPhone, setNewCallPhone] = useState("");
   const [newCallMotif, setNewCallMotif] = useState("");
   const [newCallNote, setNewCallNote] = useState("");
+  const [doctorId, setDoctorId] = useState<string | null>(null);
+
+  // Load from Supabase in production
+  useEffect(() => {
+    if (getAppMode() !== "production") return;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      setDoctorId(session.user.id);
+      const { data } = await (supabase.from as any)("call_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (data && data.length > 0) {
+        setCalls(data.map(mapCallRow));
+      }
+    })();
+  }, []);
 
   const filtered = calls.filter(c => {
     if (filter !== "all" && c.type !== filter) return false;
@@ -75,31 +111,73 @@ const SecretaryCallLog = () => {
 
   const missedCount = calls.filter(c => c.type === "missed" && !c.handled).length;
   const voicemailCount = calls.filter(c => c.type === "voicemail" && !c.handled).length;
-  const todayCount = calls.filter(c => c.date === "20 Fév").length;
+  const todayCount = calls.length;
 
-  const handleMarkHandled = (id: number) => {
+  const handleMarkHandled = async (id: number) => {
     setCalls(prev => prev.map(c => c.id === id ? { ...c, handled: true } : c));
     toast({ title: "Appel traité" });
+    if (getAppMode() === "production") {
+      try {
+        await (supabase.from as any)("call_log").update({ handled: true }).eq("id", id);
+      } catch {}
+    }
   };
 
-  const handleSendSMS = () => {
+  const handleSendSMS = async () => {
     if (!showSMS || !smsText.trim()) return;
     toast({ title: "SMS envoyé", description: `Message envoyé à ${showSMS.caller} (${showSMS.phone})` });
+    // Log SMS to sms_log in production
+    if (getAppMode() === "production" && doctorId) {
+      try {
+        await (supabase.from as any)("sms_log").insert({
+          doctor_id: doctorId,
+          recipient: showSMS.caller,
+          phone: showSMS.phone,
+          message: smsText,
+          sms_type: "manual",
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        });
+      } catch {}
+    }
     setShowSMS(null);
     setSmsText("");
   };
 
-  const handleLogCall = () => {
+  const handleLogCall = async () => {
     if (!newCallPatient.trim()) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
     const newCall: CallEntry = {
       id: Date.now(), caller: `Secrétaire → ${newCallPatient}`, phone: newCallPhone || "+216 XX XXX XXX",
-      type: "outgoing", time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-      date: "20 Fév", duration: "—", motif: newCallMotif || "Appel sortant", handled: true, note: newCallNote,
+      type: "outgoing", time: timeStr, date: dateStr, duration: "—",
+      motif: newCallMotif || "Appel sortant", handled: true, note: newCallNote,
     };
     setCalls(prev => [newCall, ...prev]);
     setShowNewCall(false);
     setNewCallPatient(""); setNewCallPhone(""); setNewCallMotif(""); setNewCallNote("");
     toast({ title: "Appel enregistré" });
+
+    // Persist to Supabase
+    if (getAppMode() === "production" && doctorId) {
+      try {
+        await (supabase.from as any)("call_log").insert({
+          doctor_id: doctorId,
+          caller: newCall.caller,
+          phone: newCall.phone,
+          call_type: "outgoing",
+          time: timeStr,
+          date: dateStr,
+          duration: "—",
+          motif: newCall.motif,
+          handled: true,
+          note: newCallNote || "",
+        });
+      } catch (e) {
+        console.warn("[SecretaryCallLog] insert failed:", e);
+      }
+    }
   };
 
   const applyTemplate = (tpl: typeof mockSecretaryTemplates[0]) => {
@@ -118,7 +196,7 @@ const SecretaryCallLog = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl border bg-card p-3 flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Phone className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-lg font-bold text-foreground">{todayCount}</p><p className="text-[10px] text-muted-foreground">Aujourd'hui</p></div>
+            <div><p className="text-lg font-bold text-foreground">{todayCount}</p><p className="text-[10px] text-muted-foreground">Total appels</p></div>
           </div>
           <div className="rounded-xl border bg-destructive/5 border-destructive/20 p-3 flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center"><PhoneMissed className="h-5 w-5 text-destructive" /></div>

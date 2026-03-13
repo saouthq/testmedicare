@@ -151,6 +151,12 @@ async function loadSupabaseUser(supabaseUserId: string): Promise<AppUser | null>
 
     store.set(user);
     syncLegacyRole(user);
+
+    // Load doctor subscription (activity/specialty) if doctor role
+    if (role === "doctor") {
+      import("./doctorSubscriptionStore").then(m => m.loadDoctorSubscription()).catch(() => {});
+    }
+
     return user;
   } catch (err) {
     console.error("[authStore] Failed to load Supabase user:", err);
