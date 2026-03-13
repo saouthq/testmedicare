@@ -83,7 +83,7 @@ const store = createStore<DoctorProfile>("medicare_doctor_profile", defaultProfi
 
 export const doctorProfileStore = store;
 
-export function useDoctorProfile(): [DoctorProfile, (v: DoctorProfile | ((p: DoctorProfile) => DoctorProfile)) => void] {
+export function useDoctorProfile() {
   return useDualQuery<DoctorProfile>({
     store,
     tableName: "doctors_directory",

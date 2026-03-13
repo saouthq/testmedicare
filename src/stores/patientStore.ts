@@ -42,7 +42,7 @@ const defaultProfile: PatientProfile = {
 const profileStore = createStore<PatientProfile>("medicare_patient_profile", defaultProfile);
 
 // ── Hooks ──
-export function usePatientProfile(): [PatientProfile, (v: PatientProfile | ((p: PatientProfile) => PatientProfile)) => void] {
+export function usePatientProfile() {
   return useDualQuery<PatientProfile>({
     store: profileStore,
     tableName: "profiles",

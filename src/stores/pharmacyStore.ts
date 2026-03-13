@@ -70,7 +70,7 @@ function mapPharmacyRxRow(row: any): PharmacyPrescription {
   };
 }
 
-export function usePharmacyPrescriptions(): [PharmacyPrescription[], (v: PharmacyPrescription[] | ((p: PharmacyPrescription[]) => PharmacyPrescription[])) => void] {
+export function usePharmacyPrescriptions() {
   return useDualQuery<PharmacyPrescription[]>({
     store: rxStore,
     tableName: "pharmacy_prescriptions",

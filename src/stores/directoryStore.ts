@@ -115,6 +115,8 @@ function mapMedicineRow(row: any): MockMedicine {
     warnings: [],
     pregnancyInfo: "",
     storage: "",
+    faq: [],
+    similarSlugs: [],
   };
 }
 

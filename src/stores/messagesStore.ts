@@ -136,7 +136,7 @@ function mapChatMessageRow(row: any): ChatMessage {
   };
 }
 
-export function useChatMessages(): [ChatMessage[], (v: ChatMessage[] | ((p: ChatMessage[]) => ChatMessage[])) => void] {
+export function useChatMessages() {
   return useDualQuery<ChatMessage[]>({
     store: messagesItemsStore,
     tableName: "chat_messages",
