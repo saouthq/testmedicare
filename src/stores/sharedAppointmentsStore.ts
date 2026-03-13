@@ -365,7 +365,8 @@ export function getAppointmentsForDoctor(appointments: SharedAppointment[], doct
 
 /** Get today's date as YYYY-MM-DD */
 export function getTodayDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /** Get appointments for a patient by patientId */
