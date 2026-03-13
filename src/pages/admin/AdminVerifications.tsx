@@ -138,6 +138,27 @@ const AdminVerifications = () => {
   const verificationUpdate = useAdminVerificationUpdate();
 
   const buildVerifications = (): Verification[] => {
+    // In production mode, use Supabase data
+    if (isProduction && supabaseQuery.data) {
+      return supabaseQuery.data.map(row => ({
+        id: row.id,
+        entityType: row.entityType,
+        entityName: row.entityName,
+        specialty: row.specialty,
+        city: row.city,
+        email: "",
+        phone: row.phone,
+        submittedAt: new Date(row.created_at).toLocaleDateString("fr-TN", { day: "2-digit", month: "short", year: "numeric" }),
+        status: row.verified ? "approved" : "pending",
+        docs: [],
+        events: [{
+          id: `e-${row.id}`, type: "submitted" as const, text: "Dossier soumis",
+          author: row.entityName, createdAt: row.created_at,
+        }],
+      }));
+    }
+
+    // Demo mode: use mocks + registrations
     const base = [...initialVerifications];
     const registrations = getRegistrations();
 
