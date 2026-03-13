@@ -124,7 +124,11 @@ export function updateAppointmentStatus(id: string, status: AppointmentStatus, e
 export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">) {
   const id = `apt-${Date.now()}`;
   const endTime = computeEndTime(apt.startTime, apt.duration);
-  const newApt: SharedAppointment = { ...apt, id, endTime };
+  // Auto-populate doctorId from auth if not provided
+  const { readAuthUser } = require("@/stores/authStore");
+  const currentUser = readAuthUser();
+  const doctorId = apt.doctorId || (currentUser?.role === "doctor" ? currentUser.id : undefined);
+  const newApt: SharedAppointment = { ...apt, id, endTime, doctorId };
   store.set(prev => [...prev, newApt].sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)));
 
   // Notify doctor
