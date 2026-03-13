@@ -35,6 +35,23 @@ interface NavSection {
   items: NavItem[];
 }
 
+/** Small badge showing current app mode */
+function ModeBadge() {
+  const [mode] = useAppMode();
+  if (mode === "production") {
+    return (
+      <span className="ml-2 hidden sm:inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/30 px-2 py-0.5 text-[9px] font-semibold text-accent uppercase tracking-wider">
+        🔗 Production
+      </span>
+    );
+  }
+  return (
+    <span className="ml-2 hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 text-[9px] font-semibold text-primary uppercase tracking-wider">
+      🎭 Démo
+    </span>
+  );
+}
+
 interface DashboardLayoutProps {
   children: ReactNode;
   role: "patient" | "doctor" | "pharmacy" | "laboratory" | "secretary" | "admin" | "hospital" | "clinic";
