@@ -356,9 +356,11 @@ const SimulationPanel = () => {
   };
 
   const goTo = (url: string, role?: string) => {
-    const resolved = role || resolveRole(url);
-    if (resolved && resolved !== "public") {
-      switchDemoRole(resolved as UserRole);
+    if (!isProduction) {
+      const resolved = role || resolveRole(url);
+      if (resolved && resolved !== "public") {
+        switchDemoRole(resolved as UserRole);
+      }
     }
     navigate(url);
   };
