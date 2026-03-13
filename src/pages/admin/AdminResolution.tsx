@@ -152,7 +152,9 @@ const AdminResolution = () => {
   const handleAddNote = () => {
     if (!selectedReport || !adminNote.trim()) return;
     const note: ModerationNote = { id: `n-${Date.now()}`, author: "Admin", text: adminNote.trim(), type: "note", createdAt: new Date().toISOString() };
-    setReports(prev => prev.map(x => x.id === selectedReport.id ? { ...x, notes: [...x.notes, note] } : x));
+    const updated = reports.map(x => x.id === selectedReport.id ? { ...x, notes: [...x.notes, note] } : x);
+    setReports(updated);
+    setStoreReports(updated); // sync back
     setSelectedReport(prev => prev ? { ...prev, notes: [...prev.notes, note] } : null);
     setAdminNote("");
     toast({ title: "Note ajoutée" });
