@@ -55,7 +55,7 @@ const PatientDashboard = () => {
     const today = new Date().toISOString().slice(0, 10);
     const todayApts = appointments.filter(a => a.date === today);
     const activePrescriptions = recentPrescriptions.length;
-    const pendingResults = health.documents.filter(d => d.type === "Analyse").length;
+    const pendingResults = (health?.documents ?? []).filter(d => d.type === "Analyse").length;
     return {
       nextApt: appointments.length > 0 ? `${appointments[0].date} ${appointments[0].startTime}` : "Aucun",
       upcomingCount: appointments.length,
