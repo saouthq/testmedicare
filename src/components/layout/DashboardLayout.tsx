@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { toast } from "@/hooks/use-toast";
 import { useNotifications } from "@/stores/notificationsStore";
+import { useAppMode } from "@/stores/authStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import NotificationCenter from "@/components/shared/NotificationCenter";
 import AdminSpotlight from "@/components/admin/AdminSpotlight";
