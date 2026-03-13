@@ -3,6 +3,8 @@
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
+import { appendLog } from "@/services/admin/adminAuditService";
+import { toast } from "@/hooks/use-toast";
 import {
   UserPlus, CheckCircle, Clock, TrendingUp,
   BarChart3, Eye, Filter,
