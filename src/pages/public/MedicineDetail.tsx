@@ -25,7 +25,17 @@ const MedicineDetail = () => {
   const medicines = useMedicinesDirectory();
   const med = medicines.find(m => m.slug === slug);
 
-  if (!med) return <div className="min-h-screen bg-background"><PublicHeader /><div className="container mx-auto px-4 py-20 text-center"><h1 className="text-xl font-bold">Médicament non trouvé</h1><Link to="/medicaments" className="text-primary mt-4 inline-block">← Retour à l'annuaire</Link></div></div>;
+  if (!med) return (
+    <div className="min-h-screen bg-background">
+      <PublicHeader />
+      <div className="container mx-auto px-4 py-20 text-center">
+        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center"><Pill className="h-8 w-8 text-muted-foreground/40" /></div>
+        <h1 className="text-xl font-bold text-foreground mb-2">Médicament non trouvé</h1>
+        <p className="text-sm text-muted-foreground mb-4">Le médicament recherché n'existe pas dans notre base.</p>
+        <Link to="/medicaments" className="text-primary hover:underline">← Retour à l'annuaire des médicaments</Link>
+      </div>
+    </div>
+  );
 
   const jsonLd = { "@context": "https://schema.org", "@type": "Drug", name: med.name, dosageForm: med.form, activeIngredient: med.name, description: med.summary };
   const similars = medicines.filter(m => med.similarSlugs.includes(m.slug));

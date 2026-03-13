@@ -180,6 +180,12 @@ export function PatientsProvider({ children }: { children: ReactNode }) {
       if (filter === "recent") return p.lastVisit !== null;
       if (filter === "chronic") return p.chronicConditions.length > 0;
       if (filter === "new") return p.isNew;
+      if (filter === "this_month") {
+        if (!p.lastVisit) return false;
+        const now = new Date();
+        const monthStr = now.toLocaleDateString("fr-FR", { month: "short", year: "numeric" });
+        return p.lastVisit.toLowerCase().includes(monthStr.toLowerCase()) || p.lastVisit.includes(`${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`);
+      }
       return true;
     });
   }, [patients, search, filter]);

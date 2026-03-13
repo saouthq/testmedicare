@@ -271,9 +271,9 @@ const Help = () => {
           ) : (
             <div className="text-center py-6">
               <Mail className="h-12 w-12 text-accent mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground mb-1">Message envoyé !</h3>
-              <p className="text-sm text-muted-foreground">Notre équipe vous répondra sous 24h à {contactEmail}.</p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => { setContactSent(false); setContactName(""); setContactEmail(""); setContactMessage(""); }}>
+              <h3 className="font-semibold text-foreground mb-1">Demande enregistrée !</h3>
+              <p className="text-sm text-muted-foreground">Votre demande <strong>#{ticketNumber}</strong> a été enregistrée. Notre équipe vous répondra sous 24h à {contactEmail}.</p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={() => { setContactSent(false); setContactName(""); setContactEmail(""); setContactSubject(""); setContactMessage(""); }}>
                 Envoyer un autre message
               </Button>
             </div>

@@ -12,7 +12,17 @@ const HospitalDetail = () => {
   const hospitals = useHospitalsDirectory();
   const hospital = hospitals.find(h => h.slug === slug);
 
-  if (!hospital) return <div className="min-h-screen bg-background"><PublicHeader /><div className="container mx-auto px-4 py-20 text-center"><h1 className="text-xl font-bold">Hôpital non trouvé</h1><Link to="/hospitals" className="text-primary mt-4 inline-block">← Retour à l'annuaire</Link></div></div>;
+  if (!hospital) return (
+    <div className="min-h-screen bg-background">
+      <PublicHeader />
+      <div className="container mx-auto px-4 py-20 text-center">
+        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center"><Hospital className="h-8 w-8 text-muted-foreground/40" /></div>
+        <h1 className="text-xl font-bold text-foreground mb-2">Hôpital non trouvé</h1>
+        <p className="text-sm text-muted-foreground mb-4">L'établissement recherché n'existe pas ou a été supprimé.</p>
+        <Link to="/hospitals" className="text-primary hover:underline">← Retour à l'annuaire des hôpitaux</Link>
+      </div>
+    </div>
+  );
 
   const jsonLd = { "@context": "https://schema.org", "@type": "Hospital", name: hospital.name, address: { "@type": "PostalAddress", streetAddress: hospital.address, addressLocality: hospital.city, addressCountry: "TN" }, telephone: hospital.phone };
 

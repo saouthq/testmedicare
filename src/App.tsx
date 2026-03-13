@@ -355,6 +355,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </ErrorBoundary>
         {/* Floating simulation panel for cross-role workflow testing */}
         <SimulationPanel />
       </BrowserRouter>

@@ -271,6 +271,12 @@ const PatientHealth = () => {
   return (
     <DashboardLayout role="patient" title="Mon espace santé">
       <div className="max-w-2xl space-y-4">
+        {/* Export button */}
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleExportDossier}>
+            <Download className="h-4 w-4 mr-1" />Exporter mon dossier médical
+          </Button>
+        </div>
         {/* MENU */}
         {section === "menu" && (
           <div className="space-y-4">
