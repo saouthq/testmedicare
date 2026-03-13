@@ -122,9 +122,10 @@ const generateDays = (weekOffset: number, doctorRef: string) => {
     date.setDate(start.getDate() + i);
     const frDayName = JS_DAY_TO_FR[date.getDay()];
     const dayConfig = availability.days[frDayName];
-    const dateStr = date.toISOString().slice(0, 10);
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-    const isPast = dateStr < today.toISOString().slice(0, 10);
+    const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
+    const isPast = dateStr < todayStr;
     const leave = leaves.find(l => l.status !== "past" && dateStr >= l.startDate && dateStr <= l.endDate);
     const fullDayBlock = blockedSlots.find(b => b.date === dateStr && b.duration >= 480);
 
