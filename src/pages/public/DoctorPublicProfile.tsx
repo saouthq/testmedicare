@@ -62,6 +62,23 @@ const DoctorPublicProfile = () => {
     verified: r.verified,
     helpful: Math.floor(Math.random() * 10) + 1,
   }));
+
+  // Favorites
+  const [favorites] = useFavoriteDoctors();
+  const isFavorite = useMemo(() => favorites.some(f => f.id === numId), [favorites, numId]);
+  const handleToggleFavorite = () => {
+    if (isFavorite) {
+      removeFavoriteDoctor(numId);
+    } else {
+      addFavoriteDoctor({
+        id: numId,
+        name: doctorData.name,
+        specialty: doctorData.specialty,
+        avatar: doctorData.initials,
+        acceptsMessages: true,
+      });
+    }
+  };
   
   const doctorExists = numId === 1 || doctors.some(d => d.id === numId);
   if (!doctorExists) {
