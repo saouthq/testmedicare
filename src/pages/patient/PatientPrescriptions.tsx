@@ -1,5 +1,6 @@
 /**
  * PatientPrescriptions — Multi-pharmacy send + cross-role tracking via stores.
+ * Uses real patient name from auth context.
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { requestRenewal } from "@/stores/doctorStore";
+import { useAuth } from "@/stores/authStore";
 
 import { type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
 import { usePharmaciesDirectory } from "@/stores/directoryStore";
@@ -26,11 +28,12 @@ const statusConfig: Record<PharmacyResponse["status"], { label: string; class: s
 };
 
 const PatientPrescriptions = () => {
+  const { user } = useAuth();
+  const patientName = user ? `${user.firstName} ${user.lastName}` : "Patient";
   const [filter, setFilter] = useState("all");
   const [doctorRx] = useDoctorPrescriptions();
   const { isEnabled } = useActionGating();
   const directoryPharmacies = usePharmaciesDirectory();
-  // Build partner pharmacies from directory store
   const mockPartnerPharmacies = directoryPharmacies.map(p => ({
     id: p.id?.toString() || `ph-${p.name}`,
     name: p.name,
@@ -40,7 +43,6 @@ const PatientPrescriptions = () => {
     openNow: true,
   }));
   
-  // Build prescriptions from doctor prescriptions store
   const prescriptions: PrescriptionWithPharmacies[] = doctorRx.map(rx => ({
     ...rx,
     patient: rx.patient || "",
@@ -52,14 +54,11 @@ const PatientPrescriptions = () => {
   const [pharmacySearch, setPharmacySearch] = useState("");
   const [selectedPharmacies, setSelectedPharmacies] = useState<string[]>([]);
 
-  // Read cross-role shared prescriptions
   const [sharedPrescriptions] = useSharedPrescriptions();
 
-  // Merge local mock data with shared store data for display
   const mergedPrescriptions = prescriptions.map((p) => {
     const shared = sharedPrescriptions.find((sp) => sp.id === p.id);
     if (shared) {
-      // Map shared pharmacy responses to local format
       const sharedResponses: PharmacyResponse[] = shared.sentToPharmacies.map((sph) => ({
         pharmacyId: sph.pharmacyId,
         pharmacyName: sph.pharmacyName,
@@ -68,7 +67,6 @@ const PatientPrescriptions = () => {
         pickupTime: sph.pickupTime,
         alternatives: sph.alternatives,
       }));
-      // Merge: keep local + add shared
       const existingIds = (p.sentToPharmacies || []).map((ph) => ph.pharmacyId);
       const newOnes = sharedResponses.filter((r) => !existingIds.includes(r.pharmacyId));
       return {
@@ -105,7 +103,7 @@ const PatientPrescriptions = () => {
 
   const handleSendToPharmacies = (id: string) => {
     if (!isEnabled("patient.send_to_pharmacy")) {
-      toast({ title: "Action désactivée", description: "L’envoi vers pharmacie est désactivé par l’administrateur." });
+      toast({ title: "Action désactivée", description: "L'envoi vers pharmacie est désactivé par l'administrateur." });
       return;
     }
 
@@ -117,11 +115,10 @@ const PatientPrescriptions = () => {
       return { id: phId, name: ph?.name || "" };
     });
 
-    // Write to cross-role store
     sendPrescriptionToPharmacies(
       {
         id: p.id,
-        patientName: "Amine Ben Ali", // TODO: get from session
+        patientName,
         doctorName: p.doctor,
         date: p.date,
         items: p.items,
@@ -204,7 +201,6 @@ const PatientPrescriptions = () => {
               
               {expandedId === p.id && (
                 <div className="border-t px-5 py-4 bg-muted/10 space-y-4">
-                  {/* Actions */}
                   <div className="flex gap-2 flex-wrap">
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Aperçu ordonnance (mock)" })}><Eye className="h-4 w-4 mr-1" />Voir le détail</Button>
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Téléchargement PDF (mock)" })}><Download className="h-4 w-4 mr-1" />Télécharger PDF</Button>
@@ -217,13 +213,13 @@ const PatientPrescriptions = () => {
                     {p.status === "active" && isEnabled("patient.request_renewal") && (
                       <Button variant="outline" size="sm" onClick={() => {
                         const renewalId = requestRenewal({
-                          patientName: "Amine Ben Ali",
-                          patientAvatar: "AB",
+                          patientName,
+                          patientAvatar: patientName.split(" ").map(w => w[0]).join("").toUpperCase(),
                           prescriptionId: p.id,
                           items: p.items,
                         });
                         if (!renewalId) {
-                          toast({ title: "Action désactivée", description: "Le renouvellement est désactivé par l’administrateur." });
+                          toast({ title: "Action désactivée", description: "Le renouvellement est désactivé par l'administrateur." });
                           return;
                         }
                         toast({ title: "Demande envoyée", description: `Demande de renouvellement de ${p.id} envoyée à ${p.doctor}. Visible dans son dashboard.` });
@@ -233,7 +229,6 @@ const PatientPrescriptions = () => {
                     )}
                   </div>
 
-                  {/* Pharmacy tracking */}
                   {(p.sentToPharmacies || []).length > 0 && (
                     <div className="rounded-xl border bg-card p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -268,7 +263,6 @@ const PatientPrescriptions = () => {
                     </div>
                   )}
 
-                  {/* Pharmacy search/selection panel */}
                   {sendingToPharmacy === p.id && isEnabled("patient.send_to_pharmacy") && (
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -332,39 +326,24 @@ const PatientPrescriptions = () => {
                                 </p>
                                 <div className="flex items-center gap-3 mt-1">
                                   <span className="text-[11px] text-muted-foreground">{ph.distance}</span>
-                                  <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
-                                    <Phone className="h-3 w-3" />{ph.phone}
-                                  </span>
+                                  {ph.phone && <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{ph.phone}</span>}
                                 </div>
                               </div>
                               {selectedPharmacies.includes(ph.id) && (
-                                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                                <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
                               )}
                             </div>
                           </button>
                         ))}
-                        {filteredPharmacies.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-4">Aucune pharmacie trouvée</p>
-                        )}
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-primary/10">
-                        <Button variant="outline" size="sm" onClick={handleCancelSend}>Annuler</Button>
-                        <Button
-                          size="sm"
-                          className="gradient-primary text-primary-foreground"
-                          disabled={selectedPharmacies.length === 0}
-                          onClick={() => handleSendToPharmacies(p.id)}
-                        >
-                          <Send className="h-3.5 w-3.5 mr-1" />
-                          Envoyer ({selectedPharmacies.length})
+                      {selectedPharmacies.length > 0 && (
+                        <Button className="w-full gradient-primary text-primary-foreground" onClick={() => handleSendToPharmacies(p.id)}>
+                          <Send className="h-4 w-4 mr-2" />
+                          Envoyer à {selectedPharmacies.length} pharmacie(s)
                         </Button>
-                      </div>
+                      )}
                     </div>
-                  )}
-
-                  {p.status === "active" && !sendingToPharmacy && getSentCount(p) === 0 && (
-                    <p className="text-xs text-muted-foreground">💡 Vous pouvez envoyer cette ordonnance à jusqu'à {MAX_PHARMACIES} pharmacies pour comparer les disponibilités.</p>
                   )}
                 </div>
               )}

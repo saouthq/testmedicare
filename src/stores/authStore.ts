@@ -152,9 +152,24 @@ async function loadSupabaseUser(supabaseUserId: string): Promise<AppUser | null>
     store.set(user);
     syncLegacyRole(user);
 
-    // Load doctor subscription (activity/specialty) if doctor role
+    // Role-specific initializations
     if (role === "doctor") {
       import("./doctorSubscriptionStore").then(m => m.loadDoctorSubscription()).catch(() => {});
+    }
+    if (role === "admin") {
+      import("./adminStore").then(m => m.loadAdminSupabaseData()).catch(() => {});
+    }
+    if (role === "patient") {
+      // Resolve patient_id from patients table and attach to user
+      try {
+        const { data: patientRow } = await (supabase.from as any)("patients")
+          .select("id")
+          .eq("user_id", supabaseUserId)
+          .maybeSingle();
+        if (patientRow?.id) {
+          store.set(prev => prev ? { ...prev, patientId: patientRow.id } : prev);
+        }
+      } catch {}
     }
 
     return user;
