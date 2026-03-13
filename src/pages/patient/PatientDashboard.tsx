@@ -38,8 +38,8 @@ const PatientDashboard = () => {
   const [favoriteDoctors] = useFavoriteDoctors();
   const { isEnabled } = useActionGating();
 
-  const PATIENT_ID = 1;
-  const appointments = useMemo(() => 
+  const PATIENT_ID = readAuthUser()?.patientId ?? 1;
+  const appointments = useMemo(() =>
     allAppointments.filter(a => a.patientId === PATIENT_ID && !["done", "cancelled", "absent"].includes(a.status))
       .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)),
     [allAppointments]
