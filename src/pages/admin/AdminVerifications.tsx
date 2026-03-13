@@ -235,6 +235,15 @@ const AdminVerifications = () => {
     const newStatus = motifAction.type === "approve" ? "approved" : "rejected";
     setVerifications(prev => prev.map(x => x.id === motifAction.id ? { ...x, status: newStatus, events: [...x.events, event] } : x));
 
+    // Production: update verified flag in Supabase
+    if (isProduction) {
+      verificationUpdate.mutate({
+        entityId: v.id,
+        entityType: v.entityType === "lab" ? "pharmacy" : v.entityType as "doctor" | "pharmacy",
+        verified: newStatus === "approved",
+      });
+    }
+
     if (v.id.startsWith("reg-")) {
       updateRegistrationStatus(v.id, newStatus as any, motif);
     }
