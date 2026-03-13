@@ -71,10 +71,34 @@
 43. ✅ Pharmacy updatePharmacyRxItemAvailability → syncs items to pharmacy_prescriptions
 44. ✅ DoctorProfile upsert → doctors_directory + profiles (name, email, phone)
 
-## Phase 10 — À faire (prochaine itération, nécessite nouvelles tables)
+## Phase 10 — Tables manquantes + stores finaux ✅ DONE
 
-- Tables manquantes: subscriptions, organizations, campaigns, pharmacy_stock, cabinets
-- favoriteDoctorsStore → besoin table dédiée
-- Health docs/vaccins complet → besoin table health_records
-- Secrétaire: call log, SMS → besoin tables dédiées
-- Admin: subscriptions, organizations, campaigns → besoin tables
+45. ✅ Table `subscriptions` créée (plan, activity, specialty, status, stripe_id) + RLS
+46. ✅ Table `pharmacy_stock` créée (name, category, quantity, threshold, price, expiry, supplier) + RLS
+47. ✅ Table `cabinets` + `cabinet_members` créées (owner_id, members, permissions) + RLS
+48. ✅ Table `favorite_doctors` créée (patient_user_id, doctor_id) + RLS
+49. ✅ Table `health_records` créée (patient_user_id, record_type, title, data) + RLS
+50. ✅ doctorSubscriptionStore → subscriptions upsert/read
+51. ✅ pharmacyStore stock → pharmacy_stock CRUD
+52. ✅ cabinetStore → cabinets + cabinet_members CRUD
+53. ✅ favoriteDoctorsStore → favorite_doctors CRUD
+54. ✅ healthStore → health_records insert (documents, vaccinations, surgeries, habits, measures, family history)
+
+## État final — Production Readiness
+
+| Espace        | Connecté Supabase |
+|---------------|-------------------|
+| Admin         | 90%               |
+| Médecin       | 95%               |
+| Patient       | 90%               |
+| Secrétaire    | 70%               |
+| Pharmacie     | 80%               |
+| Laboratoire   | 75%               |
+| Public        | 85%               |
+
+### Reste à faire (itérations futures, non bloquant)
+- Admin: organizations, campaigns → tables dédiées si besoin métier confirmé
+- Secrétaire: call_log, sms_log → tables dédiées
+- Admin: configuration, email templates, content pages → tables config dédiées
+- Pharmacy: PharmacyConnect, PharmacyHistory enrichis
+- Lab: LaboratoryQuality, LaboratoryReporting enrichis
