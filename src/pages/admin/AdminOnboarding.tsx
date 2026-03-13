@@ -40,7 +40,7 @@ const typeColors: Record<string, string> = { doctor: "bg-primary/10 text-primary
 
 const AdminOnboarding = () => {
   const { applications: records, setApplications: setRecords } = useAdminOnboarding();
-  const { applications: records } = useAdminOnboarding();
+  
   const [search, setSearch] = useState("");
   const [filterStep, setFilterStep] = useState<string>("all");
   const [selected, setSelected] = useState<OnboardingApplication | null>(null);
