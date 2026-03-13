@@ -155,7 +155,7 @@ const PaymentModal = ({ apt, onClose, onPaid }: { apt: SharedAppointment; onClos
   );
 };
 
-const PATIENT_ID = 1;
+const PATIENT_ID_FALLBACK = 1;
 
 const PatientAppointments = () => {
   const navigate = useNavigate();
