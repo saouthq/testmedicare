@@ -189,7 +189,7 @@ const PublicBooking = () => {
   // Payment state
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  const days = generateDays(weekOffset);
+  const days = generateDays(weekOffset, doctor.doctorRef);
   const isTeleconsult = consultType === "teleconsultation";
   const selectedMotifData = doctor.motifs.find(m => m.name === selectedMotif);
 
