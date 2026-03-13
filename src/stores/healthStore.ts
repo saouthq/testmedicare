@@ -55,7 +55,7 @@ async function syncAllergiesToSupabase(allergies: Allergy[]) {
       .limit(1);
     if (patients?.[0]) {
       await (supabase.from as any)("patients")
-        .update({ allergies: allergies.map(a => ({ name: a.name, severity: a.severity, type: a.type })) })
+        .update({ allergies: allergies.map(a => ({ name: a.name, severity: a.severity, reaction: a.reaction })) })
         .eq("id", patients[0].id);
     }
   } catch {}
