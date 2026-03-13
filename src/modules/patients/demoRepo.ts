@@ -15,7 +15,7 @@ export const demoPatientRepo: PatientRepository = {
   },
 
   async create(patient) {
-    const id = addPatient(patient);
+    const id = await addPatient(patient);
     return sharedPatientsStore.read().find(p => p.id === id)!;
   },
 
