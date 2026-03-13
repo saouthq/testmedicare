@@ -77,7 +77,7 @@ const PharmacyPrescriptions = () => {
       }
     }
     if (needsUpdate && newItems.length > 0) {
-      const { pharmacyRxStore } = require("@/stores/pharmacyStore");
+      const { pharmacyRxStore } = await import("@/stores/pharmacyStore");
       pharmacyRxStore.set((prev: PharmacyPrescription[]) => [...newItems, ...prev]);
     }
   }, [sharedPrescriptions, storeRx]);
