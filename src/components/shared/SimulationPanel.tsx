@@ -451,7 +451,14 @@ const SimulationPanel = () => {
               <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{currentRole}</span>
             </div>
 
-            {/* Quick role grid */}
+            {/* Quick role grid — Demo only */}
+            {isProduction ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 text-center">
+                <span className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                  🔒 Mode Production — connectez-vous avec un vrai compte Supabase
+                </span>
+              </div>
+            ) : (
             <div className="grid grid-cols-4 gap-1.5">
               {[
                 { label: "Patient", role: "patient", url: "/dashboard/patient", color: "text-primary" },
