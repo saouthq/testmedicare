@@ -248,9 +248,27 @@ const AdminResolution = () => {
     toast({ title: "Réponse envoyée" });
   };
 
-  const handleTicketClose = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" as any } : t)); appendLog("ticket_closed", "support", id, "Ticket clôturé"); toast({ title: "Ticket clôturé" }); };
-  const handleTicketReopen = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" as any } : t)); appendLog("ticket_reopened", "support", id, "Ticket réouvert"); toast({ title: "Ticket réouvert" }); };
-  const handleTicketTake = (id: string) => { setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress", assignedTo: "Admin Support" } : t)); setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress" as any, assignedTo: "Admin Support" } : t)); appendLog("ticket_taken", "support", id, "Ticket pris en charge"); toast({ title: "Pris en charge" }); };
+  const handleTicketClose = (id: string) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" } : t));
+    if (!isProduction) setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "closed" as any } : t));
+    if (isProduction) ticketUpdateMutation.mutate({ ticketId: id, updates: { status: "closed" } });
+    appendLog("ticket_closed", "support", id, "Ticket clôturé");
+    toast({ title: "Ticket clôturé" });
+  };
+  const handleTicketReopen = (id: string) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" } : t));
+    if (!isProduction) setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "open" as any } : t));
+    if (isProduction) ticketUpdateMutation.mutate({ ticketId: id, updates: { status: "open" } });
+    appendLog("ticket_reopened", "support", id, "Ticket réouvert");
+    toast({ title: "Ticket réouvert" });
+  };
+  const handleTicketTake = (id: string) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress", assignedTo: "Admin Support" } : t));
+    if (!isProduction) setStoreTickets(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress" as any, assignedTo: "Admin Support" } : t));
+    if (isProduction) ticketUpdateMutation.mutate({ ticketId: id, updates: { status: "in_progress" } });
+    appendLog("ticket_taken", "support", id, "Ticket pris en charge");
+    toast({ title: "Pris en charge" });
+  };
 
   // Global counts for tab badges
   const totalOpen = modStats.pending + dispStats.open + tickets.filter(t => t.status === "open").length;
