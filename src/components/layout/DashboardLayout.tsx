@@ -307,7 +307,6 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const specConfig = useMemo(() => {
     if (role !== "doctor") return null;
     try {
-      const { getSpecialtyConfig } = await import("@/components/consultation/specialtyConfig");
       return getSpecialtyConfig(doctorSub.activity, doctorSub.specialty);
     } catch { return null; }
   }, [role, doctorSub]);

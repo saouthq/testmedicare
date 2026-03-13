@@ -101,7 +101,6 @@ const PharmacyPrescriptions = () => {
 
   /* ── Save item changes to pharmacy store ── */
   const saveItems = (id: string) => {
-    const { pharmacyRxStore } = await import("@/stores/pharmacyStore");
     pharmacyRxStore.set((prev: PharmacyPrescription[]) => prev.map((p: PharmacyPrescription) => {
       if (p.id !== id) return p;
       return {

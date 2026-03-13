@@ -214,7 +214,6 @@ const AdminVerifications = () => {
     if (newStatus === "approved") {
       // Add to directoryStore so the professional appears in public search
       try {
-        const { directoryStore } = await import("@/stores/directoryStore");
         const dir = directoryStore.read();
         if (v.entityType === "doctor") {
           const newDoc = {
