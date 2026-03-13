@@ -159,7 +159,7 @@ const PATIENT_ID = 1;
 const PatientAppointments = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("upcoming");
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading }] = useSharedAppointments();
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState<string | null>(null);

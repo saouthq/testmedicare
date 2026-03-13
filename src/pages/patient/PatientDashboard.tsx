@@ -29,7 +29,7 @@ const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<HealthDocument | null>(null);
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading: aptsLoading }] = useSharedAppointments();
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
   const [health] = useHealth();
