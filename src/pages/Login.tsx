@@ -39,11 +39,11 @@ const Login = () => {
     setError("");
 
     try {
-      await signInWithEmail(email, password);
-      // authStore will be updated via onAuthStateChange → loadSupabaseUser
-      // We need to wait a tick for the store to update
+      const data = await signInWithEmail(email, password);
+      // Wait for store to update then navigate
       setTimeout(() => {
-        const currentUser = (await import("@/stores/authStore")).readAuthUser();
+        const { readAuthUser } = require("@/stores/authStore");
+        const currentUser = readAuthUser();
         navigate(`/dashboard/${currentUser?.role || "patient"}`);
       }, 300);
     } catch (err: any) {
