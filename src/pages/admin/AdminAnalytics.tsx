@@ -516,7 +516,7 @@ const AdminAnalytics = () => {
                   <p className="text-sm font-medium text-destructive flex items-center gap-2"><AlertTriangle className="h-4 w-4" />{selectedDoc.complaints} plainte(s)</p>
                 </div>
               )}
-              <Badge variant="outline" className="text-xs text-muted-foreground mt-4"><Info className="h-3 w-3 mr-1" />Données simulées</Badge>
+              {!isProduction && <Badge variant="outline" className="text-xs text-muted-foreground mt-4"><Info className="h-3 w-3 mr-1" />Données simulées en mode démo</Badge>}
             </ScrollArea>
           </>)}
         </SheetContent>
