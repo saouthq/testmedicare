@@ -23,8 +23,9 @@ import {
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import type { AppointmentStatus, SharedAppointment } from "@/types/appointment";
 import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
+import { readAuthUser } from "@/stores/authStore";
 
-const CURRENT_DOCTOR = "Dr. Bouazizi";
+const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 const statusLabels: Record<AppointmentStatus, string> = {
   pending: "À venir",

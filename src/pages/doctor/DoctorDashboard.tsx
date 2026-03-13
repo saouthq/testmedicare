@@ -22,8 +22,9 @@ import {
 import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { useActionGating } from "@/hooks/useActionGating";
+import { readAuthUser } from "@/stores/authStore";
 
-const CURRENT_DOCTOR = "Dr. Bouazizi";
+const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 const DoctorDashboard = () => {
   const teleconsultSessions = useTeleconsultSessions();

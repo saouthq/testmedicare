@@ -136,14 +136,17 @@ async function loadSupabaseUser(supabaseUserId: string): Promise<AppUser | null>
     if (!profile) return null;
 
     const role = (roleData?.role as UserRole) || "patient";
+    const firstName = profile.first_name || "";
+    const lastName = profile.last_name || "";
     const user: AppUser = {
       id: supabaseUserId,
-      firstName: profile.first_name || "",
-      lastName: profile.last_name || "",
+      firstName,
+      lastName,
       email: profile.email || "",
       role,
       isDemo: false,
       avatarUrl: profile.avatar_url || "",
+      doctorName: role === "doctor" ? `Dr. ${lastName || firstName}` : undefined,
     };
 
     store.set(user);
