@@ -10,8 +10,7 @@ const MATRIX_KEY = "medicare_feature_matrix";
 const OVERRIDES_KEY = "medicare_feature_overrides";
 
 // ── Types ──
-export type ActivityType = "generaliste" | "specialiste" | "dentiste" | "kine" | "laboratory" | "pharmacy" | "clinic";
-export type PlanTier = "essentiel" | "pro" | "cabinet";
+export type ActivityType = "generaliste" | "specialiste" | "dentiste" | "kine" | "osteopathe" | "sage_femme" | "orthophoniste" | "psychologue" | "nutritionniste" | "podologue" | "orthoptiste" | "laboratory" | "pharmacy" | "clinic";
 
 export interface FeatureDef {
   id: string;
@@ -45,10 +44,26 @@ export const activities: ActivityConfig[] = [
   { id: "generaliste", label: "Médecin généraliste" },
   {
     id: "specialiste", label: "Médecin spécialiste",
-    specialties: ["Cardiologue", "Dermatologue", "Gynécologue", "Ophtalmologue", "ORL", "Pédiatre", "Pneumologue", "Rhumatologue", "Urologue", "Neurologue", "Psychiatre", "Endocrinologue"],
+    specialties: [
+      "Cardiologue", "Dermatologue", "Gynécologue", "Ophtalmologue", "ORL",
+      "Pédiatre", "Pneumologue", "Rhumatologue", "Urologue", "Neurologue",
+      "Psychiatre", "Endocrinologue", "Gastro-entérologue", "Néphrologue",
+      "Allergologue", "Infectiologue", "Hématologue", "Oncologue",
+      "Chirurgien", "Chirurgien orthopédiste", "Chirurgien plastique", "Chirurgien vasculaire",
+      "Anesthésiste-réanimateur", "Radiologue", "Médecin interniste",
+      "Médecin du sport", "Médecin du travail", "Gériatre",
+      "Phlébologue", "Médecin esthétique",
+    ],
   },
-  { id: "dentiste", label: "Dentiste" },
+  { id: "dentiste", label: "Chirurgien-Dentiste / Orthodontiste" },
   { id: "kine", label: "Kinésithérapeute" },
+  { id: "osteopathe", label: "Ostéopathe" },
+  { id: "sage_femme", label: "Sage-femme" },
+  { id: "orthophoniste", label: "Orthophoniste" },
+  { id: "psychologue", label: "Psychologue" },
+  { id: "nutritionniste", label: "Nutritionniste / Diététicien" },
+  { id: "podologue", label: "Podologue" },
+  { id: "orthoptiste", label: "Orthoptiste" },
   { id: "laboratory", label: "Laboratoire d'analyses" },
   { id: "pharmacy", label: "Pharmacie" },
   { id: "clinic", label: "Clinique / Établissement" },
