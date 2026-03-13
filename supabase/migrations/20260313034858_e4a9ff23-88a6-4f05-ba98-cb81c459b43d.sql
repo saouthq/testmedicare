@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS doctor_availability_doctor_day_unique ON public.doctor_availability (doctor_id, day_name);
