@@ -122,8 +122,8 @@ export const authStore = store;
 async function loadSupabaseUser(supabaseUserId: string): Promise<AppUser | null> {
   try {
     const [{ data: profile }, { data: roleData }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", supabaseUserId).single(),
-      supabase.from("user_roles").select("role").eq("user_id", supabaseUserId).single(),
+      (supabase.from as any)("profiles").select("*").eq("id", supabaseUserId).single(),
+      (supabase.from as any)("user_roles").select("role").eq("user_id", supabaseUserId).single(),
     ]);
 
     if (!profile) return null;
