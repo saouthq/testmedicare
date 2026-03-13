@@ -1,12 +1,14 @@
 /**
  * notificationsStore.ts — Cross-role notification store.
- * Dual-mode: Supabase Realtime when authenticated, localStorage fallback for demo.
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { toast } from "sonner";
-import { getCurrentRole } from "./authStore";
+import { getCurrentRole, getAppMode } from "./authStore";
 import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapNotificationRow } from "@/lib/supabaseMappers";
 
 export interface CrossNotification {
   id: string;
@@ -24,7 +26,13 @@ const store = createStore<CrossNotification[]>("medicare_notifications", []);
 export const notificationsStore = store;
 
 export function useNotifications(role?: string) {
-  const [all, set] = useStore(store);
+  const [all, set] = useDualQuery<CrossNotification[]>({
+    store,
+    tableName: "notifications",
+    queryKey: ["notifications"],
+    mapRowToLocal: mapNotificationRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
   const filtered = role ? all.filter((n) => n.targetRole === role) : all;
   return { notifications: filtered, setNotifications: set, allNotifications: all };
 }

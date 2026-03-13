@@ -1,12 +1,15 @@
 /**
  * sharedAvailabilityStore.ts — Centralized doctor availability.
- * Used by: DoctorSettings/AvailabilityTab, DoctorSchedule/AvailModal,
- *          SecretaryAgenda, SecretaryOffice, PublicBooking
- *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import type { AvailabilityConfig, AvailabilityDay } from "@/types/appointment";
+import { getAppMode } from "./authStore";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthReady } from "@/hooks/useSupabaseQuery";
+import { mapAvailabilityRows } from "@/lib/supabaseMappers";
+import { useSyncExternalStore } from "react";
 
 const defaultDays: Record<string, AvailabilityDay> = {
   Lundi:    { active: true,  start: "08:00", end: "18:00", breakStart: "12:00", breakEnd: "14:00" },
@@ -28,8 +31,28 @@ const store = createStore<AvailabilityConfig>("medicare_availability", initialCo
 
 export const sharedAvailabilityStore = store;
 
-export function useSharedAvailability() {
-  return useStore(store);
+export function useSharedAvailability(): [AvailabilityConfig, (v: AvailabilityConfig | ((p: AvailabilityConfig) => AvailabilityConfig)) => void] {
+  const mode = getAppMode();
+  const { isReady } = useAuthReady();
+  const localData = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+
+  const query = useQuery({
+    queryKey: ["doctor_availability"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("doctor_availability").select("*");
+      if (error || !data || data.length === 0) return null;
+      const days = mapAvailabilityRows(data);
+      const slotDuration = data[0]?.slot_duration || 30;
+      return { days, slotDuration, doctor: "" } as AvailabilityConfig;
+    },
+    enabled: mode === "production" && isReady,
+  });
+
+  if (mode === "production" && query.data) {
+    return [query.data, store.set];
+  }
+
+  return [localData, store.set];
 }
 
 export function updateAvailabilityDay(dayName: string, update: Partial<AvailabilityDay>) {
