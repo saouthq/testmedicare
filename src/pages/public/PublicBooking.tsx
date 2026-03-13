@@ -335,6 +335,7 @@ const PublicBooking = () => {
       patientId: isLoggedIn && authUser?.patientId ? authUser.patientId : null,
       avatar: `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase(),
       doctor: doctor.doctorRef,
+      doctorId: doctor.doctorId,
       type: isTeleconsult ? "Téléconsultation" : (selectedMotifData?.name === "Première visite" ? "Première visite" : selectedMotifData?.name === "Suivi" || selectedMotifData?.name === "Suivi maladie chronique" ? "Suivi" : "Consultation"),
       motif: selectedMotif,
       phone: phone || phoneInput,
