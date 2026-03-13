@@ -178,7 +178,7 @@ const DoctorBilling = () => {
             <div className="rounded-xl border bg-card shadow-card">
               <div className="border-b px-5 py-4"><h3 className="font-semibold text-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Historique factures</h3></div>
               <div className="divide-y">
-                {mockSubscriptionInvoices.map(inv => {
+                {subscriptionInvoices.map(inv => {
                   const sc = statusConfig[inv.status];
                   return (
                     <div key={inv.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
