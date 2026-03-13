@@ -15,12 +15,9 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  specialtiesWithAll as specialties,
-  availDates,
-  mockDoctors as doctors,
-  gouvernorats,
-} from "@/data/mockData";
+import { availDates, gouvernorats } from "@/data/mockData";
+import { useDoctorsDirectory } from "@/stores/directoryStore";
+import { getEnabledSpecialtyLabels } from "@/stores/specialtyStore";
 
 const PublicSearch = () => {
   const [searchParams] = useSearchParams();
