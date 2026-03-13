@@ -186,7 +186,11 @@ const AdminReports = () => {
                   </TableCell>
                   <TableCell>
                     {h.status === "ready" && (
-                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => toast({ title: "Export non disponible", description: "Nécessite backend" })}>
+                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => {
+                        const matchReport = reports.find(r => r.name === h.reportName);
+                        if (matchReport) runNow(matchReport);
+                        else toast({ title: "Rapport non trouvé" });
+                      }}>
                         <Download className="h-3.5 w-3.5 mr-1" />Télécharger
                       </Button>
                     )}
