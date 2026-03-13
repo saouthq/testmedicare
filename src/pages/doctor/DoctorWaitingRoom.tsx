@@ -40,7 +40,7 @@ const statusLabels: Record<AppointmentStatus, string> = {
 };
 
 const DoctorWaitingRoom = () => {
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading }] = useSharedAppointments();
   const [patients] = useSharedPatients();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | AppointmentStatus>("all");
