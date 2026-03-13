@@ -153,7 +153,7 @@ const DoctorBilling = () => {
                       <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground line-through"><span className="h-4 w-4 shrink-0" />{f}</li>
                     ))}
                   </ul>
-                  {mockSubscriptionInfo.plan === plan.name ? (
+                  {subscriptionInfo.plan === plan.name ? (
                     <Button variant="outline" className="w-full" disabled>Plan actuel</Button>
                   ) : (
                     <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow"><Zap className="h-4 w-4 mr-1" />Passer au {plan.name}</Button>
