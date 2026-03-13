@@ -43,12 +43,15 @@ const PatientPrescriptions = () => {
     openNow: true,
   }));
   
-  const prescriptions: PrescriptionWithPharmacies[] = doctorRx.map(rx => ({
-    ...rx,
-    patient: rx.patient || "",
-    sent: rx.sent,
-    sentToPharmacies: [],
-  }));
+  // Filter prescriptions for current patient
+  const prescriptions: PrescriptionWithPharmacies[] = doctorRx
+    .filter(rx => (rx.patient || "").toLowerCase() === patientName.toLowerCase())
+    .map(rx => ({
+      ...rx,
+      patient: rx.patient || "",
+      sent: rx.sent,
+      sentToPharmacies: [],
+    }));
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sendingToPharmacy, setSendingToPharmacy] = useState<string | null>(null);
   const [pharmacySearch, setPharmacySearch] = useState("");

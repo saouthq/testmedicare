@@ -46,11 +46,14 @@ const PatientDashboard = () => {
     [allAppointments]
   );
 
+  const patientName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
   const recentPrescriptions = useMemo(() =>
-    doctorRx.filter(rx => rx.status === "active").slice(0, 3).map(rx => ({
-      id: rx.id, doctor: rx.doctor, date: rx.date, items: rx.items.length, status: rx.status,
-    })),
-    [doctorRx]
+    doctorRx
+      .filter(rx => rx.status === "active" && (!patientName || (rx.patient || "").toLowerCase() === patientName.toLowerCase()))
+      .slice(0, 3).map(rx => ({
+        id: rx.id, doctor: rx.doctor, date: rx.date, items: rx.items.length, status: rx.status,
+      })),
+    [doctorRx, patientName]
   );
 
   const stats = useMemo(() => {
