@@ -15,6 +15,8 @@ import {
   LogIn, Edit, Trash2, Eye, Settings, ChevronLeft, ChevronRight, Server, Activity, RefreshCw,
 } from "lucide-react";
 import { getLogs, clearLogs, type AuditLogEntry } from "@/services/admin/adminAuditService";
+import { useAdminAuditLogsSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 
 // ── System log types ──
 interface SystemLog { id: number; time: string; user: string; userRole: string; action: string; detail: string; level: string; ip?: string; userAgent?: string; duration?: string; }
