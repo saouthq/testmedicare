@@ -3,11 +3,13 @@
  * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
-import { sharedBlockedSlotsStore } from "./sharedBlockedSlotsStore";
+import { sharedBlockedSlotsStore, addBlockedSlot } from "./sharedBlockedSlotsStore";
 import { pushNotification } from "./notificationsStore";
 import type { SharedLeave } from "@/types/appointment";
 import { useDualQuery } from "@/hooks/useDualData";
 import { mapLeaveRow } from "@/lib/supabaseMappers";
+import { getAppMode } from "./authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 const initialLeaves: SharedLeave[] = [
   { id: 1, startDate: "2026-03-15", endDate: "2026-03-22", motif: "Vacances de printemps", type: "conge", replacementDoctor: "Dr. Sonia Gharbi", notifyPatients: true, status: "upcoming", affectedAppointments: 12, doctor: "Dr. Ahmed Bouazizi" },
@@ -31,7 +33,7 @@ export function useSharedLeaves() {
 }
 
 /** Create a leave and auto-generate blocked slots for each day */
-export function createLeave(leave: Omit<SharedLeave, "id">) {
+export async function createLeave(leave: Omit<SharedLeave, "id">) {
   const id = Date.now();
   store.set(prev => [{ ...leave, id }, ...prev]);
 
@@ -41,18 +43,38 @@ export function createLeave(leave: Omit<SharedLeave, "id">) {
   const current = new Date(start);
   while (current <= end) {
     const dateStr = current.toISOString().slice(0, 10);
-    sharedBlockedSlotsStore.set(prev => [
-      ...prev,
-      {
-        id: `leave-blk-${id}-${dateStr}`,
-        date: dateStr,
-        startTime: "08:00",
-        duration: 600, // full day
-        reason: `Congé: ${leave.motif}`,
-        doctor: leave.doctor,
-      },
-    ]);
+    // Use addBlockedSlot which handles Supabase persistence
+    addBlockedSlot({
+      date: dateStr,
+      startTime: "08:00",
+      duration: 600,
+      reason: `Congé: ${leave.motif}`,
+      doctor: leave.doctor,
+    });
     current.setDate(current.getDate() + 1);
+  }
+
+  // Persist to Supabase
+  if (getAppMode() === "production") {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await (supabase.from as any)("doctor_leaves").insert({
+          doctor_id: session.user.id,
+          doctor_name: leave.doctor || "",
+          start_date: leave.startDate,
+          end_date: leave.endDate,
+          motif: leave.motif || "",
+          type: leave.type || "conge",
+          replacement_doctor: leave.replacementDoctor || "",
+          notify_patients: leave.notifyPatients ?? true,
+          status: leave.status || "upcoming",
+          affected_appointments: leave.affectedAppointments || 0,
+        });
+      }
+    } catch (e) {
+      console.warn("[createLeave] Supabase insert failed:", e);
+    }
   }
 
   // Notify secretary
@@ -67,10 +89,22 @@ export function createLeave(leave: Omit<SharedLeave, "id">) {
   return id;
 }
 
-export function deleteLeave(id: number) {
+export async function deleteLeave(id: number) {
   store.set(prev => prev.filter(l => l.id !== id));
   // Remove associated blocked slots
   sharedBlockedSlotsStore.set(prev => prev.filter(b => !b.id.startsWith(`leave-blk-${id}-`)));
+
+  // Persist to Supabase
+  if (getAppMode() === "production") {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await (supabase.from as any)("doctor_leaves").delete().eq("id", id);
+      }
+    } catch (e) {
+      console.warn("[deleteLeave] Supabase delete failed:", e);
+    }
+  }
 }
 
 /** Check if a date falls within any active leave */

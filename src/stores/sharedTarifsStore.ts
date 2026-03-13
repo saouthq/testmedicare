@@ -6,6 +6,8 @@ import { createStore, useStore } from "./crossRoleStore";
 import type { SharedActe } from "@/types/appointment";
 import { useDualQuery } from "@/hooks/useDualData";
 import { mapTarifRow } from "@/lib/supabaseMappers";
+import { getAppMode } from "./authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 const initialActes: SharedActe[] = [
   { id: 1, code: "CS", name: "Consultation standard", price: 35, conventionne: true, duration: 30, active: true },
@@ -34,18 +36,67 @@ export function useSharedTarifs() {
   });
 }
 
-export function updateActe(id: number, update: Partial<SharedActe>) {
+export async function updateActe(id: number, update: Partial<SharedActe>) {
   store.set(prev => prev.map(a => a.id === id ? { ...a, ...update } : a));
+
+  if (getAppMode() === "production") {
+    try {
+      const row: Record<string, any> = {};
+      if (update.code !== undefined) row.code = update.code;
+      if (update.name !== undefined) row.name = update.name;
+      if (update.price !== undefined) row.price = update.price;
+      if (update.conventionne !== undefined) row.conventionne = update.conventionne;
+      if (update.duration !== undefined) row.duration = update.duration;
+      if (update.active !== undefined) row.active = update.active;
+      if (Object.keys(row).length > 0) {
+        await (supabase.from as any)("tarifs").update(row).eq("id", id);
+      }
+    } catch (e) {
+      console.warn("[updateActe] Supabase update failed:", e);
+    }
+  }
 }
 
-export function addActe(acte: Omit<SharedActe, "id">) {
+export async function addActe(acte: Omit<SharedActe, "id">) {
   const id = Date.now();
   store.set(prev => [...prev, { ...acte, id }]);
+
+  if (getAppMode() === "production") {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await (supabase.from as any)("tarifs").insert({
+          doctor_id: session.user.id,
+          code: acte.code,
+          name: acte.name,
+          price: acte.price,
+          conventionne: acte.conventionne ?? true,
+          duration: acte.duration || 30,
+          active: acte.active ?? true,
+        }).select("id").single();
+        // Update local id with server id
+        if (data?.id) {
+          store.set(prev => prev.map(a => a.id === id ? { ...a, id: data.id } : a));
+        }
+      }
+    } catch (e) {
+      console.warn("[addActe] Supabase insert failed:", e);
+    }
+  }
+
   return id;
 }
 
-export function removeActe(id: number) {
+export async function removeActe(id: number) {
   store.set(prev => prev.filter(a => a.id !== id));
+
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("tarifs").delete().eq("id", id);
+    } catch (e) {
+      console.warn("[removeActe] Supabase delete failed:", e);
+    }
+  }
 }
 
 /** Get active actes for billing */

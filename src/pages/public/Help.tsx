@@ -121,9 +121,9 @@ const Help = () => {
     ),
   })).filter(cat => cat.questions.length > 0);
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const number = createSupportTicket({
+    const number = await createSupportTicket({
       name: contactName,
       email: contactEmail,
       subject: contactSubject,

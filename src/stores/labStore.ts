@@ -8,6 +8,7 @@ import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/use
 import { supabase } from "@/integrations/supabase/client";
 import { useDualQuery } from "@/hooks/useDualData";
 import { mapLabDemandRow } from "@/lib/supabaseMappers";
+import { getAppMode } from "./authStore";
 
 export type LabDemandStatus = "received" | "in_progress" | "results_ready" | "transmitted";
 
@@ -108,18 +109,40 @@ export async function updateLabDemandStatus(id: string, status: LabDemandStatus)
   }
 }
 
-/** Add PDF to a demand */
-export function addLabPdf(demandId: string, pdf: LabPdfItem) {
+/** Add PDF to a demand — syncs to Supabase */
+export async function addLabPdf(demandId: string, pdf: LabPdfItem) {
   store.set((prev) =>
     prev.map((d) => (d.id === demandId ? { ...d, pdfs: [...d.pdfs, pdf] } : d))
   );
+
+  if (getAppMode() === "production") {
+    try {
+      const demand = store.read().find(d => d.id === demandId);
+      if (demand) {
+        await (supabase.from as any)("lab_demands").update({ pdfs: demand.pdfs }).eq("id", demandId);
+      }
+    } catch (e) {
+      console.warn("[addLabPdf] Supabase update failed:", e);
+    }
+  }
 }
 
-/** Remove PDF from a demand */
-export function removeLabPdf(demandId: string, pdfId: string) {
+/** Remove PDF from a demand — syncs to Supabase */
+export async function removeLabPdf(demandId: string, pdfId: string) {
   store.set((prev) =>
     prev.map((d) => (d.id === demandId ? { ...d, pdfs: d.pdfs.filter((p) => p.id !== pdfId) } : d))
   );
+
+  if (getAppMode() === "production") {
+    try {
+      const demand = store.read().find(d => d.id === demandId);
+      if (demand) {
+        await (supabase.from as any)("lab_demands").update({ pdfs: demand.pdfs }).eq("id", demandId);
+      }
+    } catch (e) {
+      console.warn("[removeLabPdf] Supabase update failed:", e);
+    }
+  }
 }
 
 /** Create a new lab demand from doctor consultation → lab inbox. */
