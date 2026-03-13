@@ -81,7 +81,7 @@ const navItems: Record<string, NavItem[]> = {
     { title: "Documents", url: "/dashboard/doctor/documents", icon: FileDown },
     { title: "Congés", url: "/dashboard/doctor/leaves", icon: CalendarDays },
     { title: "Messagerie", url: "/dashboard/doctor/messages", icon: MessageSquare },
-    { title: "Téléconsultation", url: "/dashboard/doctor/teleconsultation", icon: Video },
+    
     { title: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
     { title: "Protocoles", url: "/dashboard/doctor/protocols", icon: BookOpen },
     { title: "Connect", url: "/dashboard/doctor/connect", icon: Plug },
