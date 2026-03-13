@@ -120,7 +120,7 @@ const DoctorDashboard = () => {
           <div className="lg:col-span-2 relative overflow-hidden rounded-2xl gradient-primary p-5 text-primary-foreground min-h-0">
             <div className="relative z-10">
               <p className="text-primary-foreground/70 text-sm">Bonjour,</p>
-              <h2 className="text-xl font-bold mt-0.5">{CURRENT_DOCTOR.replace("Dr. ", "Dr. Ahmed ")}</h2>
+              <h2 className="text-xl font-bold mt-0.5">Dr. {readAuthUser()?.firstName || "Ahmed"} {readAuthUser()?.lastName || "Bouazizi"}</h2>
               <p className="text-primary-foreground/60 text-xs mt-0.5">{config.dashboardSubtitle}</p>
               <p className="text-primary-foreground/80 mt-1 text-sm">{doneCount}/{totalCount} {config.kpiLabels?.done?.toLowerCase() || "consultations"} · Prochain : <span className="font-semibold">{nextRdv?.startTime || "—"}</span></p>
               <div className="flex gap-3 mt-3 flex-wrap">
