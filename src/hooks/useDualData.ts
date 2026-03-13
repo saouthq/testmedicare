@@ -133,7 +133,7 @@ export function useDualUpdate<T extends Record<string, any>>({
   return useMutation({
     mutationFn: async ({ id, ...update }: Partial<T> & { id: any }) => {
       if (!isProduction) {
-        localUpdate(id, update as Partial<T>);
+        localUpdate(id, update as unknown as Partial<T>);
         return { id, ...update };
       }
       const row = mapLocalToRow({ id, ...update } as any);
