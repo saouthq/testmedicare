@@ -24,6 +24,7 @@ const DoctorOnboarding = () => {
   const [step, setStep] = useState<Step>("identity");
   const [selectedLangs, setSelectedLangs] = useState(["Français", "Arabe"]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
+  const specialties = getEnabledSpecialtyLabels();
   const [motifs, setMotifs] = useState(mockDefaultMotifs);
   const [horaires, setHoraires] = useState(mockDefaultHoraires);
   const [autoConfirm, setAutoConfirm] = useState(true);

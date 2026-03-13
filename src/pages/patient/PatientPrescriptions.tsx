@@ -28,6 +28,16 @@ const PatientPrescriptions = () => {
   const [filter, setFilter] = useState("all");
   const [doctorRx] = useDoctorPrescriptions();
   const { isEnabled } = useActionGating();
+  const directoryPharmacies = usePharmaciesDirectory();
+  // Build partner pharmacies from directory store
+  const mockPartnerPharmacies = directoryPharmacies.map(p => ({
+    id: p.id?.toString() || `ph-${p.name}`,
+    name: p.name,
+    address: `${p.address || ""}, ${p.city || ""}`.trim(),
+    distance: "—",
+    phone: p.phone || "",
+    openNow: true,
+  }));
   
   // Build prescriptions from doctor prescriptions store
   const prescriptions: PrescriptionWithPharmacies[] = doctorRx.map(rx => ({

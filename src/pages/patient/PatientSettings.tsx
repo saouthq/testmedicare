@@ -84,7 +84,20 @@ const PatientSettings = () => {
                     onChange={e => setInsurance(e.target.value)}
                     className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm"
                   >
-                    {mockAssurances.map(a => (
+                    {[
+                      { id: "publique", name: "Assurance publique" },
+                      { id: "cnrps", name: "CNRPS (retraités)" },
+                      { id: "cnss", name: "CNSS" },
+                      { id: "maghrebia", name: "Assurances Maghrebia" },
+                      { id: "star", name: "STAR Assurances" },
+                      { id: "gat", name: "GAT Assurances" },
+                      { id: "carte", name: "CARTE Assurance" },
+                      { id: "ami", name: "AMI Assurances" },
+                      { id: "bh", name: "BH Assurance" },
+                      { id: "ctama", name: "CTAMA" },
+                      { id: "lloyd", name: "Lloyd Assurances" },
+                      { id: "none", name: "Sans assurance" },
+                    ].map(a => (
                       <option key={a.id} value={a.id}>{a.name}</option>
                     ))}
                   </select>
