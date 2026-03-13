@@ -981,6 +981,8 @@ function WeekView({
                 apts={apts.filter((a) => a.date === fmtDate(d))}
                 blocks={blocks.filter((b) => b.date === fmtDate(d))}
                 typeColors={typeColors}
+                dayConfig={getDayConfig(d)}
+                leave={getLeaveForDate(d)}
                 onSlotClick={(t, x, y) => onSlot(d, t, x, y)}
                 onAptClick={onApt}
                 onBlockClick={onBlock}

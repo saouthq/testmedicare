@@ -313,6 +313,18 @@ const PublicBooking = () => {
   const handleConfirmBooking = (paid = false) => {
     const duration = selectedMotifData?.duration || 30;
 
+    const normalizedPhone = (phone || phoneInput).replace(/\s+/g, "");
+    const normalizedFullName = `${firstName} ${lastName}`.trim().toLowerCase();
+    const linkedPatient = sharedPatientsStore.read().find((p) => {
+      const pName = p.name.trim().toLowerCase();
+      const pPhone = (p.phone || "").replace(/\s+/g, "");
+      return pName === normalizedFullName || (!!normalizedPhone && pPhone.endsWith(normalizedPhone));
+    });
+
+    const resolvedPatientId = isLoggedIn
+      ? (authUser?.patientId ?? linkedPatient?.id ?? null)
+      : (linkedPatient?.id ?? null);
+
     // Validate via centralized rules
     const validation = validateBooking({
       date: selectedDayDateStr,
@@ -333,7 +345,7 @@ const PublicBooking = () => {
       startTime: selectedSlot,
       duration,
       patient: `${firstName} ${lastName}`,
-      patientId: isLoggedIn && authUser?.patientId ? authUser.patientId : null,
+      patientId: resolvedPatientId,
       avatar: `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase(),
       doctor: doctor.doctorRef,
       doctorId: doctor.doctorId,

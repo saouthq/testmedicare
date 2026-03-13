@@ -49,11 +49,12 @@ const DoctorLeaves = () => {
     if (!form.startDate || !form.endDate || !form.motif) {
       toast.error("Veuillez remplir tous les champs obligatoires"); return;
     }
+    const currentDoctor = readAuthUser()?.doctorName || "Dr. Ahmed Bouazizi";
     createLeave({
       ...form,
       status: "upcoming",
       affectedAppointments: Math.floor(Math.random() * 10) + 2,
-      doctor: "Dr. Ahmed Bouazizi",
+      doctor: currentDoctor,
     });
     setDrawerOpen(false);
     setForm({ startDate: "", endDate: "", motif: "", type: "conge", replacementDoctor: "", notifyPatients: true });
