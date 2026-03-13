@@ -380,19 +380,26 @@ export function PatientDetailProvider({ children }: { children: ReactNode }) {
   const saveAnte = () => { const ts = Date.now(); const at = new Date().toLocaleString(); setAnteHistory((p) => [{ id: `a-${ts}`, at, ts, data: { ...ante } }, ...p]); };
 
   // ── Vitals ──
-  const lastVitals = useMemo(() => (mockVitalsHistory || [])[0], []);
+  const lastVitals = useMemo(() => {
+    if (getAppMode() === "production") return null;
+    try { const { mockVitalsHistory } = require("@/data/mockData"); return (mockVitalsHistory || [])[0] || null; } catch { return null; }
+  }, []);
   const [vitals, setVitals] = useState<VitalsData>({
     ta: lastVitals ? `${lastVitals.systolic}/${lastVitals.diastolic}` : "130/80",
     fc: String(lastVitals?.heartRate ?? "72"),
     weight: String(lastVitals?.weight ?? "75"),
     gly: String(lastVitals?.glycemia ?? "1.05 g/L"),
   });
-  const [vitalsHistory, setVitalsHistory] = useState<VersionVitals[]>(() =>
-    (mockVitalsHistory || []).map((v: any, i: number) => ({
-      id: `vh-${i}`, at: v.date, ts: Date.parse(v.date) || Date.now() - i * 1000,
-      data: { ta: `${v.systolic ?? ""}/${v.diastolic ?? ""}`, fc: String(v.heartRate ?? ""), weight: String(v.weight ?? ""), gly: String(v.glycemia ?? "") },
-    })),
-  );
+  const [vitalsHistory, setVitalsHistory] = useState<VersionVitals[]>(() => {
+    if (getAppMode() === "production") return [];
+    try {
+      const { mockVitalsHistory } = require("@/data/mockData");
+      return (mockVitalsHistory || []).map((v: any, i: number) => ({
+        id: `vh-${i}`, at: v.date, ts: Date.parse(v.date) || Date.now() - i * 1000,
+        data: { ta: `${v.systolic ?? ""}/${v.diastolic ?? ""}`, fc: String(v.heartRate ?? ""), weight: String(v.weight ?? ""), gly: String(v.glycemia ?? "") },
+      }));
+    } catch { return []; }
+  });
   const saveVitals = () => { const ts = Date.now(); const at = new Date().toLocaleString(); setVitalsHistory((p) => [{ id: `vh-${ts}`, at, ts, data: { ...vitals } }, ...p]); };
 
   // ── Documents ──
