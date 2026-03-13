@@ -27,6 +27,7 @@ import {
   mockPatients,
   type RxFavorite,
 } from "@/data/mockData";
+import { addAntecedent, addMeasure } from "@/stores/healthStore";
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
 import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
