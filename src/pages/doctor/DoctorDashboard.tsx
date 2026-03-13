@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { plansByActivity } from "@/stores/featureMatrixStore";
