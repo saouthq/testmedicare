@@ -6,7 +6,7 @@ import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
 import { useDualQuery } from "@/hooks/useDualData";
 import { supabase } from "@/integrations/supabase/client";
-import { getAppMode } from "./authStore";
+import { getAppMode, readAuthUser } from "./authStore";
 import type { PharmacyPrescription } from "@/types";
 
 // ─── Stock ───────────────────────────────────────────────────
@@ -26,24 +26,78 @@ export interface StockItem {
 const stockStore = createStore<StockItem[]>("medicare_pharmacy_stock", []);
 
 export function usePharmacyStock() {
-  return useStore(stockStore);
+  return useDualQuery<StockItem[]>({
+    store: stockStore,
+    tableName: "pharmacy_stock",
+    queryKey: ["pharmacy_stock"],
+    mapRowToLocal: (row: any): StockItem => ({
+      id: row.id,
+      name: row.name || "",
+      category: row.category || "",
+      quantity: row.quantity ?? 0,
+      threshold: row.threshold ?? 10,
+      status: row.status || "ok",
+      price: row.price || "0 DT",
+      expiry: row.expiry || "",
+      supplier: row.supplier || "",
+    }),
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 export function initStockIfEmpty(items: StockItem[]) {
   if (stockStore.read().length === 0) stockStore.set(items);
 }
 
-export function updateStockQuantity(id: number, quantity: number) {
+export async function updateStockQuantity(id: number, quantity: number) {
   stockStore.set(prev => prev.map(item => {
     if (item.id !== id) return item;
     const status = quantity <= 0 ? "critical" : quantity < item.threshold ? "low" : "ok";
     return { ...item, quantity, status };
   }));
+
+  if (getAppMode() === "production") {
+    try {
+      const item = stockStore.read().find(i => i.id === id);
+      const status = item?.status || "ok";
+      await (supabase.from as any)("pharmacy_stock")
+        .update({ quantity, status })
+        .eq("id", id);
+    } catch {}
+  }
 }
 
-export function addStockItem(item: Omit<StockItem, "id">) {
+export async function addStockItem(item: Omit<StockItem, "id">) {
   const id = Date.now();
   stockStore.set(prev => [...prev, { ...item, id }]);
+
+  if (getAppMode() === "production") {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      await (supabase.from as any)("pharmacy_stock").insert({
+        pharmacy_id: session.user.id,
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        threshold: item.threshold,
+        status: item.status,
+        price: item.price,
+        expiry: item.expiry,
+        supplier: item.supplier,
+      });
+    } catch {}
+  }
+}
+
+export async function removeStockItem(id: number) {
+  stockStore.set(prev => prev.filter(i => i.id !== id));
+
+  if (getAppMode() === "production") {
+    try {
+      await (supabase.from as any)("pharmacy_stock").delete().eq("id", id);
+    } catch {}
+  }
 }
 
 // ─── Pharmacy Prescriptions ──────────────────────────────────
