@@ -39,6 +39,7 @@ const typeLabels: Record<string, string> = { doctor: "Médecin", pharmacy: "Phar
 const typeColors: Record<string, string> = { doctor: "bg-primary/10 text-primary", pharmacy: "bg-warning/10 text-warning", lab: "bg-accent/10 text-accent" };
 
 const AdminOnboarding = () => {
+  const { applications: records, setApplications: setRecords } = useAdminOnboarding();
   const { applications: records } = useAdminOnboarding();
   const [search, setSearch] = useState("");
   const [filterStep, setFilterStep] = useState<string>("all");
