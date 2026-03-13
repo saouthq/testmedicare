@@ -9,6 +9,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 export interface SidebarVisibilityConfig {
   /** Per-role visibility: role → url → enabled */
