@@ -39,6 +39,7 @@ import type { SharedAppointment } from "@/types/appointment";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
+  isTeleconsult: boolean;
   patient: typeof mockConsultationPatient;
   navigate: ReturnType<typeof useNavigate>;
   // Notes
