@@ -238,22 +238,22 @@ const PatientHealth = () => {
     }
     if (treatments.length) {
       lines.push("── Traitements en cours ──");
-      treatments.forEach(t => lines.push(`• ${t.name} — ${t.dosage || ""} — ${t.frequency || ""}`));
+      treatments.forEach(t => lines.push(`• ${t.name} — ${t.dose || ""} — depuis ${t.since || ""}`));
       lines.push("");
     }
     if (vaccinations.length) {
       lines.push("── Vaccinations ──");
-      vaccinations.forEach(v => lines.push(`• ${v.name} — ${v.date || ""}`));
+      vaccinations.forEach(v => lines.push(`• ${v.name} — ${v.doses} doses — dernière: ${v.lastDate || ""}`));
       lines.push("");
     }
     if (measures.length) {
       lines.push("── Dernières mesures ──");
-      measures.forEach(m => lines.push(`• ${m.type || m.name}: ${m.value} ${m.unit || ""} — ${m.date || ""}`));
+      measures.forEach(m => lines.push(`• ${m.label}: ${m.value} — ${m.date || ""}`));
       lines.push("");
     }
     if (surgeries.length) {
       lines.push("── Opérations chirurgicales ──");
-      surgeries.forEach(s => lines.push(`• ${s.name} — ${s.date || ""}`));
+      surgeries.forEach(s => lines.push(`• ${s.name} — ${s.date || ""} — ${s.hospital || ""}`));
       lines.push("");
     }
     lines.push("Ce document est un export de données patient à titre informatif.");
