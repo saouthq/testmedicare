@@ -103,7 +103,7 @@ const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsD
 };
 
 // ─── Day Generation (checks availability + leaves + blocked slots) ───
-const generateDays = (weekOffset: number) => {
+const generateDays = (weekOffset: number, doctorRef: string) => {
   const today = new Date();
   const start = new Date(today);
   start.setDate(today.getDate() + (weekOffset * 7));
@@ -111,8 +111,8 @@ const generateDays = (weekOffset: number) => {
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
   const availability = sharedAvailabilityStore.read();
-  const leaves = sharedLeavesStore.read();
-  const blockedSlots = sharedBlockedSlotsStore.read();
+  const leaves = sharedLeavesStore.read().filter(l => l.doctor === doctorRef);
+  const blockedSlots = sharedBlockedSlotsStore.read().filter(b => b.doctor === doctorRef);
 
   const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string; leaveReason?: string }[] = [];
 
@@ -123,13 +123,8 @@ const generateDays = (weekOffset: number) => {
     const dayConfig = availability.days[frDayName];
     const dateStr = date.toISOString().slice(0, 10);
 
-    // Check if day is in the past
     const isPast = dateStr < today.toISOString().slice(0, 10);
-
-    // Check leaves
     const leave = leaves.find(l => l.status !== "past" && dateStr >= l.startDate && dateStr <= l.endDate);
-
-    // Check full-day blocks (duration >= 480 min = 8h)
     const fullDayBlock = blockedSlots.find(b => b.date === dateStr && b.duration >= 480);
 
     const isAvailable = !isPast && (dayConfig ? dayConfig.active : false) && !leave && !fullDayBlock;
