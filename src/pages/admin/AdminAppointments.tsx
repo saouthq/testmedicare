@@ -13,6 +13,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
+import { useAdminAppointmentsSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 
 interface AdminApt {
   id: number;
