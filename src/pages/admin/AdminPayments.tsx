@@ -26,7 +26,26 @@ type MotifTarget = { type: "refund" | "mark_paid"; id: string } | null;
 
 const AdminPayments = () => {
   const navigate = useNavigate();
-  const { payments, setPayments } = useAdminPayments();
+  const { payments: demoPayments, setPayments } = useAdminPayments();
+  const isProduction = getAppMode() === "production";
+  const supabaseInvoicesQuery = useAdminInvoicesSupabase();
+  
+  // Map Supabase invoices to AdminPayment format
+  const supabasePayments: AdminPayment[] = (supabaseInvoicesQuery.data || []).map(row => ({
+    id: row.id,
+    payerId: "",
+    payerName: row.patient_name,
+    payerRole: "patient" as any,
+    amount: row.amount,
+    currency: "DT",
+    method: row.payment || "especes",
+    status: row.status as any,
+    description: row.type,
+    createdAt: row.created_at,
+    organizationId: "",
+  }));
+  
+  const payments = isProduction ? supabasePayments : demoPayments;
   const [motifTarget, setMotifTarget] = useState<MotifTarget>(null);
   const [detailPayment, setDetailPayment] = useState<AdminPayment | null>(null);
   const [dateFrom, setDateFrom] = useState("");
