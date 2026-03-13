@@ -152,7 +152,8 @@ type ConsultType = "cabinet" | "teleconsultation";
 const PublicBooking = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
-  const doctor = buildDoctor(doctorId || "1");
+  const doctorsDirectory = useDoctorsDirectory();
+  const doctor = useMemo(() => buildDoctor(doctorId || "1", doctorsDirectory), [doctorId, doctorsDirectory]);
 
   // Check if user is logged in
   const authUser = readAuthUser();
