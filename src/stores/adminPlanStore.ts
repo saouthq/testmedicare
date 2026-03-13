@@ -83,6 +83,7 @@ export function createPlan(plan: Omit<AdminPlan, "id" | "createdAt" | "updatedAt
   };
   store.set(prev => [entry, ...prev]);
   appendLog("plan_created", "plan", entry.id, `Plan "${entry.name}" (${roleLabels[entry.role]}) créé — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
   return entry;
 }
 
