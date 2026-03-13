@@ -1,11 +1,13 @@
 /**
  * billingStore.ts — Cross-role billing store (secretary ↔ doctor).
- * Dual-mode: Supabase when authenticated, localStorage fallback for demo.
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
 import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapInvoiceRow } from "@/lib/supabaseMappers";
 
 export interface SharedInvoice {
   id: string;
