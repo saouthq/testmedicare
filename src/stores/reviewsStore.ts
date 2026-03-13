@@ -24,7 +24,15 @@ const store = createStore<Review[]>("medicare_reviews", []);
 export const reviewsStore = store;
 
 export function useReviews() {
-  return useStore(store);
+  const { useDualQuery } = require("@/hooks/useDualData");
+  const { mapReviewRow } = require("@/lib/supabaseMappers");
+  return useDualQuery<Review[]>({
+    store,
+    tableName: "reviews",
+    queryKey: ["reviews"],
+    mapRowToLocal: mapReviewRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 /** Supabase-aware reviews hook */
