@@ -5,6 +5,7 @@
  * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { directoryStore } from "@/stores/directoryStore";
 import { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle, XCircle, FileText, Eye, Calendar, MapPin, Mail, Clock,
