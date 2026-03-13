@@ -259,7 +259,7 @@ const AdminOnboarding = () => {
                         </>
                       )}
                     </div>
-                  )
+                  )}
                 </div>
               </ScrollArea>
             </>
