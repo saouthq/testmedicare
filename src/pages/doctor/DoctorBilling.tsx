@@ -1,11 +1,14 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockSubscriptionInfo, mockPlans, mockSubscriptionInvoices, mockTeleconsultTransactions, InvoiceStatus } from "@/data/mockData";
+import { InvoiceStatus } from "@/data/mockData";
+import { mockTeleconsultTransactions } from "@/data/mocks/doctor";
 import { getMyActivePromo } from "@/services/admin/adminPromotionsService";
 import { useSharedBilling, markInvoicePaid, getBillingStats, type SharedInvoice } from "@/stores/billingStore";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { useAdminPlans } from "@/stores/adminPlanStore";
 
 type BillingTab = "subscription" | "teleconsult" | "cabinet";
 
