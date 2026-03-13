@@ -1,10 +1,11 @@
 /**
  * doctorProfileStore.ts — Doctor public profile (persistent, cross-role readable).
- * Used by: DoctorSettings/ProfileTab, DoctorPublicProfile, CareSheetModal
- *
- * // TODO BACKEND: Replace with API
+ * Dual-mode: Supabase (doctors_directory + profiles) in production, localStorage for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
+import { useDualQuery } from "@/hooks/useDualData";
+import { supabase } from "@/integrations/supabase/client";
+import { getAppMode } from "./authStore";
 
 export interface DoctorProfile {
   name: string;
@@ -83,13 +84,50 @@ const store = createStore<DoctorProfile>("medicare_doctor_profile", defaultProfi
 export const doctorProfileStore = store;
 
 export function useDoctorProfile() {
-  return useStore(store);
+  return useDualQuery<DoctorProfile>({
+    store,
+    tableName: "doctors_directory",
+    select: "*, profiles!doctors_directory_id_fkey(first_name, last_name, email, phone)",
+    queryKey: ["doctor_profile"],
+    mapRowToLocal: (row: any) => {
+      const profile = row.profiles || {};
+      const name = `Dr. ${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+      return {
+        ...defaultProfile,
+        name: name || defaultProfile.name,
+        specialty: row.specialty || defaultProfile.specialty,
+        email: profile.email || defaultProfile.email,
+        phone: profile.phone || row.phone || defaultProfile.phone,
+        address: row.address || defaultProfile.address,
+        price: row.consultation_price ? `${row.consultation_price} DT` : defaultProfile.price,
+        languages: row.languages || defaultProfile.languages,
+        presentation: row.bio || defaultProfile.presentation,
+        initials: ((profile.first_name || "")[0] || "") + ((profile.last_name || "")[0] || ""),
+      };
+    },
+  });
 }
 
 /** Update doctor profile fields */
-export function updateDoctorProfile(updates: Partial<DoctorProfile>) {
-  // TODO BACKEND: PUT /api/doctor/profile
+export async function updateDoctorProfile(updates: Partial<DoctorProfile>) {
   store.set(prev => ({ ...prev, ...updates }));
+
+  if (getAppMode() === "production") {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const row: Record<string, any> = {};
+        if (updates.specialty) row.specialty = updates.specialty;
+        if (updates.address) row.address = updates.address;
+        if (updates.presentation) row.bio = updates.presentation;
+        if (updates.languages) row.languages = updates.languages;
+        if (updates.price) row.consultation_price = parseInt(updates.price) || 0;
+        if (Object.keys(row).length > 0) {
+          await (supabase.from as any)("doctors_directory").update(row).eq("id", session.user.id);
+        }
+      }
+    } catch {}
+  }
 }
 
 /** Read-only access for non-React contexts */

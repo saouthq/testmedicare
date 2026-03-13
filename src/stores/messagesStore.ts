@@ -1,12 +1,13 @@
 /**
  * messagesStore.ts — Cross-role messaging store.
- * Dual-mode: Supabase Realtime when authenticated, localStorage fallback for demo.
+ * Dual-mode: Supabase when production, localStorage for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
-import { getCurrentRole } from "./authStore";
-import { useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapChatThreadRow } from "@/lib/supabaseMappers";
 import { supabase } from "@/integrations/supabase/client";
+import { getAppMode } from "./authStore";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -111,19 +112,38 @@ const messagesItemsStore = createStore<ChatMessage[]>("medicare_chat_messages", 
 
 export { threadsStore, messagesItemsStore };
 
-// ─── Hooks ──────────────────────────────────────────────────
+// ─── Dual-mode Hooks ────────────────────────────────────────
 
 export function useChatThreads() {
-  return useStore(threadsStore);
+  return useDualQuery<ChatThread[]>({
+    store: threadsStore,
+    tableName: "chat_threads",
+    queryKey: ["chat_threads"],
+    mapRowToLocal: mapChatThreadRow,
+    orderBy: { column: "last_message_at", ascending: false },
+  });
+}
+
+function mapChatMessageRow(row: any): ChatMessage {
+  return {
+    id: row.id,
+    threadId: row.thread_id,
+    senderId: row.sender_id,
+    senderName: row.sender_name || "",
+    text: row.text || "",
+    createdAt: row.created_at || "",
+    readAt: row.read_at || undefined,
+  };
 }
 
 export function useChatMessages() {
-  return useStore(messagesItemsStore);
-}
-
-/** Supabase Realtime sync for chat */
-export function useChatRealtime() {
-  useSupabaseRealtime("chat_messages", [["chat_messages"], ["chat_threads"]]);
+  return useDualQuery<ChatMessage[]>({
+    store: messagesItemsStore,
+    tableName: "chat_messages",
+    queryKey: ["chat_messages"],
+    mapRowToLocal: mapChatMessageRow,
+    orderBy: { column: "created_at", ascending: true },
+  });
 }
 
 // ─── Actions ────────────────────────────────────────────────
@@ -153,10 +173,9 @@ export async function sendMessage(threadId: string, senderId: string, text: stri
     };
   }));
 
-  // Try Supabase
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
+  // Try Supabase in production
+  if (getAppMode() === "production") {
+    try {
       await (supabase.from as any)("chat_messages").insert({
         id: msg.id,
         thread_id: threadId,
@@ -167,8 +186,8 @@ export async function sendMessage(threadId: string, senderId: string, text: stri
       await (supabase.from as any)("chat_threads")
         .update({ last_message: text, last_message_at: msg.createdAt })
         .eq("id", threadId);
-    }
-  } catch {}
+    } catch {}
+  }
 
   // Notify the other participant
   const thread = threadsStore.read().find(t => t.id === threadId);
