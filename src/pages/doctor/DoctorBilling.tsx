@@ -1,11 +1,14 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CreditCard, Search, Eye, Printer, CheckCircle2, Clock, AlertTriangle, RefreshCw, X, Banknote, Video, ArrowRight, Calendar, FileText, Shield, Crown, Zap, CheckCircle, Star, Gift, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockSubscriptionInfo, mockPlans, mockSubscriptionInvoices, mockTeleconsultTransactions, InvoiceStatus } from "@/data/mockData";
+import { InvoiceStatus } from "@/data/mockData";
+import { mockTeleconsultTransactions } from "@/data/mocks/doctor";
 import { getMyActivePromo } from "@/services/admin/adminPromotionsService";
 import { useSharedBilling, markInvoicePaid, getBillingStats, type SharedInvoice } from "@/stores/billingStore";
+import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
+import { useAdminPlans, type AdminPlan } from "@/stores/adminPlanStore";
 
 type BillingTab = "subscription" | "teleconsult" | "cabinet";
 
@@ -24,6 +27,44 @@ const DoctorBilling = () => {
   const activePromo = getMyActivePromo(1);
   const [sharedInvoices] = useSharedBilling();
   const cabinetStats = getBillingStats(sharedInvoices);
+  const [subscription] = useDoctorSubscription();
+  const [plans] = useAdminPlans();
+
+  // Derive subscription info from stores
+  const currentPlanName = subscription.plan === "pro" ? "Pro" : "Basic";
+  const currentPlan = plans.find(p => p.name.toLowerCase().includes(currentPlanName.toLowerCase()) && p.role === "doctor");
+  const subscriptionInfo = {
+    plan: currentPlanName,
+    price: currentPlan ? `${currentPlan.monthlyPrice} DT/mois` : "39 DT/mois",
+    cardBrand: "VISA",
+    cardLast4: "4242",
+    renewDate: "1 Mar 2026",
+  };
+
+  // Build plans display from adminPlanStore
+  const displayPlans = useMemo(() => {
+    const doctorPlans = plans.filter(p => p.role === "doctor" && p.status === "active");
+    if (doctorPlans.length === 0) return [
+      { key: "basic", name: "Basic", price: "39", period: "DT/mois", popular: false, features: ["Agenda en ligne", "Gestion patients", "Ordonnances PDF"], notIncluded: ["Téléconsultation", "SMS illimités", "Multi-cabinet"] },
+      { key: "pro", name: "Pro", price: "129", period: "DT/mois", popular: true, features: ["Tout Basic +", "Téléconsultation vidéo", "SMS illimités", "Multi-cabinet", "Statistiques avancées", "Secrétaire virtuelle"], notIncluded: [] },
+    ];
+    return doctorPlans.map(p => ({
+      key: p.name.toLowerCase(),
+      name: p.name,
+      price: String(p.monthlyPrice),
+      period: "DT/mois",
+      popular: p.highlighted,
+      features: p.features || [],
+      notIncluded: [] as string[],
+    }));
+  }, [plans]);
+
+  // Subscription invoices (mock — TODO: connect to billing when teleconsult payments are implemented)
+  const subscriptionInvoices = [
+    { id: "SUB-2026-02", month: "Février 2026", amount: parseInt(subscriptionInfo.price) || 39, status: "paid" as InvoiceStatus, date: "1 Fév 2026" },
+    { id: "SUB-2026-01", month: "Janvier 2026", amount: parseInt(subscriptionInfo.price) || 39, status: "paid" as InvoiceStatus, date: "1 Jan 2026" },
+    { id: "SUB-2025-12", month: "Décembre 2025", amount: parseInt(subscriptionInfo.price) || 39, status: "paid" as InvoiceStatus, date: "1 Déc 2025" },
+  ];
 
   const filteredTx = mockTeleconsultTransactions.filter(tx =>
     !search || tx.patient.toLowerCase().includes(search.toLowerCase()) || tx.ref.toLowerCase().includes(search.toLowerCase())
@@ -53,7 +94,7 @@ const DoctorBilling = () => {
         {tab === "subscription" && (
           <div className="space-y-6">
             {/* Pro upgrade banner – eye-catching */}
-            {mockSubscriptionInfo.plan === "Basic" && (
+            {subscriptionInfo.plan === "Basic" && (
               <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 p-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/4" />
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -94,7 +135,7 @@ const DoctorBilling = () => {
             )}
             {/* Plans comparison */}
             <div className="grid gap-5 sm:grid-cols-2">
-              {mockPlans.map(plan => (
+              {displayPlans.map(plan => (
                 <div key={plan.key} className={`rounded-xl border bg-card p-5 shadow-card relative ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -113,7 +154,7 @@ const DoctorBilling = () => {
                       <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground line-through"><span className="h-4 w-4 shrink-0" />{f}</li>
                     ))}
                   </ul>
-                  {mockSubscriptionInfo.plan === plan.name ? (
+                  {subscriptionInfo.plan === plan.name ? (
                     <Button variant="outline" className="w-full" disabled>Plan actuel</Button>
                   ) : (
                     <Button className="w-full gradient-primary text-primary-foreground shadow-primary-glow"><Zap className="h-4 w-4 mr-1" />Passer au {plan.name}</Button>
@@ -127,8 +168,8 @@ const DoctorBilling = () => {
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" />Méthode de paiement</h3>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-14 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">{mockSubscriptionInfo.cardBrand}</div>
-                  <div><p className="text-sm font-medium text-foreground">•••• •••• •••• {mockSubscriptionInfo.cardLast4}</p><p className="text-xs text-muted-foreground">Expire 12/2027</p></div>
+                   <div className="h-10 w-14 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">{subscriptionInfo.cardBrand}</div>
+                   <div><p className="text-sm font-medium text-foreground">•••• •••• •••• {subscriptionInfo.cardLast4}</p><p className="text-xs text-muted-foreground">Expire 12/2027</p></div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setShowChangeCard(true)}>Modifier</Button>
               </div>
@@ -138,7 +179,7 @@ const DoctorBilling = () => {
             <div className="rounded-xl border bg-card shadow-card">
               <div className="border-b px-5 py-4"><h3 className="font-semibold text-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Historique factures</h3></div>
               <div className="divide-y">
-                {mockSubscriptionInvoices.map(inv => {
+                {subscriptionInvoices.map(inv => {
                   const sc = statusConfig[inv.status];
                   return (
                     <div key={inv.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">

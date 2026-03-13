@@ -1,0 +1,64 @@
+/**
+ * reviewsStore.ts — Patient reviews for doctors (crossRoleStore).
+ * // TODO BACKEND: Replace with API
+ */
+import { createStore, useStore } from "./crossRoleStore";
+
+export interface Review {
+  id: string;
+  appointmentId: string;
+  patientId: number;
+  patientName: string;
+  doctorId: number;
+  doctorName: string;
+  rating: number;
+  text: string;
+  verified: boolean;
+  createdAt: string;
+}
+
+const store = createStore<Review[]>("medicare_reviews", []);
+
+export const reviewsStore = store;
+
+export function useReviews() {
+  return useStore(store);
+}
+
+export function submitReview(review: Omit<Review, "id" | "createdAt">) {
+  store.set(prev => [
+    {
+      ...review,
+      id: `rev-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    },
+    ...prev,
+  ]);
+}
+
+export function getReviewsForDoctor(doctorId: number): Review[] {
+  return store.read().filter(r => r.doctorId === doctorId);
+}
+
+export function getAverageRating(doctorId: number): number {
+  const reviews = getReviewsForDoctor(doctorId);
+  if (reviews.length === 0) return 0;
+  return Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
+}
+
+// Seed data
+const SEED_REVIEWS: Review[] = [
+  { id: "rev-1", appointmentId: "apt-100", patientId: 1, patientName: "Amine B.", doctorId: 1, doctorName: "Dr. Ahmed Bouazizi", rating: 5, text: "Très bon médecin, à l'écoute et professionnel.", verified: true, createdAt: "2026-02-10T10:00:00Z" },
+  { id: "rev-2", appointmentId: "apt-101", patientId: 2, patientName: "Fatma T.", doctorId: 1, doctorName: "Dr. Ahmed Bouazizi", rating: 5, text: "Ponctuel et efficace. Explique bien les traitements.", verified: true, createdAt: "2026-02-05T10:00:00Z" },
+  { id: "rev-3", appointmentId: "apt-102", patientId: 3, patientName: "Mohamed S.", doctorId: 1, doctorName: "Dr. Ahmed Bouazizi", rating: 4, text: "Bon suivi médical, cabinet propre et moderne.", verified: true, createdAt: "2026-01-28T10:00:00Z" },
+  { id: "rev-4", appointmentId: "apt-103", patientId: 4, patientName: "Nadia J.", doctorId: 1, doctorName: "Dr. Ahmed Bouazizi", rating: 5, text: "Excellent suivi pour mon diabète.", verified: true, createdAt: "2026-01-20T10:00:00Z" },
+  { id: "rev-5", appointmentId: "apt-104", patientId: 5, patientName: "Sami A.", doctorId: 1, doctorName: "Dr. Ahmed Bouazizi", rating: 4, text: "Bonne consultation, docteur à l'écoute.", verified: false, createdAt: "2026-01-15T10:00:00Z" },
+  { id: "rev-6", appointmentId: "apt-105", patientId: 1, patientName: "Amine B.", doctorId: 2, doctorName: "Dr. Sonia Gharbi", rating: 5, text: "Excellente cardiologue, très professionnelle.", verified: true, createdAt: "2026-02-01T10:00:00Z" },
+];
+
+export function seedReviewsIfEmpty() {
+  const current = store.read();
+  if (current.length === 0) {
+    store.set(SEED_REVIEWS);
+  }
+}

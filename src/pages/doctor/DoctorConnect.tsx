@@ -1,9 +1,10 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, Send, Paperclip, ChevronLeft, Users, Building2, Bot, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockProContacts, mockCabinetContacts, mockProMessages, mockCabinetMessages, ChatContact, ChatMessage } from "@/data/mockData";
+import { useChatThreads, useChatMessages, sendMessage as storeSendMessage, type ChatThread } from "@/stores/messagesStore";
+import type { ChatMessage } from "@/types";
 
 type ConnectTab = "professionals" | "cabinet" | "ai";
 
@@ -16,11 +17,52 @@ const aiSuggestions = [
 
 const DoctorConnect = () => {
   const [tab, setTab] = useState<ConnectTab>("professionals");
-  const [selectedContact, setSelectedContact] = useState<string | null>("p1");
+  const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
-  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({ ...mockProMessages, ...mockCabinetMessages });
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Use messagesStore threads/messages
+  const [threads] = useChatThreads();
+  const [allMessages] = useChatMessages();
+
+  // Filter threads by type: "cabinet" or regular messages for "professionals"
+  const filteredThreads = useMemo(() => {
+    const doctorId = "demo-doctor-1";
+    return threads.filter(t => {
+      const isParticipant = t.participantA.id === doctorId || t.participantB.id === doctorId;
+      if (!isParticipant) return false;
+      if (tab === "cabinet") return t.category === "cabinet";
+      return t.category !== "cabinet";
+    });
+  }, [threads, tab]);
+
+  // Build contact-like list from threads
+  const contacts = useMemo(() => {
+    const doctorId = "demo-doctor-1";
+    return filteredThreads.map(t => {
+      const other = t.participantA.id === doctorId ? t.participantB : t.participantA;
+      return { id: t.id, name: other.name, avatar: other.avatar, lastMessage: t.lastMessage, role: other.role, online: false, specialty: other.role, time: "", unread: 0 };
+    });
+  }, [filteredThreads]);
+
+  const currentContact = contacts.find(c => c.id === selectedContact);
+  const currentMessages: ChatMessage[] = useMemo(() => {
+    if (!selectedContact) return [];
+    return allMessages.filter(m => m.threadId === selectedContact).map(m => ({
+      id: m.id,
+      sender: (m.senderId === "demo-doctor-1" ? "me" : "them") as "me" | "them",
+      senderName: m.senderName,
+      text: m.text,
+      time: new Date(m.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+    }));
+  }, [allMessages, selectedContact]);
+
+  const sendMessageHandler = () => {
+    if (!newMessage.trim() || !selectedContact) return;
+    storeSendMessage(selectedContact, "demo-doctor-1", "Dr. Ahmed Bouazizi", newMessage.trim());
+    setNewMessage("");
+  };
 
   // AI chat state
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>([
@@ -28,25 +70,11 @@ const DoctorConnect = () => {
   ]);
   const [aiInput, setAiInput] = useState("");
 
-  const contacts = tab === "professionals" ? mockProContacts : mockCabinetContacts;
-  const currentContact = contacts.find(c => c.id === selectedContact);
-  const currentMessages = selectedContact ? messages[selectedContact] || [] : [];
-
-  const sendMessage = () => {
-    if (!newMessage.trim() || !selectedContact) return;
-    const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    const msg: ChatMessage = { id: Date.now().toString(), sender: "me", text: newMessage, time };
-    setMessages(prev => ({ ...prev, [selectedContact]: [...(prev[selectedContact] || []), msg] }));
-    setNewMessage("");
-  };
-
   const sendAiMessage = (text?: string) => {
     const msgText = text || aiInput;
     if (!msgText.trim()) return;
     const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
     const userMsg: ChatMessage = { id: Date.now().toString(), sender: "me", text: msgText, time };
-    
-    // Simulated AI response
     const aiResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
       sender: "ai",
@@ -54,7 +82,6 @@ const DoctorConnect = () => {
       text: `Je traite votre demande : "${msgText}"\n\nVoici une réponse simulée. En production, cette réponse proviendrait d'un modèle IA médical avec accès au dossier patient.`,
       time,
     };
-    
     setAiMessages(prev => [...prev, userMsg, aiResponse]);
     setAiInput("");
   };
@@ -156,8 +183,8 @@ const DoctorConnect = () => {
                   <div className="border-t p-3">
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0"><Paperclip className="h-4 w-4 text-muted-foreground" /></Button>
-                      <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} className="flex-1" />
-                      <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendMessage} disabled={!newMessage.trim()}><Send className="h-4 w-4" /></Button>
+                      <Input placeholder="Écrire un message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessageHandler()} className="flex-1" />
+                      <Button size="icon" className="gradient-primary text-primary-foreground h-9 w-9 shrink-0" onClick={sendMessageHandler} disabled={!newMessage.trim()}><Send className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 </>
