@@ -314,13 +314,19 @@ export const buildDefaultState = (activityId: ActivityType): FeatureState => {
       // Activity-specific
       if (activityId === "dentiste" && ["dental_chart", "dental_quote"].includes(f.id) && plan !== "essentiel") enabled = true;
       if (activityId === "kine" && ["kine_exercises", "kine_balance"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "osteopathe" && ["osteo_schema", "osteo_tests"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "orthophoniste" && ["ortho_bilan", "ortho_exercices"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "psychologue" && ["psy_echelles", "psy_notes_conf"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "nutritionniste" && ["nutri_plan", "nutri_journal"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "podologue" && ["podo_schema", "podo_semelles"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "sage_femme" && ["sf_suivi_grossesse", "sf_monitoring"].includes(f.id) && plan !== "essentiel") enabled = true;
+      if (activityId === "orthoptiste" && ["orthoptiste_bilan", "orthoptiste_exercices"].includes(f.id) && plan !== "essentiel") enabled = true;
       if (activityId === "specialiste" && f.id === "prescription_specialized" && plan !== "essentiel") enabled = true;
       if (activityId === "laboratory" && ["lab_auto_integration", "lab_results_view", "lab_request"].includes(f.id)) enabled = true;
       if (activityId === "pharmacy" && ["rx_reception", "stock_basic", "guard_schedule"].includes(f.id)) enabled = true;
       if (activityId === "pharmacy" && plan !== "essentiel" && ["stock_advanced", "substitution_auto"].includes(f.id)) enabled = true;
 
       // Specialty-specific: disable teleconsult for ophtalmo
-      // (Ophtalmo needs in-person exams: acuité visuelle, fond d'oeil, etc.)
       if (activityId === "specialiste" && ["teleconsult_video", "teleconsult_chat", "teleconsult_screen_share", "teleconsult_recording"].includes(f.id)) {
         // Keep enabled by default but overrides will disable for specific specialties
       }
