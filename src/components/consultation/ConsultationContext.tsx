@@ -36,6 +36,9 @@ import { createLabDemand } from "@/stores/labStore";
 import { createPrescription } from "@/stores/doctorPrescriptionsStore";
 import { addDocument as addHealthDocument } from "@/stores/healthStore";
 import type { SharedAppointment } from "@/types/appointment";
+import { getConsultationRepo } from "@/modules/consultations";
+import { readAuthUser } from "@/stores/authStore";
+import { sharedPatientsStore } from "@/stores/sharedPatientsStore";
 
 // ── Context type ─────────────────────────────────────────────
 interface Ctx {
