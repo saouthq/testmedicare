@@ -108,7 +108,7 @@ const DoctorDashboard = () => {
           {[
             { label: "Planning", icon: Calendar, to: "/dashboard/doctor/schedule", color: "text-primary" },
             { label: config.sidebarLabels?.["/dashboard/doctor/waiting-room"] || "Salle d'attente", icon: Clock, to: "/dashboard/doctor/waiting-room", color: "text-warning", badge: activeWaiting.length },
-            { label: config.sidebarLabels?.["/dashboard/doctor/consultations"] || "Consultation", icon: Play, to: currentRdv ? `/dashboard/doctor/consultation/new?patient=${getPatientId(currentRdv.patient)}` : "/dashboard/doctor/consultations", color: "text-accent" },
+            { label: config.sidebarLabels?.["/dashboard/doctor/consultations"] || "Consultation", icon: Play, to: currentRdv ? `/dashboard/doctor/consultation/new?patient=${getPatientId(currentRdv.patient)}&aptId=${currentRdv.id}` : "/dashboard/doctor/consultations", color: "text-accent" },
             { label: config.sidebarLabels?.["/dashboard/doctor/patients"] || "Mes patients", icon: Search, to: "/dashboard/doctor/patients", color: "text-primary" },
             { label: config.sidebarLabels?.["/dashboard/doctor/prescriptions"] || "Ordonnances", icon: FileText, to: "/dashboard/doctor/prescriptions", color: "text-primary" },
           ].map(action => (
