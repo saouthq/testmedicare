@@ -1,8 +1,6 @@
 /**
  * DoctorPrescriptions — Page Ordonnances (slim composer).
- * Remplace l'ancien fichier qui était un doublon mort de DoctorConsultations.
- *
- * // TODO BACKEND: Charger les ordonnances depuis GET /api/prescriptions
+ * Data source: PrescriptionsContext → doctorPrescriptionsStore (dual-mode).
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { PrescriptionsProvider } from "@/components/doctor-prescriptions/PrescriptionsContext";

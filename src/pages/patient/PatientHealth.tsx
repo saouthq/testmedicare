@@ -25,12 +25,17 @@ const menuItemsDef: { key: HealthSection; label: string; icon: any }[] = [
   { key: "measures", label: "Mesures", icon: Thermometer },
 ];
 
-import {
-  mockPatientAiInitial as aiInitial,
-  mockPatientAiResponses as aiMockResponses
-} from "@/data/mockData";
-
-import type { ChatMessage } from "@/data/mockData";
+// Inline AI chat data (no mock import dependency)
+interface ChatMessage { id: string; sender: "ai" | "user"; text: string; time: string; }
+const aiInitial: ChatMessage[] = [
+  { id: "1", sender: "ai", text: "Bonjour ! Je suis l'assistant virtuel Medicare. Je peux vous aider à comprendre vos résultats ou vous orienter. Que puis-je faire pour vous ?", time: "—" },
+];
+const aiMockResponses = [
+  "D'après vos résultats, votre glycémie est dans les normes (1.05 g/L). Continuez votre traitement et vos contrôles réguliers. N'hésitez pas à consulter votre médecin traitant pour toute question.",
+  "Je vous recommande de consulter un spécialiste pour ce type de symptômes. Vous pouvez rechercher un praticien directement depuis l'onglet 'Prendre RDV'.",
+  "Votre tension artérielle (12/7) est normale. Continuez à maintenir une alimentation équilibrée et une activité physique régulière.",
+  "Pour toute question urgente, je vous recommande de contacter directement votre médecin traitant ou de vous rendre aux urgences les plus proches.",
+];
 
 const PatientHealth = () => {
   const [searchParams] = useSearchParams();
