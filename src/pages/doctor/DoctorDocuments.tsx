@@ -1,7 +1,7 @@
 /**
  * DoctorDocuments — Bibliothèque de modèles de documents
  * Certificats, courriers, arrêts maladie — CRUD + aperçu
- * // TODO BACKEND: Persister les modèles, générer PDF
+ * Persisted via doctorDocumentsStore (localStorage + Supabase dual-mode)
  */
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -15,7 +15,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { FileText, Plus, Copy, Eye, Trash2, Search, Pencil } from "lucide-react";
-import { useDoctorDocTemplates, type DocTemplate } from "@/stores/doctorDocumentsStore";
+import {
+  useDoctorDocTemplates,
+  createDocTemplate,
+  updateDocTemplate,
+  deleteDocTemplate,
+  type DocTemplate,
+} from "@/stores/doctorDocumentsStore";
 
 const categoryLabels: Record<string, string> = {
   certificat: "Certificat", courrier: "Courrier", arret: "Arrêt maladie",
@@ -28,7 +34,7 @@ const categoryColors: Record<string, string> = {
 };
 
 const DoctorDocuments = () => {
-  const [templates, setTemplates] = useDoctorDocTemplates();
+  const [templates] = useDoctorDocTemplates();
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -54,26 +60,26 @@ const DoctorDocuments = () => {
     setDrawerOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.content) { toast.error("Nom et contenu requis"); return; }
     const vars = (form.content.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/\{\{|\}\}/g, ""));
     if (editMode && selected) {
-      setTemplates(prev => prev.map(t => t.id === selected.id ? { ...t, ...form, variables: vars } : t));
+      await updateDocTemplate(selected.id, { ...form, variables: vars });
       toast.success("Modèle mis à jour");
     } else {
-      setTemplates(prev => [{ id: Date.now(), ...form, variables: vars, usageCount: 0, lastUsed: "—", createdAt: "Mar 2026" }, ...prev]);
+      await createDocTemplate({ ...form, variables: vars });
       toast.success("Modèle créé");
     }
     setDrawerOpen(false);
   };
 
-  const handleDuplicate = (t: DocTemplate) => {
-    setTemplates(prev => [{ ...t, id: Date.now(), name: `${t.name} (copie)`, usageCount: 0, lastUsed: "—" }, ...prev]);
+  const handleDuplicate = async (t: DocTemplate) => {
+    await createDocTemplate({ name: `${t.name} (copie)`, category: t.category, content: t.content, variables: t.variables });
     toast.success("Modèle dupliqué");
   };
 
-  const handleDelete = (id: number) => {
-    setTemplates(prev => prev.filter(t => t.id !== id));
+  const handleDelete = async (id: number) => {
+    await deleteDocTemplate(id);
     toast.success("Modèle supprimé");
   };
 
@@ -147,6 +153,13 @@ const DoctorDocuments = () => {
           </Card>
         ))}
       </div>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Aucun modèle trouvé</p>
+        </div>
+      )}
 
       {/* Preview drawer */}
       <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>

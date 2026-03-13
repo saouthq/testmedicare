@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Users, Calendar, FileText, Settings, MessageSquare, ClipboardList, Banknote,
   Building2, ShieldCheck, BarChart3, Plug, Bot, Clock, Gavel, Flag, CreditCard, ScrollText, Activity,
   UserCheck, CalendarPlus, Send, Video, Phone, Bell, RefreshCw, Lock, CheckCircle2, AlertTriangle,
-  ArrowRight, Inbox, Upload, Download, Star, Truck, Power, Key, FileDown, CalendarDays, BookOpen
+  ArrowRight, Inbox, Upload, Download, Star, Truck, Power, Key, FileDown, CalendarDays, BookOpen,
+  Hand, HeartPulse, Apple, Footprints, ScanEye, Mic
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pharmacyRespond, prescriptionsStore } from "@/stores/prescriptionsStore";
@@ -27,6 +28,11 @@ import { switchDemoRole, loginDemoAs, useAppMode, setAppMode, logout, type UserR
 import { Switch } from "@/components/ui/switch";
 import { pushNotification, notifyPatient, notifyDoctor } from "@/stores/notificationsStore";
 import { useAdminModules, toggleModule, platformModules } from "@/stores/adminModulesStore";
+import { sharedLeavesStore } from "@/stores/sharedLeavesStore";
+import { sharedTarifsStore } from "@/stores/sharedTarifsStore";
+import { sharedBlockedSlotsStore } from "@/stores/sharedBlockedSlotsStore";
+import { doctorDocumentsStore } from "@/stores/doctorDocumentsStore";
+import { doctorProtocolsStore } from "@/stores/doctorProtocolsStore";
 
 type PanelTab = "navigation" | "simulation" | "plan" | "specialty" | "admin";
 
@@ -42,6 +48,14 @@ const specialtyConfigs = [
   { id: "gynecologue", label: "Gynécologue", icon: Heart, activity: "specialiste" as ActivityType, specialty: "Gynécologue", color: "text-rose-500" },
   { id: "dentiste", label: "Dentiste", icon: Smile, activity: "dentiste" as ActivityType, specialty: undefined, color: "text-cyan-500" },
   { id: "kine", label: "Kinésithérapeute", icon: Bone, activity: "kine" as ActivityType, specialty: undefined, color: "text-orange-500" },
+  // Paramedical
+  { id: "osteopathe", label: "Ostéopathe", icon: Hand, activity: "osteopathe" as ActivityType, specialty: undefined, color: "text-teal-500" },
+  { id: "sage_femme", label: "Sage-femme", icon: HeartPulse, activity: "sage_femme" as ActivityType, specialty: undefined, color: "text-pink-500" },
+  { id: "orthophoniste", label: "Orthophoniste", icon: Mic, activity: "orthophoniste" as ActivityType, specialty: undefined, color: "text-violet-500" },
+  { id: "psychologue", label: "Psychologue", icon: Brain, activity: "psychologue" as ActivityType, specialty: undefined, color: "text-indigo-500" },
+  { id: "nutritionniste", label: "Nutritionniste", icon: Apple, activity: "nutritionniste" as ActivityType, specialty: undefined, color: "text-green-500" },
+  { id: "podologue", label: "Podologue", icon: Footprints, activity: "podologue" as ActivityType, specialty: undefined, color: "text-amber-600" },
+  { id: "orthoptiste", label: "Orthoptiste", icon: ScanEye, activity: "orthoptiste" as ActivityType, specialty: undefined, color: "text-blue-600" },
 ];
 
 interface NavGroup { label: string; icon: any; color: string; role: string; links: { label: string; url: string; icon: any }[] }
@@ -66,6 +80,7 @@ const roleNavGroups: NavGroup[] = [
       { label: "Dashboard", url: "/dashboard/doctor", icon: LayoutDashboard },
       { label: "Planning", url: "/dashboard/doctor/schedule", icon: Calendar },
       { label: "Salle d'attente", url: "/dashboard/doctor/waiting-room", icon: Clock },
+      { label: "Consultations", url: "/dashboard/doctor/consultations", icon: ClipboardList },
       { label: "Patients", url: "/dashboard/doctor/patients", icon: Users },
       { label: "Consultation", url: "/dashboard/doctor/consultation/new?patient=1", icon: ClipboardList },
       { label: "Fiche patient", url: "/dashboard/doctor/patients/1", icon: Eye },
@@ -74,7 +89,6 @@ const roleNavGroups: NavGroup[] = [
       { label: "Tarifs", url: "/dashboard/doctor/tarifs", icon: Banknote },
       { label: "Congés", url: "/dashboard/doctor/leaves", icon: CalendarDays },
       { label: "Facturation", url: "/dashboard/doctor/billing", icon: Banknote },
-      { label: "Téléconsultation", url: "/dashboard/doctor/teleconsultation", icon: Video },
       { label: "Connect", url: "/dashboard/doctor/connect", icon: Plug },
       { label: "Assistant IA", url: "/dashboard/doctor/ai-assistant", icon: Bot },
       { label: "Statistiques", url: "/dashboard/doctor/stats", icon: BarChart3 },
@@ -158,6 +172,10 @@ const roleNavGroups: NavGroup[] = [
       { label: "Audit Logs", url: "/dashboard/admin/audit-logs", icon: ScrollText },
       { label: "Paiements", url: "/dashboard/admin/payments", icon: CreditCard },
       { label: "Abonnements", url: "/dashboard/admin/subscriptions", icon: CreditCard },
+      { label: "Organisations", url: "/dashboard/admin/organizations", icon: Building2 },
+      { label: "Campagnes", url: "/dashboard/admin/campaigns", icon: Send },
+      { label: "Promotions", url: "/dashboard/admin/promotions", icon: Star },
+      { label: "Spécialités", url: "/dashboard/admin/specialties", icon: Stethoscope },
       { label: "Paramètres", url: "/dashboard/admin/settings", icon: Settings },
     ],
   },
@@ -202,6 +220,18 @@ const SimulationPanel = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isProduction = appMode === "production";
+
+  // ─── Store counts for dashboard ───────────────────
+  const storeStats = useMemo(() => ({
+    appointments: sharedAppointmentsStore.read().length,
+    lab: labStore.read().length,
+    rx: prescriptionsStore.read().length,
+    leaves: sharedLeavesStore.read().length,
+    tarifs: sharedTarifsStore.read().length,
+    blocks: sharedBlockedSlotsStore.read().length,
+    templates: doctorDocumentsStore.read().length,
+    protocols: doctorProtocolsStore.read().length,
+  }), [open]); // recalc when panel opens
 
   // ─── Simulation actions ───────────────────────────────
 
@@ -297,26 +327,22 @@ const SimulationPanel = () => {
 
   const simulateFullWorkflow = () => {
     const today = getTodayDate();
-    // Step 1: Create appointment
     createAppointment({
       date: today, startTime: "15:00", duration: 20,
       patient: "Workflow Complet Test", patientId: null, avatar: "WC",
       doctor: "Dr. Bouazizi", type: "Consultation", motif: "Bilan général",
       status: "confirmed", phone: "+216 11 222 333", assurance: "CNAM", createdBy: "patient",
     });
-    // Step 2: arrival
     setTimeout(() => {
       const apts = sharedAppointmentsStore.read();
       const apt = apts.find(a => a.patient === "Workflow Complet Test" && a.status === "confirmed");
       if (apt) sendToWaitingRoom(apt.id);
     }, 500);
-    // Step 3: start
     setTimeout(() => {
       const apts = sharedAppointmentsStore.read();
       const apt = apts.find(a => a.patient === "Workflow Complet Test" && a.status === "in_waiting");
       if (apt) startAppointmentConsultation(apt.id);
     }, 1000);
-    // Step 4: end
     setTimeout(() => {
       const apts = sharedAppointmentsStore.read();
       const apt = apts.find(a => a.patient === "Workflow Complet Test" && a.status === "in_progress");
@@ -387,13 +413,14 @@ const SimulationPanel = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] w-[420px] max-h-[85vh] rounded-2xl border bg-card shadow-elevated animate-fade-in overflow-hidden flex flex-col">
+    <div className="fixed bottom-4 right-4 z-[100] w-[440px] max-h-[88vh] rounded-2xl border bg-card shadow-elevated animate-fade-in overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
-          <span className="text-xs font-semibold text-foreground">Simulation Panel</span>
-          <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{currentRole}</span>
+          <span className="text-xs font-semibold text-foreground">Panel de simulation</span>
+          <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">{currentRole}</span>
+          {isProduction && <span className="text-[9px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full font-medium">PROD</span>}
         </div>
         <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground" aria-label="Fermer">
           <X className="h-4 w-4" />
@@ -593,15 +620,28 @@ const SimulationPanel = () => {
               </div>
             </div>
 
-            {/* State info */}
-            <div className="rounded-lg bg-muted/50 p-2.5 space-y-1">
-              <p className="text-[10px] font-medium text-foreground">État des stores :</p>
-              <div className="grid grid-cols-2 gap-1 text-[9px] text-muted-foreground">
-                <span>RDV: {sharedAppointmentsStore.read().length}</span>
-                <span>Labo: {labStore.read().length}</span>
-                <span>Rx: {prescriptionsStore.read().length}</span>
-                <span>Modules: {enabledModules}/{platformModules.length}</span>
+            {/* Store state dashboard */}
+            <div className="rounded-lg bg-muted/50 p-3 space-y-2">
+              <p className="text-[10px] font-semibold text-foreground uppercase tracking-wide">📊 État des stores</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { label: "RDV", value: storeStats.appointments, icon: Calendar },
+                  { label: "Labo", value: storeStats.lab, icon: FlaskConical },
+                  { label: "Ordonnances", value: storeStats.rx, icon: FileText },
+                  { label: "Congés", value: storeStats.leaves, icon: CalendarDays },
+                  { label: "Tarifs", value: storeStats.tarifs, icon: Banknote },
+                  { label: "Bloqués", value: storeStats.blocks, icon: Lock },
+                  { label: "Modèles doc", value: storeStats.templates, icon: FileText },
+                  { label: "Protocoles", value: storeStats.protocols, icon: BookOpen },
+                ].map(s => (
+                  <div key={s.label} className="flex items-center gap-2 rounded-md bg-card border px-2 py-1.5">
+                    <s.icon className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <span className="text-[10px] text-muted-foreground flex-1">{s.label}</span>
+                    <span className="text-[11px] font-bold text-foreground">{s.value}</span>
+                  </div>
+                ))}
               </div>
+              <p className="text-[9px] text-muted-foreground">Modules: {enabledModules}/{platformModules.length} actifs</p>
             </div>
           </>
         )}
@@ -668,11 +708,11 @@ const SimulationPanel = () => {
               ));
             })()}
 
-            <div className="border-t pt-2">
+            <div className="border-t pt-2 space-y-1">
               <Button size="sm" variant="outline" className="w-full text-[10px] h-7" onClick={() => goTo("/dashboard/admin/modules", "admin")}>
                 <Settings className="h-3 w-3 mr-1.5" />Ouvrir AdminModules (page complète)
               </Button>
-              <Button size="sm" variant="outline" className="w-full text-[10px] h-7 mt-1" onClick={() => goTo("/dashboard/admin/sidebar-config", "admin")}>
+              <Button size="sm" variant="outline" className="w-full text-[10px] h-7" onClick={() => goTo("/dashboard/admin/sidebar-config", "admin")}>
                 <Settings className="h-3 w-3 mr-1.5" />Config Sidebar par rôle
               </Button>
             </div>
@@ -691,7 +731,7 @@ const SimulationPanel = () => {
                 setDoctorActivity(act, specs?.[0]);
                 toast.success(`Activité → ${activities.find(a => a.id === act)?.label}`);
               }} className="w-full rounded-lg border bg-background px-3 py-2 text-xs">
-                {activities.filter(a => ["generaliste", "specialiste", "dentiste", "kine"].includes(a.id)).map(a => (
+                {activities.map(a => (
                   <option key={a.id} value={a.id}>{a.label}</option>
                 ))}
               </select>
@@ -729,7 +769,8 @@ const SimulationPanel = () => {
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5">
               <p className="text-[10px] font-medium text-primary uppercase">Spécialité active</p>
               <p className="text-sm font-semibold text-foreground mt-0.5">
-                {sub.activity === "generaliste" ? "Généraliste" : sub.activity === "dentiste" ? "Dentiste" : sub.activity === "kine" ? "Kinésithérapeute" : sub.specialty || "Spécialiste"}
+                {currentActivity?.label || sub.activity}
+                {sub.specialty && ` · ${sub.specialty}`}
               </p>
               {currentSpecialtyInfo && (
                 <div className="mt-1.5 space-y-0.5">
@@ -742,8 +783,9 @@ const SimulationPanel = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5">
-              {specialtyConfigs.map(config => {
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Médecins spécialistes</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {specialtyConfigs.filter(c => c.activity === "specialiste" || c.activity === "generaliste" || c.activity === "dentiste" || c.activity === "kine").map(config => {
                 const isActive = (config.activity === sub.activity && config.specialty === sub.specialty) ||
                   (config.activity === sub.activity && !config.specialty && !sub.specialty);
                 const Icon = config.icon;
@@ -753,8 +795,27 @@ const SimulationPanel = () => {
                       isActive ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/50 hover:border-primary/30"
                     }`}>
                     <div className="flex items-center gap-1.5">
-                      <Icon className={`h-3.5 w-3.5 ${config.color}`} />
-                      <span className="text-[10px] font-medium text-foreground truncate">{config.label}</span>
+                      <Icon className={`h-3 w-3 ${config.color}`} />
+                      <span className="text-[9px] font-medium text-foreground truncate">{config.label}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Paramédicaux</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {specialtyConfigs.filter(c => ["osteopathe", "sage_femme", "orthophoniste", "psychologue", "nutritionniste", "podologue", "orthoptiste"].includes(c.activity)).map(config => {
+                const isActive = config.activity === sub.activity;
+                const Icon = config.icon;
+                return (
+                  <button key={config.id} onClick={() => switchToSpecialty(config)}
+                    className={`rounded-lg border p-2 text-left transition-all ${
+                      isActive ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/50 hover:border-primary/30"
+                    }`}>
+                    <div className="flex items-center gap-1.5">
+                      <Icon className={`h-3 w-3 ${config.color}`} />
+                      <span className="text-[9px] font-medium text-foreground truncate">{config.label}</span>
                     </div>
                   </button>
                 );
