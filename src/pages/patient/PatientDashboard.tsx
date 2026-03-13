@@ -119,6 +119,10 @@ const PatientDashboard = () => {
     toast({ title: "Demande envoyée", description: "Votre demande de renouvellement a été envoyée au médecin." });
   };
 
+  if (aptsLoading) {
+    return <DashboardLayout role="patient" title="Tableau de bord"><LoadingSkeleton type="dashboard" /></DashboardLayout>;
+  }
+
   return (
     <DashboardLayout role="patient" title="Tableau de bord">
       <div className="space-y-5">

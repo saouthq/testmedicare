@@ -199,6 +199,10 @@ const PatientAppointments = () => {
   const aptForReschedule = showReschedule ? appointments.find(a => a.id === showReschedule) : null;
   const aptForPayment = showPayment ? appointments.find(a => a.id === showPayment) : null;
 
+  if (isLoading) {
+    return <DashboardLayout role="patient" title="Mes rendez-vous"><LoadingSkeleton type="card" /></DashboardLayout>;
+  }
+
   return (
   <>
     <DashboardLayout role="patient" title="Mes rendez-vous">
