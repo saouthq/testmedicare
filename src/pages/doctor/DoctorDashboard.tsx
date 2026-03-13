@@ -28,7 +28,7 @@ const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 const DoctorDashboard = () => {
   const teleconsultSessions = useTeleconsultSessions();
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading: aptsLoading }] = useSharedAppointments();
   const [patients] = useSharedPatients();
   const [renewalRequests] = useRenewalRequests();
   const [profileCompletion] = useProfileCompletion();
