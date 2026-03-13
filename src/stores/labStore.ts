@@ -1,13 +1,13 @@
 /**
- * labStore.ts — Cross-role lab request tracking (localStorage + Supabase).
- * Doctor creates demand → Lab receives → Lab uploads PDFs → Lab transmits → Patient/Doctor see.
- *
- * Dual-mode: Supabase when authenticated, localStorage fallback for demo.
+ * labStore.ts — Cross-role lab request tracking.
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
 import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapLabDemandRow } from "@/lib/supabaseMappers";
 
 export type LabDemandStatus = "received" | "in_progress" | "results_ready" | "transmitted";
 
@@ -40,7 +40,13 @@ const store = createStore<SharedLabDemand[]>("medicare_lab_demands", []);
 export const labStore = store;
 
 export function useSharedLabDemands() {
-  return useStore(store);
+  return useDualQuery<SharedLabDemand[]>({
+    store,
+    tableName: "lab_demands",
+    queryKey: ["lab_demands"],
+    mapRowToLocal: mapLabDemandRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 /** Supabase-aware hook for lab demands */

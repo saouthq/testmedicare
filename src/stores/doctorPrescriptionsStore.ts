@@ -1,21 +1,28 @@
 /**
  * doctorPrescriptionsStore.ts — Doctor-side prescription management.
- * Cross-role: Doctor creates → Patient sees → Pharmacy receives.
- *
- * Dual-mode: Supabase when authenticated, localStorage fallback for demo.
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
 import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
 import type { Prescription } from "@/types";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapPrescriptionRow } from "@/lib/supabaseMappers";
 
 const store = createStore<Prescription[]>("medicare_doctor_prescriptions", []);
 
 export const doctorPrescriptionsStore = store;
 
 export function useDoctorPrescriptions(): [Prescription[], (v: Prescription[] | ((prev: Prescription[]) => Prescription[])) => void] {
-  return useStore(store);
+  const [data, set] = useDualQuery<Prescription[]>({
+    store,
+    tableName: "prescriptions",
+    queryKey: ["prescriptions"],
+    mapRowToLocal: mapPrescriptionRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
+  return [data, set];
 }
 
 /** Hook that tries Supabase first, falls back to localStorage */

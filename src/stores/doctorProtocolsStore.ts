@@ -1,10 +1,12 @@
 /**
  * doctorProtocolsStore.ts — Persisted protocols store.
- * Dual-mode: Supabase + localStorage fallback.
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { useSupabaseTable, useAuthReady } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapProtocolRow } from "@/lib/supabaseMappers";
 
 export type ProtocolType = "consultation" | "prescription" | "procedure" | "followup";
 
@@ -20,7 +22,13 @@ const store = createStore<Protocol[]>("medicare_doctor_protocols", []);
 export const doctorProtocolsStore = store;
 
 export function useDoctorProtocols() {
-  return useStore(store);
+  return useDualQuery<Protocol[]>({
+    store,
+    tableName: "doctor_protocols",
+    queryKey: ["doctor_protocols"],
+    mapRowToLocal: mapProtocolRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 /** Supabase-aware hook */

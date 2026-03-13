@@ -1,10 +1,12 @@
 /**
  * doctorDocumentsStore.ts — Persisted document templates store.
- * Dual-mode: Supabase + localStorage fallback.
+ * Dual-mode: localStorage in Demo, Supabase in Production.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { useSupabaseTable, useAuthReady } from "@/hooks/useSupabaseQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { useDualQuery } from "@/hooks/useDualData";
+import { mapDocTemplateRow } from "@/lib/supabaseMappers";
 
 export interface DocTemplate {
   id: number;
@@ -22,7 +24,13 @@ const store = createStore<DocTemplate[]>("medicare_doctor_templates", []);
 export const doctorDocumentsStore = store;
 
 export function useDoctorDocTemplates() {
-  return useStore(store);
+  return useDualQuery<DocTemplate[]>({
+    store,
+    tableName: "doctor_documents",
+    queryKey: ["doctor_documents"],
+    mapRowToLocal: mapDocTemplateRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 /** Supabase-aware hook */
