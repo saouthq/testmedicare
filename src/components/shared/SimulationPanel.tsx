@@ -524,8 +524,18 @@ const SimulationPanel = () => {
 
         {/* ═══ Workflows tab ═══ */}
         {tab === "simulation" && (
+          isProduction ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-4 text-center space-y-2">
+              <Lock className="h-5 w-5 mx-auto text-amber-600 dark:text-amber-400" />
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                Les simulations sont désactivées en mode Production.
+              </p>
+              <p className="text-[10px] text-amber-600/70 dark:text-amber-500/70">
+                Passez en mode Démo pour tester les workflows.
+              </p>
+            </div>
+          ) :
           <>
-            {/* Full workflow */}
             <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-3">
               <p className="text-[10px] font-semibold text-primary uppercase mb-2">⚡ Workflow complet</p>
               <Button size="sm" className="w-full text-xs gradient-primary text-primary-foreground" onClick={simulateFullWorkflow}>
