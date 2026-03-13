@@ -697,7 +697,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
 
     // 4) Update patient health record with consultation data
     // TODO BACKEND: POST /api/consultations/{id}/close — sync all data server-side
-    const { addAntecedent, addMeasure } = require("@/stores/healthStore");
+    const { addAntecedent, addMeasure } = await import("@/stores/healthStore");
 
     // Record vitals as health measures
     if (vitals.systolic && vitals.diastolic) {

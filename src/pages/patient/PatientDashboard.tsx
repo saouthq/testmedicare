@@ -91,7 +91,7 @@ const PatientDashboard = () => {
   const nextVaccination = health.vaccinations.find(v => v.nextDate);
 
   const handleCancel = (id: string) => {
-    const { cancelAppointment } = require("@/stores/sharedAppointmentsStore");
+    const { cancelAppointment } = await import("@/stores/sharedAppointmentsStore");
     cancelAppointment(id);
     setShowCancelConfirm(null);
     setDrawerApt(null);

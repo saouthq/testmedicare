@@ -246,8 +246,8 @@ export function completeAppointmentConsultation(id: string) {
   // Auto-create invoice from tarifs
   if (apt) {
     try {
-      const { createInvoice } = require("./billingStore");
-      const { sharedTarifsStore } = require("./sharedTarifsStore");
+      const { createInvoice } = await import("./billingStore");
+      const { sharedTarifsStore } = await import("./sharedTarifsStore");
       const tarifs = sharedTarifsStore.read();
       // Match by appointment type
       const typeMap: Record<string, string> = {

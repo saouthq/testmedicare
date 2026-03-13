@@ -70,15 +70,18 @@ export function seedDirectoryIfEmpty() {
   const current = directoryStore.read();
   if (current.doctors.length === 0) {
     // Lazy import to avoid circular deps
-    const { mockDoctors } = require("@/data/mocks/doctor");
-    const { mockClinics, mockHospitals, mockPublicPharmacies } = require("@/data/mocks/establishments");
-    const { mockMedicines, mockTopMedicines } = require("@/data/mocks/medicines");
-    directoryStore.set({
-      doctors: mockDoctors,
-      clinics: mockClinics,
-      hospitals: mockHospitals,
-      pharmacies: mockPublicPharmacies,
-      medicines: mockMedicines || mockTopMedicines || [],
+    Promise.all([
+      import("@/data/mocks/doctor"),
+      import("@/data/mocks/establishments"),
+      import("@/data/mocks/medicines"),
+    ]).then(([docMod, estMod, medMod]) => {
+      directoryStore.set({
+        doctors: docMod.mockDoctors,
+        clinics: estMod.mockClinics,
+        hospitals: estMod.mockHospitals,
+        pharmacies: estMod.mockPublicPharmacies,
+        medicines: medMod.mockMedicines || medMod.mockTopMedicines || [],
+      });
     });
   }
 }
