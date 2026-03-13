@@ -102,6 +102,7 @@ export function toggleSidebarItemBySpecialty(specialty: string, url: string, ena
     `Sidebar "${url}" ${enabled ? "activé" : "désactivé"} pour la spécialité "${specialty}" par ${adminName}`,
     adminName
   );
+  saveAdminConfig("sidebar_visibility", store.read());
 }
 
 /**
