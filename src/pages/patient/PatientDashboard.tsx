@@ -55,19 +55,19 @@ const PatientDashboard = () => {
     const today = new Date().toISOString().slice(0, 10);
     const todayApts = appointments.filter(a => a.date === today);
     const activePrescriptions = recentPrescriptions.length;
-    const pendingResults = health.documents.filter(d => d.type === "Analyse").length;
+    const pendingResults = (health?.documents ?? []).filter(d => d.type === "Analyse").length;
     return {
       nextApt: appointments.length > 0 ? `${appointments[0].date} ${appointments[0].startTime}` : "Aucun",
       upcomingCount: appointments.length,
       activePrescriptions,
       pendingResults,
-      patientName: `${profile.firstName} ${profile.lastName}`,
+      patientName: `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`,
       todayCount: todayApts.length,
       healthSummary: {
-        bloodType: profile.bloodType || "Non renseigné",
-        treatingDoctor: profile.treatingDoctor || "Non renseigné",
-        insurance: profile.insurance || "Aucune",
-        allergies: profile.allergies || [],
+        bloodType: profile?.bloodType || "Non renseigné",
+        treatingDoctor: profile?.treatingDoctor || "Non renseigné",
+        insurance: profile?.insurance || "Aucune",
+        allergies: profile?.allergies || [],
       },
     };
   }, [appointments, profile, recentPrescriptions, health]);
@@ -77,18 +77,18 @@ const PatientDashboard = () => {
 
   const healthCompletion = useMemo(() => {
     let total = 8, done = 0;
-    if (profile.bloodType) done++;
-    if (profile.treatingDoctor) done++;
-    if (profile.insurance && profile.insurance !== "none") done++;
-    if (profile.allergies.length > 0) done++;
-    if (health.vaccinations.length > 0) done++;
-    if (health.treatments.length > 0) done++;
-    if (health.documents.length > 0) done++;
-    if (profile.dob) done++;
+    if (profile?.bloodType) done++;
+    if (profile?.treatingDoctor) done++;
+    if (profile?.insurance && profile.insurance !== "none") done++;
+    if ((profile?.allergies?.length ?? 0) > 0) done++;
+    if ((health?.vaccinations?.length ?? 0) > 0) done++;
+    if ((health?.treatments?.length ?? 0) > 0) done++;
+    if ((health?.documents?.length ?? 0) > 0) done++;
+    if (profile?.dob) done++;
     return Math.round((done / total) * 100);
   }, [profile, health]);
 
-  const nextVaccination = health.vaccinations.find(v => v.nextDate);
+  const nextVaccination = (health?.vaccinations ?? []).find(v => v.nextDate);
 
   const handleCancel = (id: string) => {
     cancelAppointment(id);
