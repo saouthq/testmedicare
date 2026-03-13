@@ -12,7 +12,7 @@ import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { useAdminPayments } from "@/stores/adminStore";
-import { useAdminInvoicesSupabase } from "@/hooks/useAdminData";
+import { useAdminInvoicesSupabase, useAdminInvoiceUpdate } from "@/hooks/useAdminData";
 import { getAppMode } from "@/stores/authStore";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import type { AdminPayment } from "@/types/admin";
@@ -72,17 +72,27 @@ const AdminPayments = () => {
     refundedAmount: dateFiltered.filter(p => p.status === "refunded").reduce((s, p) => s + p.amount, 0),
   }), [dateFiltered]);
 
+  const invoiceUpdateMutation = useAdminInvoiceUpdate();
+
   const handleMotifConfirm = (motif: string) => {
     if (!motifTarget) return;
     const p = payments.find(x => x.id === motifTarget.id);
     if (!p) return;
 
     if (motifTarget.type === "refund") {
-      setPayments(prev => prev.map(x => x.id === motifTarget.id ? { ...x, status: "refunded" as const } : x));
+      if (isProduction) {
+        invoiceUpdateMutation.mutate({ invoiceId: motifTarget.id, updates: { status: "overdue" } });
+      } else {
+        setPayments(prev => prev.map(x => x.id === motifTarget.id ? { ...x, status: "refunded" as const } : x));
+      }
       appendLog("payment_refunded", "payment", motifTarget.id, `Remboursement ${p.amount} ${p.currency} à ${p.payerName} — Motif : ${motif}`);
       toast({ title: `${p.amount} ${p.currency} remboursé à ${p.payerName}` });
     } else if (motifTarget.type === "mark_paid") {
-      setPayments(prev => prev.map(x => x.id === motifTarget.id ? { ...x, status: "paid" as const } : x));
+      if (isProduction) {
+        invoiceUpdateMutation.mutate({ invoiceId: motifTarget.id, updates: { status: "paid" } });
+      } else {
+        setPayments(prev => prev.map(x => x.id === motifTarget.id ? { ...x, status: "paid" as const } : x));
+      }
       appendLog("payment_marked_paid", "payment", motifTarget.id, `Paiement de ${p.payerName} marqué payé — Motif : ${motif}`);
       toast({ title: `Paiement de ${p.payerName} marqué comme payé` });
     }

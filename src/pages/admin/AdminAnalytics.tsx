@@ -25,6 +25,8 @@ import {
 } from "recharts";
 import { useAdminDashboardStats, useAdminStore } from "@/stores/adminStore";
 import { useAdminPlans } from "@/stores/adminPlanStore";
+import { useAdminDashboardStatsSupabase, useAdminReviewsSupabase, useAdminAppointmentsSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 
 const PIE_COLORS = ["hsl(205,85%,45%)", "hsl(160,60%,45%)", "hsl(45,93%,47%)", "hsl(0,72%,51%)"];
 const chartStyle = { borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' };
@@ -48,9 +50,16 @@ const AdminAnalytics = () => {
   const [perfSort, setPerfSort] = useState<"rating" | "nps" | "cancelRate" | "revenue">("rating");
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
-  const stats = useAdminDashboardStats();
+  const isProduction = getAppMode() === "production";
+  const demoStats = useAdminDashboardStats();
+  const supabaseStatsQuery = useAdminDashboardStatsSupabase();
+  const stats = isProduction ? (supabaseStatsQuery.data || demoStats) : demoStats;
   const [state] = useAdminStore();
   const [plans] = useAdminPlans();
+  
+  // Production data for satisfaction tab
+  const reviewsQuery = useAdminReviewsSupabase();
+  const appointmentsQuery = useAdminAppointmentsSupabase();
 
   // ── Derive data from store ──
   const userGrowthData = useMemo(() => {
@@ -371,11 +380,75 @@ const AdminAnalytics = () => {
 
         {/* ════ SATISFACTION ════ */}
         <TabsContent value="satisfaction" className="space-y-6">
-          <BackendPlaceholder label="Données NPS et satisfaction — Nécessite intégration backend (collecte d'avis, enquêtes NPS)" />
-          <div className="grid md:grid-cols-2 gap-6">
-            <BackendPlaceholder label="Évolution du NPS — Données insuffisantes" />
-            <BackendPlaceholder label="Distribution des notes — Données insuffisantes" />
-          </div>
+          {(() => {
+            const reviews = isProduction ? (reviewsQuery.data || []) : [];
+            const avgRating = reviews.length > 0 ? (reviews.reduce((s: number, r: any) => s + (r.rating || 0), 0) / reviews.length).toFixed(1) : "—";
+            const totalReviews = reviews.length;
+            const ratingDist = [5, 4, 3, 2, 1].map(r => ({ rating: `${r}★`, count: reviews.filter((rv: any) => rv.rating === r).length }));
+            
+            if (totalReviews === 0) {
+              return <BackendPlaceholder label="Données NPS et satisfaction — Aucun avis collecté. Les statistiques apparaîtront quand des patients laisseront des avis." />;
+            }
+            
+            return (
+              <>
+                <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl border bg-card p-5 shadow-card">
+                    <Star className="h-5 w-5 text-warning mb-2" />
+                    <p className="text-2xl font-bold text-foreground">{avgRating}/5</p>
+                    <p className="text-xs text-muted-foreground">Note moyenne</p>
+                  </div>
+                  <div className="rounded-xl border bg-card p-5 shadow-card">
+                    <MessageSquare className="h-5 w-5 text-primary mb-2" />
+                    <p className="text-2xl font-bold text-foreground">{totalReviews}</p>
+                    <p className="text-xs text-muted-foreground">Avis total</p>
+                  </div>
+                  <div className="rounded-xl border bg-card p-5 shadow-card">
+                    <ThumbsUp className="h-5 w-5 text-accent mb-2" />
+                    <p className="text-2xl font-bold text-foreground">{reviews.filter((r: any) => r.rating >= 4).length}</p>
+                    <p className="text-xs text-muted-foreground">Avis positifs (4-5★)</p>
+                  </div>
+                  <div className="rounded-xl border bg-destructive/5 p-5 shadow-card">
+                    <ThumbsDown className="h-5 w-5 text-destructive mb-2" />
+                    <p className="text-2xl font-bold text-foreground">{reviews.filter((r: any) => r.rating <= 2).length}</p>
+                    <p className="text-xs text-muted-foreground">Avis négatifs (1-2★)</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="rounded-xl border bg-card p-6 shadow-card">
+                    <h3 className="font-semibold text-foreground mb-4">Distribution des notes</h3>
+                    <div className="h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={ratingDist}>
+                          <XAxis dataKey="rating" axisLine={false} tickLine={false} tick={tickStyle} />
+                          <YAxis axisLine={false} tickLine={false} tick={tickStyle} />
+                          <Tooltip contentStyle={chartStyle} />
+                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name="Avis" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border bg-card p-6 shadow-card">
+                    <h3 className="font-semibold text-foreground mb-4">Derniers avis</h3>
+                    <div className="space-y-3">
+                      {reviews.slice(0, 5).map((r: any) => (
+                        <div key={r.id} className="flex items-start gap-3 text-sm border-b pb-2 last:border-0">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-foreground">{r.patient_name}</span>
+                              <span className={`text-xs font-bold ${r.rating >= 4 ? "text-accent" : r.rating >= 3 ? "text-warning" : "text-destructive"}`}>{r.rating}★</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.text || "Pas de commentaire"}</p>
+                            <p className="text-[10px] text-muted-foreground">{r.doctor_name}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </TabsContent>
       </Tabs>
 

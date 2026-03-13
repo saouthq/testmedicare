@@ -11,6 +11,8 @@
  * - support_tickets → AdminTickets
  * - doctors_directory → AdminVerifications
  * - pharmacies_directory → AdminGuardPharmacies
+ * - reviews → AdminAnalytics (satisfaction)
+ * - prescriptions → AdminAnalytics (prescriptions count)
  */
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,14 +62,12 @@ export function useAdminUsersSupabase() {
   return useQuery<AdminUser[]>({
     queryKey: ["admin", "users"],
     queryFn: async () => {
-      // Fetch profiles
       const { data: profiles, error: pErr } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
       if (pErr) { console.error("[admin] profiles:", pErr); return []; }
 
-      // Fetch roles
       const { data: roles, error: rErr } = await supabase
         .from("user_roles")
         .select("user_id, role");
@@ -121,6 +121,25 @@ export function useAdminAppointmentsSupabase() {
   });
 }
 
+// ─── Admin Appointment Update ────────────────────────────────
+
+export function useAdminAppointmentUpdate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ appointmentId, updates }: { appointmentId: string; updates: Record<string, any> }) => {
+      const { error } = await supabase
+        .from("appointments")
+        .update(updates)
+        .eq("id", appointmentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "appointments"] });
+    },
+  });
+}
+
 // ─── Admin Audit Logs ────────────────────────────────────────
 
 export interface AdminAuditLogRow {
@@ -151,6 +170,28 @@ export function useAdminAuditLogsSupabase() {
       return data || [];
     },
     enabled: isProduction && isReady,
+  });
+}
+
+// ─── Write Audit Log to Supabase ─────────────────────────────
+
+export function useAdminAuditLogInsert() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entry: { action: string; entity_type: string; entity_id: string; details: string; user_name?: string }) => {
+      const { error } = await supabase.from("audit_logs").insert({
+        action: entry.action,
+        entity_type: entry.entity_type,
+        entity_id: entry.entity_id,
+        details: { summary: entry.details } as any,
+        user_name: entry.user_name || "Admin",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "audit_logs"] });
+    },
   });
 }
 
@@ -189,6 +230,25 @@ export function useAdminInvoicesSupabase() {
   });
 }
 
+// ─── Admin Invoice Update ────────────────────────────────────
+
+export function useAdminInvoiceUpdate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ invoiceId, updates }: { invoiceId: string; updates: Record<string, any> }) => {
+      const { error } = await supabase
+        .from("invoices")
+        .update(updates)
+        .eq("id", invoiceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "invoices"] });
+    },
+  });
+}
+
 // ─── Admin Support Tickets ───────────────────────────────────
 
 export function useAdminTicketsSupabase() {
@@ -210,6 +270,50 @@ export function useAdminTicketsSupabase() {
   });
 }
 
+// ─── Admin Reviews (for satisfaction analytics) ──────────────
+
+export function useAdminReviewsSupabase() {
+  const mode = getAppMode();
+  const isProduction = mode === "production";
+  const { isReady } = useAuthReady();
+
+  return useQuery<any[]>({
+    queryKey: ["admin", "reviews"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) { console.error("[admin] reviews:", error); return []; }
+      return data || [];
+    },
+    enabled: isProduction && isReady,
+  });
+}
+
+// ─── Admin Prescriptions Count ───────────────────────────────
+
+export function useAdminPrescriptionsSupabase() {
+  const mode = getAppMode();
+  const isProduction = mode === "production";
+  const { isReady } = useAuthReady();
+
+  return useQuery<any[]>({
+    queryKey: ["admin", "prescriptions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prescriptions")
+        .select("id, doctor_name, patient_name, date, status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) { console.error("[admin] prescriptions:", error); return []; }
+      return data || [];
+    },
+    enabled: isProduction && isReady,
+  });
+}
+
 // ─── Admin Dashboard Stats (production) ──────────────────────
 
 export function useAdminDashboardStatsSupabase() {
@@ -220,12 +324,15 @@ export function useAdminDashboardStatsSupabase() {
   return useQuery({
     queryKey: ["admin", "dashboard_stats"],
     queryFn: async () => {
-      const [profilesRes, rolesRes, aptsRes, invoicesRes, ticketsRes] = await Promise.all([
+      const [profilesRes, rolesRes, aptsRes, invoicesRes, ticketsRes, docsRes, pharmsRes, reviewsRes] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("user_roles").select("role"),
-        supabase.from("appointments").select("status", { count: "exact" }),
+        supabase.from("appointments").select("status"),
         supabase.from("invoices").select("amount, status"),
         supabase.from("support_tickets").select("status"),
+        supabase.from("doctors_directory").select("id, verified"),
+        supabase.from("pharmacies_directory").select("id, is_guard, verified"),
+        supabase.from("reviews").select("id", { count: "exact", head: true }),
       ]);
 
       const totalUsers = profilesRes.count || 0;
@@ -234,41 +341,58 @@ export function useAdminDashboardStatsSupabase() {
       const patients = roles.filter((r: any) => r.role === "patient").length;
       const pharmacies = roles.filter((r: any) => r.role === "pharmacy").length;
       const laboratories = roles.filter((r: any) => r.role === "laboratory").length;
+      const secretaries = roles.filter((r: any) => r.role === "secretary").length;
 
       const invoices = invoicesRes.data || [];
       const totalRevenue = invoices.filter((i: any) => i.status === "paid").reduce((s: number, i: any) => s + (i.amount || 0), 0);
       const pendingPayments = invoices.filter((i: any) => i.status === "pending").reduce((s: number, i: any) => s + (i.amount || 0), 0);
+      const failedPayments = invoices.filter((i: any) => i.status === "overdue").length;
 
       const tickets = ticketsRes.data || [];
       const openTickets = tickets.filter((t: any) => t.status === "open").length;
+      const inProgressTickets = tickets.filter((t: any) => t.status === "in_progress").length;
+
+      const docsData = docsRes.data || [];
+      const pharmsData = pharmsRes.data || [];
+      const pendingVerifications = docsData.filter((d: any) => !d.verified).length + pharmsData.filter((p: any) => !p.verified).length;
+      const guardPharmaciesCount = pharmsData.filter((p: any) => p.is_guard).length;
+
+      const appointments = aptsRes.data || [];
+      const pendingReports = 0; // No reports table yet
 
       return {
         totalUsers,
         activeUsers: totalUsers,
         pendingUsers: 0,
         suspendedUsers: 0,
-        usersByRole: { doctors, patients, pharmacies, laboratories, secretaries: 0 },
-        pendingVerifications: 0,
+        usersByRole: { doctors, patients, pharmacies, laboratories, secretaries },
+        pendingVerifications,
         totalRevenue,
-        mrr: Math.round(totalRevenue / 6),
+        mrr: Math.round(totalRevenue / Math.max(1, 6)),
         pendingPayments,
-        failedPayments: 0,
+        failedPayments,
         refundedAmount: 0,
         openTickets,
-        inProgressTickets: 0,
+        inProgressTickets,
         openDisputes: 0,
         investigatingDisputes: 0,
-        pendingReports: 0,
+        pendingReports,
         highPriorityReports: 0,
-        guardPharmaciesCount: 0,
+        guardPharmaciesCount,
         activeCampaigns: 0,
         blockedOnboarding: 0,
         onboardingConversionRate: 0,
-        activeSubscriptions: 0,
+        activeSubscriptions: doctors + pharmacies + laboratories,
         trialSubscriptions: 0,
         expiredSubscriptions: 0,
         unpaidSubscriptions: 0,
-        verifiedUsers: totalUsers,
+        verifiedUsers: docsData.filter((d: any) => d.verified).length + pharmsData.filter((p: any) => p.verified).length,
+        // Extra stats for analytics
+        totalAppointments: appointments.length,
+        completedAppointments: appointments.filter((a: any) => a.status === "done").length,
+        cancelledAppointments: appointments.filter((a: any) => a.status === "cancelled").length,
+        absentAppointments: appointments.filter((a: any) => a.status === "absent").length,
+        totalReviews: reviewsRes.count || 0,
       };
     },
     enabled: isProduction && isReady,
@@ -305,7 +429,7 @@ export function useAdminVerificationsSupabase() {
       const profileMap = new Map<string, string>();
       (profilesRes.data || []).forEach((p: any) => profileMap.set(p.id, `${p.first_name} ${p.last_name}`.trim()));
 
-      const doctors: AdminVerificationRow[] = (docsRes.data || []).map((d: any) => ({
+      const doctorsArr: AdminVerificationRow[] = (docsRes.data || []).map((d: any) => ({
         id: d.id,
         entityType: "doctor" as const,
         entityName: profileMap.get(d.id) ? `Dr. ${profileMap.get(d.id)}` : `Dr. ${d.id.slice(0, 8)}`,
@@ -316,7 +440,7 @@ export function useAdminVerificationsSupabase() {
         created_at: d.created_at,
       }));
 
-      const pharmacies: AdminVerificationRow[] = (pharmsRes.data || []).map((p: any) => ({
+      const pharmaciesArr: AdminVerificationRow[] = (pharmsRes.data || []).map((p: any) => ({
         id: p.id,
         entityType: "pharmacy" as const,
         entityName: p.name || "Pharmacie",
@@ -327,7 +451,7 @@ export function useAdminVerificationsSupabase() {
         created_at: p.created_at,
       }));
 
-      return [...doctors, ...pharmacies];
+      return [...doctorsArr, ...pharmaciesArr];
     },
     enabled: isProduction && isReady,
   });

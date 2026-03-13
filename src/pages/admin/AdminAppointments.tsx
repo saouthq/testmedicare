@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
-import { useAdminAppointmentsSupabase } from "@/hooks/useAdminData";
+import { useAdminAppointmentsSupabase, useAdminAppointmentUpdate } from "@/hooks/useAdminData";
 import { getAppMode } from "@/stores/authStore";
 import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 
@@ -101,20 +101,31 @@ const AdminAppointments = () => {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 
   const stats = useMemo(() => ({
-    total: apts.length,
-    confirmed: apts.filter(a => a.status === "confirmed").length,
-    completed: apts.filter(a => a.status === "completed").length,
-    absent: apts.filter(a => a.status === "absent").length,
-    noShowRate: apts.length > 0 ? Math.round((apts.filter(a => a.status === "absent").length / apts.length) * 100) : 0,
-    teleRate: apts.length > 0 ? Math.round((apts.filter(a => a.type === "teleconsultation").length / apts.length) * 100) : 0,
-  }), [apts]);
+    total: displayApts.length,
+    confirmed: displayApts.filter(a => a.status === "confirmed").length,
+    completed: displayApts.filter(a => a.status === "completed" || a.status === "done").length,
+    absent: displayApts.filter(a => a.status === "absent").length,
+    noShowRate: displayApts.length > 0 ? Math.round((displayApts.filter(a => a.status === "absent").length / displayApts.length) * 100) : 0,
+    teleRate: displayApts.length > 0 ? Math.round((displayApts.filter(a => a.type === "teleconsultation").length / displayApts.length) * 100) : 0,
+  }), [displayApts]);
+
+  const appointmentUpdateMutation = useAdminAppointmentUpdate();
 
   const handleMotifConfirm = (motif: string) => {
     if (!motifAction) return;
-    const apt = apts.find(a => a.id === motifAction.id);
+    const apt = displayApts.find(a => a.id === motifAction.id);
     if (!apt) return;
     const newStatus = motifAction.type === "cancel" ? "cancelled" : "absent";
-    setApts(prev => prev.map(a => a.id === motifAction.id ? { ...a, status: newStatus } : a));
+    
+    if (isProduction) {
+      // Find the real Supabase appointment id
+      const realApt = supabaseAptsQuery.data?.find((_, i) => i + 1 === motifAction.id);
+      if (realApt) {
+        appointmentUpdateMutation.mutate({ appointmentId: realApt.id, updates: { status: newStatus } });
+      }
+    } else {
+      setApts(prev => prev.map(a => a.id === motifAction.id ? { ...a, status: newStatus } : a));
+    }
     appendLog(`appointment_${motifAction.type}_override`, "appointment", String(motifAction.id),
       `${motifAction.type === "cancel" ? "RDV annulé" : "Marqué absent"} (admin) — ${apt.patientName} / ${apt.doctorName} — Motif : ${motif}`);
     toast({ title: motifAction.type === "cancel" ? "RDV annulé par l'admin" : "Marqué absent" });
