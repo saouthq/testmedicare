@@ -67,7 +67,7 @@ const PatientDashboard = () => {
         bloodType: profile.bloodType || "Non renseigné",
         treatingDoctor: profile.treatingDoctor || "Non renseigné",
         insurance: profile.insurance || "Aucune",
-        allergies: profile.allergies || [],
+        allergies: profile?.allergies || [],
       },
     };
   }, [appointments, profile, recentPrescriptions, health]);
