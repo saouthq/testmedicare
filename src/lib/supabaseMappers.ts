@@ -43,6 +43,7 @@ export function mapAppointmentRow(row: any): SharedAppointment {
     status: row.status as AppointmentStatus,
     assurance: row.insurance || "",
     doctor: row.doctor_name || "",
+    doctorId: row.doctor_id || undefined,
     teleconsultation: row.teleconsultation || false,
     notes: row.notes || "",
     isNew: row.is_new || false,
