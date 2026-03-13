@@ -12,6 +12,7 @@ import type { SharedAppointment, AppointmentStatus, AppointmentType } from "@/ty
 import { computeEndTime } from "@/types/appointment";
 import { useDualQuery } from "@/hooks/useDualData";
 import { mapAppointmentRow } from "@/lib/supabaseMappers";
+import { readAuthUser } from "@/stores/authStore";
 
 // ─── Helper: generate YYYY-MM-DD relative to today ──────────
 function relDate(offset: number): string {
