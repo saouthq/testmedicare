@@ -820,6 +820,21 @@ function DayCol({
     return aptOcc || blkOcc;
   };
 
+  const isOpenByAvailability = (slotMin: number) => {
+    if (!dayConfig?.active || leave) return false;
+    const dayStart = t2min(dayConfig.start);
+    const dayEnd = t2min(dayConfig.end);
+    if (slotMin < dayStart || slotMin + 30 > dayEnd) return false;
+
+    if (dayConfig.breakStart && dayConfig.breakEnd) {
+      const breakStart = t2min(dayConfig.breakStart);
+      const breakEnd = t2min(dayConfig.breakEnd);
+      if (slotMin < breakEnd && slotMin + 30 > breakStart) return false;
+    }
+
+    return true;
+  };
+
   return (
     <div className="relative flex-1 min-w-0" style={{ height: GRID_H }}>
       {/* Grid lines */}
