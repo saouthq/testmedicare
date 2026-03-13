@@ -95,7 +95,45 @@ export const usePatients = () => {
 
 export function PatientsProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  // Use shared store data + merge with mock for demo completeness
+  const [sharedPatients] = useSharedPatients();
+  const mergedPatients = useMemo(() => {
+    if (sharedPatients.length > 0) {
+      // Map SharedPatient → Patient format for this context
+      const fromStore: Patient[] = sharedPatients.map(sp => ({
+        id: sp.id,
+        name: sp.name,
+        age: sp.dob ? Math.floor((Date.now() - new Date(sp.dob.split("/").reverse().join("-")).getTime()) / 31557600000) : 0,
+        gender: "",
+        dob: sp.dob || "",
+        phone: sp.phone || "",
+        email: sp.email || "",
+        address: sp.gouvernorat || "",
+        avatar: sp.avatar || sp.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+        bloodType: "",
+        ssn: sp.numAssure || "",
+        mutuelle: sp.assurance || "",
+        insurance: sp.assurance || "",
+        treatingDoctor: sp.doctor || "",
+        registeredSince: "2026",
+        allergies: [],
+        conditions: [],
+        chronicConditions: [],
+        lastVisit: sp.lastVisit || null,
+        nextAppointment: sp.nextAppointment || null,
+        isNew: !sp.lastVisit,
+        lastVitals: { ta: "—", glycemia: "—" },
+        gouvernorat: sp.gouvernorat || "",
+        balance: sp.balance || 0,
+        notes: sp.notes || "",
+      }));
+      return fromStore;
+    }
+    return mockPatients;
+  }, [sharedPatients]);
+  const [patients, setPatients] = useState<Patient[]>(mergedPatients);
+  // Sync when store changes
+  useEffect(() => { setPatients(mergedPatients); }, [mergedPatients]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<PatientFilter>("all");
   const [sortBy, setSortBy] = useState<SortKey>("name");
