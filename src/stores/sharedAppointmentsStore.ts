@@ -436,3 +436,41 @@ function timeToMin(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + (m || 0);
 }
+
+/**
+ * Check upcoming appointments in next 24h and send reminder notifications.
+ * Called from seedStores.ts at startup (simulating a cron job).
+ */
+export function checkUpcomingReminders() {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+  const apts = store.read();
+  const upcomingApts = apts.filter(a =>
+    a.date === tomorrowStr &&
+    !["cancelled", "absent", "done"].includes(a.status) &&
+    !(a as any).reminderSent
+  );
+
+  if (upcomingApts.length === 0) return;
+
+  for (const apt of upcomingApts) {
+    // Notify patient
+    if (apt.patientId) {
+      pushNotification({
+        type: "appointment_reminder",
+        title: "Rappel RDV demain",
+        message: `Votre RDV avec ${apt.doctor} est prévu demain à ${apt.startTime}.`,
+        targetRole: "patient",
+        actionLink: "/dashboard/patient/appointments",
+      });
+    }
+
+    // Mark as reminded
+    store.set(prev => prev.map(a =>
+      a.id === apt.id ? { ...a, reminderSent: true } as any : a
+    ));
+  }
+}

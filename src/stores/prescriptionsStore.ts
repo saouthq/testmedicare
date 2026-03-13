@@ -62,6 +62,23 @@ export function sendPrescriptionToPharmacies(
     return [...prev, { ...prescription, sentToPharmacies: items }];
   });
 
+  // Also create entries in pharmacyRxStore so pharmacy sees incoming prescriptions
+  for (const ph of pharmacies) {
+    const rxId = `rx-sent-${Date.now()}-${ph.id}`;
+    const pharmacyRx: PharmacyPrescription = {
+      id: rxId,
+      patient: prescription.patientName,
+      avatar: prescription.patientName.split(" ").map(w => w[0]).join("").toUpperCase(),
+      phone: "",
+      assurance: prescription.assurance || "Sans assurance",
+      date: prescription.date,
+      items: prescription.items.map(name => ({ name, dosage: "", quantity: "1", availability: "available" as const })),
+      status: "received",
+      doctor: prescription.doctorName,
+    };
+    pharmacyRxStore.set(prev => [...prev, pharmacyRx]);
+  }
+
   // Notify pharmacy
   pushNotification({
     type: "prescription_sent",

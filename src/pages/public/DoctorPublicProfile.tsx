@@ -166,9 +166,11 @@ const DoctorPublicProfile = () => {
             {/* Hero doctor card */}
             <div className="rounded-2xl border bg-card overflow-hidden shadow-card">
               <div className="h-20 sm:h-28 gradient-hero relative my-0 mb-[34px]">
-                <div className="absolute right-3 top-3 sm:right-4 sm:top-4 flex gap-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-card/20 backdrop-blur-sm text-primary-foreground hover:bg-card/40"><Heart className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-card/20 backdrop-blur-sm text-primary-foreground hover:bg-card/40"><Share2 className="h-4 w-4" /></Button>
+                 <div className="absolute right-3 top-3 sm:right-4 sm:top-4 flex gap-2">
+                   <Button variant="ghost" size="icon" className={`h-8 w-8 backdrop-blur-sm hover:bg-card/40 ${isFavorite ? "bg-destructive/20 text-destructive" : "bg-card/20 text-primary-foreground"}`} onClick={handleToggleFavorite} title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}>
+                     <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+                   </Button>
+                   <Button variant="ghost" size="icon" className="h-8 w-8 bg-card/20 backdrop-blur-sm text-primary-foreground hover:bg-card/40"><Share2 className="h-4 w-4" /></Button>
                 </div>
               </div>
               <div className="px-4 sm:px-6 pb-5 -mt-8 sm:-mt-10 relative">
