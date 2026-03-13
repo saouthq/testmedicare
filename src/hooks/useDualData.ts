@@ -12,6 +12,20 @@ import { getAppMode } from "@/stores/authStore";
 import { useSyncExternalStore } from "react";
 
 /**
+ * For stores that have NO Supabase table yet:
+ * Demo → returns localStorage data as usual.
+ * Production → returns the provided emptyValue (empty array, empty object, etc.)
+ */
+export function useDemoOnlyStore<T>(
+  store: { getSnapshot: () => T; subscribe: (cb: () => void) => () => void; set: (v: T | ((p: T) => T)) => void },
+  emptyValue: T
+): [T, (v: T | ((p: T) => T)) => void] {
+  const localData = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const isProduction = getAppMode() === "production";
+  return [isProduction ? emptyValue : localData, store.set];
+}
+
+/**
  * Generic dual-mode read hook.
  * - Demo: returns localStorage data via store.getSnapshot()
  * - Production: fetches from Supabase table, maps rows to frontend type
