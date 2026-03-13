@@ -1,8 +1,7 @@
 /**
- * Admin Validations KYC — Enhanced with timeline, relance, notes internes, stats
+ * Admin Validations KYC — Dual-mode: Demo (mocks) / Production (doctors_directory + pharmacies_directory)
+ * Enhanced with timeline, relance, notes internes, stats
  * Connected to partnerRegistrationStore and featureMatrixStore
- * Shows activity, specialty, plan, and enabled features for each registration
- * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { directoryStore } from "@/stores/directoryStore";
