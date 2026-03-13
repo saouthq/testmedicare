@@ -415,6 +415,24 @@ const SimulationPanel = () => {
       </div>
 
       <div className="p-3 space-y-3 overflow-y-auto flex-1">
+        {/* ═══ Mode toggle ═══ */}
+        <div className="rounded-lg border bg-muted/30 p-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px]">{isProduction ? "🔗" : "🎭"}</span>
+            <span className="text-[11px] font-medium text-foreground">{isProduction ? "Production (Supabase)" : "Mode Démo"}</span>
+          </div>
+          <Switch
+            checked={isProduction}
+            onCheckedChange={async (checked) => {
+              await logout();
+              setAppMode(checked ? "production" : "demo");
+              toast.success(checked ? "Mode Production activé — connectez-vous via Supabase" : "Mode Démo activé");
+              navigate("/login");
+            }}
+            className="scale-75"
+          />
+        </div>
+
         {/* ═══ Navigation tab ═══ */}
         {tab === "navigation" && (
           <>
