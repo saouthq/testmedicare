@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_config: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           arrived_at: string | null
@@ -263,6 +284,111 @@ export type Database = {
           name?: string
           owner_id?: string
           phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      call_log: {
+        Row: {
+          call_type: string
+          caller: string
+          created_at: string
+          date: string | null
+          doctor_id: string
+          duration: string | null
+          follow_up: string | null
+          handled: boolean | null
+          id: number
+          motif: string | null
+          note: string | null
+          phone: string | null
+          priority: boolean | null
+          time: string | null
+        }
+        Insert: {
+          call_type?: string
+          caller?: string
+          created_at?: string
+          date?: string | null
+          doctor_id: string
+          duration?: string | null
+          follow_up?: string | null
+          handled?: boolean | null
+          id?: never
+          motif?: string | null
+          note?: string | null
+          phone?: string | null
+          priority?: boolean | null
+          time?: string | null
+        }
+        Update: {
+          call_type?: string
+          caller?: string
+          created_at?: string
+          date?: string | null
+          doctor_id?: string
+          duration?: string | null
+          follow_up?: string | null
+          handled?: boolean | null
+          id?: never
+          motif?: string | null
+          note?: string | null
+          phone?: string | null
+          priority?: boolean | null
+          time?: string | null
+        }
+        Relationships: []
+      }
+      campaigns: {
+        Row: {
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          open_rate: number | null
+          recipients_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string | null
+          target: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          open_rate?: number | null
+          recipients_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string | null
+          target?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          open_rate?: number | null
+          recipients_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string | null
+          target?: string | null
+          type?: string
           updated_at?: string
         }
         Relationships: []
@@ -974,6 +1100,51 @@ export type Database = {
         }
         Relationships: []
       }
+      organizations: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          members_count: number | null
+          name: string
+          phone: string | null
+          status: string
+          subscription_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          members_count?: number | null
+          name?: string
+          phone?: string | null
+          status?: string
+          subscription_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          members_count?: number | null
+          name?: string
+          phone?: string | null
+          status?: string
+          subscription_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       otp_codes: {
         Row: {
           code: string
@@ -1329,6 +1500,66 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          auto_apply: boolean | null
+          created_at: string
+          end_date: string | null
+          id: string
+          name: string
+          new_doctors_only: boolean | null
+          notes: string | null
+          promo_code: string | null
+          require_code: boolean | null
+          require_signup_during_period: boolean | null
+          start_date: string | null
+          status: string
+          target: string | null
+          type: string
+          updated_at: string
+          usage_count: number | null
+          value: number
+        }
+        Insert: {
+          auto_apply?: boolean | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          new_doctors_only?: boolean | null
+          notes?: string | null
+          promo_code?: string | null
+          require_code?: boolean | null
+          require_signup_during_period?: boolean | null
+          start_date?: string | null
+          status?: string
+          target?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number | null
+          value?: number
+        }
+        Update: {
+          auto_apply?: boolean | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          new_doctors_only?: boolean | null
+          notes?: string | null
+          promo_code?: string | null
+          require_code?: boolean | null
+          require_signup_during_period?: boolean | null
+          start_date?: string | null
+          status?: string
+          target?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number | null
+          value?: number
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           appointment_id: string | null
@@ -1375,6 +1606,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sms_log: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: number
+          message: string | null
+          phone: string | null
+          recipient: string
+          sent_at: string | null
+          sms_type: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: never
+          message?: string | null
+          phone?: string | null
+          recipient?: string
+          sent_at?: string | null
+          sms_type?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: never
+          message?: string | null
+          phone?: string | null
+          recipient?: string
+          sent_at?: string | null
+          sms_type?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       subscriptions: {
         Row: {
