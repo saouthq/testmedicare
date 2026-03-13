@@ -11,6 +11,7 @@ import { sidebarFeatureMap, blurredFeatures } from "@/hooks/useFeatureGating";
 import { getEnabledFeatures } from "@/stores/featureMatrixStore";
 import { useAdminModules, isSidebarUrlEnabled, getDisabledModuleForRoute } from "@/stores/adminModulesStore";
 import { isSidebarItemVisible } from "@/stores/sidebarVisibilityStore";
+import { getSpecialtyConfig } from "@/components/consultation/specialtyConfig";
 import { Lock, Power, Crown, UserCog, Flag as FlagIcon, Zap } from "lucide-react";
 import {
   Stethoscope, ShieldCheck, CreditCard, Flag, BarChart3, LayoutDashboard,
@@ -306,7 +307,6 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
   const specConfig = useMemo(() => {
     if (role !== "doctor") return null;
     try {
-      const { getSpecialtyConfig } = require("@/components/consultation/specialtyConfig");
       return getSpecialtyConfig(doctorSub.activity, doctorSub.specialty);
     } catch { return null; }
   }, [role, doctorSub]);

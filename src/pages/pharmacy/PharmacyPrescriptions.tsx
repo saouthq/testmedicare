@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { mockPickupTimePresets } from "@/data/mocks/pharmacy";
-import { usePharmacyPrescriptions, updatePharmacyRxStatus, updatePharmacyRxItemAvailability } from "@/stores/pharmacyStore";
+import { usePharmacyPrescriptions, updatePharmacyRxStatus, updatePharmacyRxItemAvailability, pharmacyRxStore } from "@/stores/pharmacyStore";
 import type {
   PharmacyPrescription, PharmacyPrescriptionStatus, PharmacyItemAvailability,
 } from "@/types";
@@ -77,7 +77,6 @@ const PharmacyPrescriptions = () => {
       }
     }
     if (needsUpdate && newItems.length > 0) {
-      const { pharmacyRxStore } = require("@/stores/pharmacyStore");
       pharmacyRxStore.set((prev: PharmacyPrescription[]) => [...newItems, ...prev]);
     }
   }, [sharedPrescriptions, storeRx]);
@@ -102,7 +101,6 @@ const PharmacyPrescriptions = () => {
 
   /* ── Save item changes to pharmacy store ── */
   const saveItems = (id: string) => {
-    const { pharmacyRxStore } = require("@/stores/pharmacyStore");
     pharmacyRxStore.set((prev: PharmacyPrescription[]) => prev.map((p: PharmacyPrescription) => {
       if (p.id !== id) return p;
       return {

@@ -27,6 +27,7 @@ import {
   mockPatients,
   type RxFavorite,
 } from "@/data/mockData";
+import { addAntecedent, addMeasure } from "@/stores/healthStore";
 import type { DockTab, SlideType, PrescriptionItem, VitalsState, CompletionState, CommandAction } from "./types";
 import type { ConsultationTemplate } from "@/types/consultation";
 import { escapeHtml, scrollToId, openPrintWindow } from "./helpers";
@@ -697,22 +698,21 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
 
     // 4) Update patient health record with consultation data
     // TODO BACKEND: POST /api/consultations/{id}/close — sync all data server-side
-    const { addAntecedent, addMeasure } = require("@/stores/healthStore");
 
     // Record vitals as health measures
     if (vitals.systolic && vitals.diastolic) {
-      addMeasure({ type: "Tension artérielle", value: `${vitals.systolic}/${vitals.diastolic} mmHg`, date: today, source: doctorName });
+      addMeasure({ label: "Tension artérielle", value: `${vitals.systolic}/${vitals.diastolic} mmHg`, date: today });
     }
     if (vitals.weight) {
-      addMeasure({ type: "Poids", value: `${vitals.weight} kg`, date: today, source: doctorName });
+      addMeasure({ label: "Poids", value: `${vitals.weight} kg`, date: today });
     }
     if (vitals.heartRate) {
-      addMeasure({ type: "Fréquence cardiaque", value: `${vitals.heartRate} bpm`, date: today, source: doctorName });
+      addMeasure({ label: "Fréquence cardiaque", value: `${vitals.heartRate} bpm`, date: today });
     }
 
     // Record diagnosis as antecedent
     if (diagnosis.trim()) {
-      addAntecedent({ name: diagnosis.trim(), date: today, type: "Médical", notes: `Motif: ${motif}. ${conclusion}`.trim() });
+      addAntecedent({ name: diagnosis.trim(), date: today, details: `Motif: ${motif}. ${conclusion}`.trim() });
     }
   };
 

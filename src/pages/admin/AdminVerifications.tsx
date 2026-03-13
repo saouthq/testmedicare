@@ -5,6 +5,7 @@
  * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { directoryStore } from "@/stores/directoryStore";
 import { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle, XCircle, FileText, Eye, Calendar, MapPin, Mail, Clock,
@@ -213,7 +214,6 @@ const AdminVerifications = () => {
     if (newStatus === "approved") {
       // Add to directoryStore so the professional appears in public search
       try {
-        const { directoryStore } = require("@/stores/directoryStore");
         const dir = directoryStore.read();
         if (v.entityType === "doctor") {
           const newDoc = {
@@ -230,11 +230,15 @@ const AdminVerifications = () => {
             available: true,
             languages: ["Français", "Arabe"],
             teleconsultation: false,
+            acceptsInsurance: true,
+            nextSlot: "",
+            availAM: true,
+            availPM: true,
           };
-          directoryStore.set({ ...dir, doctors: [...dir.doctors, newDoc] });
+          directoryStore.set({ ...dir, doctors: [...dir.doctors, newDoc as any] });
         } else if (v.entityType === "pharmacy") {
           const newPharmacy = {
-            id: Date.now(),
+            id: String(Date.now()),
             name: v.entityName,
             slug: v.entityName.toLowerCase().replace(/\s+/g, "-"),
             city: v.city || "Tunis",
@@ -243,7 +247,7 @@ const AdminVerifications = () => {
             horaires: "08:00 - 20:00",
             deGarde: false,
           };
-          directoryStore.set({ ...dir, pharmacies: [...dir.pharmacies, newPharmacy] });
+          directoryStore.set({ ...dir, pharmacies: [...dir.pharmacies, newPharmacy as any] });
         }
       } catch { /* directoryStore not available */ }
 

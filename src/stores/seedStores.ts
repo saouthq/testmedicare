@@ -175,10 +175,9 @@ export function seedAllStores() {
   ]);
 
   // ── Appointment reminders (simulated cron) ──
-  try {
-    const { checkUpcomingReminders } = require("./sharedAppointmentsStore");
-    checkUpcomingReminders();
-  } catch { /* ignore */ }
+  import("./sharedAppointmentsStore").then(m => {
+    if (m.checkUpcomingReminders) m.checkUpcomingReminders();
+  }).catch(() => { /* ignore */ });
 }
 
 /**

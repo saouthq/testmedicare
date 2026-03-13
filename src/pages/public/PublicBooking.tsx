@@ -332,8 +332,7 @@ const PublicBooking = () => {
 
     // Mark as paid if teleconsult
     if (paid && result.id) {
-      const { sharedAppointmentsStore: store } = require("@/stores/sharedAppointmentsStore");
-      store.set((prev: any[]) => prev.map((a: any) =>
+      sharedAppointmentsStore.set((prev: any[]) => prev.map((a: any) =>
         a.id === result.id ? { ...a, paymentStatus: "paid", paidAmount: selectedMotifData?.price || 0 } : a
       ));
     }

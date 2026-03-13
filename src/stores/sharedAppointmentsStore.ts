@@ -8,6 +8,8 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
+import { createInvoice } from "./billingStore";
+import { sharedTarifsStore } from "./sharedTarifsStore";
 import type { SharedAppointment, AppointmentStatus, AppointmentType } from "@/types/appointment";
 import { computeEndTime } from "@/types/appointment";
 
@@ -246,16 +248,14 @@ export function completeAppointmentConsultation(id: string) {
   // Auto-create invoice from tarifs
   if (apt) {
     try {
-      const { createInvoice } = require("./billingStore");
-      const { sharedTarifsStore } = require("./sharedTarifsStore");
-      const tarifs = sharedTarifsStore.read();
+      const allTarifs = sharedTarifsStore.read();
       // Match by appointment type
       const typeMap: Record<string, string> = {
         "Consultation": "CS", "Première visite": "CS-P", "Suivi": "CS-S",
         "Contrôle": "CS-S", "Téléconsultation": "TC", "Certificat": "CERT",
       };
       const code = typeMap[apt.type] || "CS";
-      const tarif = tarifs.find((t: any) => t.code === code && t.active);
+      const tarif = allTarifs.find((t: any) => t.code === code && t.active);
       if (tarif) {
         createInvoice({
           patient: apt.patient,
