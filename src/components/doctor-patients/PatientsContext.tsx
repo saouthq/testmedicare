@@ -6,7 +6,7 @@ import { parseFrDate } from "@/components/consultation/helpers";
 
 // ── Types ──
 
-export type PatientFilter = "all" | "recent" | "chronic" | "new";
+export type PatientFilter = "all" | "recent" | "chronic" | "new" | "this_month";
 export type SortKey = "name" | "lastVisit" | "age";
 
 type PaletteGroup = "Patients" | "Patient" | "Global" | "Filtrer" | "Trier";
