@@ -306,6 +306,47 @@ export function useAdminLookups() {
 }
 
 // ═══════════════════════════════════════════
+// CASCADE OPERATIONS
+// ═══════════════════════════════════════════
+
+/**
+ * Suspend an organization + cascade: suspend all members + suspend org subscription.
+ */
+export function suspendOrganizationWithCascade(orgId: string, motif: string) {
+  const state = adminStore.read();
+  const org = state.organizations.find(o => o.id === orgId);
+  if (!org) return;
+
+  // 1. Suspend org
+  const updatedOrgs = state.organizations.map(o =>
+    o.id === orgId ? { ...o, status: "suspended" as const } : o
+  );
+
+  // 2. Suspend all members
+  const memberIds = state.users.filter(u => u.organizationId === orgId).map(u => u.id);
+  const updatedUsers = state.users.map(u =>
+    u.organizationId === orgId ? { ...u, status: "suspended" as const } : u
+  );
+
+  // 3. Suspend org subscription
+  const updatedSubs = state.subscriptions.map(s =>
+    s.organizationId === orgId ? { ...s, status: "suspended" as const } : s
+  );
+
+  adminStore.set({
+    ...state,
+    organizations: updatedOrgs,
+    users: updatedUsers,
+    subscriptions: updatedSubs,
+  });
+
+  // Audit
+  appendLog("org_cascade_suspend", "organization", orgId,
+    `Organisation "${org.name}" suspendue en cascade (${memberIds.length} membres, abonnement) — Motif : ${motif}`
+  );
+}
+
+// ═══════════════════════════════════════════
 // SEEDING
 // ═══════════════════════════════════════════
 export function seedAdminStoreIfEmpty(seedData: AdminState) {
