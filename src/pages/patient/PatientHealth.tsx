@@ -26,7 +26,7 @@ const menuItemsDef: { key: HealthSection; label: string; icon: any }[] = [
 ];
 
 // Inline AI chat data (no mock import dependency)
-interface ChatMessage { id: string; sender: "ai" | "user"; text: string; time: string; }
+interface ChatMessage { id: string; sender: "ai" | "user" | "me"; text: string; time: string; }
 const aiInitial: ChatMessage[] = [
   { id: "1", sender: "ai", text: "Bonjour ! Je suis l'assistant virtuel Medicare. Je peux vous aider à comprendre vos résultats ou vous orienter. Que puis-je faire pour vous ?", time: "—" },
 ];
