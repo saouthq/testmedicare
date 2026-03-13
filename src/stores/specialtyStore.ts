@@ -8,7 +8,7 @@
 import { createStore, useStore } from "./crossRoleStore";
 import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
-export type SpecialtyCategory = "generaliste" | "specialiste" | "dentiste" | "paramedical";
+export type SpecialtyCategory = "generaliste" | "specialiste" | "dentiste" | "paramedical" | "chirurgien";
 
 export interface ManagedSpecialty {
   id: string;
