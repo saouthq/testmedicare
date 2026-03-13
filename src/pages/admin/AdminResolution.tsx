@@ -185,7 +185,10 @@ const AdminResolution = () => {
     if (!dispMotifAction) return;
     const newStatus = dispMotifAction.type === "resolve" ? "resolved" : dispMotifAction.type === "close" ? "closed" : "investigating";
     const sysMsg: DisputeMessage = { id: `m-${Date.now()}`, author: "Admin", authorRole: "admin", text: `[Action] Litige ${newStatus}. Motif : ${motif}`, createdAt: new Date().toISOString() };
-    setDisputes(prev => prev.map(x => x.id === dispMotifAction.id ? { ...x, status: newStatus, messages: [...x.messages, sysMsg], updatedAt: new Date().toISOString() } : x));
+    const updated = disputes.map(x => x.id === dispMotifAction.id ? { ...x, status: newStatus, messages: [...x.messages, sysMsg], updatedAt: new Date().toISOString() } : x);
+    setDisputes(updated);
+    setStoreDisputes(updated as any); // sync back
+    appendLog(`dispute_${newStatus}`, "dispute", dispMotifAction.id, `Litige ${newStatus} — ${motif}`);
     toast({ title: `Litige ${newStatus}` });
     setDispMotifAction(null);
   };
