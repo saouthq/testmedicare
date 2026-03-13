@@ -121,15 +121,54 @@ const AdminAnalytics = () => {
 
   const PLAN_COLORS = ["hsl(var(--muted-foreground))", "hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--warning))", "hsl(205,85%,45%)", "hsl(160,60%,45%)"];
 
-  // Top doctors from users
+  // Top doctors: use real Supabase data if available
   const doctorPerfs = useMemo(() => {
+    // In production, compute from real appointments + reviews
+    if (isProduction) {
+      const apts = appointmentsQuery.data || [];
+      const revs = reviewsQuery.data || [];
+      const doctorMap = new Map<string, { name: string; consults: number; cancelled: number; ratings: number[]; revenue: number }>();
+      
+      apts.forEach((a: any) => {
+        const key = a.doctor_name || "Inconnu";
+        const existing = doctorMap.get(key) || { name: key, consults: 0, cancelled: 0, ratings: [], revenue: 0 };
+        existing.consults++;
+        if (a.status === "cancelled") existing.cancelled++;
+        if (a.status === "done") existing.revenue += (a.paid_amount || 0);
+        doctorMap.set(key, existing);
+      });
+
+      revs.forEach((r: any) => {
+        const key = r.doctor_name || "Inconnu";
+        const existing = doctorMap.get(key) || { name: key, consults: 0, cancelled: 0, ratings: [], revenue: 0 };
+        existing.ratings.push(r.rating || 0);
+        doctorMap.set(key, existing);
+      });
+
+      return Array.from(doctorMap.values()).map(d => ({
+        id: d.name,
+        name: d.name,
+        specialty: "—",
+        rating: d.ratings.length > 0 ? d.ratings.reduce((s, r) => s + r, 0) / d.ratings.length : 0,
+        totalConsults: d.consults,
+        cancelRate: d.consults > 0 ? Math.round((d.cancelled / d.consults) * 1000) / 10 : 0,
+        avgWaitMin: 0,
+        nps: d.ratings.length > 0 ? Math.round(((d.ratings.filter(r => r >= 4).length - d.ratings.filter(r => r <= 2).length) / d.ratings.length) * 100) : 0,
+        complaints: d.ratings.filter(r => r <= 2).length,
+        revenueGenerated: d.revenue,
+        activePatients: 0,
+        retention: 0,
+      })).filter(d => d.totalConsults > 0).sort((a, b) => b.totalConsults - a.totalConsults).slice(0, 20);
+    }
+
+    // Demo mode: from admin store
     const doctors = state.users.filter(u => u.role === "doctor" && u.status === "active");
     return doctors.slice(0, 20).map(d => {
       const payments = state.payments.filter(p => p.payerId === d.id && p.status === "paid");
       return {
         id: d.id, name: d.name,
         specialty: d.subscription || "Non renseignée",
-        rating: 4.0 + Math.random() * 1, // Mock rating - needs backend
+        rating: 4.0 + Math.random() * 1,
         totalConsults: Math.floor(Math.random() * 500) + 50,
         cancelRate: Math.round(Math.random() * 15 * 10) / 10,
         avgWaitMin: Math.floor(Math.random() * 25) + 5,
@@ -140,7 +179,7 @@ const AdminAnalytics = () => {
         retention: Math.floor(Math.random() * 25) + 70,
       };
     });
-  }, [state.users, state.payments]);
+  }, [isProduction, appointmentsQuery.data, reviewsQuery.data, state.users, state.payments]);
 
   const perfFiltered = useMemo(() => {
     let list = [...doctorPerfs];
