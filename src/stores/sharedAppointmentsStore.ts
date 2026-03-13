@@ -8,6 +8,8 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
+import { createInvoice } from "./billingStore";
+import { sharedTarifsStore } from "./sharedTarifsStore";
 import type { SharedAppointment, AppointmentStatus, AppointmentType } from "@/types/appointment";
 import { computeEndTime } from "@/types/appointment";
 
