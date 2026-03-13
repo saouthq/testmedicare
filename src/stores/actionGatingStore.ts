@@ -281,6 +281,13 @@ export function toggleCategoryForRole(role: string, category: string, enabled: b
  */
 export function resetActionGating() {
   store.set({});
+  saveAdminConfig("action_gating", {});
+}
+
+/** Load from Supabase */
+export async function loadActionGating() {
+  const data = await loadAdminConfig<Record<string, boolean>>("action_gating");
+  if (data) store.set(data);
 }
 
 /**
