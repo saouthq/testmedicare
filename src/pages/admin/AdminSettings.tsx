@@ -1,8 +1,8 @@
 /**
- * Admin System Settings — with reset to defaults
+ * Admin System Settings — with reset to defaults + unsaved changes indicator
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   Settings, Globe, Bell, Shield, Server, AlertTriangle, CheckCircle,
   Database, Save, ToggleLeft, ToggleRight, Zap, KeyRound,
@@ -26,6 +26,26 @@ const AdminSettings = () => {
   const [saved, setSaved] = useState(false);
   const { settings, setSettings } = useAdminSettings();
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const initialSettingsRef = useRef(JSON.stringify(settings));
+
+  // isDirty tracking
+  const isDirty = useMemo(() => {
+    return JSON.stringify(settings) !== initialSettingsRef.current;
+  }, [settings]);
+
+  // Update ref after save
+  const markClean = useCallback(() => {
+    initialSettingsRef.current = JSON.stringify(settings);
+  }, [settings]);
+
+  // beforeunload warning
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) { e.preventDefault(); e.returnValue = ""; }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const { platformName, supportEmail, supportPhone, maxFileSize, autoApprovePatients,
     defaultLanguage, timezone, termsUrl, privacyUrl, features, notifConfig, security,
@@ -46,6 +66,7 @@ const AdminSettings = () => {
   const handleSave = () => {
     appendLog("settings_updated", "system", "settings", `Paramètres système mis à jour (onglet: ${tab})`);
     setSaved(true);
+    markClean();
     toast({ title: "Paramètres sauvegardés" });
     setTimeout(() => setSaved(false), 2000);
   };
@@ -114,6 +135,12 @@ const AdminSettings = () => {
   return (
     <DashboardLayout role="admin" title="Paramètres système">
       <div className="max-w-4xl space-y-6">
+        {isDirty && (
+          <div className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span className="text-sm text-warning font-medium">Modifications non sauvegardées</span>
+          </div>
+        )}
         <div className="flex gap-1 rounded-lg border bg-card p-1 overflow-x-auto">
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${tab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>

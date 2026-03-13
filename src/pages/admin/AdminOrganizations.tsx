@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAdminOrganizations, useAdminLookups } from "@/stores/adminStore";
+import { useAdminOrganizations, useAdminLookups, suspendOrganizationWithCascade } from "@/stores/adminStore";
 import type { AdminOrganization, OrgType, OrgStatus } from "@/types/admin";
 
 const availableSecretaries = ["Sonia Gharbi", "Amira Bouzid", "Mariem Kaabi"];
@@ -90,10 +90,15 @@ const AdminOrganizations = () => {
     if (!motifOpen) return;
     const o = orgs.find(x => x.id === motifOpen.id);
     if (!o) return;
-    const newStatus: OrgStatus = motifOpen.action === "suspend" ? "suspended" : "active";
-    setOrgs(prev => prev.map(x => x.id === motifOpen.id ? { ...x, status: newStatus } : x));
-    appendLog("org_status_change", "organization", motifOpen.id, `${o.name} — ${newStatus} — Motif : ${motif}`);
-    toast({ title: newStatus === "active" ? "Organisation activée" : "Organisation suspendue" });
+    if (motifOpen.action === "suspend") {
+      // Cascade suspend: org + members + subscription
+      suspendOrganizationWithCascade(motifOpen.id, motif);
+      toast({ title: "Organisation suspendue (cascade)", description: `${o.name} + membres + abonnement suspendus.` });
+    } else {
+      setOrgs(prev => prev.map(x => x.id === motifOpen.id ? { ...x, status: "active" as OrgStatus } : x));
+      appendLog("org_status_change", "organization", motifOpen.id, `${o.name} — active — Motif : ${motif}`);
+      toast({ title: "Organisation activée" });
+    }
     setMotifOpen(null);
   };
 

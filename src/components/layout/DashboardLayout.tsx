@@ -121,6 +121,8 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Tableau de bord", url: "/dashboard/admin", icon: LayoutDashboard },
       { title: "Analytiques", url: "/dashboard/admin/analytics", icon: BarChart3 },
+      { title: "Onboarding Funnel", url: "/dashboard/admin/onboarding", icon: Users },
+      { title: "Rapports & Exports", url: "/dashboard/admin/reports", icon: FileDown },
     ],
   },
   {
@@ -154,6 +156,9 @@ const adminSections: NavSection[] = [
     items: [
       { title: "Fonctionnalités", url: "/dashboard/admin/configuration", icon: Power },
       { title: "Spécialités & Référentiels", url: "/dashboard/admin/specialties", icon: Stethoscope },
+      { title: "Données de référence", url: "/dashboard/admin/reference-data", icon: Activity },
+      { title: "Matrice Features", url: "/dashboard/admin/feature-matrix", icon: FlagIcon },
+      { title: "Overrides", url: "/dashboard/admin/overrides", icon: UserCog },
       { title: "Centre d'actions", url: "/dashboard/admin/actions", icon: Zap },
       { title: "Sidebar", url: "/dashboard/admin/sidebar-config", icon: UserCog },
     ],
@@ -162,6 +167,7 @@ const adminSections: NavSection[] = [
     label: "Contenu & Comm.",
     items: [
       { title: "Notifications & Emails", url: "/dashboard/admin/email-config", icon: MessageSquare },
+      { title: "Templates Notifs", url: "/dashboard/admin/notification-templates", icon: Bell },
       { title: "Pages & Contenu", url: "/dashboard/admin/content", icon: ScrollText },
       { title: "Campagnes", url: "/dashboard/admin/campaigns", icon: Bell },
     ],

@@ -1,12 +1,14 @@
 /**
  * Admin Notification Campaigns — Full CRUD
- * Connected to central admin store
+ * Connected to central admin store + templates + push notifications
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Send, Eye, Bell, Users, CheckCircle, Clock, MapPin, Stethoscope,
   Shield, Filter, Copy, Pencil, XCircle, RotateCcw, Trash2, BarChart3,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +20,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
-import { useAdminCampaigns } from "@/stores/adminStore";
+import { useAdminCampaigns, useAdminNotificationTemplates, useAdminUsers } from "@/stores/adminStore";
+import { pushNotification } from "@/stores/notificationsStore";
 import type { AdminCampaign, CampaignStatus } from "@/types/admin";
 
 type Campaign = AdminCampaign;
@@ -37,7 +40,10 @@ const CITIES = ["Tunis", "Ariana", "Sousse", "Sfax", "Monastir", "Nabeul", "Bize
 const SPECIALTIES = ["Généraliste", "Cardiologue", "Dermatologue", "Pédiatre", "Ophtalmologue"];
 
 const AdminCampaigns = () => {
+  const navigate = useNavigate();
   const { campaigns, setCampaigns } = useAdminCampaigns();
+  const { templates } = useAdminNotificationTemplates();
+  const { users } = useAdminUsers();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -128,6 +134,25 @@ const AdminCampaigns = () => {
         appendLog("campaign_sent", "notification_campaign", newCampaign.id,
           `Campagne "${title}" ${scheduleEnabled ? "programmée" : "envoyée"} à ${targetLabels[target]}${segLabel ? ` (${segLabel})` : ""} via ${channelLabels[channel]} — Motif : ${motif}`
         );
+
+        // 3.2 — If channel is "push", create real notifications for targeted users
+        if (channel === "push" && !scheduleEnabled) {
+          const roleMap: Record<string, string> = { patients: "patient", doctors: "doctor", pharmacies: "pharmacy", laboratories: "laboratory" };
+          const targetRoles = target === "all" ? ["patient", "doctor", "pharmacy", "laboratory"] : [roleMap[target] || "patient"];
+          const targetUsers = users.filter(u => targetRoles.includes(u.role));
+          targetUsers.forEach(u => {
+            pushNotification({
+              type: "system",
+              title: title || "Notification",
+              message: message,
+              targetRole: u.role as any,
+            });
+          });
+          // Update delivery stats
+          newCampaign.deliveryRate = 98;
+          newCampaign.recipientCount = targetUsers.length || estimatedRecipients;
+        }
+
         toast({ title: scheduleEnabled ? "Campagne programmée" : "Campagne envoyée" });
       }
       resetForm();
@@ -292,6 +317,36 @@ const AdminCampaigns = () => {
                 </Select>
               </div>
             </div>
+
+            {/* Template selector */}
+            {templates.length > 0 && (
+              <div className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <Label className="text-xs font-semibold">Utiliser un template</Label>
+                  </div>
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => navigate("/dashboard/admin/notification-templates")}>
+                    Voir les templates
+                  </Button>
+                </div>
+                <Select onValueChange={(tplId) => {
+                  const tpl = templates.find(t => t.id === tplId);
+                  if (tpl) {
+                    setMessage(tpl.body);
+                    if (!title.trim()) setTitle(tpl.name);
+                    toast({ title: "Template appliqué", description: `"${tpl.name}" chargé dans le message.` });
+                  }
+                }}>
+                  <SelectTrigger className="text-xs"><SelectValue placeholder="Sélectionner un template..." /></SelectTrigger>
+                  <SelectContent>
+                    {templates.filter(t => t.active).map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.name} ({t.channel})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div>
               <Label className="text-xs">Message *</Label>
