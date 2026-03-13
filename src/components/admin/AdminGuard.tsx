@@ -1,14 +1,18 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/stores/authStore";
+import LoadingPage from "@/components/shared/LoadingPage";
 
 /**
  * RBAC Guard for admin routes.
- * Reads role from authStore (single source of truth).
- * // TODO BACKEND: Replace with real auth/role verification via API + server-side RBAC.
+ * Reads user from authStore (supports both Supabase and demo sessions).
  */
 const AdminGuard = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingPage />;
+  }
 
   if (!user || user.role !== "admin") {
     return <Navigate to="/login" replace />;

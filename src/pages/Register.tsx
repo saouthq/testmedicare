@@ -3,13 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import PublicFooter from "@/components/public/PublicFooter";
 import {
   Stethoscope, Eye, EyeOff, User, Building2, FlaskConical, Pill,
   CheckCircle2, Shield, ArrowRight, ChevronRight, Calendar, Heart,
-  Phone, Mail, MapPin, Lock,
+  Phone, AlertCircle,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { signUpWithEmail } from "@/stores/authStore";
 
 const roles = [
   { value: "patient", label: "Patient", icon: User, desc: "Prenez RDV et gérez votre santé en ligne", color: "bg-primary/10 text-primary" },
@@ -24,7 +24,9 @@ const Register = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
-  const [step, setStep] = useState<"role" | "form" | "success">("role");
+  const [step, setStep] = useState<"role" | "form" | "success" | "confirm">("role");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "", gouvernorat: "Tunis",
     assuranceNumber: "", password: "", confirmPassword: "",
@@ -38,13 +40,34 @@ const Register = () => {
   const passwordsMatch = formData.password === formData.confirmPassword;
   const formValid = formData.firstName.length >= 2 && formData.lastName.length >= 2 && emailValid && phoneValid && passwordValid && passwordsMatch;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formValid) return;
-    // Mock registration
-    localStorage.setItem("userRole", "patient");
-    toast({ title: "Compte créé !", description: "Bienvenue sur Medicare. Vous pouvez maintenant prendre rendez-vous." });
-    setStep("success");
+    setLoading(true);
+    setError("");
+
+    try {
+      await signUpWithEmail({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        gouvernorat: formData.gouvernorat,
+        role: "patient",
+      });
+      toast({ title: "Compte créé !", description: "Vérifiez votre email pour confirmer votre inscription." });
+      setStep("confirm");
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg.includes("already registered")) {
+        setError("Un compte existe déjà avec cet email.");
+      } else {
+        setError(msg || "Erreur lors de la création du compte.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -148,6 +171,13 @@ const Register = () => {
                 <h1 className="text-2xl font-bold text-foreground mb-2">Créer votre compte patient</h1>
                 <p className="text-muted-foreground mb-6">Remplissez vos informations pour accéder à tous les services.</p>
 
+                {error && (
+                  <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    {error}
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>Prénom *</Label><Input value={formData.firstName} onChange={e => handleChange("firstName", e.target.value)} placeholder="Amine" className="mt-1.5" required /></div>
@@ -193,8 +223,8 @@ const Register = () => {
                     </p>
                   </div>
 
-                  <Button type="submit" disabled={!formValid} className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11">
-                    Créer mon compte <ArrowRight className="h-4 w-4 ml-1" />
+                  <Button type="submit" disabled={!formValid || loading} className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11">
+                    {loading ? "Création en cours..." : "Créer mon compte"} <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>
                 </form>
 
@@ -205,7 +235,24 @@ const Register = () => {
               </div>
             )}
 
-            {/* Step: Success */}
+            {/* Step: Email confirmation needed */}
+            {step === "confirm" && (
+              <div className="text-center py-8">
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                  <Stethoscope className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Vérifiez votre email 📧</h2>
+                <p className="text-muted-foreground mb-6">
+                  Un lien de confirmation a été envoyé à <strong className="text-foreground">{formData.email}</strong>.<br />
+                  Cliquez sur le lien pour activer votre compte.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Link to="/login"><Button className="w-full gradient-primary text-primary-foreground">Aller à la page de connexion</Button></Link>
+                </div>
+              </div>
+            )}
+
+            {/* Step: Success (legacy, kept for demo compat) */}
             {step === "success" && (
               <div className="text-center py-8">
                 <div className="h-20 w-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">

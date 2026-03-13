@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Stethoscope, Eye, EyeOff, Shield, Users, Calendar, Pill, FlaskConical, Building2, ShieldCheck, Play } from "lucide-react";
-import { loginDemoAs, DEMO_SCENARIOS, useAuth, type UserRole } from "@/stores/authStore";
+import { Stethoscope, Eye, EyeOff, Shield, Users, Calendar, Pill, FlaskConical, Building2, ShieldCheck, Play, AlertCircle } from "lucide-react";
+import { loginDemoAs, signInWithEmail, DEMO_SCENARIOS, useAuth, type UserRole } from "@/stores/authStore";
+import { toast } from "@/hooks/use-toast";
 
 const roleIcons: Record<string, any> = {
   patient: Users, doctor: Stethoscope, pharmacy: Pill, laboratory: FlaskConical,
@@ -22,6 +23,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [showDemoProfiles, setShowDemoProfiles] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -31,23 +33,31 @@ const Login = () => {
     navigate(`/dashboard/${user.role}`, { replace: true });
   }
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // TODO BACKEND: POST /api/auth/login with email/password
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const data = await signInWithEmail(email, password);
+      // Wait for store to update then navigate
+      setTimeout(() => {
+        const { readAuthUser } = require("@/stores/authStore");
+        const currentUser = readAuthUser();
+        navigate(`/dashboard/${currentUser?.role || "patient"}`);
+      }, 300);
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg.includes("Invalid login")) {
+        setError("Email ou mot de passe incorrect.");
+      } else if (msg.includes("Email not confirmed")) {
+        setError("Veuillez confirmer votre email avant de vous connecter.");
+      } else {
+        setError("Erreur de connexion. Veuillez réessayer.");
+      }
+    } finally {
       setLoading(false);
-      let role: UserRole = "patient";
-      if (email.includes("doctor") || email.includes("dr")) role = "doctor";
-      else if (email.includes("pharma")) role = "pharmacy";
-      else if (email.includes("labo")) role = "laboratory";
-      else if (email.includes("admin")) role = "admin";
-      else if (email.includes("secr")) role = "secretary";
-      else if (email.includes("hopit") || email.includes("hospit")) role = "hospital";
-      else if (email.includes("clini")) role = "clinic";
-      loginDemoAs(role);
-      navigate(`/dashboard/${role}`);
-    }, 800);
+    }
   };
 
   const handleDemoLogin = (scenarioId: string) => {
@@ -87,11 +97,18 @@ const Login = () => {
           <h1 className="text-2xl font-bold text-foreground">Connexion</h1>
           <p className="mt-2 text-muted-foreground">Entrez vos identifiants pour accéder à votre espace</p>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-4">
-            <div><Label htmlFor="email">Email</Label><Input id="email" type="email" placeholder="votre@email.tn" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5" /></div>
+          {error && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="mt-6 space-y-4">
+            <div><Label htmlFor="email">Email</Label><Input id="email" type="email" placeholder="votre@email.tn" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5" required /></div>
             <div><Label htmlFor="password">Mot de passe</Label>
               <div className="relative mt-1.5">
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -173,7 +190,7 @@ const Login = () => {
           {/* Demo banner */}
           <div className="mt-4 rounded-lg bg-warning/5 border border-warning/20 p-3">
             <p className="text-[11px] text-muted-foreground text-center">
-              🔒 <span className="font-medium text-foreground">Mode démo</span> — SMS / paiements simulés, aucune donnée réelle transmise.
+              🔒 <span className="font-medium text-foreground">Mode démo</span> — Les boutons d'accès rapide utilisent des comptes simulés. Le formulaire ci-dessus se connecte via Supabase Auth.
             </p>
           </div>
 

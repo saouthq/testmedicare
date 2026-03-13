@@ -1,15 +1,19 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/stores/authStore";
+import LoadingPage from "./LoadingPage";
 
 /**
  * Auth guard for dashboard routes.
- * Reads role from authStore (single source of truth).
- * // TODO BACKEND: Replace with real session/JWT validation via API.
+ * Reads user from authStore (supports both Supabase and demo sessions).
  */
 const AuthGuard = ({ children, allowedRoles }: { children: ReactNode; allowedRoles?: string[] }) => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingPage />;
+  }
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
