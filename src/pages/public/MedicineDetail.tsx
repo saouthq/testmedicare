@@ -22,12 +22,13 @@ const Section = ({ title, children, defaultOpen = false }: { title: string; chil
 
 const MedicineDetail = () => {
   const { slug } = useParams();
-  const med = mockMedicines.find(m => m.slug === slug);
+  const medicines = useMedicinesDirectory();
+  const med = medicines.find(m => m.slug === slug);
 
   if (!med) return <div className="min-h-screen bg-background"><PublicHeader /><div className="container mx-auto px-4 py-20 text-center"><h1 className="text-xl font-bold">Médicament non trouvé</h1><Link to="/medicaments" className="text-primary mt-4 inline-block">← Retour à l'annuaire</Link></div></div>;
 
   const jsonLd = { "@context": "https://schema.org", "@type": "Drug", name: med.name, dosageForm: med.form, activeIngredient: med.name, description: med.summary };
-  const similars = mockMedicines.filter(m => med.similarSlugs.includes(m.slug));
+  const similars = medicines.filter(m => med.similarSlugs.includes(m.slug));
 
   return (
     <div className="min-h-screen bg-background">

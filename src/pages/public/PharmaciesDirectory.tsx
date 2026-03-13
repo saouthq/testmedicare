@@ -11,18 +11,19 @@ import { Search, Pill } from "lucide-react";
 import { usePharmaciesDirectory } from "@/stores/directoryStore";
 
 const PharmaciesDirectory = () => {
+  const pharmacies = usePharmaciesDirectory();
+  const cities = useMemo(() => ["Toutes", ...Array.from(new Set(pharmacies.map(p => p.city)))], [pharmacies]);
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
   const [deGarde, setDeGarde] = useState(false);
   const [showCount, setShowCount] = useState(10);
 
-  // Read ?garde=true from URL
   useEffect(() => {
     if (searchParams.get("garde") === "true") setDeGarde(true);
   }, [searchParams]);
 
-  const filtered = mockPublicPharmacies.filter(p => {
+  const filtered = pharmacies.filter(p => {
     if (city !== "Toutes" && p.city !== city) return false;
     if (deGarde && !p.deGarde) return false;
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;

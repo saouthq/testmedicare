@@ -10,11 +10,13 @@ import { Search, Building2 } from "lucide-react";
 import { useClinicsDirectory } from "@/stores/directoryStore";
 
 const ClinicsDirectory = () => {
+  const clinics = useClinicsDirectory();
+  const cities = useMemo(() => ["Toutes", ...Array.from(new Set(clinics.map(c => c.city)))], [clinics]);
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Toutes");
   const [showCount, setShowCount] = useState(10);
 
-  const filtered = mockClinics.filter(c => {
+  const filtered = clinics.filter(c => {
     if (city !== "Toutes" && c.city !== city) return false;
     if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.services.some(s => s.toLowerCase().includes(search.toLowerCase()))) return false;
     return true;

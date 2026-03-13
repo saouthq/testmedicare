@@ -5,11 +5,12 @@ import JsonLd from "@/components/seo/JsonLd";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Clock, Navigation, Pill, Moon } from "lucide-react";
-import { mockPublicPharmacies } from "@/data/mocks/establishments";
+import { usePharmaciesDirectory } from "@/stores/directoryStore";
 
 const PharmacyDetail = () => {
   const { slug } = useParams();
-  const pharmacy = mockPublicPharmacies.find(p => p.slug === slug);
+  const pharmacies = usePharmaciesDirectory();
+  const pharmacy = pharmacies.find(p => p.slug === slug);
 
   if (!pharmacy) return <div className="min-h-screen bg-background"><PublicHeader /><div className="container mx-auto px-4 py-20 text-center"><h1 className="text-xl font-bold">Pharmacie non trouvée</h1><Link to="/pharmacies" className="text-primary mt-4 inline-block">← Retour à l'annuaire</Link></div></div>;
 
