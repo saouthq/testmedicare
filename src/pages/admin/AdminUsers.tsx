@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAdminUsers, useAdminLookups } from "@/stores/adminStore";
+import { useAdminUsersSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 import type { AdminUser, UserRole } from "@/types/admin";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
