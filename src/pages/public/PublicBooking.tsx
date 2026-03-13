@@ -42,13 +42,32 @@ function minToTime(m: number): string {
 const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 // ─── Doctor Data Builder ────────────────────────────────────
-const buildDoctor = (id: string) => {
-  const numId = parseInt(id);
-  const found = mockDoctors.find(d => d.id === numId);
+const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsDirectory>) => {
+  const fromDirectory = directoryDoctors.find(d => String(d.id) === String(id));
   const profile = readDoctorProfile();
 
+  if (fromDirectory) {
+    return {
+      id: String(fromDirectory.id),
+      doctorId: String(fromDirectory.id),
+      name: fromDirectory.name,
+      specialty: fromDirectory.specialty,
+      address: fromDirectory.address,
+      initials: fromDirectory.avatar || fromDirectory.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+      motifs: [
+        { name: "Consultation", duration: 30, price: fromDirectory.price || 35 },
+        { name: "Suivi", duration: 20, price: Math.round((fromDirectory.price || 35) * 0.75) },
+        { name: "Première visite", duration: 45, price: Math.round((fromDirectory.price || 35) * 1.35) },
+      ],
+      teleconsultation: fromDirectory.teleconsultation,
+      doctorRef: fromDirectory.name,
+    };
+  }
+
+  const numId = Number.parseInt(id, 10);
+  const found = mockDoctors.find(d => d.id === numId);
+
   if (found) {
-    // Use profile motifs for doctor 1 (Bouazizi), else use generic ones
     const motifs = numId === 1
       ? profile.motifs.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 }))
       : [
@@ -59,18 +78,20 @@ const buildDoctor = (id: string) => {
 
     return {
       id: String(found.id),
+      doctorId: undefined,
       name: found.name,
       specialty: found.specialty,
       address: found.address,
       initials: found.avatar,
       motifs,
       teleconsultation: found.teleconsultation,
-      doctorRef: found.name, // Used for store lookups
+      doctorRef: found.name,
     };
   }
 
   return {
     id: "1",
+    doctorId: undefined,
     name: profile.name,
     specialty: profile.specialty,
     address: profile.address,
