@@ -209,7 +209,7 @@ const DoctorWaitingRoom = () => {
                     </Button>
                   )}
                   {(entry.status === "in_waiting" || entry.status === "arrived") && (
-                    <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(entry.patient)}`}>
+                    <Link to={`/dashboard/doctor/consultation/new?patient=${getPatientId(entry.patient)}${entry.teleconsultation ? "&teleconsult=true" : ""}`}>
                       <Button size="sm" className="h-8 text-xs gradient-primary text-primary-foreground">
                         <Play className="h-3.5 w-3.5 mr-1" />Appeler
                       </Button>
