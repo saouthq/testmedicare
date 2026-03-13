@@ -223,7 +223,7 @@ const PublicBooking = () => {
 
     const slots: string[] = [];
     const now = new Date();
-    const isToday = selectedDayDateStr === now.toISOString().slice(0, 10);
+    const isToday = selectedDayDateStr === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
     for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
       // Skip break time
