@@ -99,7 +99,11 @@ export function seedAllStores() {
   if (seeded) return;
   seeded = true;
 
-  // ── Auto-refresh appointments when day changes ──
+  // ── In Production mode, skip ALL mock data seeding ──
+  if (getAppMode() === "production") {
+    console.log("[seedStores] Production mode — skipping mock data");
+    return;
+  }
   const today = new Date().toISOString().slice(0, 10);
   const lastSeedDate = localStorage.getItem(SEED_DATE_KEY);
   if (lastSeedDate !== today) {
