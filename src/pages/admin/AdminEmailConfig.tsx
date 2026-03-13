@@ -74,14 +74,14 @@ const AdminEmailConfig = () => {
 
   // isDirty tracking
   const isDirty = useMemo(() => {
-    const ec = settings.emailConfig || {};
-    const sc = settings.smsConfig || {};
+    const ec = settings.emailConfig as any || {};
+    const sc = settings.smsConfig as any || {};
     return smtpHost !== (ec.smtpHost || "") || smtpPort !== (ec.smtpPort || "") ||
       smtpUser !== (ec.smtpUser || "") || smtpTls !== (ec.smtpTls ?? true) ||
       fromName !== (ec.fromName || "") || fromEmail !== (ec.fromEmail || "") || replyTo !== (ec.replyTo || "") ||
       smsProvider !== (sc.provider || "") || smsSenderId !== (sc.senderId || "") ||
       smsEnabled !== (sc.enabled ?? true) || smsRateLimit !== (sc.rateLimit || "") ||
-      pushEnabled !== (settings.pushConfig?.enabled ?? true);
+      pushEnabled !== ((settings.pushConfig as any)?.enabled ?? true);
   }, [smtpHost, smtpPort, smtpUser, smtpTls, fromName, fromEmail, replyTo, smsProvider, smsSenderId, smsEnabled, smsRateLimit, pushEnabled, settings]);
 
   // Stats

@@ -118,7 +118,7 @@ const AdminAnalytics = () => {
     return doctors.slice(0, 20).map(d => {
       const payments = state.payments.filter(p => p.payerId === d.id && p.status === "paid");
       return {
-        id: d.id, name: d.name, specialty: d.specialty || "Non renseignée",
+        id: d.id, name: d.name,
         specialty: d.subscription || "Non renseignée",
         rating: 4.0 + Math.random() * 1, // Mock rating - needs backend
         totalConsults: Math.floor(Math.random() * 500) + 50,
