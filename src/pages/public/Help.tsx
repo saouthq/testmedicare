@@ -123,8 +123,14 @@ const Help = () => {
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO BACKEND: POST /api/support/contact
-    toast({ title: "Message envoyé !", description: "Notre équipe vous répondra sous 24h." });
+    const number = createSupportTicket({
+      name: contactName,
+      email: contactEmail,
+      subject: contactSubject,
+      message: contactMessage,
+    });
+    setTicketNumber(number);
+    toast({ title: "Demande enregistrée", description: `Votre demande a été enregistrée sous le numéro #${number}.` });
     setContactSent(true);
   };
 
