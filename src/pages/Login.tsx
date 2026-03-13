@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Stethoscope, Eye, EyeOff, Shield, Users, Calendar, Pill, FlaskConical, Building2, ShieldCheck, Play, AlertCircle } from "lucide-react";
-import { loginDemoAs, signInWithEmail, readAuthUser, DEMO_SCENARIOS, useAuth, type UserRole } from "@/stores/authStore";
+import { loginDemoAs, signInWithEmail, readAuthUser, DEMO_SCENARIOS, useAuth, isLoggingOut, type UserRole } from "@/stores/authStore";
 import { toast } from "@/hooks/use-toast";
 
 const roleIcons: Record<string, any> = {
