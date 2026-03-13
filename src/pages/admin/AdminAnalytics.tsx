@@ -50,7 +50,7 @@ const AdminAnalytics = () => {
 
   const stats = useAdminDashboardStats();
   const [state] = useAdminStore();
-  const { plans } = useAdminPlans();
+  const [plans] = useAdminPlans();
 
   // ── Derive data from store ──
   const userGrowthData = useMemo(() => {
