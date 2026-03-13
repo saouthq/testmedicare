@@ -790,6 +790,8 @@ function DayCol({
   apts,
   blocks,
   typeColors,
+  dayConfig,
+  leave,
   onSlotClick,
   onAptClick,
   onBlockClick,
@@ -798,6 +800,8 @@ function DayCol({
   apts: Appt[];
   blocks: BlockedSlot[];
   typeColors: Record<ApptType, ColorKey>;
+  dayConfig?: AvailabilityDay;
+  leave?: SharedLeave;
   onSlotClick: (t: string, x: number, y: number) => void;
   onAptClick: (a: Appt) => void;
   onBlockClick: (b: BlockedSlot) => void;
