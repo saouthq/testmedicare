@@ -257,6 +257,10 @@ const Help = () => {
                 </div>
               </div>
               <div>
+                <label className="text-xs font-medium text-muted-foreground">Sujet</label>
+                <Input value={contactSubject} onChange={e => setContactSubject(e.target.value)} className="mt-1" placeholder="Ex: Problème de connexion" />
+              </div>
+              <div>
                 <label className="text-xs font-medium text-muted-foreground">Message *</label>
                 <Textarea value={contactMessage} onChange={e => setContactMessage(e.target.value)} required rows={4} className="mt-1" placeholder="Décrivez votre problème ou question..." />
               </div>
