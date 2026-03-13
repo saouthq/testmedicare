@@ -16,6 +16,8 @@ import MotifDialog from "@/components/admin/MotifDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import { useAdminTickets, useAdminDisputes, useAdminModerationReports } from "@/stores/adminStore";
+import { useAdminTicketsSupabase, useAdminTicketUpdateSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 import type { AdminModerationReport, AdminTicket, ModerationNote } from "@/types/admin";
 import EmptyState from "@/components/shared/EmptyState";
 import {
