@@ -14,7 +14,7 @@ export const specialties = [
   "Sage-femme", "Radiologue", "Anesthésiste-réanimateur",
   "Chirurgien orthopédiste", "Chirurgien plastique", "Chirurgien vasculaire",
   "Médecin interniste", "Rééducateur fonctionnel", "Phlébologue",
-  "Médecin esthétique",
+  "Médecin esthétique", "Orthoptiste",
 ];
 
 export const specialtiesWithAll = ["Tous", ...specialties.slice(0, 15)];

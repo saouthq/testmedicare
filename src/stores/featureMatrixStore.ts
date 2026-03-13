@@ -437,9 +437,10 @@ export const planNameToTier = (name: string, activity: ActivityType): PlanTier =
  * Used in onboarding to show what's unique to each specialty.
  */
 export const specialtyFeatureHighlights: Record<string, { highlights: string[]; disabledFeatures: string[]; extraTools: string[] }> = {
+  // ── Spécialistes médicaux ──
   "Ophtalmologue": {
     highlights: ["Examen ophtalmologique intégré", "Acuité visuelle numérique", "Fond d'œil documenté", "Prescription lunettes/lentilles"],
-    disabledFeatures: ["teleconsult_video", "teleconsult_chat"], // Ophtalmo needs in-person
+    disabledFeatures: ["teleconsult_video", "teleconsult_chat"],
     extraTools: ["ophtalmo_exam"],
   },
   "Cardiologue": {
@@ -474,6 +475,76 @@ export const specialtyFeatureHighlights: Record<string, { highlights: string[]; 
   },
   "Neurologue": {
     highlights: ["EEG documenté", "Bilan neurologique structuré", "Suivi épilepsie"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Pneumologue": {
+    highlights: ["Spirométrie intégrée", "Suivi asthme/BPCO", "Oxymétrie nocturne"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Rhumatologue": {
+    highlights: ["Scores DAS28/HAQ", "Suivi biothérapies", "Bilan articulaire structuré"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Urologue": {
+    highlights: ["Score IPSS intégré", "Suivi PSA", "Bilan urodynamique"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Endocrinologue": {
+    highlights: ["Suivi diabète (HbA1c)", "Bilan thyroïdien", "Courbes glycémiques"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Gastro-entérologue": {
+    highlights: ["Compte-rendu endoscopie", "Suivi MICI", "Score de fibrose"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Néphrologue": {
+    highlights: ["Suivi DFG/créatinine", "Bilan dialyse", "Suivi greffe rénale"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Allergologue": {
+    highlights: ["Prick-tests documentés", "Désensibilisation suivi", "Bilan allergologique"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Oncologue": {
+    highlights: ["Protocoles chimiothérapie", "Suivi effets secondaires", "Score OMS/Karnofsky"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Chirurgien": {
+    highlights: ["Planning opératoire", "Compte-rendu opératoire", "Suivi post-opératoire"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Chirurgien orthopédiste": {
+    highlights: ["Bilan articulaire", "Planning chirurgical", "Suivi prothèses"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Radiologue": {
+    highlights: ["Compte-rendu structuré", "Intégration PACS", "Dictée vocale"],
+    disabledFeatures: ["teleconsult_video"],
+    extraTools: [],
+  },
+  "Gériatre": {
+    highlights: ["Évaluation gériatrique (MMS, ADL)", "Suivi polymédication", "Grille d'autonomie"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Médecin du sport": {
+    highlights: ["Certificats d'aptitude sportive", "Tests d'effort", "Suivi blessures"],
+    disabledFeatures: [],
+    extraTools: [],
+  },
+  "Médecin esthétique": {
+    highlights: ["Photos avant/après", "Suivi injections", "Devis esthétiques"],
     disabledFeatures: [],
     extraTools: [],
   },
