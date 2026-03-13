@@ -77,14 +77,14 @@ const PatientDashboard = () => {
 
   const healthCompletion = useMemo(() => {
     let total = 8, done = 0;
-    if (profile.bloodType) done++;
-    if (profile.treatingDoctor) done++;
-    if (profile.insurance && profile.insurance !== "none") done++;
-    if (profile.allergies.length > 0) done++;
-    if (health.vaccinations.length > 0) done++;
-    if (health.treatments.length > 0) done++;
-    if (health.documents.length > 0) done++;
-    if (profile.dob) done++;
+    if (profile?.bloodType) done++;
+    if (profile?.treatingDoctor) done++;
+    if (profile?.insurance && profile.insurance !== "none") done++;
+    if ((profile?.allergies?.length ?? 0) > 0) done++;
+    if ((health?.vaccinations?.length ?? 0) > 0) done++;
+    if ((health?.treatments?.length ?? 0) > 0) done++;
+    if ((health?.documents?.length ?? 0) > 0) done++;
+    if (profile?.dob) done++;
     return Math.round((done / total) * 100);
   }, [profile, health]);
 
