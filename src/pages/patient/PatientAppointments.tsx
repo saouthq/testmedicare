@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import { useState } from "react";
 import { Calendar, Clock, MapPin, Plus, Video, MessageSquare, X, RefreshCw, CheckCircle2, Shield, AlertTriangle, ChevronDown, Navigation, FileText, UserX, CalendarPlus, ChevronRight, Send, CreditCard, Info, Download, Flag } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -159,7 +160,7 @@ const PATIENT_ID = 1;
 const PatientAppointments = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("upcoming");
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading }] = useSharedAppointments();
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
@@ -198,6 +199,10 @@ const PatientAppointments = () => {
   const currentPast = drawerApt ? completedAppointments.find(a => a.id === drawerApt) : null;
   const aptForReschedule = showReschedule ? appointments.find(a => a.id === showReschedule) : null;
   const aptForPayment = showPayment ? appointments.find(a => a.id === showPayment) : null;
+
+  if (isLoading) {
+    return <DashboardLayout role="patient" title="Mes rendez-vous"><LoadingSkeleton type="card" /></DashboardLayout>;
+  }
 
   return (
   <>

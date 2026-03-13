@@ -43,6 +43,7 @@ export function mapAppointmentRow(row: any): SharedAppointment {
     status: row.status as AppointmentStatus,
     assurance: row.insurance || "",
     doctor: row.doctor_name || "",
+    doctorId: row.doctor_id || undefined,
     teleconsultation: row.teleconsultation || false,
     notes: row.notes || "",
     isNew: row.is_new || false,
@@ -72,6 +73,7 @@ export function mapAppointmentToRow(apt: Partial<SharedAppointment> & { id?: str
   if (apt.status !== undefined) row.status = apt.status;
   if (apt.assurance !== undefined) row.insurance = apt.assurance;
   if (apt.doctor !== undefined) row.doctor_name = apt.doctor;
+  if (apt.doctorId !== undefined) row.doctor_id = apt.doctorId;
   if (apt.teleconsultation !== undefined) row.teleconsultation = apt.teleconsultation;
   if (apt.notes !== undefined) row.notes = apt.notes;
   if (apt.isNew !== undefined) row.is_new = apt.isNew;

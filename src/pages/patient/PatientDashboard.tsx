@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import { 
   Calendar, Clock, FileText, Activity, ChevronRight, MapPin, 
   Video, Heart, Pill, Star, AlertTriangle,
@@ -29,7 +30,7 @@ const PatientDashboard = () => {
   const [drawerApt, setDrawerApt] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<HealthDocument | null>(null);
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading: aptsLoading }] = useSharedAppointments();
   const [profile] = usePatientProfile();
   const { notifications: crossNotifs } = useNotifications("patient");
   const [health] = useHealth();
@@ -118,6 +119,10 @@ const PatientDashboard = () => {
 
     toast({ title: "Demande envoyée", description: "Votre demande de renouvellement a été envoyée au médecin." });
   };
+
+  if (aptsLoading) {
+    return <DashboardLayout role="patient" title="Tableau de bord"><LoadingSkeleton type="dashboard" /></DashboardLayout>;
+  }
 
   return (
     <DashboardLayout role="patient" title="Tableau de bord">

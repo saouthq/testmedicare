@@ -42,6 +42,7 @@ export interface SharedAppointment {
   status: AppointmentStatus;
   assurance: string;
   doctor: string;
+  doctorId?: string;
   teleconsultation?: boolean;
   notes?: string;
   isNew?: boolean;

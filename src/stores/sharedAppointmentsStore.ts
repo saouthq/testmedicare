@@ -12,6 +12,7 @@ import type { SharedAppointment, AppointmentStatus, AppointmentType } from "@/ty
 import { computeEndTime } from "@/types/appointment";
 import { useDualQuery } from "@/hooks/useDualData";
 import { mapAppointmentRow } from "@/lib/supabaseMappers";
+import { readAuthUser } from "@/stores/authStore";
 
 // ─── Helper: generate YYYY-MM-DD relative to today ──────────
 function relDate(offset: number): string {
@@ -124,7 +125,10 @@ export function updateAppointmentStatus(id: string, status: AppointmentStatus, e
 export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">) {
   const id = `apt-${Date.now()}`;
   const endTime = computeEndTime(apt.startTime, apt.duration);
-  const newApt: SharedAppointment = { ...apt, id, endTime };
+  // Auto-populate doctorId from auth if not provided
+  const currentUser = readAuthUser();
+  const doctorId = apt.doctorId || (currentUser?.role === "doctor" ? currentUser.id : undefined);
+  const newApt: SharedAppointment = { ...apt, id, endTime, doctorId };
   store.set(prev => [...prev, newApt].sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)));
 
   // Notify doctor

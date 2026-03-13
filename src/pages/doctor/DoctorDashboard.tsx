@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import UpgradeBanner from "@/components/shared/UpgradeBanner";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { plansByActivity } from "@/stores/featureMatrixStore";
@@ -28,7 +29,7 @@ const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 const DoctorDashboard = () => {
   const teleconsultSessions = useTeleconsultSessions();
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading: aptsLoading }] = useSharedAppointments();
   const [patients] = useSharedPatients();
   const [renewalRequests] = useRenewalRequests();
   const [profileCompletion] = useProfileCompletion();
@@ -63,6 +64,14 @@ const DoctorDashboard = () => {
   };
 
   const kpi = config.kpiLabels || { done: "Terminées aujourd'hui", waiting: "En attente", renewals: "Renouvellements", teleconsult: "Téléconsultations" };
+
+  if (aptsLoading) {
+    return (
+      <DashboardLayout role="doctor" title="Tableau de bord">
+        <LoadingSkeleton type="dashboard" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="doctor" title="Tableau de bord">

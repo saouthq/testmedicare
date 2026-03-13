@@ -4,6 +4,7 @@
  * // TODO BACKEND: GET /api/doctor/waiting-room, PUT /api/waiting-room/:id/status
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -39,7 +40,7 @@ const statusLabels: Record<AppointmentStatus, string> = {
 };
 
 const DoctorWaitingRoom = () => {
-  const [allAppointments] = useSharedAppointments();
+  const [allAppointments, , { isLoading }] = useSharedAppointments();
   const [patients] = useSharedPatients();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | AppointmentStatus>("all");
@@ -105,6 +106,10 @@ const DoctorWaitingRoom = () => {
     }
     setAbsentConfirm({ open: false, id: null });
   };
+
+  if (isLoading) {
+    return <DashboardLayout role="doctor" title="Salle d'attente"><LoadingSkeleton type="table" /></DashboardLayout>;
+  }
 
   return (
     <DashboardLayout role="doctor" title="Salle d'attente">
