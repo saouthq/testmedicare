@@ -114,7 +114,7 @@ export { threadsStore, messagesItemsStore };
 
 // ─── Dual-mode Hooks ────────────────────────────────────────
 
-export function useChatThreads(): [ChatThread[], (v: ChatThread[] | ((p: ChatThread[]) => ChatThread[])) => void] {
+export function useChatThreads() {
   return useDualQuery<ChatThread[]>({
     store: threadsStore,
     tableName: "chat_threads",
