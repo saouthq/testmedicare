@@ -15,6 +15,8 @@ import {
   LogIn, Edit, Trash2, Eye, Settings, ChevronLeft, ChevronRight, Server, Activity, RefreshCw,
 } from "lucide-react";
 import { getLogs, clearLogs, type AuditLogEntry } from "@/services/admin/adminAuditService";
+import { useAdminAuditLogsSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 
 // ── System log types ──
 interface SystemLog { id: number; time: string; user: string; userRole: string; action: string; detail: string; level: string; ip?: string; userAgent?: string; duration?: string; }
@@ -55,6 +57,9 @@ type LogLevel = "all" | "info" | "warning" | "error" | "security";
 const PAGE_SIZE = 10;
 
 const AdminLogs = () => {
+  const isProduction = getAppMode() === "production";
+  const supabaseLogsQuery = useAdminAuditLogsSupabase();
+  
   // System tab
   const [filter, setFilter] = useState<LogLevel>("all");
   const [search, setSearch] = useState("");
@@ -62,14 +67,31 @@ const AdminLogs = () => {
   const [detailLog, setDetailLog] = useState<SystemLog | null>(null);
   const [page, setPage] = useState(0);
 
-  // Audit tab
+  // Audit tab — in production, map from Supabase; in demo, from local service
+  const supabaseAuditMapped: AuditLogEntry[] = (supabaseLogsQuery.data || []).map(row => ({
+    id: row.id,
+    actorAdminName: row.user_name || "Système",
+    actorRole: "admin",
+    actionType: row.action || "",
+    targetType: row.entity_type || "",
+    targetId: row.entity_id || "",
+    summary: typeof row.details === "string" ? row.details : JSON.stringify(row.details || {}),
+    createdAt: new Date(row.created_at).toLocaleString("fr-TN"),
+  }));
+
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [auditSearch, setAuditSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("");
   const [targetFilter, setTargetFilter] = useState("");
 
-  const refreshAudit = () => setAuditLogs(getLogs({ search: auditSearch, actionType: actionFilter || undefined, targetType: targetFilter || undefined }));
-  useEffect(() => { refreshAudit(); }, [auditSearch, actionFilter, targetFilter]);
+  const refreshAudit = () => {
+    if (isProduction) {
+      setAuditLogs(supabaseAuditMapped);
+    } else {
+      setAuditLogs(getLogs({ search: auditSearch, actionType: actionFilter || undefined, targetType: targetFilter || undefined }));
+    }
+  };
+  useEffect(() => { refreshAudit(); }, [auditSearch, actionFilter, targetFilter, supabaseLogsQuery.data]);
 
   const actionTypes = Array.from(new Set(getLogs().map(l => l.actionType)));
   const targetTypes = Array.from(new Set(getLogs().map(l => l.targetType)));

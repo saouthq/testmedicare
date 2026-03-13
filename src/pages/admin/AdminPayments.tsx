@@ -12,6 +12,8 @@ import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
 import { useAdminPayments } from "@/stores/adminStore";
+import { useAdminInvoicesSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import type { AdminPayment } from "@/types/admin";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +26,29 @@ type MotifTarget = { type: "refund" | "mark_paid"; id: string } | null;
 
 const AdminPayments = () => {
   const navigate = useNavigate();
-  const { payments, setPayments } = useAdminPayments();
+  const { payments: demoPayments, setPayments } = useAdminPayments();
+  const isProduction = getAppMode() === "production";
+  const supabaseInvoicesQuery = useAdminInvoicesSupabase();
+  
+  // Map Supabase invoices to AdminPayment format
+  const supabasePayments: AdminPayment[] = (supabaseInvoicesQuery.data || []).map(row => ({
+    id: row.id,
+    type: "teleconsult" as const,
+    payerId: "",
+    payerName: row.patient_name,
+    payerEmail: "",
+    payerRole: "patient" as any,
+    amount: row.amount,
+    currency: "DT",
+    method: row.payment || "especes",
+    status: row.status as any,
+    description: row.type,
+    reference: row.id,
+    createdAt: row.created_at,
+    organizationId: "",
+  }));
+  
+  const payments = isProduction ? supabasePayments : demoPayments;
   const [motifTarget, setMotifTarget] = useState<MotifTarget>(null);
   const [detailPayment, setDetailPayment] = useState<AdminPayment | null>(null);
   const [dateFrom, setDateFrom] = useState("");

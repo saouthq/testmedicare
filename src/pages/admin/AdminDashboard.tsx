@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { getLogs } from "@/services/admin/adminAuditService";
 import { useAdminDashboardStats, useAdminStore } from "@/stores/adminStore";
+import { useAdminDashboardStatsSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 
 const revenueChartData = [
   { month: "Sep", value: 28000 }, { month: "Oct", value: 32000 },
@@ -28,7 +30,10 @@ const topSearchedMeds = [
 ];
 
 const AdminDashboard = () => {
-  const stats = useAdminDashboardStats();
+  const demoStats = useAdminDashboardStats();
+  const supabaseStatsQuery = useAdminDashboardStatsSupabase();
+  const isProduction = getAppMode() === "production";
+  const stats = isProduction ? (supabaseStatsQuery.data || demoStats) : demoStats;
   const [state] = useAdminStore();
   const recentLogs = useMemo(() => getLogs().slice(0, 5), []);
 

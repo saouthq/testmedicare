@@ -13,6 +13,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { appendLog } from "@/services/admin/adminAuditService";
 import { toast } from "@/hooks/use-toast";
 import MotifDialog from "@/components/admin/MotifDialog";
+import { useAdminAppointmentsSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 
 interface AdminApt {
   id: number;
@@ -52,8 +55,28 @@ const payLabels: Record<string, string> = { paid: "Payé", pending: "En attente"
 const PAGE_SIZE = 8;
 
 const AdminAppointments = () => {
+  const isProduction = getAppMode() === "production";
+  const supabaseAptsQuery = useAdminAppointmentsSupabase();
+  
+  // Map Supabase rows to local AdminApt format
+  const supabaseApts: AdminApt[] = (supabaseAptsQuery.data || []).map((row, i) => ({
+    id: i + 1,
+    patientName: row.patient_name || "",
+    doctorName: row.doctor_name || "",
+    specialty: "",
+    date: row.date,
+    time: row.start_time?.slice(0, 5) || "",
+    type: row.teleconsultation ? "teleconsultation" as const : "presentiel" as const,
+    status: row.status,
+    city: "",
+    amount: `${row.paid_amount || 0} DT`,
+    paymentStatus: (row.payment_status || "pending") as "paid" | "pending" | "refunded",
+    notes: row.notes || undefined,
+  }));
+
   const [search, setSearch] = useState("");
   const [apts, setApts] = useState(initialApts);
+  const displayApts = isProduction ? supabaseApts : apts;
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
@@ -61,9 +84,9 @@ const AdminAppointments = () => {
   const [detailApt, setDetailApt] = useState<AdminApt | null>(null);
   const [page, setPage] = useState(0);
 
-  const cities = useMemo(() => Array.from(new Set(apts.map(a => a.city))), [apts]);
+  const cities = useMemo(() => Array.from(new Set(displayApts.map(a => a.city).filter(Boolean))), [displayApts]);
 
-  const filtered = useMemo(() => apts.filter(a => {
+  const filtered = useMemo(() => displayApts.filter(a => {
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
     if (typeFilter !== "all" && a.type !== typeFilter) return false;
     if (cityFilter !== "all" && a.city !== cityFilter) return false;
@@ -72,7 +95,7 @@ const AdminAppointments = () => {
       return a.patientName.toLowerCase().includes(q) || a.doctorName.toLowerCase().includes(q) || a.specialty.toLowerCase().includes(q);
     }
     return true;
-  }), [apts, statusFilter, typeFilter, cityFilter, search]);
+  }), [displayApts, statusFilter, typeFilter, cityFilter, search]);
 
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);

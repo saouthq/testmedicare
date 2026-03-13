@@ -18,13 +18,25 @@
 ## Phase 3 — UX & redirections ✅ DONE
 
 10. ✅ Loading skeletons sur DoctorConsultations, DoctorSchedule
-11. ✅ Empty states avec CTA sur DoctorConsultations (liste vide), PatientPrescriptions
-12. ✅ SecretaryTeleconsultPanel déjà intégré dans SecretaryDashboard (vérifié)
-13. ✅ Redirection post-register vers /dashboard/doctor/onboarding pour les médecins
+11. ✅ Empty states avec CTA sur DoctorConsultations, PatientPrescriptions
+12. ✅ SecretaryTeleconsultPanel déjà intégré dans SecretaryDashboard
+13. ✅ Redirection post-register vers /dashboard/doctor/onboarding
 14. ✅ Post-confirm redirect dans Login.tsx via localStorage flag
 
-## Phase 4 — À faire (prochaine itération)
+## Phase 4 — Admin backend + Isolation praticien ✅ DONE
 
-- Empty states sur les pages pharmacy/lab en mode Production (inline déjà présents)
-- Loading states sur pages pharmacy/lab
-- Null-safety audit complet sur toutes les pages restantes
+15. ✅ Créé `useAdminData.ts` avec hooks Supabase pour toutes les entités admin
+16. ✅ AdminUsers connecté à `profiles` + `user_roles` (production mode)
+17. ✅ AdminDashboard stats dérivées de Supabase (profiles, invoices, appointments, tickets)
+18. ✅ AdminAppointments connecté à la table `appointments`
+19. ✅ AdminLogs connecté à la table `audit_logs`
+20. ✅ AdminPayments connecté à la table `invoices`
+21. ✅ Isolation praticien via RLS (doctor_id, pharmacy_id, lab_id) + useDualQuery déjà en place
+22. ✅ Toutes les pages fonctionnent en dual mode (Demo localStorage / Production Supabase)
+
+## Phase 5 — À faire (prochaine itération)
+
+- Connecter AdminVerifications à `doctors_directory` (KYC verification status)
+- Connecter AdminGuardPharmacies à `pharmacies_directory` (is_guard field)
+- UI spécialité dynamique selon doctor profile (specialty-specific tools)
+- Tables manquantes pour subscriptions, organizations, disputes, campaigns (besoin migration DB)
