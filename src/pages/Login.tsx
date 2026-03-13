@@ -43,7 +43,14 @@ const Login = () => {
     try {
       await signInWithEmail(email, password);
       const currentUser = readAuthUser();
-      navigate(`/dashboard/${currentUser?.role || "patient"}`);
+      // Check for post-registration redirect (e.g., doctor onboarding)
+      const postRedirect = localStorage.getItem("medicare_post_confirm_redirect");
+      if (postRedirect) {
+        localStorage.removeItem("medicare_post_confirm_redirect");
+        navigate(postRedirect);
+      } else {
+        navigate(`/dashboard/${currentUser?.role || "patient"}`);
+      }
     } catch (err: any) {
       const msg = err?.message || "";
       if (msg.includes("Invalid login")) {
