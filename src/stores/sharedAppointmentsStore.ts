@@ -126,7 +126,6 @@ export function createAppointment(apt: Omit<SharedAppointment, "id" | "endTime">
   const id = `apt-${Date.now()}`;
   const endTime = computeEndTime(apt.startTime, apt.duration);
   // Auto-populate doctorId from auth if not provided
-  const { readAuthUser } = require("@/stores/authStore");
   const currentUser = readAuthUser();
   const doctorId = apt.doctorId || (currentUser?.role === "doctor" ? currentUser.id : undefined);
   const newApt: SharedAppointment = { ...apt, id, endTime, doctorId };
