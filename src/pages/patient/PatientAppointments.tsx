@@ -15,6 +15,7 @@ import { ReportButton } from "@/components/shared/ReportButton";
 type Tab = "upcoming" | "past" | "cancelled" | "absent";
 
 import { useSharedAppointments, cancelAppointment as sharedCancelAppointment, rescheduleAppointment as sharedRescheduleAppointment } from "@/stores/sharedAppointmentsStore";
+import { readAuthUser } from "@/stores/authStore";
 import type { SharedAppointment } from "@/types/appointment";
 import { canCancel as checkCanCancel, canReschedule as checkCanReschedule } from "@/lib/appointmentRules";
 
