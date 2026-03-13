@@ -1,61 +1,18 @@
+/**
+ * DoctorStats — Statistiques dérivées des stores centralisés.
+ * // TODO BACKEND: Replace with analytics API
+ */
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import FeatureGate from "@/components/shared/FeatureGate";
-import { TrendingUp, Users, Calendar, Banknote, Clock, Activity, Download, ChevronDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
+import { TrendingUp, Users, Calendar, Banknote, Clock, Activity, Download, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import { useSharedBilling } from "@/stores/billingStore";
+import { useReviews, getAverageRating } from "@/stores/reviewsStore";
 
 type Period = "week" | "month" | "quarter" | "year";
-
-const periodData: Record<Period, { consultations: { month: string; count: number }[]; revenue: { day: string; revenue: number }[] }> = {
-  week: {
-    consultations: [
-      { month: "Lun", count: 14 }, { month: "Mar", count: 18 }, { month: "Mer", count: 8 },
-      { month: "Jeu", count: 16 }, { month: "Ven", count: 12 }, { month: "Sam", count: 6 },
-    ],
-    revenue: [
-      { day: "Lun", revenue: 490 }, { day: "Mar", revenue: 630 }, { day: "Mer", revenue: 280 },
-      { day: "Jeu", revenue: 560 }, { day: "Ven", revenue: 420 }, { day: "Sam", revenue: 210 },
-    ],
-  },
-  month: {
-    consultations: [
-      { month: "S1", count: 48 }, { month: "S2", count: 52 }, { month: "S3", count: 45 }, { month: "S4", count: 55 },
-    ],
-    revenue: [
-      { day: "S1", revenue: 1680 }, { day: "S2", revenue: 1820 }, { day: "S3", revenue: 1575 }, { day: "S4", revenue: 1925 },
-    ],
-  },
-  quarter: {
-    consultations: [
-      { month: "Déc", count: 87 }, { month: "Jan", count: 124 }, { month: "Fév", count: 94 },
-    ],
-    revenue: [
-      { day: "Déc", revenue: 3045 }, { day: "Jan", revenue: 4340 }, { day: "Fév", revenue: 3290 },
-    ],
-  },
-  year: {
-    consultations: [
-      { month: "Mar", count: 102 }, { month: "Avr", count: 95 }, { month: "Mai", count: 110 },
-      { month: "Jun", count: 88 }, { month: "Jul", count: 65 }, { month: "Aoû", count: 45 },
-      { month: "Sep", count: 98 }, { month: "Oct", count: 112 }, { month: "Nov", count: 105 },
-      { month: "Déc", count: 87 }, { month: "Jan", count: 124 }, { month: "Fév", count: 94 },
-    ],
-    revenue: [
-      { day: "Mar", revenue: 3570 }, { day: "Avr", revenue: 3325 }, { day: "Mai", revenue: 3850 },
-      { day: "Jun", revenue: 3080 }, { day: "Jul", revenue: 2275 }, { day: "Aoû", revenue: 1575 },
-      { day: "Sep", revenue: 3430 }, { day: "Oct", revenue: 3920 }, { day: "Nov", revenue: 3675 },
-      { day: "Déc", revenue: 3045 }, { day: "Jan", revenue: 4340 }, { day: "Fév", revenue: 3290 },
-    ],
-  },
-};
-
-const patientsByType = [
-  { name: "Consultation", value: 45, color: "hsl(var(--primary))" },
-  { name: "Suivi", value: 25, color: "hsl(var(--accent))" },
-  { name: "Première visite", value: 15, color: "hsl(var(--warning))" },
-  { name: "Contrôle", value: 15, color: "hsl(var(--muted-foreground))" },
-];
 
 const periodLabels: Record<Period, string> = {
   week: "Cette semaine",
@@ -64,21 +21,102 @@ const periodLabels: Record<Period, string> = {
   year: "Cette année",
 };
 
+function getDaysBack(period: Period): number {
+  switch (period) {
+    case "week": return 7;
+    case "month": return 30;
+    case "quarter": return 90;
+    case "year": return 365;
+  }
+}
+
 const DoctorStats = () => {
   const [period, setPeriod] = useState<Period>("month");
+  const [appointments] = useSharedAppointments();
+  const [invoices] = useSharedBilling();
+  const [reviews] = useReviews();
 
-  const data = periodData[period];
-  const totalConsult = data.consultations.reduce((s, c) => s + c.count, 0);
-  const totalRevenue = data.revenue.reduce((s, r) => s + r.revenue, 0);
-  const avgPerDay = Math.round(totalConsult / data.consultations.length);
+  const stats = useMemo(() => {
+    const now = new Date();
+    const daysBack = getDaysBack(period);
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - daysBack);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-  const stats = [
-    { label: "Consultations", value: String(totalConsult), change: "+12%", up: true, icon: Calendar, color: "text-primary" },
-    { label: "Patients actifs", value: "342", change: "+5%", up: true, icon: Users, color: "text-accent" },
-    { label: "Chiffre d'affaires", value: `${totalRevenue.toLocaleString()} DT`, change: "+8%", up: true, icon: Banknote, color: "text-warning" },
-    { label: "Durée moy. consultation", value: "22 min", change: "-3 min", up: false, icon: Clock, color: "text-primary" },
-    { label: "Taux d'occupation", value: "87%", change: "+2%", up: true, icon: TrendingUp, color: "text-accent" },
-    { label: "Taux d'annulation", value: "4.2%", change: "-1%", up: false, icon: Activity, color: "text-destructive" },
+    // Filter appointments in period
+    const periodAppts = appointments.filter(a => a.date >= cutoffStr);
+    const doneAppts = periodAppts.filter(a => a.status === "done");
+    const cancelledAppts = periodAppts.filter(a => a.status === "cancelled");
+    const teleconsultAppts = doneAppts.filter(a => a.teleconsultation);
+
+    // Invoices in period
+    const periodInvoices = invoices.filter(inv => inv.date >= cutoffStr);
+    const totalRevenue = periodInvoices.reduce((s, inv) => s + inv.amount, 0);
+
+    // Unique patients
+    const uniquePatients = new Set(doneAppts.map(a => a.patient)).size;
+
+    // Cancellation rate
+    const totalBooked = periodAppts.filter(a => a.status !== "pending").length;
+    const cancellationRate = totalBooked > 0 ? ((cancelledAppts.length / totalBooked) * 100).toFixed(1) : "0";
+
+    // Teleconsult percentage
+    const teleconsultPct = doneAppts.length > 0 ? Math.round((teleconsultAppts.length / doneAppts.length) * 100) : 0;
+
+    // Reviews
+    const avgRating = getAverageRating(1); // Doctor ID 1
+    const reviewCount = reviews.filter(r => r.doctorId === 1).length;
+
+    return { doneCount: doneAppts.length, uniquePatients, totalRevenue, cancellationRate, teleconsultPct, avgRating, reviewCount, doneAppts, periodInvoices };
+  }, [appointments, invoices, reviews, period]);
+
+  // Build chart data - group done appointments by label
+  const consultationsChart = useMemo(() => {
+    const groups: Record<string, number> = {};
+    stats.doneAppts.forEach(a => {
+      const label = period === "week" 
+        ? ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"][new Date(a.date).getDay()]
+        : period === "month"
+          ? `S${Math.ceil(new Date(a.date).getDate() / 7)}`
+          : new Date(a.date).toLocaleString("fr", { month: "short" });
+      groups[label] = (groups[label] || 0) + 1;
+    });
+    return Object.entries(groups).map(([month, count]) => ({ month, count }));
+  }, [stats.doneAppts, period]);
+
+  const revenueChart = useMemo(() => {
+    const groups: Record<string, number> = {};
+    stats.periodInvoices.forEach(inv => {
+      const label = period === "week"
+        ? ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"][new Date(inv.date).getDay()]
+        : period === "month"
+          ? `S${Math.ceil(new Date(inv.date).getDate() / 7)}`
+          : new Date(inv.date).toLocaleString("fr", { month: "short" });
+      groups[label] = (groups[label] || 0) + inv.amount;
+    });
+    return Object.entries(groups).map(([day, revenue]) => ({ day, revenue }));
+  }, [stats.periodInvoices, period]);
+
+  const patientsByType = useMemo(() => {
+    const types: Record<string, number> = {};
+    stats.doneAppts.forEach(a => {
+      types[a.type] = (types[a.type] || 0) + 1;
+    });
+    const colors = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--warning))", "hsl(var(--muted-foreground))"];
+    return Object.entries(types).map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }));
+  }, [stats.doneAppts]);
+
+  const avgPerPeriod = consultationsChart.length > 0 ? Math.round(stats.doneCount / consultationsChart.length) : 0;
+
+  const hasData = stats.doneCount > 0 || stats.totalRevenue > 0;
+
+  const kpiCards = [
+    { label: "Consultations", value: String(stats.doneCount), icon: Calendar, color: "text-primary" },
+    { label: "Patients vus", value: String(stats.uniquePatients), icon: Users, color: "text-accent" },
+    { label: "Chiffre d'affaires", value: `${stats.totalRevenue.toLocaleString()} DT`, icon: Banknote, color: "text-warning" },
+    { label: "Satisfaction", value: stats.avgRating > 0 ? `${stats.avgRating}/5` : "—", icon: TrendingUp, color: "text-accent" },
+    { label: "Taux d'annulation", value: `${stats.cancellationRate}%`, icon: Activity, color: "text-destructive" },
+    { label: "Téléconsultation", value: `${stats.teleconsultPct}%`, icon: Clock, color: "text-primary" },
   ];
 
   return (
@@ -103,7 +141,7 @@ const DoctorStats = () => {
 
         {/* KPI cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {stats.map(s => (
+          {kpiCards.map(s => (
             <div key={s.label} className="rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">{s.label}</p>
@@ -111,96 +149,106 @@ const DoctorStats = () => {
               </div>
               <div className="flex items-end gap-2 mt-2">
                 <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                <span className={`text-xs font-medium flex items-center gap-0.5 ${
-                  (s.label === "Taux d'annulation" ? !s.up : s.up) ? "text-accent" : "text-destructive"
-                }`}>
-                  {s.up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                  {s.change}
-                </span>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1">vs période précédente</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{periodLabels[period]}</p>
             </div>
           ))}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Consultations chart */}
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Consultations · {periodLabels[period]}</h3>
-              <span className="text-xs text-muted-foreground">Moy. {avgPerDay}/période</span>
-            </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={data.consultations}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
-                  labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
-                />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        {!hasData ? (
+          <div className="rounded-xl border bg-card p-12 text-center shadow-card">
+            <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">Données insuffisantes</p>
+            <p className="text-xs text-muted-foreground mt-1">Les statistiques apparaîtront après vos premières consultations terminées.</p>
           </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Consultations chart */}
+            <div className="rounded-xl border bg-card p-5 shadow-card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground">Consultations · {periodLabels[period]}</h3>
+                <span className="text-xs text-muted-foreground">Moy. {avgPerPeriod}/période</span>
+              </div>
+              {consultationsChart.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={consultationsChart}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">Pas encore de données</div>
+              )}
+            </div>
 
-          {/* Patient distribution */}
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <h3 className="font-semibold text-foreground mb-4">Répartition par motif</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={patientsByType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2}>
-                  {patientsByType.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap gap-3 justify-center mt-2">
-              {patientsByType.map(p => (
-                <div key={p.name} className="flex items-center gap-1.5 text-xs">
-                  <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                  <span className="text-muted-foreground">{p.name} ({p.value}%)</span>
-                </div>
-              ))}
+            {/* Patient distribution */}
+            <div className="rounded-xl border bg-card p-5 shadow-card">
+              <h3 className="font-semibold text-foreground mb-4">Répartition par motif</h3>
+              {patientsByType.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie data={patientsByType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2}>
+                        {patientsByType.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap gap-3 justify-center mt-2">
+                    {patientsByType.map(p => (
+                      <div key={p.name} className="flex items-center gap-1.5 text-xs">
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                        <span className="text-muted-foreground">{p.name} ({p.value})</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">Pas encore de données</div>
+              )}
             </div>
-          </div>
 
-          {/* Revenue chart */}
-          <div className="rounded-xl border bg-card p-5 shadow-card lg:col-span-2">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Revenus · {periodLabels[period]}</h3>
-              <span className="text-sm font-bold text-foreground">{totalRevenue.toLocaleString()} DT</span>
+            {/* Revenue chart */}
+            <div className="rounded-xl border bg-card p-5 shadow-card lg:col-span-2">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground">Revenus · {periodLabels[period]}</h3>
+                <span className="text-sm font-bold text-foreground">{stats.totalRevenue.toLocaleString()} DT</span>
+              </div>
+              {revenueChart.length > 0 ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  <AreaChart data={revenueChart}>
+                    <defs>
+                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="day" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `${v} DT`} />
+                    <Tooltip formatter={(value: number) => [`${value} DT`, "Revenus"]} contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
+                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#revenueGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Pas encore de données</div>
+              )}
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={data.revenue}>
-                <defs>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `${v} DT`} />
-                <Tooltip
-                  formatter={(value: number) => [`${value} DT`, "Revenus"]}
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
-                />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#revenueGradient)" />
-              </AreaChart>
-            </ResponsiveContainer>
           </div>
-        </div>
+        )}
 
         {/* Performance indicators */}
         <div className="rounded-xl border bg-card shadow-card p-5">
           <h3 className="font-semibold text-foreground mb-4">Indicateurs de performance</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "Patients fidélisés", value: "78%", desc: "Reviennent dans les 6 mois", color: "bg-primary" },
-              { label: "Satisfaction", value: "4.8/5", desc: "Basée sur 156 avis", color: "bg-accent" },
-              { label: "Délai moyen RDV", value: "3.2j", desc: "Temps d'attente patient", color: "bg-warning" },
-              { label: "Téléconsultation", value: "23%", desc: "Part des consultations", color: "bg-primary" },
+              { label: "Patients fidélisés", value: stats.uniquePatients > 0 ? `${Math.min(100, Math.round((stats.uniquePatients / Math.max(1, stats.doneCount)) * 100))}%` : "—", desc: "Taux de patients uniques", color: "bg-primary" },
+              { label: "Satisfaction", value: stats.avgRating > 0 ? `${stats.avgRating}/5` : "—", desc: `Basée sur ${stats.reviewCount} avis`, color: "bg-accent" },
+              { label: "Taux d'annulation", value: `${stats.cancellationRate}%`, desc: periodLabels[period], color: "bg-warning" },
+              { label: "Téléconsultation", value: `${stats.teleconsultPct}%`, desc: "Part des consultations", color: "bg-primary" },
             ].map((ind, i) => (
               <div key={i} className="rounded-lg border p-4">
                 <div className="flex items-center gap-2 mb-2">

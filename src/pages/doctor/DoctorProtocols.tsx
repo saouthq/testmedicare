@@ -15,54 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-
-type ProtocolType = "consultation" | "prescription" | "procedure" | "followup";
-
-interface Protocol {
-  id: number; name: string; type: ProtocolType; specialty: string;
-  description: string; steps: string[]; meds?: string[];
-  examens?: string[]; duration?: string; favorite: boolean;
-  usageCount: number; lastUsed: string;
-}
-
-const mockProtocols: Protocol[] = [
-  {
-    id: 1, name: "Suivi diabète type 2", type: "followup", specialty: "Généraliste",
-    description: "Protocole standard de suivi trimestriel du patient diabétique de type 2",
-    steps: ["Contrôle glycémie à jeun + HbA1c", "Mesure TA + poids + IMC", "Examen des pieds", "Renouvellement traitement si stable", "Bilan rénal + lipidique annuel"],
-    meds: ["Metformine 850mg x2/j", "Glibenclamide 5mg x1/j"],
-    examens: ["HbA1c", "Glycémie à jeun", "Bilan rénal", "Bilan lipidique"],
-    duration: "20 min", favorite: true, usageCount: 45, lastUsed: "20 Fév 2026",
-  },
-  {
-    id: 2, name: "Bilan hypertension", type: "consultation", specialty: "Cardiologue",
-    description: "Première consultation pour suspicion d'hypertension artérielle",
-    steps: ["Anamnèse complète + ATCD familiaux", "Mesure TA bras droit + gauche", "ECG 12 dérivations", "Fond d'oeil si HTA sévère", "Bilan biologique complet"],
-    examens: ["ECG", "Bilan rénal", "Ionogramme", "Bilan lipidique"],
-    duration: "45 min", favorite: true, usageCount: 28, lastUsed: "19 Fév 2026",
-  },
-  {
-    id: 3, name: "Rhinopharyngite aiguë", type: "prescription", specialty: "Généraliste",
-    description: "Traitement standard de la rhinopharyngite virale de l'adulte",
-    steps: ["Examen ORL", "Vérifier absence d'infection bactérienne", "Prescription traitement symptomatique"],
-    meds: ["Paracétamol 1g x3/j pendant 5j", "Sérum physiologique lavage nasal", "Miel + citron"],
-    duration: "15 min", favorite: false, usageCount: 62, lastUsed: "20 Fév 2026",
-  },
-  {
-    id: 4, name: "Check-up annuel complet", type: "procedure", specialty: "Généraliste",
-    description: "Bilan de santé annuel complet avec tous les examens recommandés",
-    steps: ["Interrogatoire complet", "Examen clinique général", "Auscultation cardio-pulmonaire", "Palpation abdominale", "Examen neurologique de base", "Vérification calendrier vaccinal", "Prescription bilan biologique"],
-    examens: ["NFS", "Glycémie", "Bilan lipidique", "Bilan hépatique", "Bilan rénal", "TSH", "Vitamine D"],
-    duration: "60 min", favorite: true, usageCount: 15, lastUsed: "18 Fév 2026",
-  },
-  {
-    id: 5, name: "Lombalgie aiguë", type: "prescription", specialty: "Généraliste",
-    description: "Prise en charge de la lombalgie aiguë commune",
-    steps: ["Éliminer drapeaux rouges", "Examen neurologique", "Prescription antalgiques + kiné"],
-    meds: ["Ibuprofène 400mg x3/j pendant 5j", "Paracétamol 1g x3/j pendant 7j", "Myorelaxant si besoin"],
-    duration: "20 min", favorite: false, usageCount: 34, lastUsed: "17 Fév 2026",
-  },
-];
+import { useDoctorProtocols, type Protocol, type ProtocolType } from "@/stores/doctorProtocolsStore";
 
 const typeConfig: Record<ProtocolType, { label: string; icon: any; cls: string }> = {
   consultation: { label: "Consultation", icon: Stethoscope, cls: "bg-primary/10 text-primary" },
@@ -72,7 +25,7 @@ const typeConfig: Record<ProtocolType, { label: string; icon: any; cls: string }
 };
 
 const DoctorProtocols = () => {
-  const [protocols, setProtocols] = useState(mockProtocols);
+  const [protocols, setProtocols] = useDoctorProtocols();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | ProtocolType>("all");
   const [selectedId, setSelectedId] = useState<number | null>(null);

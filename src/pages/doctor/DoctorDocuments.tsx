@@ -15,17 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { FileText, Plus, Copy, Eye, Trash2, Search, Pencil } from "lucide-react";
-
-interface DocTemplate {
-  id: number;
-  name: string;
-  category: "certificat" | "courrier" | "arret" | "compte_rendu" | "autre";
-  content: string;
-  variables: string[];
-  usageCount: number;
-  lastUsed: string;
-  createdAt: string;
-}
+import { useDoctorDocTemplates, type DocTemplate } from "@/stores/doctorDocumentsStore";
 
 const categoryLabels: Record<string, string> = {
   certificat: "Certificat", courrier: "Courrier", arret: "Arrêt maladie",
@@ -37,16 +27,8 @@ const categoryColors: Record<string, string> = {
   autre: "bg-muted text-muted-foreground",
 };
 
-const initialTemplates: DocTemplate[] = [
-  { id: 1, name: "Certificat médical standard", category: "certificat", content: "Je soussigné Dr. {{NOM_MEDECIN}}, certifie avoir examiné ce jour {{DATE}} M./Mme {{NOM_PATIENT}}, né(e) le {{DATE_NAISSANCE}}.\n\nL'état de santé du patient nécessite un repos de {{DUREE}} jours à compter du {{DATE_DEBUT}}.\n\nCertificat établi à la demande de l'intéressé(e) pour servir et valoir ce que de droit.", variables: ["NOM_MEDECIN", "DATE", "NOM_PATIENT", "DATE_NAISSANCE", "DUREE", "DATE_DEBUT"], usageCount: 45, lastUsed: "10 Mar 2026", createdAt: "Jan 2025" },
-  { id: 2, name: "Arrêt maladie", category: "arret", content: "Arrêt de travail pour maladie\n\nPatient : {{NOM_PATIENT}}\nDurée : {{DUREE}} jours\nDu {{DATE_DEBUT}} au {{DATE_FIN}}\nDiagnostic : {{DIAGNOSTIC}}\n\nDr. {{NOM_MEDECIN}}", variables: ["NOM_PATIENT", "DUREE", "DATE_DEBUT", "DATE_FIN", "DIAGNOSTIC", "NOM_MEDECIN"], usageCount: 32, lastUsed: "8 Mar 2026", createdAt: "Jan 2025" },
-  { id: 3, name: "Lettre d'adressage", category: "courrier", content: "Cher(e) Confrère/Consœur,\n\nJe vous adresse M./Mme {{NOM_PATIENT}}, âgé(e) de {{AGE}} ans, pour {{MOTIF}}.\n\nAntécédents notables : {{ANTECEDENTS}}\nTraitement en cours : {{TRAITEMENT}}\n\nJe vous remercie de votre avis éclairé.\n\nConfraternellement,\nDr. {{NOM_MEDECIN}}", variables: ["NOM_PATIENT", "AGE", "MOTIF", "ANTECEDENTS", "TRAITEMENT", "NOM_MEDECIN"], usageCount: 18, lastUsed: "5 Mar 2026", createdAt: "Fév 2025" },
-  { id: 4, name: "Certificat d'aptitude sportive", category: "certificat", content: "Je soussigné Dr. {{NOM_MEDECIN}}, certifie que M./Mme {{NOM_PATIENT}} a été examiné(e) ce jour et ne présente pas de contre-indication apparente à la pratique du sport en compétition / loisir.\n\nCertificat valable 1 an.", variables: ["NOM_MEDECIN", "NOM_PATIENT"], usageCount: 12, lastUsed: "1 Mar 2026", createdAt: "Mar 2025" },
-  { id: 5, name: "Compte-rendu opératoire", category: "compte_rendu", content: "COMPTE-RENDU OPÉRATOIRE\n\nPatient : {{NOM_PATIENT}}\nDate : {{DATE}}\nIntervention : {{INTERVENTION}}\n\nDéroulement : {{DEROULEMENT}}\n\nSuites opératoires : {{SUITES}}\n\nDr. {{NOM_MEDECIN}}", variables: ["NOM_PATIENT", "DATE", "INTERVENTION", "DEROULEMENT", "SUITES", "NOM_MEDECIN"], usageCount: 7, lastUsed: "20 Fév 2026", createdAt: "Avr 2025" },
-];
-
 const DoctorDocuments = () => {
-  const [templates, setTemplates] = useState<DocTemplate[]>(initialTemplates);
+  const [templates, setTemplates] = useDoctorDocTemplates();
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [drawerOpen, setDrawerOpen] = useState(false);

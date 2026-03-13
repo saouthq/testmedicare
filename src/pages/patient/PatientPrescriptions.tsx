@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { requestRenewal } from "@/stores/doctorStore";
 
-import { mockPartnerPharmacies, type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
+import { type PrescriptionWithPharmacies, type PharmacyResponse } from "@/data/mockData";
+import { usePharmaciesDirectory } from "@/stores/directoryStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useSharedPrescriptions, sendPrescriptionToPharmacies } from "@/stores/prescriptionsStore";
 import { useActionGating } from "@/hooks/useActionGating";
@@ -27,6 +28,16 @@ const PatientPrescriptions = () => {
   const [filter, setFilter] = useState("all");
   const [doctorRx] = useDoctorPrescriptions();
   const { isEnabled } = useActionGating();
+  const directoryPharmacies = usePharmaciesDirectory();
+  // Build partner pharmacies from directory store
+  const mockPartnerPharmacies = directoryPharmacies.map(p => ({
+    id: p.id?.toString() || `ph-${p.name}`,
+    name: p.name,
+    address: `${p.address || ""}, ${p.city || ""}`.trim(),
+    distance: "—",
+    phone: p.phone || "",
+    openNow: true,
+  }));
   
   // Build prescriptions from doctor prescriptions store
   const prescriptions: PrescriptionWithPharmacies[] = doctorRx.map(rx => ({
