@@ -25,6 +25,8 @@ import {
 } from "recharts";
 import { useAdminDashboardStats, useAdminStore } from "@/stores/adminStore";
 import { useAdminPlans } from "@/stores/adminPlanStore";
+import { useAdminDashboardStatsSupabase, useAdminReviewsSupabase, useAdminAppointmentsSupabase } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
 
 const PIE_COLORS = ["hsl(205,85%,45%)", "hsl(160,60%,45%)", "hsl(45,93%,47%)", "hsl(0,72%,51%)"];
 const chartStyle = { borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' };
