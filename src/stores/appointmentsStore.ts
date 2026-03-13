@@ -5,7 +5,8 @@
  *
  * // TODO BACKEND: Replace with API + real-time
  */
-import { createStore, useStore } from "./crossRoleStore";
+import { createStore } from "./crossRoleStore";
+import { useDemoOnlyStore } from "@/hooks/useDualData";
 import { pushNotification } from "./notificationsStore";
 
 export interface AppointmentEvent {
