@@ -1,11 +1,13 @@
 /**
- * labStore.ts — Cross-role lab request tracking (localStorage).
+ * labStore.ts — Cross-role lab request tracking (localStorage + Supabase).
  * Doctor creates demand → Lab receives → Lab uploads PDFs → Lab transmits → Patient/Doctor see.
  *
- * // TODO BACKEND: Replace with API calls + real-time updates
+ * Dual-mode: Supabase when authenticated, localStorage fallback for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
+import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { supabase } from "@/integrations/supabase/client";
 
 export type LabDemandStatus = "received" | "in_progress" | "results_ready" | "transmitted";
 
@@ -41,6 +43,24 @@ export function useSharedLabDemands() {
   return useStore(store);
 }
 
+/** Supabase-aware hook for lab demands */
+export function useLabDemandsSupabase() {
+  const { userId, isAuthenticated } = useAuthReady();
+  const [localDemands] = useStore(store);
+
+  const query = useSupabaseTable<SharedLabDemand>({
+    queryKey: ["lab_demands", userId || ""],
+    tableName: "lab_demands",
+    orderBy: { column: "created_at", ascending: false },
+    enabled: isAuthenticated,
+    fallbackData: localDemands,
+  });
+
+  useSupabaseRealtime("lab_demands", [["lab_demands", userId || ""]]);
+
+  return query;
+}
+
 /** Initialize store with mock data if empty */
 export function initLabStoreIfEmpty(mockDemands: SharedLabDemand[]) {
   const current = store.read();
@@ -50,13 +70,20 @@ export function initLabStoreIfEmpty(mockDemands: SharedLabDemand[]) {
 }
 
 /** Update lab demand status */
-export function updateLabDemandStatus(id: string, status: LabDemandStatus) {
+export async function updateLabDemandStatus(id: string, status: LabDemandStatus) {
   store.set((prev) => prev.map((d) => (d.id === id ? { ...d, status } : d)));
+
+  // Try Supabase
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("lab_demands").update({ status }).eq("id", id);
+    }
+  } catch {}
 
   if (status === "transmitted") {
     const demand = store.read().find((d) => d.id === id);
     if (demand) {
-      // Notify doctor
       pushNotification({
         type: "lab_results",
         title: "Résultats d'analyses transmis",
@@ -64,7 +91,6 @@ export function updateLabDemandStatus(id: string, status: LabDemandStatus) {
         targetRole: "doctor",
         actionLink: "/dashboard/doctor/patients",
       });
-      // Notify patient
       pushNotification({
         type: "lab_results",
         title: "Résultats d'analyses disponibles",
@@ -90,10 +116,8 @@ export function removeLabPdf(demandId: string, pdfId: string) {
   );
 }
 
-/** Create a new lab demand from doctor consultation → lab inbox.
- *  // TODO BACKEND: POST /api/lab/demands
- */
-export function createLabDemand(data: {
+/** Create a new lab demand from doctor consultation → lab inbox. */
+export async function createLabDemand(data: {
   patient: string;
   patientDob?: string;
   avatar: string;
@@ -119,9 +143,34 @@ export function createLabDemand(data: {
     pdfs: [],
     notes: data.notes,
   };
+
   store.set((prev) => [demand, ...prev]);
 
-  // Notify lab
+  // Try Supabase
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("lab_demands").insert({
+        id,
+        doctor_id: session.user.id,
+        patient_name: data.patient,
+        patient_dob: data.patientDob || "",
+        patient_avatar: data.avatar,
+        assurance: data.assurance || "Sans assurance",
+        prescriber_name: data.prescriber,
+        examens: data.examens,
+        status: "received",
+        date: demand.date,
+        priority: data.priority || "normal",
+        amount: demand.amount,
+        pdfs: [],
+        notes: data.notes || "",
+      });
+    }
+  } catch (e) {
+    console.warn("[createLabDemand] Supabase insert failed:", e);
+  }
+
   pushNotification({
     type: "lab_results",
     title: "Nouvelle demande d'analyses",
