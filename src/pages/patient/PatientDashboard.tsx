@@ -15,7 +15,7 @@ import { downloadCalendarEvent } from "@/lib/calendarExport";
 import { usePatientProfile } from "@/stores/patientStore";
 import { useNotifications } from "@/stores/notificationsStore";
 import { requestRenewal } from "@/stores/doctorStore";
-import { useSharedAppointments } from "@/stores/sharedAppointmentsStore";
+import { useSharedAppointments, cancelAppointment } from "@/stores/sharedAppointmentsStore";
 import { useHealth } from "@/stores/healthStore";
 import { useDoctorPrescriptions } from "@/stores/doctorPrescriptionsStore";
 import { useFavoriteDoctors } from "@/stores/favoriteDoctorsStore";
