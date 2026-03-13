@@ -107,6 +107,10 @@ const DoctorWaitingRoom = () => {
     setAbsentConfirm({ open: false, id: null });
   };
 
+  if (isLoading) {
+    return <DashboardLayout role="doctor" title="Salle d'attente"><LoadingSkeleton type="table" /></DashboardLayout>;
+  }
+
   return (
     <DashboardLayout role="doctor" title="Salle d'attente">
       <div className="space-y-6">
