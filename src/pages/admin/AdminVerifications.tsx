@@ -26,6 +26,9 @@ import {
   activities as matrixActivities,
   type ActivityType,
 } from "@/stores/featureMatrixStore";
+import { useAdminVerificationsSupabase, useAdminVerificationUpdate } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 
 type Tab = "doctors" | "labs" | "pharmacies";
 
