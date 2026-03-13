@@ -4,6 +4,7 @@
  * // TODO BACKEND: GET /api/doctor/waiting-room, PUT /api/waiting-room/:id/status
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
