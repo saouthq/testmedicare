@@ -109,12 +109,23 @@ const AdminAppointments = () => {
     teleRate: displayApts.length > 0 ? Math.round((displayApts.filter(a => a.type === "teleconsultation").length / displayApts.length) * 100) : 0,
   }), [displayApts]);
 
+  const appointmentUpdateMutation = useAdminAppointmentUpdate();
+
   const handleMotifConfirm = (motif: string) => {
     if (!motifAction) return;
-    const apt = apts.find(a => a.id === motifAction.id);
+    const apt = displayApts.find(a => a.id === motifAction.id);
     if (!apt) return;
     const newStatus = motifAction.type === "cancel" ? "cancelled" : "absent";
-    setApts(prev => prev.map(a => a.id === motifAction.id ? { ...a, status: newStatus } : a));
+    
+    if (isProduction) {
+      // Find the real Supabase appointment id
+      const realApt = supabaseAptsQuery.data?.find((_, i) => i + 1 === motifAction.id);
+      if (realApt) {
+        appointmentUpdateMutation.mutate({ appointmentId: realApt.id, updates: { status: newStatus } });
+      }
+    } else {
+      setApts(prev => prev.map(a => a.id === motifAction.id ? { ...a, status: newStatus } : a));
+    }
     appendLog(`appointment_${motifAction.type}_override`, "appointment", String(motifAction.id),
       `${motifAction.type === "cancel" ? "RDV annulé" : "Marqué absent"} (admin) — ${apt.patientName} / ${apt.doctorName} — Motif : ${motif}`);
     toast({ title: motifAction.type === "cancel" ? "RDV annulé par l'admin" : "Marqué absent" });
