@@ -271,6 +271,8 @@ const initialSpecialties: ManagedSpecialty[] = [
   },
 ];
 
+const store = createStore<ManagedSpecialty[]>("medicare_specialties", initialSpecialties);
+
 export function useSpecialties() {
   return useStore(store);
 }

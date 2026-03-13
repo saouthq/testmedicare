@@ -22,11 +22,12 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { appendLog } from "@/services/admin/adminAuditService";
 
 const categoryLabels: Record<SpecialtyCategory, string> = {
-  generaliste: "Généraliste", specialiste: "Spécialiste", dentiste: "Dentaire", paramedical: "Paramédical",
+  generaliste: "Généraliste", specialiste: "Spécialiste", dentiste: "Dentaire", paramedical: "Paramédical", chirurgien: "Chirurgien",
 };
 const categoryColors: Record<SpecialtyCategory, string> = {
   generaliste: "bg-primary/10 text-primary", specialiste: "bg-accent/10 text-accent",
   dentiste: "bg-warning/10 text-warning", paramedical: "bg-muted text-muted-foreground",
+  chirurgien: "bg-destructive/10 text-destructive",
 };
 
 const emptySpec: Omit<ManagedSpecialty, "id" | "createdAt" | "updatedAt" | "activeDoctors"> = {
