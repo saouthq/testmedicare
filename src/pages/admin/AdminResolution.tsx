@@ -89,6 +89,10 @@ const mockSupportMacros = [
 ];
 
 const AdminResolution = () => {
+  const isProduction = getAppMode() === "production";
+  const supabaseTicketsQuery = useAdminTicketsSupabase();
+  const ticketUpdateMutation = useAdminTicketUpdateSupabase();
+
   // ── Moderation — from store ──
   const { reports: storeReports, setReports: setStoreReports } = useAdminModerationReports();
   const [reports, setReports] = useState<AdminModerationReport[]>(storeReports);
@@ -110,9 +114,33 @@ const AdminResolution = () => {
   const [newMsg, setNewMsg] = useState("");
   const [dispMotifAction, setDispMotifAction] = useState<{ id: string; type: string } | null>(null);
 
-  // ── Support — from store ──
+  // ── Support — dual-mode: demo store or Supabase ──
   const { tickets: storeTickets, setTickets: setStoreTickets } = useAdminTickets();
   const enrichedTickets = (): TicketExt[] => {
+    // Production: map Supabase support_tickets
+    if (isProduction && supabaseTicketsQuery.data && supabaseTicketsQuery.data.length > 0) {
+      return supabaseTicketsQuery.data.map((t: any) => ({
+        id: t.id,
+        subject: t.subject || "Ticket",
+        category: "support",
+        priority: "medium",
+        status: t.status || "open",
+        requester: t.user_id ? t.user_id.slice(0, 8) : "Utilisateur",
+        requesterRole: "patient",
+        assignedTo: "",
+        createdAt: new Date(t.created_at).toLocaleDateString("fr-TN"),
+        messages: Array.isArray(t.conversation) ? t.conversation.length : 0,
+        slaDeadline: "8h",
+        conversation: Array.isArray(t.conversation) ? (t.conversation as any[]).map((c: any, i: number) => ({
+          id: `msg-${i}`,
+          sender: c.sender || "user",
+          senderName: c.senderName || "Utilisateur",
+          text: c.text || "",
+          time: c.time || "",
+        })) : [],
+      }));
+    }
+    // Demo: from store
     if (storeTickets.length > 0) {
       return storeTickets.map(t => ({
         ...t,
@@ -123,6 +151,13 @@ const AdminResolution = () => {
     return [];
   };
   const [tickets, setTickets] = useState<TicketExt[]>(enrichedTickets);
+
+  // Re-sync tickets when supabase data arrives
+  useMemo(() => {
+    if (isProduction && supabaseTicketsQuery.data) {
+      setTickets(enrichedTickets());
+    }
+  }, [supabaseTicketsQuery.data]);
   const [ticketSearch, setTicketSearch] = useState("");
   const [ticketStatusFilter, setTicketStatusFilter] = useState("all");
   const [selectedTicket, setSelectedTicket] = useState<TicketExt | null>(null);
