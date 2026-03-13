@@ -885,14 +885,35 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     ).slice(0, 8);
   }, [paletteActions, paletteQuery]);
 
-  // Mark patient as in_progress in shared appointments store on mount
+  // Track consultation ID for persistence
+  const consultationIdRef = useRef<string | null>(null);
+
+  // Mark patient as in_progress in shared appointments store on mount + create consultation record
   useEffect(() => {
     const searchParams2 = new URLSearchParams(window.location.search);
     const aptId = searchParams2.get("aptId");
     if (aptId) {
       startAppointmentConsultation(aptId);
     }
-  }, []);
+
+    // Create a consultation record in the repository
+    const user = readAuthUser();
+    const patientIdParam = searchParams2.get("patient");
+    const patientIdNum = patientIdParam ? parseInt(patientIdParam) : null;
+    const repo = getConsultationRepo();
+    repo.create({
+      appointmentId: aptId || undefined,
+      doctorId: user?.id || "demo-doctor-1",
+      patientId: patientIdNum,
+      patientName: patient.name,
+      doctorName: user?.doctorName || "Dr. Bouazizi",
+      date: new Date().toISOString().slice(0, 10),
+      motif: motif || "",
+      specialty: "",
+    }).then(c => {
+      consultationIdRef.current = c.id;
+    }).catch(e => console.warn("[ConsultationContext] Failed to create consultation:", e));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keyboard
   useEffect(() => {
