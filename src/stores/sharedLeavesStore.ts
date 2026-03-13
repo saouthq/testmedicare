@@ -21,7 +21,13 @@ const store = createStore<SharedLeave[]>("medicare_leaves", initialLeaves);
 export const sharedLeavesStore = store;
 
 export function useSharedLeaves() {
-  return useStore(store);
+  return useDualQuery<SharedLeave[]>({
+    store,
+    tableName: "doctor_leaves",
+    queryKey: ["doctor_leaves"],
+    mapRowToLocal: mapLeaveRow,
+    orderBy: { column: "start_date", ascending: false },
+  });
 }
 
 /** Create a leave and auto-generate blocked slots for each day */
