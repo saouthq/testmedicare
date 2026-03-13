@@ -55,20 +55,61 @@ export function useSharedAvailability(): [AvailabilityConfig, (v: AvailabilityCo
   return [localData, store.set];
 }
 
+/** Persist availability day to Supabase */
+async function supabaseUpsertDay(dayName: string, day: AvailabilityDay, slotDuration: number) {
+  if (getAppMode() !== "production") return;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    await (supabase.from as any)("doctor_availability").upsert({
+      doctor_id: session.user.id,
+      day_name: dayName,
+      active: day.active,
+      start_time: day.start || "08:00",
+      end_time: day.end || "18:00",
+      break_start: day.breakStart || null,
+      break_end: day.breakEnd || null,
+      slot_duration: slotDuration,
+    }, { onConflict: "doctor_id,day_name" });
+  } catch (e) {
+    console.warn("[availability] Supabase upsert failed:", e);
+  }
+}
+
 export function updateAvailabilityDay(dayName: string, update: Partial<AvailabilityDay>) {
-  store.set(prev => ({
-    ...prev,
-    days: { ...prev.days, [dayName]: { ...prev.days[dayName], ...update } },
-  }));
+  store.set(prev => {
+    const newDays = { ...prev.days, [dayName]: { ...prev.days[dayName], ...update } };
+    const newConfig = { ...prev, days: newDays };
+    // Persist to Supabase
+    supabaseUpsertDay(dayName, newDays[dayName], prev.slotDuration);
+    return newConfig;
+  });
 }
 
 export function setSlotDuration(duration: number) {
-  store.set(prev => ({ ...prev, slotDuration: duration }));
+  store.set(prev => {
+    const newConfig = { ...prev, slotDuration: duration };
+    // Update all days in Supabase with new slot duration
+    if (getAppMode() === "production") {
+      Object.entries(prev.days).forEach(([dayName, day]) => {
+        supabaseUpsertDay(dayName, day, duration);
+      });
+    }
+    return newConfig;
+  });
+}
+
+/** Save entire availability config to Supabase */
+export async function saveAvailabilityToSupabase() {
+  if (getAppMode() !== "production") return;
+  const config = store.read();
+  for (const [dayName, day] of Object.entries(config.days)) {
+    await supabaseUpsertDay(dayName, day, config.slotDuration);
+  }
 }
 
 /** Get break times for the current config */
 export function getBreakTime(config: AvailabilityConfig): { start: string; end: string } | null {
-  // Find the most common break across active days
   const breaks = Object.values(config.days)
     .filter(d => d.active && d.breakStart && d.breakEnd);
   if (breaks.length === 0) return null;

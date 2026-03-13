@@ -1,12 +1,13 @@
 /**
- * prescriptionsStore.ts — Cross-role prescription tracking (localStorage).
+ * prescriptionsStore.ts — Cross-role prescription tracking.
  * Patient sends → Pharmacy sees → Pharmacy responds → Patient sees status.
- *
- * // TODO BACKEND: Replace with API calls + real-time updates
+ * Dual-mode: localStorage (demo) + Supabase pharmacy_prescriptions (production).
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
 import { pharmacyRxStore } from "./pharmacyStore";
+import { getAppMode } from "./authStore";
+import { supabase } from "@/integrations/supabase/client";
 import type { PharmacyPrescription } from "@/types";
 
 export interface PharmacySentItem {
@@ -39,7 +40,7 @@ export function useSharedPrescriptions() {
 }
 
 /** Patient sends prescription to pharmacies */
-export function sendPrescriptionToPharmacies(
+export async function sendPrescriptionToPharmacies(
   prescription: Omit<SharedPrescription, "sentToPharmacies">,
   pharmacies: { id: string; name: string }[]
 ) {
@@ -62,23 +63,47 @@ export function sendPrescriptionToPharmacies(
     return [...prev, { ...prescription, sentToPharmacies: items }];
   });
 
-  // Also create entries in pharmacyRxStore so pharmacy sees incoming prescriptions
-  for (const ph of pharmacies) {
-    const rxId = `rx-sent-${Date.now()}-${ph.id}`;
-    const pharmacyRx: PharmacyPrescription = {
-      id: rxId,
-      patient: prescription.patientName,
-      avatar: prescription.patientName.split(" ").map(w => w[0]).join("").toUpperCase(),
-      doctor: prescription.doctorName,
-      date: prescription.date,
-      items: prescription.items.map(name => ({ name, dosage: "", quantity: 1, availability: "available" as const, price: "—" })),
-      status: "received",
-      total: prescription.total || "—",
-      assurance: prescription.assurance || "Sans assurance",
-      urgent: false,
-      patientPhone: "",
-    };
-    pharmacyRxStore.set(prev => [...prev, pharmacyRx]);
+  // Persist to Supabase: create pharmacy_prescriptions entries
+  if (getAppMode() === "production") {
+    for (const ph of pharmacies) {
+      try {
+        await (supabase.from as any)("pharmacy_prescriptions").insert({
+          prescription_id: prescription.id,
+          pharmacy_id: ph.id,
+          patient_name: prescription.patientName,
+          doctor_name: prescription.doctorName,
+          date: prescription.date,
+          items: prescription.items.map(name => ({ name, dosage: "", quantity: 1, availability: "available", price: "—" })),
+          status: "received",
+          total: prescription.total || "0 DT",
+          assurance: prescription.assurance || "",
+          urgent: false,
+        });
+      } catch (e) {
+        console.warn("[sendPrescriptionToPharmacies] Supabase insert failed:", e);
+      }
+    }
+  }
+
+  // Also create entries in pharmacyRxStore so pharmacy sees incoming prescriptions (demo mode)
+  if (getAppMode() === "demo") {
+    for (const ph of pharmacies) {
+      const rxId = `rx-sent-${Date.now()}-${ph.id}`;
+      const pharmacyRx: PharmacyPrescription = {
+        id: rxId,
+        patient: prescription.patientName,
+        avatar: prescription.patientName.split(" ").map(w => w[0]).join("").toUpperCase(),
+        doctor: prescription.doctorName,
+        date: prescription.date,
+        items: prescription.items.map(name => ({ name, dosage: "", quantity: 1, availability: "available" as const, price: "—" })),
+        status: "received",
+        total: prescription.total || "—",
+        assurance: prescription.assurance || "Sans assurance",
+        urgent: false,
+        patientPhone: "",
+      };
+      pharmacyRxStore.set(prev => [...prev, pharmacyRx]);
+    }
   }
 
   // Notify pharmacy
