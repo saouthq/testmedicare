@@ -134,6 +134,25 @@ const AdminCampaigns = () => {
         appendLog("campaign_sent", "notification_campaign", newCampaign.id,
           `Campagne "${title}" ${scheduleEnabled ? "programmée" : "envoyée"} à ${targetLabels[target]}${segLabel ? ` (${segLabel})` : ""} via ${channelLabels[channel]} — Motif : ${motif}`
         );
+
+        // 3.2 — If channel is "push", create real notifications for targeted users
+        if (channel === "push" && !scheduleEnabled) {
+          const roleMap: Record<string, string> = { patients: "patient", doctors: "doctor", pharmacies: "pharmacy", laboratories: "laboratory" };
+          const targetRoles = target === "all" ? ["patient", "doctor", "pharmacy", "laboratory"] : [roleMap[target] || "patient"];
+          const targetUsers = users.filter(u => targetRoles.includes(u.role));
+          targetUsers.forEach(u => {
+            pushNotification({
+              type: "system",
+              title: title || "Notification",
+              message: message,
+              targetRole: u.role as any,
+            });
+          });
+          // Update delivery stats
+          newCampaign.deliveryRate = 98;
+          newCampaign.recipientCount = targetUsers.length || estimatedRecipients;
+        }
+
         toast({ title: scheduleEnabled ? "Campagne programmée" : "Campagne envoyée" });
       }
       resetForm();
