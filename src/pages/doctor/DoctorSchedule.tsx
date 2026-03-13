@@ -56,9 +56,11 @@ import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoi
 import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
 import { useSharedAppointments, updateAppointmentStatus, createAppointment as storeCreateAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
 import { useSharedBlockedSlots, addBlockedSlot, updateBlockedSlot as storeUpdateBlock, removeBlockedSlot } from "@/stores/sharedBlockedSlotsStore";
+import { useSharedAvailability } from "@/stores/sharedAvailabilityStore";
+import { useSharedLeaves } from "@/stores/sharedLeavesStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { pushNotification } from "@/stores/notificationsStore";
-import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey } from "@/types/appointment";
+import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey, AvailabilityDay, SharedLeave } from "@/types/appointment";
 import { computeEndTime, DEFAULT_TYPE_COLORS as SHARED_TYPE_COLORS, type AppointmentStatus } from "@/types/appointment";
 
 // ─── Types (aliases to shared types) ──────────────────────────
