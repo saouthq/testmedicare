@@ -59,6 +59,11 @@ function ConsultationInner() {
                 <h2 className="text-base font-bold text-foreground">{ctx.patient.name}</h2>
                 <span className="text-xs text-muted-foreground">{ctx.patient.age} ans · {ctx.patient.gender}</span>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{config.label}</span>
+                {ctx.isTeleconsult && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium inline-flex items-center gap-1">
+                    <Video className="h-3 w-3" /> Téléconsultation
+                  </span>
+                )}
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">En cours</span>
               </div>
               <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
