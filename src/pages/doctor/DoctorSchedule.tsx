@@ -220,6 +220,21 @@ const MONTHS_LONG = [
   "Décembre",
 ];
 const MONTHS_SH = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+const normalizeDoctorName = (value?: string) =>
+  (value || "")
+    .toLowerCase()
+    .replace(/dr\.?\s*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const doctorMatches = (a?: string, b?: string) => {
+  const na = normalizeDoctorName(a);
+  const nb = normalizeDoctorName(b);
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+};
 
 // ─── Date helpers ─────────────────────────────────────────────
 const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
