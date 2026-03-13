@@ -357,8 +357,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         </ErrorBoundary>
-        {/* Floating simulation panel for cross-role workflow testing */}
-        <SimulationPanel />
+        {/* Floating simulation panel — hidden in production builds */}
+        {import.meta.env.VITE_APP_MODE !== "production" && <SimulationPanel />}
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

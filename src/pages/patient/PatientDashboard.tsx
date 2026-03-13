@@ -57,7 +57,7 @@ const PatientDashboard = () => {
   );
 
   const stats = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
     const todayApts = appointments.filter(a => a.date === today);
     const activePrescriptions = recentPrescriptions.length;
     const pendingResults = (health?.documents ?? []).filter(d => d.type === "Analyse").length;
