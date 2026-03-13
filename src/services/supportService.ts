@@ -20,16 +20,17 @@ export function createSupportTicket(payload: {
 
   const ticket: AdminTicket = {
     id: `ticket-public-${Date.now()}`,
-    number: ticketNumber,
-    requesterId: "public-visitor",
-    requesterName: payload.name,
-    requesterEmail: payload.email,
     subject: payload.subject || "Demande via formulaire de contact",
-    description: payload.message,
-    status: "open",
-    priority: "medium",
     category: "general",
-    messages: [
+    priority: "medium",
+    status: "open",
+    requester: payload.name,
+    requesterId: "public-visitor",
+    requesterRole: "visiteur",
+    assignedTo: "Support L1",
+    createdAt: now,
+    slaDeadline: new Date(Date.now() + 48 * 3600 * 1000).toISOString().slice(0, 10),
+    conversation: [
       {
         id: `msg-${Date.now()}`,
         sender: payload.name,
@@ -38,8 +39,6 @@ export function createSupportTicket(payload: {
         date: now,
       },
     ],
-    createdAt: now,
-    updatedAt: now,
   };
 
   const current = adminStore.read();
