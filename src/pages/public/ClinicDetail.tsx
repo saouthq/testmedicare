@@ -12,7 +12,17 @@ const ClinicDetail = () => {
   const clinics = useClinicsDirectory();
   const clinic = clinics.find(c => c.slug === slug);
 
-  if (!clinic) return <div className="min-h-screen bg-background"><PublicHeader /><div className="container mx-auto px-4 py-20 text-center"><h1 className="text-xl font-bold">Clinique non trouvée</h1><Link to="/clinics" className="text-primary mt-4 inline-block">← Retour à l'annuaire</Link></div></div>;
+  if (!clinic) return (
+    <div className="min-h-screen bg-background">
+      <PublicHeader />
+      <div className="container mx-auto px-4 py-20 text-center">
+        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center"><Building2 className="h-8 w-8 text-muted-foreground/40" /></div>
+        <h1 className="text-xl font-bold text-foreground mb-2">Clinique non trouvée</h1>
+        <p className="text-sm text-muted-foreground mb-4">L'établissement recherché n'existe pas ou a été supprimé.</p>
+        <Link to="/clinics" className="text-primary hover:underline">← Retour à l'annuaire des cliniques</Link>
+      </div>
+    </div>
+  );
 
   const jsonLd = { "@context": "https://schema.org", "@type": "MedicalClinic", name: clinic.name, address: { "@type": "PostalAddress", streetAddress: clinic.address, addressLocality: clinic.city, addressCountry: "TN" }, telephone: clinic.phone, medicalSpecialty: clinic.services };
 

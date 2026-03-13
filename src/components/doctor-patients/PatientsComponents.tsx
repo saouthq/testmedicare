@@ -28,7 +28,7 @@ export function PatientsToolbar() {
         </div>
         <div className="flex gap-2 flex-wrap items-center justify-end">
           <div className="flex gap-1 rounded-lg border bg-card p-0.5">
-            {([{ key: "all" as PatientFilter, label: "Tous" }, { key: "recent" as PatientFilter, label: "Récents" }, { key: "chronic" as PatientFilter, label: "Chroniques" }, { key: "new" as PatientFilter, label: "Nouveaux" }]).map((f) => (
+            {([{ key: "all" as PatientFilter, label: "Tous" }, { key: "recent" as PatientFilter, label: "Récents" }, { key: "chronic" as PatientFilter, label: "Chroniques" }, { key: "new" as PatientFilter, label: "Nouveaux" }, { key: "this_month" as PatientFilter, label: "Vus ce mois" }]).map((f) => (
               <button key={f.key} onClick={() => ctx.setFilter(f.key)} className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${ctx.filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{f.label}</button>
             ))}
           </div>

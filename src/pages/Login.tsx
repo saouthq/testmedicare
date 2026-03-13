@@ -99,7 +99,7 @@ const Login = () => {
             </div>
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="rounded border-input" /><span className="text-muted-foreground">Se souvenir de moi</span></label>
-              <a href="#" className="text-sm text-primary hover:underline">Mot de passe oublié ?</a>
+              <Link to="/forgot-password" className="text-sm text-primary hover:underline">Mot de passe oublié ?</Link>
             </div>
             <Button type="submit" className="w-full gradient-primary text-primary-foreground shadow-primary-glow h-11" disabled={loading}>
               {loading ? "Connexion..." : "Se connecter"}

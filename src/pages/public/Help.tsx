@@ -2,7 +2,7 @@
  * Help / FAQ Page — FAQ par thèmes + OTP troubleshooting + formulaire contact mock
  * // TODO BACKEND: POST /api/support/contact
  */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import PublicHeader from "@/components/public/PublicHeader";
 import PublicFooter from "@/components/public/PublicFooter";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { createSupportTicket } from "@/services/supportService";
 import {
   Search, ChevronDown, ChevronUp, HelpCircle, Calendar, CreditCard,
   Video, Shield, User, Phone, Mail, AlertTriangle, MessageSquare, Pill, FlaskConical, Send,
@@ -98,8 +99,10 @@ const Help = () => {
   // Contact form
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [contactSubject, setContactSubject] = useState("");
   const [contactMessage, setContactMessage] = useState("");
   const [contactSent, setContactSent] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState("");
 
   const toggleQuestion = (categoryId: string, questionIndex: number) => {
     const key = `${categoryId}-${questionIndex}`;
@@ -120,8 +123,14 @@ const Help = () => {
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO BACKEND: POST /api/support/contact
-    toast({ title: "Message envoyé !", description: "Notre équipe vous répondra sous 24h." });
+    const number = createSupportTicket({
+      name: contactName,
+      email: contactEmail,
+      subject: contactSubject,
+      message: contactMessage,
+    });
+    setTicketNumber(number);
+    toast({ title: "Demande enregistrée", description: `Votre demande a été enregistrée sous le numéro #${number}.` });
     setContactSent(true);
   };
 
@@ -248,6 +257,10 @@ const Help = () => {
                 </div>
               </div>
               <div>
+                <label className="text-xs font-medium text-muted-foreground">Sujet</label>
+                <Input value={contactSubject} onChange={e => setContactSubject(e.target.value)} className="mt-1" placeholder="Ex: Problème de connexion" />
+              </div>
+              <div>
                 <label className="text-xs font-medium text-muted-foreground">Message *</label>
                 <Textarea value={contactMessage} onChange={e => setContactMessage(e.target.value)} required rows={4} className="mt-1" placeholder="Décrivez votre problème ou question..." />
               </div>
@@ -258,9 +271,9 @@ const Help = () => {
           ) : (
             <div className="text-center py-6">
               <Mail className="h-12 w-12 text-accent mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground mb-1">Message envoyé !</h3>
-              <p className="text-sm text-muted-foreground">Notre équipe vous répondra sous 24h à {contactEmail}.</p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => { setContactSent(false); setContactName(""); setContactEmail(""); setContactMessage(""); }}>
+              <h3 className="font-semibold text-foreground mb-1">Demande enregistrée !</h3>
+              <p className="text-sm text-muted-foreground">Votre demande <strong>#{ticketNumber}</strong> a été enregistrée. Notre équipe vous répondra sous 24h à {contactEmail}.</p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={() => { setContactSent(false); setContactName(""); setContactEmail(""); setContactSubject(""); setContactMessage(""); }}>
                 Envoyer un autre message
               </Button>
             </div>
