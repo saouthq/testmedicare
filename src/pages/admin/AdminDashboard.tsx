@@ -30,7 +30,10 @@ const topSearchedMeds = [
 ];
 
 const AdminDashboard = () => {
-  const stats = useAdminDashboardStats();
+  const demoStats = useAdminDashboardStats();
+  const supabaseStatsQuery = useAdminDashboardStatsSupabase();
+  const isProduction = getAppMode() === "production";
+  const stats = isProduction ? (supabaseStatsQuery.data || demoStats) : demoStats;
   const [state] = useAdminStore();
   const recentLogs = useMemo(() => getLogs().slice(0, 5), []);
 
