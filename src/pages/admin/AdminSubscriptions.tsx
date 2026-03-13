@@ -53,7 +53,7 @@ const AdminSubscriptions = () => {
     return prices;
   }, [plans]);
 
-  const planNames = useMemo(() => [...new Set(plans.map(p => p.name))], [plans]);
+  const planNames: string[] = useMemo(() => [...new Set(plans.map(p => p.name))], [plans]);
 
   const filtered = useMemo(() => {
     let list = subs;
