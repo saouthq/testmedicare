@@ -90,6 +90,7 @@ export function createPlan(plan: Omit<AdminPlan, "id" | "createdAt" | "updatedAt
 export function updatePlan(id: string, updates: Partial<AdminPlan>, motif: string) {
   store.set(prev => prev.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p));
   appendLog("plan_updated", "plan", id, `Plan modifié — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
 }
 
 export function togglePlanStatus(id: string, status: PlanStatus, motif: string) {
