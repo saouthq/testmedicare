@@ -228,7 +228,7 @@ export function startAppointmentConsultation(id: string) {
   updateAppointmentStatus(id, "in_progress");
 }
 
-/** Complete consultation */
+/** Complete consultation — auto-creates invoice if tarif exists */
 export function completeAppointmentConsultation(id: string) {
   updateAppointmentStatus(id, "done");
 
@@ -241,6 +241,36 @@ export function completeAppointmentConsultation(id: string) {
       targetRole: "patient",
       actionLink: "/dashboard/patient/health",
     });
+  }
+
+  // Auto-create invoice from tarifs
+  if (apt) {
+    try {
+      const { createInvoice } = require("./billingStore");
+      const { sharedTarifsStore } = require("./sharedTarifsStore");
+      const tarifs = sharedTarifsStore.read();
+      // Match by appointment type
+      const typeMap: Record<string, string> = {
+        "Consultation": "CS", "Première visite": "CS-P", "Suivi": "CS-S",
+        "Contrôle": "CS-S", "Téléconsultation": "TC", "Certificat": "CERT",
+      };
+      const code = typeMap[apt.type] || "CS";
+      const tarif = tarifs.find((t: any) => t.code === code && t.active);
+      if (tarif) {
+        createInvoice({
+          patient: apt.patient,
+          avatar: apt.avatar || apt.patient.split(" ").map((w: string) => w[0]).join("").toUpperCase(),
+          doctor: apt.doctor,
+          date: apt.date,
+          amount: tarif.price,
+          type: tarif.name,
+          payment: "En attente",
+          status: "pending" as const,
+          assurance: apt.assurance || "Sans assurance",
+          createdBy: "system" as const,
+        });
+      }
+    } catch { /* billing store not available */ }
   }
 }
 
