@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { ArrowLeft, CheckCircle2, ClipboardList, Clock, Printer, Save, Search, Stethoscope } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardList, Clock, Printer, Save, Search, Stethoscope, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ConsultationProvider, useConsultation } from "@/components/consultation/ConsultationContext";
@@ -9,6 +9,7 @@ import { ActionDock } from "@/components/consultation/ActionDock";
 import { SlidePanel } from "@/components/consultation/SlidePanel";
 import { CloseModal, HistoryDrawer, CommandPalette, ClosedView } from "@/components/consultation/ConsultationModals";
 import SpecialtyTools from "@/components/consultation/SpecialtyTools";
+import TeleconsultPanel from "@/components/consultation/TeleconsultPanel";
 import { useDoctorSubscription } from "@/stores/doctorSubscriptionStore";
 import { getSpecialtyConfig } from "@/components/consultation/specialtyConfig";
 
