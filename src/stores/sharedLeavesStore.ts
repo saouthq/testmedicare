@@ -43,8 +43,10 @@ export async function createLeave(leave: Omit<SharedLeave, "id">) {
   const current = new Date(start);
   while (current <= end) {
     const dateStr = current.toISOString().slice(0, 10);
+    const leaveBlockId = `leave-blk-${id}-${dateStr}`;
     // Use addBlockedSlot which handles Supabase persistence
-    addBlockedSlot({
+    await addBlockedSlot({
+      id: leaveBlockId,
       date: dateStr,
       startTime: "08:00",
       duration: 600,

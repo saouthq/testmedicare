@@ -18,6 +18,7 @@ import { bookAppointment, sharedAppointmentsStore } from "@/stores/sharedAppoint
 import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
 import { sharedBlockedSlotsStore } from "@/stores/sharedBlockedSlotsStore";
 import { sharedLeavesStore } from "@/stores/sharedLeavesStore";
+import { sharedPatientsStore } from "@/stores/sharedPatientsStore";
 import { doctorProfileStore, readDoctorProfile } from "@/stores/doctorProfileStore";
 import { useDoctorsDirectory } from "@/stores/directoryStore";
 import { validateBooking } from "@/lib/appointmentRules";

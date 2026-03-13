@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CalendarDays, Plus, Trash2, Bell, UserCheck, Clock, Calendar, AlertTriangle } from "lucide-react";
 import { useSharedLeaves, createLeave, deleteLeave } from "@/stores/sharedLeavesStore";
+import { readAuthUser } from "@/stores/authStore";
 
 const typeLabels: Record<string, string> = {
   conge: "Congé annuel", formation: "Formation", maladie: "Arrêt maladie", personnel: "Motif personnel",

@@ -24,8 +24,8 @@ export function useSharedBlockedSlots() {
   });
 }
 
-export async function addBlockedSlot(block: Omit<SharedBlockedSlot, "id">) {
-  const id = `blk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+export async function addBlockedSlot(block: Omit<SharedBlockedSlot, "id"> & { id?: string }) {
+  const id = block.id || `blk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   store.set(prev => [...prev, { ...block, id }]);
 
   if (getAppMode() === "production") {
@@ -40,6 +40,8 @@ export async function addBlockedSlot(block: Omit<SharedBlockedSlot, "id">) {
           start_time: block.startTime,
           duration: block.duration || 30,
           reason: block.reason || "",
+          recurring: block.recurring || false,
+          recurring_days: block.recurringDays || [],
         });
       }
     } catch (e) {
