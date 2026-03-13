@@ -77,6 +77,7 @@ export function toggleSidebarItem(role: string, url: string, enabled: boolean, a
     `Sidebar "${url}" ${enabled ? "activé" : "désactivé"} pour le rôle "${role}" par ${adminName}`,
     adminName
   );
+  saveAdminConfig("sidebar_visibility", store.read());
 }
 
 /**
