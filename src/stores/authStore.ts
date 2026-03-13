@@ -202,6 +202,12 @@ export function useAuth() {
     // Initialize auth listener
     initSupabaseAuth();
 
+    // If logging out, don't try to restore session
+    if (_loggingOut) {
+      setLoading(false);
+      return;
+    }
+
     // Check if we already have a user (demo or supabase)
     const current = store.read();
     if (current) {
@@ -211,6 +217,10 @@ export function useAuth() {
 
     // Check Supabase session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (_loggingOut) {
+        setLoading(false);
+        return;
+      }
       if (session?.user) {
         loadSupabaseUser(session.user.id).finally(() => setLoading(false));
       } else {
