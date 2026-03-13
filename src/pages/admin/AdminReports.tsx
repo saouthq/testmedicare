@@ -148,7 +148,7 @@ const AdminReports = () => {
                     <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>{Object.entries(freqLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
                   </Select>
-                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => runNow(r.name)}>
+                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => runNow(r)}>
                     <Play className="h-3 w-3 mr-1" />Lancer
                   </Button>
                   <Switch checked={r.active} onCheckedChange={() => toggleReport(r.id)} />
