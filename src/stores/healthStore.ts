@@ -137,7 +137,7 @@ export function addAntecedent(a: Antecedent) {
 
 export function addVaccination(v: Vaccination) {
   store.set(prev => ({ ...prev, vaccinations: [...prev.vaccinations, v] }));
-  syncHealthRecordToSupabase("vaccination", v.name, v, v.date);
+  syncHealthRecordToSupabase("vaccination", v.name, v, v.lastDate);
 }
 
 export function addMeasure(m: HealthMeasure) {
