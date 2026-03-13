@@ -134,7 +134,7 @@ const DoctorBilling = () => {
             )}
             {/* Plans comparison */}
             <div className="grid gap-5 sm:grid-cols-2">
-              {mockPlans.map(plan => (
+              {displayPlans.map(plan => (
                 <div key={plan.key} className={`rounded-xl border bg-card p-5 shadow-card relative ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
