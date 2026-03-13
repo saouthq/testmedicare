@@ -2499,6 +2499,8 @@ const DoctorSchedule = () => {
             apts={apts}
             blocks={blocks}
             typeColors={typeColors}
+            getDayConfig={getDayConfig}
+            getLeaveForDate={getLeaveForDate}
             onSlot={handleSlotClick}
             onApt={setSelApt}
             onBlock={setEditBlock}
