@@ -135,6 +135,12 @@ const AdminSettings = () => {
   return (
     <DashboardLayout role="admin" title="Paramètres système">
       <div className="max-w-4xl space-y-6">
+        {isDirty && (
+          <div className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span className="text-sm text-warning font-medium">Modifications non sauvegardées</span>
+          </div>
+        )}
         <div className="flex gap-1 rounded-lg border bg-card p-1 overflow-x-auto">
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${tab === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
