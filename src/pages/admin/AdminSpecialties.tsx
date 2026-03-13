@@ -39,7 +39,7 @@ const emptySpec: Omit<ManagedSpecialty, "id" | "createdAt" | "updatedAt" | "acti
 };
 
 const AdminSpecialties = () => {
-  const [specs] = useSpecialties();
+  const [specs] = useSpecialties() as [ManagedSpecialty[], (v: ManagedSpecialty[] | ((prev: ManagedSpecialty[]) => ManagedSpecialty[])) => void];
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<SpecialtyCategory | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
