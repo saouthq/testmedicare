@@ -99,8 +99,10 @@ const Help = () => {
   // Contact form
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [contactSubject, setContactSubject] = useState("");
   const [contactMessage, setContactMessage] = useState("");
   const [contactSent, setContactSent] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState("");
 
   const toggleQuestion = (categoryId: string, questionIndex: number) => {
     const key = `${categoryId}-${questionIndex}`;
