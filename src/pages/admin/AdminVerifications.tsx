@@ -1,8 +1,7 @@
 /**
- * Admin Validations KYC — Enhanced with timeline, relance, notes internes, stats
+ * Admin Validations KYC — Dual-mode: Demo (mocks) / Production (doctors_directory + pharmacies_directory)
+ * Enhanced with timeline, relance, notes internes, stats
  * Connected to partnerRegistrationStore and featureMatrixStore
- * Shows activity, specialty, plan, and enabled features for each registration
- * TODO BACKEND: Replace with real API
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { directoryStore } from "@/stores/directoryStore";
@@ -27,6 +26,9 @@ import {
   activities as matrixActivities,
   type ActivityType,
 } from "@/stores/featureMatrixStore";
+import { useAdminVerificationsSupabase, useAdminVerificationUpdate } from "@/hooks/useAdminData";
+import { getAppMode } from "@/stores/authStore";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
 
 type Tab = "doctors" | "labs" | "pharmacies";
 
@@ -131,8 +133,32 @@ const getActivityLabel = (activity?: string): string => {
 
 const AdminVerifications = () => {
   const [tab, setTab] = useState<Tab>("doctors");
+  const isProduction = getAppMode() === "production";
+  const supabaseQuery = useAdminVerificationsSupabase();
+  const verificationUpdate = useAdminVerificationUpdate();
 
   const buildVerifications = (): Verification[] => {
+    // In production mode, use Supabase data
+    if (isProduction && supabaseQuery.data) {
+      return supabaseQuery.data.map(row => ({
+        id: row.id,
+        entityType: row.entityType,
+        entityName: row.entityName,
+        specialty: row.specialty,
+        city: row.city,
+        email: "",
+        phone: row.phone,
+        submittedAt: new Date(row.created_at).toLocaleDateString("fr-TN", { day: "2-digit", month: "short", year: "numeric" }),
+        status: row.verified ? "approved" : "pending",
+        docs: [],
+        events: [{
+          id: `e-${row.id}`, type: "submitted" as const, text: "Dossier soumis",
+          author: row.entityName, createdAt: row.created_at,
+        }],
+      }));
+    }
+
+    // Demo mode: use mocks + registrations
     const base = [...initialVerifications];
     const registrations = getRegistrations();
 
@@ -173,12 +199,17 @@ const AdminVerifications = () => {
   const [drawerItem, setDrawerItem] = useState<Verification | null>(null);
   const [adminNote, setAdminNote] = useState("");
 
+  // Refresh demo data periodically; for production, react to supabase query changes
   useEffect(() => {
+    if (isProduction) {
+      setVerifications(buildVerifications());
+      return;
+    }
     const interval = setInterval(() => {
       setVerifications(buildVerifications());
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isProduction, supabaseQuery.data]);
 
   const filtered = verifications.filter(v => v.entityType === tabMap[tab]);
 
@@ -203,6 +234,15 @@ const AdminVerifications = () => {
 
     const newStatus = motifAction.type === "approve" ? "approved" : "rejected";
     setVerifications(prev => prev.map(x => x.id === motifAction.id ? { ...x, status: newStatus, events: [...x.events, event] } : x));
+
+    // Production: update verified flag in Supabase
+    if (isProduction) {
+      verificationUpdate.mutate({
+        entityId: v.id,
+        entityType: v.entityType === "lab" ? "pharmacy" : v.entityType as "doctor" | "pharmacy",
+        verified: newStatus === "approved",
+      });
+    }
 
     if (v.id.startsWith("reg-")) {
       updateRegistrationStatus(v.id, newStatus as any, motif);

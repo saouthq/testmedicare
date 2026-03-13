@@ -275,6 +275,159 @@ export function useAdminDashboardStatsSupabase() {
   });
 }
 
+// ─── Admin Verifications (doctors_directory + pharmacies_directory) ───
+
+export interface AdminVerificationRow {
+  id: string;
+  entityType: "doctor" | "pharmacy";
+  entityName: string;
+  specialty: string;
+  city: string;
+  phone: string;
+  verified: boolean;
+  created_at: string;
+}
+
+export function useAdminVerificationsSupabase() {
+  const mode = getAppMode();
+  const isProduction = mode === "production";
+  const { isReady } = useAuthReady();
+
+  return useQuery<AdminVerificationRow[]>({
+    queryKey: ["admin", "verifications"],
+    queryFn: async () => {
+      const [docsRes, pharmsRes, profilesRes] = await Promise.all([
+        supabase.from("doctors_directory").select("id, specialty, city, phone, verified, created_at").order("created_at", { ascending: false }),
+        supabase.from("pharmacies_directory").select("id, name, city, phone, verified, created_at").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("id, first_name, last_name"),
+      ]);
+
+      const profileMap = new Map<string, string>();
+      (profilesRes.data || []).forEach((p: any) => profileMap.set(p.id, `${p.first_name} ${p.last_name}`.trim()));
+
+      const doctors: AdminVerificationRow[] = (docsRes.data || []).map((d: any) => ({
+        id: d.id,
+        entityType: "doctor" as const,
+        entityName: profileMap.get(d.id) ? `Dr. ${profileMap.get(d.id)}` : `Dr. ${d.id.slice(0, 8)}`,
+        specialty: d.specialty || "Généraliste",
+        city: d.city || "Tunis",
+        phone: d.phone || "",
+        verified: d.verified || false,
+        created_at: d.created_at,
+      }));
+
+      const pharmacies: AdminVerificationRow[] = (pharmsRes.data || []).map((p: any) => ({
+        id: p.id,
+        entityType: "pharmacy" as const,
+        entityName: p.name || "Pharmacie",
+        specialty: "Officine",
+        city: p.city || "Tunis",
+        phone: p.phone || "",
+        verified: p.verified || false,
+        created_at: p.created_at,
+      }));
+
+      return [...doctors, ...pharmacies];
+    },
+    enabled: isProduction && isReady,
+  });
+}
+
+// ─── Admin Guard Pharmacies (pharmacies_directory) ──────────
+
+export interface AdminGuardPharmacyRow {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  phone: string;
+  is_guard: boolean;
+  guard_date: string | null;
+}
+
+export function useAdminGuardPharmaciesSupabase() {
+  const mode = getAppMode();
+  const isProduction = mode === "production";
+  const { isReady } = useAuthReady();
+
+  return useQuery<AdminGuardPharmacyRow[]>({
+    queryKey: ["admin", "guard_pharmacies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pharmacies_directory")
+        .select("id, name, city, address, phone, is_guard, guard_date")
+        .order("name");
+      if (error) { console.error("[admin] pharmacies_directory:", error); return []; }
+      return (data || []).map((p: any) => ({
+        id: p.id,
+        name: p.name || "",
+        city: p.city || "",
+        address: p.address || "",
+        phone: p.phone || "",
+        is_guard: p.is_guard || false,
+        guard_date: p.guard_date,
+      }));
+    },
+    enabled: isProduction && isReady,
+  });
+}
+
+export function useAdminGuardPharmacyToggle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pharmacyId, isGuard, guardDate }: { pharmacyId: string; isGuard: boolean; guardDate: string }) => {
+      const { error } = await supabase
+        .from("pharmacies_directory")
+        .update({ is_guard: isGuard, guard_date: guardDate })
+        .eq("id", pharmacyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "guard_pharmacies"] });
+    },
+  });
+}
+
+// ─── Admin Verification Approve/Reject ──────────────────────
+
+export function useAdminVerificationUpdate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ entityId, entityType, verified }: { entityId: string; entityType: "doctor" | "pharmacy"; verified: boolean }) => {
+      const table = entityType === "doctor" ? "doctors_directory" : "pharmacies_directory";
+      const { error } = await supabase
+        .from(table)
+        .update({ verified })
+        .eq("id", entityId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "verifications"] });
+    },
+  });
+}
+
+// ─── Admin Support Tickets (Supabase) ───────────────────────
+
+export function useAdminTicketUpdateSupabase() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ticketId, updates }: { ticketId: string; updates: Record<string, any> }) => {
+      const { error } = await supabase
+        .from("support_tickets")
+        .update(updates)
+        .eq("id", ticketId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "support_tickets"] });
+    },
+  });
+}
+
 // ─── Admin user mutations ────────────────────────────────────
 
 export function useAdminUserUpdate() {

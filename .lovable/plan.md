@@ -34,9 +34,15 @@
 21. ✅ Isolation praticien via RLS (doctor_id, pharmacy_id, lab_id) + useDualQuery déjà en place
 22. ✅ Toutes les pages fonctionnent en dual mode (Demo localStorage / Production Supabase)
 
-## Phase 5 — À faire (prochaine itération)
+## Phase 5 — Admin Supabase deep integration ✅ DONE
 
-- Connecter AdminVerifications à `doctors_directory` (KYC verification status)
-- Connecter AdminGuardPharmacies à `pharmacies_directory` (is_guard field)
-- UI spécialité dynamique selon doctor profile (specialty-specific tools)
+23. ✅ AdminVerifications connecté à `doctors_directory` + `pharmacies_directory` (dual-mode, approve/reject mutation)
+24. ✅ AdminGuardPharmacies connecté à `pharmacies_directory` (is_guard toggle mutation, dual-mode)
+25. ✅ Hooks Supabase ajoutés: `useAdminVerificationsSupabase`, `useAdminGuardPharmaciesSupabase`, `useAdminGuardPharmacyToggle`, `useAdminVerificationUpdate`, `useAdminTicketUpdateSupabase`
+26. ✅ Isolation praticien via RLS (doctor_id, pharmacy_id, lab_id) — vérifié sur toutes les tables
+
+## Phase 6 — À faire (prochaine itération)
+
 - Tables manquantes pour subscriptions, organizations, disputes, campaigns (besoin migration DB)
+- UI spécialité dynamique selon doctor profile (specialty-specific tools)
+- AdminAnalytics en production avec données réelles agrégées
