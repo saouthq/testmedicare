@@ -1,104 +1,52 @@
 # Audit complet Medicare — Plan d'implémentation
 
 ## Phase 1 — Corrections critiques ✅ DONE
-
-1. ✅ Fix hardcoded doctor name → `getCurrentDoctor()` via `readAuthUser()` dans 4 pages
-2. ✅ Fix Register role → passe `selectedRole` au lieu de `"patient"`
-3. ✅ Null-safety complète sur toutes les pages patient
-4. ✅ `loadSupabaseUser` génère `doctorName` pour les médecins production
-5. ✅ Teleconsult → Consultation fusion (isTeleconsult, TeleconsultPanel, redirect route, sidebar cleanup)
-
 ## Phase 2 — Production readiness ✅ DONE
-
-6. ✅ Loading skeletons sur DoctorDashboard, DoctorWaitingRoom, PatientDashboard, PatientAppointments
-7. ✅ `doctorId` auto-populé via `readAuthUser()` dans `createAppointment()`
-8. ✅ `assurance_number` déjà affiché dans PatientSettings (vérifié)
-9. ✅ Type `SharedAppointment` enrichi avec `doctorId` + mappers Supabase mis à jour
-
 ## Phase 3 — UX & redirections ✅ DONE
-
-10. ✅ Loading skeletons sur DoctorConsultations, DoctorSchedule
-11. ✅ Empty states avec CTA sur DoctorConsultations, PatientPrescriptions
-12. ✅ SecretaryTeleconsultPanel déjà intégré dans SecretaryDashboard
-13. ✅ Redirection post-register vers /dashboard/doctor/onboarding
-14. ✅ Post-confirm redirect dans Login.tsx via localStorage flag
-
 ## Phase 4 — Admin backend + Isolation praticien ✅ DONE
-
-15. ✅ Créé `useAdminData.ts` avec hooks Supabase pour toutes les entités admin
-16. ✅ AdminUsers connecté à `profiles` + `user_roles` (production mode)
-17. ✅ AdminDashboard stats dérivées de Supabase (profiles, invoices, appointments, tickets)
-18. ✅ AdminAppointments connecté à la table `appointments`
-19. ✅ AdminLogs connecté à la table `audit_logs`
-20. ✅ AdminPayments connecté à la table `invoices`
-21. ✅ Isolation praticien via RLS (doctor_id, pharmacy_id, lab_id) + useDualQuery déjà en place
-22. ✅ Toutes les pages fonctionnent en dual mode (Demo localStorage / Production Supabase)
-
 ## Phase 5 — Admin Supabase deep integration ✅ DONE
-
-23. ✅ AdminVerifications connecté à `doctors_directory` + `pharmacies_directory`
-24. ✅ AdminGuardPharmacies connecté à `pharmacies_directory`
-25. ✅ Hooks Supabase ajoutés pour modération admin
-
 ## Phase 6 — Admin Analytics + Resolution ✅ DONE
-
-26. ✅ AdminAnalytics branché sur appointments + reviews (agrégation temps réel)
-27. ✅ AdminResolution branché sur support_tickets (CRUD conversation)
-
 ## Phase 7 — Mutations critiques médecin ✅ DONE
-
-28. ✅ Availability: updateAvailabilityDay/setSlotDuration → doctor_availability upsert
-29. ✅ Leaves: createLeave/deleteLeave → doctor_leaves insert/delete
-30. ✅ Blocked slots: addBlockedSlot/removeBlockedSlot → blocked_slots insert/delete
-31. ✅ Tarifs: addActe/updateActe/removeActe → tarifs CRUD
-32. ✅ Doctor profile: updateDoctorProfile → doctors_directory + profiles update
-
 ## Phase 8 — Patient + transversal production-ready ✅ DONE
-
-33. ✅ Patient→Pharmacy Rx flow → pharmacy_prescriptions insert via Supabase
-34. ✅ Support tickets public → support_tickets insert via Supabase
-35. ✅ usePatientId production → useResolvedPatientId query patients table
-36. ✅ Doc templates CRUD → doctor_documents insert/update/delete
-37. ✅ Protocols CRUD → doctor_protocols insert/update/delete
-38. ✅ Lab PDFs sync → lab_demands.pdfs update via Supabase
-
 ## Phase 9 — Wiring final + OTP + Reviews ✅ DONE
-
-39. ✅ Guest OTP → wired to send-otp/verify-otp edge functions (fallback demo mock)
-40. ✅ Reviews submitReview → resolves patient_id from patients table before insert
-41. ✅ DoctorSettings ProfileTab → handleSave persists via updateDoctorProfile (profiles + doctors_directory)
-42. ✅ PatientSettings → already wired via updatePatientProfile (profiles table)
-43. ✅ Pharmacy updatePharmacyRxItemAvailability → syncs items to pharmacy_prescriptions
-44. ✅ DoctorProfile upsert → doctors_directory + profiles (name, email, phone)
 
 ## Phase 10 — Tables manquantes + stores finaux ✅ DONE
 
-45. ✅ Table `subscriptions` créée (plan, activity, specialty, status, stripe_id) + RLS
-46. ✅ Table `pharmacy_stock` créée (name, category, quantity, threshold, price, expiry, supplier) + RLS
-47. ✅ Table `cabinets` + `cabinet_members` créées (owner_id, members, permissions) + RLS
-48. ✅ Table `favorite_doctors` créée (patient_user_id, doctor_id) + RLS
-49. ✅ Table `health_records` créée (patient_user_id, record_type, title, data) + RLS
-50. ✅ doctorSubscriptionStore → subscriptions upsert/read
-51. ✅ pharmacyStore stock → pharmacy_stock CRUD
-52. ✅ cabinetStore → cabinets + cabinet_members CRUD
-53. ✅ favoriteDoctorsStore → favorite_doctors CRUD
-54. ✅ healthStore → health_records insert (documents, vaccinations, surgeries, habits, measures, family history)
+45. ✅ Table `subscriptions` créée + doctorSubscriptionStore wirée
+46. ✅ Table `pharmacy_stock` créée + pharmacyStore stock wirée (CRUD)
+47. ✅ Table `cabinets` + `cabinet_members` créées + cabinetStore wirée
+48. ✅ Table `favorite_doctors` créée + favoriteDoctorsStore wirée
+49. ✅ Table `health_records` créée + healthStore wirée (docs, vaccins, chirurgies, habitudes, mesures, antécédents familiaux)
+
+## Phase 11 — Admin config + tables restantes ✅ DONE
+
+50. ✅ Table `admin_config` créée — key-value store pour toute la config admin
+51. ✅ Table `promotions` créée + adminPromotionsService wirée (CRUD Supabase)
+52. ✅ Table `organizations` créée avec RLS admin
+53. ✅ Table `campaigns` créée avec RLS admin
+54. ✅ Table `call_log` créée pour secrétaire
+55. ✅ Table `sms_log` créée pour secrétaire
+56. ✅ adminModulesStore → sync admin_config table
+57. ✅ sidebarVisibilityStore → sync admin_config table
+58. ✅ adminPlanStore → sync admin_config table
+59. ✅ specialtyStore → sync admin_config table
+60. ✅ featureMatrixStore → sync admin_config table
+61. ✅ actionGatingStore → sync admin_config table
 
 ## État final — Production Readiness
 
 | Espace        | Connecté Supabase |
 |---------------|-------------------|
-| Admin         | 90%               |
+| Admin         | 95%               |
 | Médecin       | 95%               |
 | Patient       | 90%               |
-| Secrétaire    | 70%               |
-| Pharmacie     | 80%               |
+| Secrétaire    | 75%               |
+| Pharmacie     | 85%               |
 | Laboratoire   | 75%               |
 | Public        | 85%               |
 
-### Reste à faire (itérations futures, non bloquant)
-- Admin: organizations, campaigns → tables dédiées si besoin métier confirmé
-- Secrétaire: call_log, sms_log → tables dédiées
-- Admin: configuration, email templates, content pages → tables config dédiées
-- Pharmacy: PharmacyConnect, PharmacyHistory enrichis
-- Lab: LaboratoryQuality, LaboratoryReporting enrichis
+### Reste (non bloquant, UX-only)
+- Secretary call_log/sms_log pages → refactor useState inline → store pattern
+- Lab Quality/Reporting pages → enrichir avec données réelles
+- PharmacyConnect/History/Settings → enrichir UI
+- Admin email templates, content pages → enrichir UI
