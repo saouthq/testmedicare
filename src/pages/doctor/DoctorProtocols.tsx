@@ -1,7 +1,7 @@
 /**
  * DoctorProtocols — Protocoles de soins et modèles de consultation.
  * Templates réutilisables pour consultations, notes, prescriptions.
- * // TODO BACKEND: GET/POST /api/doctor/protocols
+ * Persisted via doctorProtocolsStore (localStorage + Supabase dual-mode)
  */
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
@@ -15,7 +15,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import { useDoctorProtocols, type Protocol, type ProtocolType } from "@/stores/doctorProtocolsStore";
+import {
+  useDoctorProtocols,
+  createProtocol,
+  updateProtocol,
+  deleteProtocol,
+  type Protocol,
+  type ProtocolType,
+} from "@/stores/doctorProtocolsStore";
 
 const typeConfig: Record<ProtocolType, { label: string; icon: any; cls: string }> = {
   consultation: { label: "Consultation", icon: Stethoscope, cls: "bg-primary/10 text-primary" },
@@ -25,7 +32,7 @@ const typeConfig: Record<ProtocolType, { label: string; icon: any; cls: string }
 };
 
 const DoctorProtocols = () => {
-  const [protocols, setProtocols] = useDoctorProtocols();
+  const [protocols] = useDoctorProtocols();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | ProtocolType>("all");
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -47,36 +54,39 @@ const DoctorProtocols = () => {
     return true;
   }).sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newName.trim()) return;
-    const newP: Protocol = {
-      id: Date.now(), name: newName, type: newType, specialty: "Généraliste",
+    await createProtocol({
+      name: newName, type: newType, specialty: "Généraliste",
       description: newDesc, steps: newSteps.split("\n").filter(Boolean),
       meds: newMeds ? newMeds.split("\n").filter(Boolean) : undefined,
-      favorite: false, usageCount: 0, lastUsed: "—",
-    };
-    setProtocols(prev => [newP, ...prev]);
+      favorite: false,
+    });
     setShowNew(false);
     setNewName(""); setNewDesc(""); setNewSteps(""); setNewMeds("");
-    toast({ title: "Protocole créé", description: newP.name });
+    toast({ title: "Protocole créé", description: newName });
   };
 
-  const handleDelete = (id: number) => {
-    setProtocols(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (id: number) => {
+    await deleteProtocol(id);
     if (selectedId === id) setSelectedId(null);
     setShowDelete(null);
     toast({ title: "Protocole supprimé" });
   };
 
-  const handleToggleFav = (id: number) => {
-    setProtocols(prev => prev.map(p => p.id === id ? { ...p, favorite: !p.favorite } : p));
+  const handleToggleFav = async (id: number) => {
+    const p = protocols.find(pr => pr.id === id);
+    if (p) await updateProtocol(id, { favorite: !p.favorite });
   };
 
-  const handleDuplicate = (id: number) => {
+  const handleDuplicate = async (id: number) => {
     const orig = protocols.find(p => p.id === id);
     if (!orig) return;
-    const dup = { ...orig, id: Date.now(), name: `${orig.name} (copie)`, favorite: false, usageCount: 0 };
-    setProtocols(prev => [dup, ...prev]);
+    await createProtocol({
+      name: `${orig.name} (copie)`, type: orig.type, specialty: orig.specialty,
+      description: orig.description, steps: orig.steps, meds: orig.meds,
+      examens: orig.examens, duration: orig.duration, favorite: false,
+    });
     toast({ title: "Protocole dupliqué" });
   };
 
@@ -150,6 +160,12 @@ const DoctorProtocols = () => {
                 </div>
               );
             })}
+            {filtered.length === 0 && (
+              <div className="text-center py-12">
+                <BookOpen className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">Aucun protocole trouvé</p>
+              </div>
+            )}
           </div>
 
           {/* Detail sidebar */}
@@ -208,9 +224,6 @@ const DoctorProtocols = () => {
                   <div className="pt-2 space-y-2">
                     <Button size="sm" className="w-full gradient-primary text-primary-foreground text-xs">
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Appliquer en consultation
-                    </Button>
-                    <Button size="sm" variant="outline" className="w-full text-xs">
-                      <Edit className="h-3.5 w-3.5 mr-1" />Modifier
                     </Button>
                   </div>
                 </div>

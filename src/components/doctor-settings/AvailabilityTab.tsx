@@ -4,25 +4,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Save, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useSharedAvailability, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
+import {
+  useSharedAvailability,
+  updateAvailabilityDay,
+  setSlotDuration,
+  saveAvailabilityToSupabase,
+  WEEK_DAYS,
+} from "@/stores/sharedAvailabilityStore";
 import { sharedAppointmentsStore, cancelConflictingAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
 
 const AvailabilityTab = () => {
-  const [config, setConfig] = useSharedAvailability();
+  const [config] = useSharedAvailability();
   const [conflictWarning, setConflictWarning] = useState<{ count: number; dayName: string } | null>(null);
 
   const handleToggleDay = (day: string) => {
-    setConfig(prev => ({
-      ...prev,
-      days: { ...prev.days, [day]: { ...prev.days[day], active: !prev.days[day].active } },
-    }));
+    updateAvailabilityDay(day, { active: !config.days[day].active });
   };
 
   const handleUpdateDay = (day: string, field: string, value: string) => {
-    setConfig(prev => ({
-      ...prev,
-      days: { ...prev.days, [day]: { ...prev.days[day], [field]: value } },
-    }));
+    updateAvailabilityDay(day, { [field]: value });
+  };
+
+  const handleSlotDuration = (duration: number) => {
+    setSlotDuration(duration);
   };
 
   /** Check for conflicting appointments before saving */
@@ -63,24 +67,22 @@ const AvailabilityTab = () => {
     return totalConflicts;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const conflicts = checkConflicts();
     if (conflicts > 0) {
       setConflictWarning({ count: conflicts, dayName: "tous les jours" });
     } else {
-      doSave();
+      await doSave();
     }
   };
 
-  const doSave = (cancelConflicts = false) => {
+  const doSave = async (cancelConflicts = false) => {
     if (cancelConflicts) {
-      // Cancel all conflicting appointments
       let totalCancelled = 0;
       WEEK_DAYS.forEach(dayName => {
         const d = config.days[dayName];
         if (!d) return;
         if (!d.active) {
-          // Cancel all future appointments on this day
           totalCancelled += cancelConflictingAppointments(dayName, "00:00", "00:00");
         } else {
           totalCancelled += cancelConflictingAppointments(dayName, d.start, d.end, d.breakStart || undefined, d.breakEnd || undefined);
@@ -90,6 +92,8 @@ const AvailabilityTab = () => {
         toast({ title: `${totalCancelled} RDV annulé(s)`, description: "Les patients concernés ont été notifiés." });
       }
     }
+    // Persist all days to Supabase
+    await saveAvailabilityToSupabase();
     setConflictWarning(null);
     toast({ title: "Enregistré", description: "Vos disponibilités sont mises à jour partout (agenda, secrétaire, prise de RDV)." });
   };
@@ -157,7 +161,7 @@ const AvailabilityTab = () => {
           <Label className="text-xs">Durée créneau par défaut</Label>
           <select
             value={config.slotDuration}
-            onChange={e => setConfig(prev => ({ ...prev, slotDuration: +e.target.value }))}
+            onChange={e => handleSlotDuration(+e.target.value)}
             className="mt-1 w-full rounded-lg border bg-background px-3 h-9 text-sm"
           >
             {[15, 20, 30, 45, 60].map(d => <option key={d} value={d}>{d} min</option>)}
