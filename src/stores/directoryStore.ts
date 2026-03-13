@@ -1,9 +1,9 @@
 /**
  * directoryStore.ts — Public directory data (doctors, clinics, hospitals, pharmacies, medicines).
- * Seeded from mocks, manageable by admin.
- * // TODO BACKEND: Replace with API
+ * Dual-mode: Supabase for public queries, localStorage fallback for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
+import { useSupabaseTable, useAuthReady } from "@/hooks/useSupabaseQuery";
 import type { Doctor } from "@/types";
 import type { MockClinic, MockHospital, MockPublicPharmacy } from "@/data/mocks/establishments";
 import type { MockMedicine } from "@/data/mocks/medicines";
@@ -33,6 +33,17 @@ export function useDirectory() {
 export function useDoctorsDirectory() {
   const [state] = useDirectory();
   return state.doctors;
+}
+
+/** Supabase-aware doctors directory hook */
+export function useDoctorsDirectorySupabase() {
+  const [state] = useDirectory();
+  return useSupabaseTable<Doctor>({
+    queryKey: ["doctors_directory"],
+    tableName: "doctors_directory",
+    enabled: true,
+    fallbackData: state.doctors,
+  });
 }
 
 export function useClinicsDirectory() {

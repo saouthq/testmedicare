@@ -1,12 +1,12 @@
 /**
- * notificationsStore.ts — Cross-role notification store (localStorage).
- * Any role can push notifications visible to patient or other roles.
- *
- * // TODO BACKEND: Replace with push notifications / Supabase Realtime
+ * notificationsStore.ts — Cross-role notification store.
+ * Dual-mode: Supabase Realtime when authenticated, localStorage fallback for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { toast } from "sonner";
 import { getCurrentRole } from "./authStore";
+import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CrossNotification {
   id: string;
@@ -29,9 +29,27 @@ export function useNotifications(role?: string) {
   return { notifications: filtered, setNotifications: set, allNotifications: all };
 }
 
+/** Supabase-aware hook */
+export function useNotificationsSupabase() {
+  const { userId, isAuthenticated } = useAuthReady();
+  const [localNotifs] = useStore(store);
+
+  const query = useSupabaseTable<CrossNotification>({
+    queryKey: ["notifications", userId || ""],
+    tableName: "notifications",
+    filters: userId ? { user_id: userId } : undefined,
+    orderBy: { column: "created_at", ascending: false },
+    enabled: isAuthenticated,
+    fallbackData: localNotifs,
+  });
+
+  useSupabaseRealtime("notifications", [["notifications", userId || ""]], userId ? `user_id=eq.${userId}` : undefined);
+
+  return query;
+}
+
 /** Push a new notification */
 export function pushNotification(notif: Omit<CrossNotification, "id" | "createdAt" | "read">) {
-  // TODO BACKEND: POST /api/notifications
   store.set((prev) => [
     {
       ...notif,
@@ -41,7 +59,6 @@ export function pushNotification(notif: Omit<CrossNotification, "id" | "createdA
     },
     ...prev,
   ]);
-  // Show toast if current user is the target
   const currentRole = getCurrentRole();
   if (currentRole === notif.targetRole) {
     toast.info(notif.title, { description: notif.message });
@@ -49,57 +66,65 @@ export function pushNotification(notif: Omit<CrossNotification, "id" | "createdA
 }
 
 /** Mark a single notification as read */
-export function markNotificationRead(id: string) {
-  // TODO BACKEND: PATCH /api/notifications/:id
+export async function markNotificationRead(id: string) {
   store.set((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("notifications").update({ read: true }).eq("id", id);
+    }
+  } catch {}
 }
 
 /** Mark all notifications for a role as read */
-export function markAllRead(role?: string) {
-  // TODO BACKEND: PATCH /api/notifications/mark-all-read
+export async function markAllRead(role?: string) {
   store.set((prev) => prev.map((n) => (role && n.targetRole !== role) ? n : { ...n, read: true }));
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("notifications").update({ read: true }).eq("user_id", session.user.id);
+    }
+  } catch {}
 }
 
 /** Delete a notification */
-export function deleteNotification(id: string) {
-  // TODO BACKEND: DELETE /api/notifications/:id
+export async function deleteNotification(id: string) {
   store.set((prev) => prev.filter((n) => n.id !== id));
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("notifications").delete().eq("id", id);
+    }
+  } catch {}
 }
 
 // ─── High-level notification helpers ────────────────────────
-// Use these from any store action to notify the right role.
 
-/** Notify patient about an event */
 export function notifyPatient(title: string, message: string, actionLink?: string, type: CrossNotification["type"] = "generic") {
   pushNotification({ type, title, message, targetRole: "patient", actionLink });
 }
 
-/** Notify doctor about an event */
 export function notifyDoctor(title: string, message: string, actionLink?: string, type: CrossNotification["type"] = "generic") {
   pushNotification({ type, title, message, targetRole: "doctor", actionLink });
 }
 
-/** Notify secretary about an event */
 export function notifySecretary(title: string, message: string, actionLink?: string, type: CrossNotification["type"] = "generic") {
   pushNotification({ type, title, message, targetRole: "secretary", actionLink });
 }
 
-/** Notify admin about an event */
 export function notifyAdmin(title: string, message: string, actionLink?: string, type: CrossNotification["type"] = "generic") {
   pushNotification({ type, title, message, targetRole: "admin", actionLink });
 }
 
-/** Notify pharmacy about an event */
 export function notifyPharmacy(title: string, message: string, actionLink?: string, type: CrossNotification["type"] = "generic") {
   pushNotification({ type, title, message, targetRole: "pharmacy", actionLink });
 }
 
-/** Notify laboratory about an event */
 export function notifyLaboratory(title: string, message: string, actionLink?: string, type: CrossNotification["type"] = "generic") {
   pushNotification({ type, title, message, targetRole: "laboratory", actionLink });
 }
 
-/** Seed initial demo notifications (called by seedStores) */
+/** Seed initial demo notifications */
 export function seedNotificationsIfEmpty() {
   if (store.read().length > 0) return;
   const now = new Date();
@@ -113,12 +138,9 @@ export function seedNotificationsIfEmpty() {
     { id: "notif-seed-5", type: "care_sheet", title: "Feuille de soins disponible", message: "La feuille de soins de votre consultation du 10 Fév est disponible au téléchargement.", targetRole: "patient", createdAt: ago(24), read: true, actionLink: "/dashboard/patient/health" },
     { id: "notif-seed-6", type: "appointment", title: "RDV confirmé", message: "Votre rendez-vous du 23 Fév avec Dr. Gharbi (Cardiologue) est confirmé.", targetRole: "patient", createdAt: ago(48), read: true, actionLink: "/dashboard/patient/appointments" },
     { id: "notif-seed-7", type: "system", title: "Mise à jour du profil", message: "Pensez à compléter vos informations d'assurance dans votre profil.", targetRole: "patient", createdAt: ago(72), read: true },
-    // Doctor notifications
     { id: "notif-seed-8", type: "appointment_booked", title: "Nouveau RDV", message: "Amine Ben Ali a réservé un RDV pour demain à 09:00.", targetRole: "doctor", createdAt: ago(2), read: false, actionLink: "/dashboard/doctor/schedule" },
     { id: "notif-seed-9", type: "generic", title: "Demande de renouvellement", message: "Fatma Trabelsi demande le renouvellement de l'ordonnance RX-003.", targetRole: "doctor", createdAt: ago(4), read: false, actionLink: "/dashboard/doctor/prescriptions" },
-    // Secretary notifications
     { id: "notif-seed-10", type: "appointment_booked", title: "Nouveau RDV en ligne", message: "Un patient a réservé en ligne pour Dr. Bouazizi demain à 09:00.", targetRole: "secretary", createdAt: ago(2), read: false, actionLink: "/dashboard/secretary/agenda" },
-    // Admin notifications
     { id: "notif-seed-11", type: "system", title: "Nouvelle inscription", message: "Dr. Hammami a soumis sa demande d'inscription. Vérification KYC requise.", targetRole: "admin", createdAt: ago(6), read: false, actionLink: "/dashboard/admin/verifications" },
   ];
 

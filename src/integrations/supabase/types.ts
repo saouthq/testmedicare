@@ -112,6 +112,39 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       blocked_slots: {
         Row: {
           created_at: string
@@ -151,6 +184,146 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+          sender_name: string | null
+          text: string
+          thread_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          text?: string
+          thread_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          text?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_threads: {
+        Row: {
+          accepts_messages: boolean | null
+          category: string | null
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string | null
+          participant_a_avatar: string | null
+          participant_a_id: string
+          participant_a_name: string
+          participant_a_role: string | null
+          participant_b_avatar: string | null
+          participant_b_id: string
+          participant_b_name: string
+          participant_b_role: string | null
+          unread_a: number | null
+          unread_b: number | null
+        }
+        Insert: {
+          accepts_messages?: boolean | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          participant_a_avatar?: string | null
+          participant_a_id?: string
+          participant_a_name?: string
+          participant_a_role?: string | null
+          participant_b_avatar?: string | null
+          participant_b_id?: string
+          participant_b_name?: string
+          participant_b_role?: string | null
+          unread_a?: number | null
+          unread_b?: number | null
+        }
+        Update: {
+          accepts_messages?: boolean | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          participant_a_avatar?: string | null
+          participant_a_id?: string
+          participant_a_name?: string
+          participant_a_role?: string | null
+          participant_b_avatar?: string | null
+          participant_b_id?: string
+          participant_b_name?: string
+          participant_b_role?: string | null
+          unread_a?: number | null
+          unread_b?: number | null
+        }
+        Relationships: []
+      }
+      clinics_directory: {
+        Row: {
+          address: string | null
+          city: string
+          created_at: string
+          doctors_count: number | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          services: Json | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          doctors_count?: number | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          services?: Json | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          doctors_count?: number | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          services?: Json | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       doctor_availability: {
         Row: {
           active: boolean | null
@@ -184,6 +357,42 @@ export type Database = {
           id?: string
           slot_duration?: number | null
           start_time?: string
+        }
+        Relationships: []
+      }
+      doctor_documents: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          doctor_id: string
+          id: number
+          last_used: string | null
+          name: string
+          usage_count: number | null
+          variables: Json | null
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: never
+          last_used?: string | null
+          name?: string
+          usage_count?: number | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: never
+          last_used?: string | null
+          name?: string
+          usage_count?: number | null
+          variables?: Json | null
         }
         Relationships: []
       }
@@ -231,6 +440,238 @@ export type Database = {
           type?: Database["public"]["Enums"]["leave_type"]
         }
         Relationships: []
+      }
+      doctor_protocols: {
+        Row: {
+          created_at: string
+          description: string | null
+          doctor_id: string
+          duration: string | null
+          examens: Json | null
+          favorite: boolean | null
+          id: number
+          is_template: boolean | null
+          last_used: string | null
+          meds: Json | null
+          name: string
+          specialty: string | null
+          steps: Json | null
+          type: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          doctor_id: string
+          duration?: string | null
+          examens?: Json | null
+          favorite?: boolean | null
+          id?: never
+          is_template?: boolean | null
+          last_used?: string | null
+          meds?: Json | null
+          name?: string
+          specialty?: string | null
+          steps?: Json | null
+          type?: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          doctor_id?: string
+          duration?: string | null
+          examens?: Json | null
+          favorite?: boolean | null
+          id?: never
+          is_template?: boolean | null
+          last_used?: string | null
+          meds?: Json | null
+          name?: string
+          specialty?: string | null
+          steps?: Json | null
+          type?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      doctors_directory: {
+        Row: {
+          accepts_new_patients: boolean | null
+          address: string | null
+          bio: string | null
+          city: string
+          consultation_price: number | null
+          created_at: string
+          id: string
+          languages: string[] | null
+          lat: number | null
+          lng: number | null
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          specialty: string
+          teleconsultation: boolean | null
+          updated_at: string
+          verified: boolean | null
+        }
+        Insert: {
+          accepts_new_patients?: boolean | null
+          address?: string | null
+          bio?: string | null
+          city?: string
+          consultation_price?: number | null
+          created_at?: string
+          id: string
+          languages?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          specialty?: string
+          teleconsultation?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Update: {
+          accepts_new_patients?: boolean | null
+          address?: string | null
+          bio?: string | null
+          city?: string
+          consultation_price?: number | null
+          created_at?: string
+          id?: string
+          languages?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          specialty?: string
+          teleconsultation?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_directory_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitals_directory: {
+        Row: {
+          address: string | null
+          beds_count: number | null
+          city: string
+          created_at: string
+          departments: Json | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          type: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          beds_count?: number | null
+          city?: string
+          created_at?: string
+          departments?: Json | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          type?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          beds_count?: number | null
+          city?: string
+          created_at?: string
+          departments?: Json | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          type?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          assurance: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          doctor_id: string | null
+          doctor_name: string
+          id: string
+          patient_avatar: string | null
+          patient_id: number | null
+          patient_name: string
+          payment: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          assurance?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_avatar?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          payment?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assurance?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_avatar?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          payment?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lab_demands: {
         Row: {
@@ -309,6 +750,81 @@ export type Database = {
           },
         ]
       }
+      medicines: {
+        Row: {
+          category: string | null
+          created_at: string
+          dci: string | null
+          description: string | null
+          form: string | null
+          id: string
+          lab: string | null
+          name: string
+          photo_url: string | null
+          price: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          dci?: string | null
+          description?: string | null
+          form?: string | null
+          id?: string
+          lab?: string | null
+          name?: string
+          photo_url?: string | null
+          price?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          dci?: string | null
+          description?: string | null
+          form?: string | null
+          id?: string
+          lab?: string | null
+          name?: string
+          photo_url?: string | null
+          price?: number | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          action_link: string | null
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          target_role: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_link?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          target_role?: string
+          title?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_link?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          target_role?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           allergies: Json | null
@@ -375,6 +891,54 @@ export type Database = {
           treating_doctor_name?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      pharmacies_directory: {
+        Row: {
+          address: string | null
+          city: string
+          created_at: string
+          guard_date: string | null
+          id: string
+          is_guard: boolean | null
+          lat: number | null
+          lng: number | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          guard_date?: string | null
+          id?: string
+          is_guard?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          guard_date?: string | null
+          id?: string
+          is_guard?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          verified?: boolean | null
         }
         Relationships: []
       }
@@ -544,6 +1108,83 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          doctor_id: string | null
+          doctor_name: string
+          id: string
+          patient_id: number | null
+          patient_name: string
+          rating: number
+          text: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_id?: number | null
+          patient_name?: string
+          rating?: number
+          text?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_id?: number | null
+          patient_name?: string
+          rating?: number
+          text?: string | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          conversation: Json | null
+          created_at: string
+          id: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          conversation?: Json | null
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          conversation?: Json | null
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tarifs: {
         Row: {
           active: boolean | null
@@ -641,6 +1282,7 @@ export type Database = {
         | "controle"
         | "teleconsultation"
         | "urgence"
+      invoice_status: "paid" | "pending" | "overdue"
       lab_demand_status:
         | "received"
         | "in_progress"
@@ -812,6 +1454,7 @@ export const Constants = {
         "teleconsultation",
         "urgence",
       ],
+      invoice_status: ["paid", "pending", "overdue"],
       lab_demand_status: [
         "received",
         "in_progress",

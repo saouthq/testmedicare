@@ -1,11 +1,11 @@
 /**
  * billingStore.ts — Cross-role billing store (secretary ↔ doctor).
- * Secretary creates invoices → doctor sees them. Both can mark as paid.
- *
- * // TODO BACKEND: Replace with API + real-time subscriptions
+ * Dual-mode: Supabase when authenticated, localStorage fallback for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
+import { useSupabaseTable, useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface SharedInvoice {
   id: string;
@@ -29,6 +29,24 @@ export function useSharedBilling() {
   return useStore(store);
 }
 
+/** Supabase-aware hook */
+export function useSharedBillingSupabase() {
+  const { userId, isAuthenticated } = useAuthReady();
+  const [localInvoices] = useStore(store);
+
+  const query = useSupabaseTable<SharedInvoice>({
+    queryKey: ["invoices", userId || ""],
+    tableName: "invoices",
+    orderBy: { column: "created_at", ascending: false },
+    enabled: isAuthenticated,
+    fallbackData: localInvoices,
+  });
+
+  useSupabaseRealtime("invoices", [["invoices", userId || ""]]);
+
+  return query;
+}
+
 export function initBillingStoreIfEmpty(invoices: SharedInvoice[]) {
   const current = store.read();
   if (current.length === 0) {
@@ -36,12 +54,31 @@ export function initBillingStoreIfEmpty(invoices: SharedInvoice[]) {
   }
 }
 
-/** Create a new invoice (from secretary or doctor) */
-export function createInvoice(invoice: Omit<SharedInvoice, "id">) {
+/** Create a new invoice */
+export async function createInvoice(invoice: Omit<SharedInvoice, "id">) {
   const id = `FAC-${Date.now().toString(36).toUpperCase()}`;
   store.set(prev => [{ ...invoice, id }, ...prev]);
 
-  // Notify the other role
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("invoices").insert({
+        id,
+        doctor_id: session.user.id,
+        patient_name: invoice.patient,
+        patient_avatar: invoice.avatar,
+        doctor_name: invoice.doctor,
+        date: invoice.date,
+        amount: invoice.amount,
+        type: invoice.type,
+        payment: invoice.payment,
+        status: invoice.status,
+        assurance: invoice.assurance,
+        created_by: invoice.createdBy,
+      });
+    }
+  } catch {}
+
   if (invoice.createdBy === "secretary") {
     pushNotification({
       type: "generic",
@@ -56,10 +93,16 @@ export function createInvoice(invoice: Omit<SharedInvoice, "id">) {
 }
 
 /** Mark invoice as paid */
-export function markInvoicePaid(id: string, paymentMethod: string) {
+export async function markInvoicePaid(id: string, paymentMethod: string) {
   store.set(prev => prev.map(inv =>
     inv.id === id ? { ...inv, status: "paid", payment: paymentMethod } : inv
   ));
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("invoices").update({ status: "paid", payment: paymentMethod }).eq("id", id);
+    }
+  } catch {}
 }
 
 /** Get billing stats */

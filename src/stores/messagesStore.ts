@@ -1,12 +1,12 @@
 /**
- * messagesStore.ts — Cross-role messaging store (localStorage).
- * Replaces all direct usage of mockMessagingContacts / mockConversationMessages.
- *
- * // TODO BACKEND: Replace with WebSocket + API (GET /api/threads, POST /api/messages)
+ * messagesStore.ts — Cross-role messaging store.
+ * Dual-mode: Supabase Realtime when authenticated, localStorage fallback for demo.
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { pushNotification } from "./notificationsStore";
 import { getCurrentRole } from "./authStore";
+import { useSupabaseRealtime, useAuthReady } from "@/hooks/useSupabaseQuery";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -18,9 +18,7 @@ export interface ChatThread {
   lastMessageAt: string;
   unreadA: number;
   unreadB: number;
-  /** Whether participantB accepts messages from participantA */
   acceptsMessages: boolean;
-  /** Thread category (e.g., "cabinet" for secretary internal) */
   category?: "messages" | "cabinet";
 }
 
@@ -77,7 +75,6 @@ const SEED_THREADS: ChatThread[] = [
     lastMessageAt: new Date(Date.now() - 345600000).toISOString(),
     unreadA: 0, unreadB: 0, acceptsMessages: true, category: "messages",
   },
-  // Secretary cabinet threads
   {
     id: "thread-cab-1",
     participantA: { id: "demo-secretary-1", name: "Sonia Hamdi", avatar: "SH", role: "secretary" },
@@ -103,7 +100,6 @@ const SEED_MESSAGES: ChatMessage[] = [
   { id: "msg-4", threadId: "thread-1", senderId: "demo-doctor-1", text: "Non, on continue le traitement actuel. Metformine 850mg 2x/jour + Glibenclamide 5mg 1x/jour.", createdAt: new Date(Date.now() - 5100000).toISOString() },
   { id: "msg-5", threadId: "thread-1", senderId: "demo-patient-1", text: "D'accord, merci beaucoup.", createdAt: new Date(Date.now() - 4800000).toISOString() },
   { id: "msg-6", threadId: "thread-1", senderId: "demo-doctor-1", text: "Vos résultats sont bons, on se revoit dans 3 mois.", createdAt: new Date(Date.now() - 3600000).toISOString() },
-  // Cabinet messages
   { id: "msg-cab-1", threadId: "thread-cab-1", senderId: "demo-secretary-1", text: "Bonjour docteur, le patient de 14h30 a annulé.", createdAt: new Date(Date.now() - 1800000).toISOString() },
   { id: "msg-cab-2", threadId: "thread-cab-1", senderId: "demo-doctor-1", text: "D'accord, essayez de replacer le suivant.", createdAt: new Date(Date.now() - 1500000).toISOString() },
 ];
@@ -125,11 +121,15 @@ export function useChatMessages() {
   return useStore(messagesItemsStore);
 }
 
+/** Supabase Realtime sync for chat */
+export function useChatRealtime() {
+  useSupabaseRealtime("chat_messages", [["chat_messages"], ["chat_threads"]]);
+}
+
 // ─── Actions ────────────────────────────────────────────────
 
 /** Send a message in a thread */
-export function sendMessage(threadId: string, senderId: string, text: string, senderName?: string) {
-  // TODO BACKEND: POST /api/messages
+export async function sendMessage(threadId: string, senderId: string, text: string, senderName?: string) {
   const msg: ChatMessage = {
     id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     threadId,
@@ -141,7 +141,6 @@ export function sendMessage(threadId: string, senderId: string, text: string, se
 
   messagesItemsStore.set(prev => [...prev, msg]);
 
-  // Update thread last message + unread
   threadsStore.set(prev => prev.map(t => {
     if (t.id !== threadId) return t;
     const isA = t.participantA.id === senderId;
@@ -153,6 +152,23 @@ export function sendMessage(threadId: string, senderId: string, text: string, se
       unreadB: isA ? t.unreadB + 1 : t.unreadB,
     };
   }));
+
+  // Try Supabase
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await (supabase.from as any)("chat_messages").insert({
+        id: msg.id,
+        thread_id: threadId,
+        sender_id: senderId,
+        sender_name: senderName || "",
+        text,
+      });
+      await (supabase.from as any)("chat_threads")
+        .update({ last_message: text, last_message_at: msg.createdAt })
+        .eq("id", threadId);
+    }
+  } catch {}
 
   // Notify the other participant
   const thread = threadsStore.read().find(t => t.id === threadId);
@@ -171,7 +187,6 @@ export function sendMessage(threadId: string, senderId: string, text: string, se
 
 /** Mark all messages in a thread as read for a participant */
 export function markThreadRead(threadId: string, userId: string) {
-  // TODO BACKEND: PATCH /api/threads/:id/read
   const now = new Date().toISOString();
 
   messagesItemsStore.set(prev => prev.map(m =>
