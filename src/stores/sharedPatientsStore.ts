@@ -110,7 +110,13 @@ const store = createStore<SharedPatient[]>("medicare_shared_patients", initialPa
 export const sharedPatientsStore = store;
 
 export function useSharedPatients() {
-  return useStore(store);
+  return useDualQuery<SharedPatient[]>({
+    store,
+    tableName: "patients",
+    queryKey: ["patients"],
+    mapRowToLocal: mapPatientRow,
+    orderBy: { column: "created_at", ascending: false },
+  });
 }
 
 export function addPatient(patient: Omit<SharedPatient, "id">) {
