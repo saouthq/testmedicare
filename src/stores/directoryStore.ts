@@ -44,20 +44,17 @@ function mapDoctorRow(row: any): Doctor {
     id: row.id,
     name: `Dr. ${row.first_name || ""} ${row.last_name || ""}`.trim() || row.id,
     specialty: row.specialty || "",
-    city: row.city || "Tunis",
+    avatar: row.photo_url || "",
     address: row.address || "",
     phone: row.phone || "",
-    rating: row.rating || 0,
     reviewCount: 0,
-    photoUrl: row.photo_url || "",
+    price: row.consultation_price || 0,
     languages: row.languages || ["Français", "Arabe"],
-    consultationPrice: row.consultation_price || 0,
     teleconsultation: row.teleconsultation || false,
-    acceptsNewPatients: row.accepts_new_patients ?? true,
-    verified: row.verified || false,
-    bio: row.bio || "",
-    lat: row.lat || 0,
-    lng: row.lng || 0,
+    acceptsInsurance: true,
+    nextSlot: "",
+    availAM: [true, true, true, true, true, true, false],
+    availPM: [true, true, false, true, true, false, false],
   };
 }
 
@@ -65,15 +62,12 @@ function mapClinicRow(row: any): MockClinic {
   return {
     id: row.id,
     name: row.name || "",
+    slug: (row.name || "").toLowerCase().replace(/\s+/g, "-"),
     city: row.city || "Tunis",
     address: row.address || "",
     phone: row.phone || "",
-    email: row.email || "",
-    photoUrl: row.photo_url || "",
-    rating: row.rating || 0,
-    doctorsCount: row.doctors_count || 0,
     services: row.services || [],
-    verified: row.verified || false,
+    description: "",
   };
 }
 
@@ -81,16 +75,13 @@ function mapHospitalRow(row: any): MockHospital {
   return {
     id: row.id,
     name: row.name || "",
+    slug: (row.name || "").toLowerCase().replace(/\s+/g, "-"),
     city: row.city || "Tunis",
     address: row.address || "",
     phone: row.phone || "",
-    email: row.email || "",
-    photoUrl: row.photo_url || "",
-    rating: row.rating || 0,
-    type: row.type || "public",
-    bedsCount: row.beds_count || 0,
-    departments: row.departments || [],
-    verified: row.verified || false,
+    services: row.departments || [],
+    urgences: true,
+    description: "",
   };
 }
 
@@ -98,16 +89,12 @@ function mapPharmacyRow(row: any): MockPublicPharmacy {
   return {
     id: row.id,
     name: row.name || "",
+    slug: (row.name || "").toLowerCase().replace(/\s+/g, "-"),
     city: row.city || "Tunis",
     address: row.address || "",
     phone: row.phone || "",
-    photoUrl: row.photo_url || "",
-    rating: row.rating || 0,
-    isGuard: row.is_guard || false,
-    guardDate: row.guard_date || "",
-    lat: row.lat || 0,
-    lng: row.lng || 0,
-    verified: row.verified || false,
+    horaires: "",
+    deGarde: row.is_guard || false,
   };
 }
 
@@ -115,18 +102,23 @@ function mapMedicineRow(row: any): MockMedicine {
   return {
     id: row.id,
     name: row.name || "",
-    dci: row.dci || "",
+    slug: (row.name || "").toLowerCase().replace(/\s+/g, "-"),
+    dosage: "",
     form: row.form || "",
-    lab: row.lab || "",
     category: row.category || "",
-    price: row.price || 0,
-    description: row.description || "",
-    photoUrl: row.photo_url || "",
+    summary: row.description || "",
+    indications: [],
+    dosageText: "",
+    contraindications: [],
+    sideEffects: [],
+    interactions: [],
+    warnings: [],
+    pregnancyInfo: "",
+    storage: "",
   };
 }
 
 export function useDoctorsDirectory(): Doctor[] {
-  // Sync from directoryStore to individual store for demo
   const [dirState] = useDirectory();
   if (dirState.doctors.length > 0 && doctorsListStore.read().length === 0) {
     doctorsListStore.set(dirState.doctors);
@@ -201,7 +193,7 @@ export function useMedicinesDirectory(): MockMedicine[] {
   return data;
 }
 
-/** Supabase-aware doctors directory hook (legacy compat) */
+/** Legacy compat */
 export function useDoctorsDirectorySupabase() {
   const doctors = useDoctorsDirectory();
   return { data: doctors, isLoading: false };
