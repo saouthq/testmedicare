@@ -11,6 +11,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 // ── Action Definition ──
 export interface ActionDef {
@@ -280,6 +281,13 @@ export function toggleCategoryForRole(role: string, category: string, enabled: b
  */
 export function resetActionGating() {
   store.set({});
+  saveAdminConfig("action_gating", {});
+}
+
+/** Load from Supabase */
+export async function loadActionGating() {
+  const data = await loadAdminConfig<Record<string, boolean>>("action_gating");
+  if (data) store.set(data);
 }
 
 /**

@@ -9,6 +9,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 export interface SidebarVisibilityConfig {
   /** Per-role visibility: role → url → enabled */
@@ -76,6 +77,7 @@ export function toggleSidebarItem(role: string, url: string, enabled: boolean, a
     `Sidebar "${url}" ${enabled ? "activé" : "désactivé"} pour le rôle "${role}" par ${adminName}`,
     adminName
   );
+  saveAdminConfig("sidebar_visibility", store.read());
 }
 
 /**
@@ -100,6 +102,7 @@ export function toggleSidebarItemBySpecialty(specialty: string, url: string, ena
     `Sidebar "${url}" ${enabled ? "activé" : "désactivé"} pour la spécialité "${specialty}" par ${adminName}`,
     adminName
   );
+  saveAdminConfig("sidebar_visibility", store.read());
 }
 
 /**
@@ -107,4 +110,11 @@ export function toggleSidebarItemBySpecialty(specialty: string, url: string, ena
  */
 export function resetSidebarVisibility() {
   store.set(defaultConfig);
+  saveAdminConfig("sidebar_visibility", defaultConfig);
+}
+
+/** Load from Supabase */
+export async function loadSidebarVisibility() {
+  const data = await loadAdminConfig<SidebarVisibilityConfig>("sidebar_visibility");
+  if (data) store.set(data);
 }

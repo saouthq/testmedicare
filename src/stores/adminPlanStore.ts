@@ -6,6 +6,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 export type PlanRole = "doctor" | "pharmacy" | "laboratory" | "clinic" | "hospital";
 export type PlanBillingCycle = "monthly" | "annual";
@@ -82,22 +83,32 @@ export function createPlan(plan: Omit<AdminPlan, "id" | "createdAt" | "updatedAt
   };
   store.set(prev => [entry, ...prev]);
   appendLog("plan_created", "plan", entry.id, `Plan "${entry.name}" (${roleLabels[entry.role]}) créé — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
   return entry;
 }
 
 export function updatePlan(id: string, updates: Partial<AdminPlan>, motif: string) {
   store.set(prev => prev.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p));
   appendLog("plan_updated", "plan", id, `Plan modifié — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
 }
 
 export function togglePlanStatus(id: string, status: PlanStatus, motif: string) {
   store.set(prev => prev.map(p => p.id === id ? { ...p, status, updatedAt: new Date().toISOString() } : p));
   const plan = getPlanById(id);
   appendLog("plan_status_changed", "plan", id, `Plan "${plan?.name}" → ${status} — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
 }
 
 export function deletePlan(id: string, motif: string) {
   const plan = getPlanById(id);
   store.set(prev => prev.filter(p => p.id !== id));
   appendLog("plan_deleted", "plan", id, `Plan "${plan?.name}" supprimé — ${motif}`);
+  saveAdminConfig("admin_plans", store.read());
+}
+
+/** Load plans from Supabase */
+export async function loadAdminPlansFromSupabase() {
+  const data = await loadAdminConfig<AdminPlan[]>("admin_plans");
+  if (data && data.length > 0) store.set(data);
 }

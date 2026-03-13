@@ -4,6 +4,7 @@
  * Persists in localStorage so admin changes reflect everywhere.
  * TODO BACKEND: Replace with real API
  */
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 const MATRIX_KEY = "medicare_feature_matrix";
 const OVERRIDES_KEY = "medicare_feature_overrides";
@@ -281,10 +282,20 @@ export const getFullOverrides = (): Record<ActivityType, SpecialtyOverrides> => 
 
 export const saveMatrix = (matrix: Record<ActivityType, FeatureState>) => {
   localStorage.setItem(MATRIX_KEY, JSON.stringify(matrix));
+  saveAdminConfig("feature_matrix", matrix);
 };
 
 export const saveOverrides = (overrides: Record<ActivityType, SpecialtyOverrides>) => {
   localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  saveAdminConfig("feature_overrides", overrides);
+};
+
+/** Load from Supabase */
+export const loadFeatureMatrixFromSupabase = async () => {
+  const matrix = await loadAdminConfig<Record<ActivityType, FeatureState>>("feature_matrix");
+  if (matrix) localStorage.setItem(MATRIX_KEY, JSON.stringify(matrix));
+  const overrides = await loadAdminConfig<Record<ActivityType, SpecialtyOverrides>>("feature_overrides");
+  if (overrides) localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
 };
 
 // ── Public API: Get features enabled for a given activity/specialty/plan ──

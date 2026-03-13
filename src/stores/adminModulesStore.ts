@@ -6,6 +6,7 @@
  */
 import { createStore, useStore } from "./crossRoleStore";
 import { appendLog } from "@/services/admin/adminAuditService";
+import { saveAdminConfig, loadAdminConfig } from "./adminConfigSync";
 
 /**
  * Every toggleable module in the platform.
@@ -328,11 +329,19 @@ export function toggleModule(moduleId: string, enabled: boolean, adminName?: str
     moduleId,
     `Module "${mod?.label || moduleId}" ${enabled ? "activé" : "désactivé"} par ${adminName || "admin"}`
   );
+  saveAdminConfig("admin_modules", store.read());
 }
 
 /** Bulk update modules */
 export function setModuleStates(states: ModuleStates) {
   store.set(states);
+  saveAdminConfig("admin_modules", states);
+}
+
+/** Load module states from Supabase */
+export async function loadModuleStates() {
+  const data = await loadAdminConfig<ModuleStates>("admin_modules");
+  if (data) store.set(data);
 }
 
 /** Get count of disabled modules */
