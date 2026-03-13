@@ -445,6 +445,7 @@ const DashboardLayout = ({ children, role, title }: DashboardLayoutProps) => {
               </button>
             )}
             <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h1>
+            <ModeBadge />
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Admin spotlight trigger */}
