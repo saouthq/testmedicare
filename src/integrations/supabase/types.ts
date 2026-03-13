@@ -151,6 +151,101 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+          sender_name: string | null
+          text: string
+          thread_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          text?: string
+          thread_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          text?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_threads: {
+        Row: {
+          accepts_messages: boolean | null
+          category: string | null
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string | null
+          participant_a_avatar: string | null
+          participant_a_id: string
+          participant_a_name: string
+          participant_a_role: string | null
+          participant_b_avatar: string | null
+          participant_b_id: string
+          participant_b_name: string
+          participant_b_role: string | null
+          unread_a: number | null
+          unread_b: number | null
+        }
+        Insert: {
+          accepts_messages?: boolean | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          participant_a_avatar?: string | null
+          participant_a_id?: string
+          participant_a_name?: string
+          participant_a_role?: string | null
+          participant_b_avatar?: string | null
+          participant_b_id?: string
+          participant_b_name?: string
+          participant_b_role?: string | null
+          unread_a?: number | null
+          unread_b?: number | null
+        }
+        Update: {
+          accepts_messages?: boolean | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          participant_a_avatar?: string | null
+          participant_a_id?: string
+          participant_a_name?: string
+          participant_a_role?: string | null
+          participant_b_avatar?: string | null
+          participant_b_id?: string
+          participant_b_name?: string
+          participant_b_role?: string | null
+          unread_a?: number | null
+          unread_b?: number | null
+        }
+        Relationships: []
+      }
       doctor_availability: {
         Row: {
           active: boolean | null
@@ -232,6 +327,68 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          assurance: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          doctor_id: string | null
+          doctor_name: string
+          id: string
+          patient_avatar: string | null
+          patient_id: number | null
+          patient_name: string
+          payment: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          assurance?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_avatar?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          payment?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assurance?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_avatar?: string | null
+          patient_id?: number | null
+          patient_name?: string
+          payment?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lab_demands: {
         Row: {
           amount: string | null
@@ -308,6 +465,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          action_link: string | null
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          target_role: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_link?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          target_role?: string
+          title?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_link?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          target_role?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       patients: {
         Row: {
@@ -641,6 +834,7 @@ export type Database = {
         | "controle"
         | "teleconsultation"
         | "urgence"
+      invoice_status: "paid" | "pending" | "overdue"
       lab_demand_status:
         | "received"
         | "in_progress"
@@ -812,6 +1006,7 @@ export const Constants = {
         "teleconsultation",
         "urgence",
       ],
+      invoice_status: ["paid", "pending", "overdue"],
       lab_demand_status: [
         "received",
         "in_progress",
