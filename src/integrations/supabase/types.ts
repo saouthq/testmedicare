@@ -112,6 +112,39 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       blocked_slots: {
         Row: {
           created_at: string
@@ -246,6 +279,51 @@ export type Database = {
         }
         Relationships: []
       }
+      clinics_directory: {
+        Row: {
+          address: string | null
+          city: string
+          created_at: string
+          doctors_count: number | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          services: Json | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          doctors_count?: number | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          services?: Json | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          doctors_count?: number | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          services?: Json | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       doctor_availability: {
         Row: {
           active: boolean | null
@@ -279,6 +357,42 @@ export type Database = {
           id?: string
           slot_duration?: number | null
           start_time?: string
+        }
+        Relationships: []
+      }
+      doctor_documents: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          doctor_id: string
+          id: number
+          last_used: string | null
+          name: string
+          usage_count: number | null
+          variables: Json | null
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: never
+          last_used?: string | null
+          name?: string
+          usage_count?: number | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: never
+          last_used?: string | null
+          name?: string
+          usage_count?: number | null
+          variables?: Json | null
         }
         Relationships: []
       }
@@ -324,6 +438,176 @@ export type Database = {
           start_date?: string
           status?: Database["public"]["Enums"]["leave_status"]
           type?: Database["public"]["Enums"]["leave_type"]
+        }
+        Relationships: []
+      }
+      doctor_protocols: {
+        Row: {
+          created_at: string
+          description: string | null
+          doctor_id: string
+          duration: string | null
+          examens: Json | null
+          favorite: boolean | null
+          id: number
+          is_template: boolean | null
+          last_used: string | null
+          meds: Json | null
+          name: string
+          specialty: string | null
+          steps: Json | null
+          type: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          doctor_id: string
+          duration?: string | null
+          examens?: Json | null
+          favorite?: boolean | null
+          id?: never
+          is_template?: boolean | null
+          last_used?: string | null
+          meds?: Json | null
+          name?: string
+          specialty?: string | null
+          steps?: Json | null
+          type?: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          doctor_id?: string
+          duration?: string | null
+          examens?: Json | null
+          favorite?: boolean | null
+          id?: never
+          is_template?: boolean | null
+          last_used?: string | null
+          meds?: Json | null
+          name?: string
+          specialty?: string | null
+          steps?: Json | null
+          type?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      doctors_directory: {
+        Row: {
+          accepts_new_patients: boolean | null
+          address: string | null
+          bio: string | null
+          city: string
+          consultation_price: number | null
+          created_at: string
+          id: string
+          languages: string[] | null
+          lat: number | null
+          lng: number | null
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          specialty: string
+          teleconsultation: boolean | null
+          updated_at: string
+          verified: boolean | null
+        }
+        Insert: {
+          accepts_new_patients?: boolean | null
+          address?: string | null
+          bio?: string | null
+          city?: string
+          consultation_price?: number | null
+          created_at?: string
+          id: string
+          languages?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          specialty?: string
+          teleconsultation?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Update: {
+          accepts_new_patients?: boolean | null
+          address?: string | null
+          bio?: string | null
+          city?: string
+          consultation_price?: number | null
+          created_at?: string
+          id?: string
+          languages?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          specialty?: string
+          teleconsultation?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_directory_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitals_directory: {
+        Row: {
+          address: string | null
+          beds_count: number | null
+          city: string
+          created_at: string
+          departments: Json | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          type: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          beds_count?: number | null
+          city?: string
+          created_at?: string
+          departments?: Json | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          type?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          beds_count?: number | null
+          city?: string
+          created_at?: string
+          departments?: Json | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          type?: string | null
+          verified?: boolean | null
         }
         Relationships: []
       }
@@ -466,6 +750,45 @@ export type Database = {
           },
         ]
       }
+      medicines: {
+        Row: {
+          category: string | null
+          created_at: string
+          dci: string | null
+          description: string | null
+          form: string | null
+          id: string
+          lab: string | null
+          name: string
+          photo_url: string | null
+          price: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          dci?: string | null
+          description?: string | null
+          form?: string | null
+          id?: string
+          lab?: string | null
+          name?: string
+          photo_url?: string | null
+          price?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          dci?: string | null
+          description?: string | null
+          form?: string | null
+          id?: string
+          lab?: string | null
+          name?: string
+          photo_url?: string | null
+          price?: number | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_link: string | null
@@ -568,6 +891,54 @@ export type Database = {
           treating_doctor_name?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      pharmacies_directory: {
+        Row: {
+          address: string | null
+          city: string
+          created_at: string
+          guard_date: string | null
+          id: string
+          is_guard: boolean | null
+          lat: number | null
+          lng: number | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          rating: number | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          guard_date?: string | null
+          id?: string
+          is_guard?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          guard_date?: string | null
+          id?: string
+          is_guard?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          verified?: boolean | null
         }
         Relationships: []
       }
@@ -734,6 +1105,83 @@ export type Database = {
           last_name?: string
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          doctor_id: string | null
+          doctor_name: string
+          id: string
+          patient_id: number | null
+          patient_name: string
+          rating: number
+          text: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_id?: number | null
+          patient_name?: string
+          rating?: number
+          text?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          doctor_name?: string
+          id?: string
+          patient_id?: number | null
+          patient_name?: string
+          rating?: number
+          text?: string | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          conversation: Json | null
+          created_at: string
+          id: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          conversation?: Json | null
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          conversation?: Json | null
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
