@@ -35,12 +35,12 @@ const tickStyle = { fontSize: 11, fill: 'hsl(var(--muted-foreground))' };
 const getNpsColor = (nps: number) => nps >= 50 ? "text-accent" : nps >= 0 ? "text-warning" : "text-destructive";
 const getRatingColor = (r: number) => r >= 4.5 ? "text-accent" : r >= 3.5 ? "text-warning" : "text-destructive";
 
-/** Placeholder component for data requiring backend */
-const BackendPlaceholder = ({ label }: { label: string }) => (
+/** Empty state for data sections */
+const EmptyDataState = ({ label }: { label: string }) => (
   <div className="rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 p-8 text-center">
     <Info className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
     <p className="text-sm font-medium text-muted-foreground">{label}</p>
-    <p className="text-xs text-muted-foreground/60 mt-1">Nécessite intégration backend</p>
+    <p className="text-xs text-muted-foreground/60 mt-1">Les données s'afficheront automatiquement</p>
   </div>
 );
 
