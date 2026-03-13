@@ -51,7 +51,7 @@ const store = createStore<Report[]>("medicare_reports", SEED_REPORTS);
 export const reportsStore = store;
 
 export function useReports() {
-  return useStore(store);
+  return useDemoOnlyStore(store, []);
 }
 
 /** Submit a new report */

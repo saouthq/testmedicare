@@ -25,7 +25,7 @@ const store = createStore<AppointmentEvent[]>("medicare_appointment_events", [])
 export const appointmentsStore = store;
 
 export function useAppointmentEvents() {
-  return useStore(store);
+  return useDemoOnlyStore(store, []);
 }
 
 /** Secretary marks patient absent */
