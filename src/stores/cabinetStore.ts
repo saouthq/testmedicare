@@ -102,7 +102,8 @@ const SEED: CabinetState = {
 const store = createStore<CabinetState>("medicare_cabinets", SEED);
 
 export function useCabinetStore() {
-  return useStore(store);
+  const EMPTY: CabinetState = { cabinets: [], selectedCabinetId: null };
+  return useDemoOnlyStore(store, EMPTY);
 }
 
 export function readCabinetState(): CabinetState {
