@@ -414,7 +414,7 @@ const AdminAnalytics = () => {
                 </table>
               </div>
             </>
-          ) : <BackendPlaceholder label="Aucun médecin dans le store — Les données de performance seront affichées après intégration" />}
+          ) : <EmptyDataState label="Aucun médecin — Les données de performance s'afficheront avec les données réelles" />}
         </TabsContent>
 
         {/* ════ SATISFACTION ════ */}
