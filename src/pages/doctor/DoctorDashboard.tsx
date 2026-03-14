@@ -23,9 +23,10 @@ import {
 import { useSharedAppointments, getTodayDate } from "@/stores/sharedAppointmentsStore";
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import { useActionGating } from "@/hooks/useActionGating";
-import { readAuthUser } from "@/stores/authStore";
+import { readAuthUser, getAppMode } from "@/stores/authStore";
 
 const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
+const getCurrentDoctorId = () => readAuthUser()?.id;
 
 const DoctorDashboard = () => {
   const teleconsultSessions = useTeleconsultSessions();
@@ -45,10 +46,13 @@ const DoctorDashboard = () => {
   const today = getTodayDate();
 
   // Derive waiting room from shared appointments store
-  const todayAppointments = useMemo(() =>
-    allAppointments
-      .filter(a => a.date === today && a.doctor === getCurrentDoctor())
-      .sort((a, b) => a.startTime.localeCompare(b.startTime)),
+  const todayAppointments = useMemo(() => {
+    const isProduction = getAppMode() === "production";
+    // In production, RLS already filters by doctor_id, so no name filter needed
+    return allAppointments
+      .filter(a => a.date === today && (isProduction || a.doctor === getCurrentDoctor()))
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  },
     [allAppointments, today]
   );
 

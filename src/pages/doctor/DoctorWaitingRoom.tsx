@@ -23,7 +23,7 @@ import {
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import type { AppointmentStatus, SharedAppointment } from "@/types/appointment";
 import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
-import { readAuthUser } from "@/stores/authStore";
+import { readAuthUser, getAppMode } from "@/stores/authStore";
 
 const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
@@ -49,8 +49,10 @@ const DoctorWaitingRoom = () => {
   const today = getTodayDate();
 
   // Today's appointments for current doctor = waiting room
-  const entries = useMemo(() =>
-    allAppointments.filter(a => a.date === today && a.doctor === getCurrentDoctor()),
+  const entries = useMemo(() => {
+    const isProduction = getAppMode() === "production";
+    return allAppointments.filter(a => a.date === today && (isProduction || a.doctor === getCurrentDoctor()));
+  },
     [allAppointments, today]
   );
 

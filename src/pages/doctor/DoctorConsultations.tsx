@@ -128,7 +128,7 @@ type LogItem = {
   meta?: string;
 };
 
-import { readAuthUser } from "@/stores/authStore";
+import { readAuthUser, getAppMode } from "@/stores/authStore";
 const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
 // Map shared appointment status to local ConsultStatus
@@ -618,10 +618,14 @@ const DoctorConsultations = () => {
 
   // Sync from shared store
   useEffect(() => {
-    const currentDoc = getCurrentDoctor();
-    const doctorApts = allSharedAppointments.filter(a =>
-      a.doctor === currentDoc || a.doctor.includes(readAuthUser()?.lastName || "Bouazizi")
-    );
+    const isProduction = getAppMode() === "production";
+    // In production, RLS already filters by doctor_id — no name filter needed
+    const doctorApts = isProduction
+      ? allSharedAppointments
+      : allSharedAppointments.filter(a => {
+          const currentDoc = getCurrentDoctor();
+          return a.doctor === currentDoc || a.doctor.includes(readAuthUser()?.lastName || "Bouazizi");
+        });
     const mapped = doctorApts.map((a, i) => mapAppointmentToConsult(a, i));
     setConsultations(mapped);
   }, [allSharedAppointments]);
