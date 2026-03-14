@@ -72,7 +72,7 @@ function mapHealthRecordsToState(records: any[], patientRow: any): HealthState {
         state.vaccinations.push({ name: r.title || "", doses: data.doses || 1, lastDate: r.date || data.lastDate || "", nextDate: data.nextDate || "", ...data });
         break;
       case "measure":
-        state.measures.push({ label: r.title || "", value: data.value || "", date: r.date || "", unit: data.unit || "" });
+        state.measures.push({ label: r.title || "", value: data.value || "", date: r.date || "" });
         break;
       case "surgery":
         state.surgeries.push({ name: r.title || "", date: r.date || "", hospital: data.hospital || "", ...data });
