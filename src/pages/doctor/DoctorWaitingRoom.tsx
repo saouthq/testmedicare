@@ -23,7 +23,7 @@ import {
 import { useSharedPatients } from "@/stores/sharedPatientsStore";
 import type { AppointmentStatus, SharedAppointment } from "@/types/appointment";
 import { APPOINTMENT_STATUS_CONFIG } from "@/types/appointment";
-import { readAuthUser } from "@/stores/authStore";
+import { readAuthUser, getAppMode } from "@/stores/authStore";
 
 const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 
