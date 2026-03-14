@@ -71,9 +71,10 @@ type ColorKey = AppointmentColorKey;
 type Appt = SharedAppointment;
 type BlockedSlot = SharedBlockedSlot;
 
-import { readAuthUser } from "@/stores/authStore";
+import { readAuthUser, getAppMode } from "@/stores/authStore";
 const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
 const CURRENT_DOCTOR = getCurrentDoctor();
+const isProductionMode = () => getAppMode() === "production";
 
 interface SlotCtx {
   date: string;
