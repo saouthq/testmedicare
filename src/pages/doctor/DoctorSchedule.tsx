@@ -1,210 +1,83 @@
-/**
- * DoctorSchedule — Agenda médecin complet
- * Design : cohérent avec le reste du site (tokens primary/accent/warning/destructive)
- * Features :
- *   • 4 vues : Semaine · Jour · Mois · Liste
- *   • Clic sur créneau vide → popup Créer RDV / Bloquer
- *   • Blocage avec durée libre (heures + minutes) → affiché grisé dans grille
- *   • Couleurs d'étiquettes configurables par le médecin par type de RDV
- *   • Créer RDV pour patient inscrit OU nouveau patient (champs libres)
- *   • Confirmations ConfirmDialog avant chaque action destructive
- *   • Actions uniquement au clic (plus de hover actions)
- *   • Statut "absent" (plus de "no_show")
- */
+DoctorSchedule — Agenda médecin complet
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  List,
+  Loader2,
+  Lock,
+  MessageSquare,
+  MoonStar,
+  Phone,
+  Plus,
+  Search,
+  Palette,
+  UserRound,
+  UserX,
+  Video,
+  CheckCircle2,
+  Stethoscope,
+  RefreshCcw,
+  CalendarClock,
+  LayoutGrid,
+  Printer,
+  X,
+} from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import LoadingSkeleton from "@/components/shared/LoadingSkeleton";
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Video,
-  LayoutGrid,
-  List as ListIcon,
-  Search,
-  Phone,
-  X,
-  CheckCircle2,
-  Ban,
-  MessageSquare,
-  Calendar as CalIcon,
-  Repeat,
-  Printer,
-  UserCheck,
-  CalendarDays,
-  UserX,
-  Activity,
-  CalendarClock,
-  RefreshCw,
-  Timer,
-  Lock,
-  Clock,
-  UserPlus,
-  User,
-  Settings2,
-  Palette,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
-import UpgradeBanner from "@/components/shared/UpgradeBanner";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import DoctorJoinTeleconsultButton from "@/components/teleconsultation/DoctorJoinTeleconsultButton";
-import { useTeleconsultSessions } from "@/components/teleconsultation/teleconsultSessionStore";
-import { useSharedAppointments, updateAppointmentStatus, createAppointment as storeCreateAppointment, rescheduleAppointment } from "@/stores/sharedAppointmentsStore";
-import { useSharedBlockedSlots, addBlockedSlot, updateBlockedSlot as storeUpdateBlock, removeBlockedSlot } from "@/stores/sharedBlockedSlotsStore";
-import { useSharedAvailability } from "@/stores/sharedAvailabilityStore";
-import { useSharedLeaves } from "@/stores/sharedLeavesStore";
-import { useSharedPatients } from "@/stores/sharedPatientsStore";
-import { pushNotification } from "@/stores/notificationsStore";
-import type { SharedAppointment, SharedBlockedSlot, AppointmentType, AppointmentColorKey, AvailabilityDay, SharedLeave } from "@/types/appointment";
-import { computeEndTime, DEFAULT_TYPE_COLORS as SHARED_TYPE_COLORS, type AppointmentStatus } from "@/types/appointment";
+import { useAuth, useAppMode } from "@/stores/authStore";
+import { getAppointmentRepo } from "@/modules/appointments";
+import { getPatientRepo } from "@/modules/patients";
+import { useSharedAvailability, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
+import {
+  addBlockedSlot,
+  removeBlockedSlot,
+  useSharedBlockedSlots,
+} from "@/stores/sharedBlockedSlotsStore";
+import type { SharedPatient } from "@/stores/sharedPatientsStore";
+import type {
+  AppointmentColorKey,
+  AppointmentStatus,
+  AppointmentType,
+  SharedAppointment,
+  SharedBlockedSlot,
+} from "@/types/appointment";
+import {
+  APPOINTMENT_STATUS_CONFIG,
+  computeEndTime,
+  DEFAULT_TYPE_COLORS,
+} from "@/types/appointment";
 
-// ─── Types (aliases to shared types) ──────────────────────────
-type ViewMode = "week" | "day" | "month" | "list";
-type ApptStatus = AppointmentStatus;
-type ApptType = AppointmentType;
-type ColorKey = AppointmentColorKey;
-type Appt = SharedAppointment;
-type BlockedSlot = SharedBlockedSlot;
-
-import { readAuthUser, getAppMode } from "@/stores/authStore";
-const getCurrentDoctor = () => readAuthUser()?.doctorName || "Dr. Bouazizi";
-const CURRENT_DOCTOR = getCurrentDoctor();
-const isProductionMode = () => getAppMode() === "production";
-
-interface SlotCtx {
-  date: string;
-  time: string;
-  x: number;
-  y: number;
-}
-
-// ─── Couleurs — tokens du site uniquement ─────────────────────
-const COLOR_OPTIONS: {
-  key: ColorKey;
-  label: string;
-  bg: string;
-  border: string;
-  text: string;
-  leftBar: string;
-  pill: string;
-  dot: string;
-}[] = [
-  {
-    key: "primary",
-    label: "Bleu",
-    bg: "bg-primary/10",
-    border: "border-primary/30",
-    text: "text-primary",
-    leftBar: "border-l-primary",
-    pill: "bg-primary/10 text-primary",
-    dot: "bg-primary",
-  },
-  {
-    key: "accent",
-    label: "Vert",
-    bg: "bg-accent/10",
-    border: "border-accent/30",
-    text: "text-accent",
-    leftBar: "border-l-accent",
-    pill: "bg-accent/10 text-accent",
-    dot: "bg-accent",
-  },
-  {
-    key: "warning",
-    label: "Orange",
-    bg: "bg-warning/10",
-    border: "border-warning/30",
-    text: "text-warning",
-    leftBar: "border-l-warning",
-    pill: "bg-warning/10 text-warning",
-    dot: "bg-warning",
-  },
-  {
-    key: "destructive",
-    label: "Rouge",
-    bg: "bg-destructive/10",
-    border: "border-destructive/30",
-    text: "text-destructive",
-    leftBar: "border-l-destructive",
-    pill: "bg-destructive/10 text-destructive",
-    dot: "bg-destructive",
-  },
-  {
-    key: "secondary",
-    label: "Gris-bleu",
-    bg: "bg-secondary",
-    border: "border-secondary-foreground/20",
-    text: "text-secondary-foreground",
-    leftBar: "border-l-secondary-foreground/40",
-    pill: "bg-secondary text-secondary-foreground",
-    dot: "bg-secondary-foreground/60",
-  },
-  {
-    key: "muted",
-    label: "Gris",
-    bg: "bg-muted",
-    border: "border-border",
-    text: "text-muted-foreground",
-    leftBar: "border-l-muted-foreground/40",
-    pill: "bg-muted text-muted-foreground",
-    dot: "bg-muted-foreground/50",
-  },
-];
-
-const colorStyle = (key: ColorKey) => COLOR_OPTIONS.find((c) => c.key === key)!;
-
-// Couleurs par défaut par type — from shared config
-const DEFAULT_TYPE_COLORS: Record<ApptType, ColorKey> = { ...SHARED_TYPE_COLORS };
-
-// ─── Statuts ──────────────────────────────────────────────────
-const STATUS_LABEL: Record<ApptStatus, string> = {
-  pending: "En attente",
-  confirmed: "Confirmé",
-  arrived: "Arrivé",
-  in_waiting: "En salle d'attente",
-  in_progress: "En cours",
-  done: "Terminé",
-  cancelled: "Annulé",
-  absent: "Absent",
-};
-const STATUS_CLS: Record<ApptStatus, string> = {
-  pending: "bg-warning/10 text-warning border-warning/20",
-  confirmed: "bg-accent/10 text-accent border-accent/20",
-  arrived: "bg-primary/10 text-primary border-primary/20",
-  in_waiting: "bg-warning/10 text-warning border-warning/20",
-  in_progress: "bg-primary/10 text-primary border-primary/20",
-  done: "bg-muted text-muted-foreground border-border",
-  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
-  absent: "bg-destructive/10 text-destructive border-destructive/20",
-};
-const STATUS_LEFT: Record<ApptStatus, string> = {
-  pending: "border-l-warning",
-  confirmed: "border-l-accent",
-  arrived: "border-l-primary",
-  in_waiting: "border-l-warning",
-  in_progress: "border-l-primary",
-  done: "border-l-muted-foreground/30",
-  cancelled: "border-l-destructive/40",
-  absent: "border-l-destructive/30",
-};
-
-// ─── Layout constants ─────────────────────────────────────────
 const DAY_START = 8 * 60;
 const DAY_END = 19 * 60;
-const PX_PER_MIN = 1.4;
-const GRID_H = (DAY_END - DAY_START) * PX_PER_MIN;
-const SLOT_H = 30 * PX_PER_MIN;
-const HOUR_LABELS = Array.from({ length: (DAY_END - DAY_START) / 30 }, (_, i) => {
-  const m = DAY_START + i * 30;
-  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-});
+const SLOT_MINUTES = 30;
+const PX_PER_MINUTE = 1.45;
+const GRID_HEIGHT = (DAY_END - DAY_START) * PX_PER_MINUTE;
+const SLOT_HEIGHT = SLOT_MINUTES * PX_PER_MINUTE;
 
-// ─── I18n ─────────────────────────────────────────────────────
 const DAYS_SHORT = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const MONTHS_LONG = [
   "Janvier",
@@ -220,2178 +93,1454 @@ const MONTHS_LONG = [
   "Novembre",
   "Décembre",
 ];
-const MONTHS_SH = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
-const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+const MONTHS_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const WEEKDAY_LONG = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-const normalizeDoctorName = (value?: string) =>
-  (value || "")
-    .toLowerCase()
-    .replace(/dr\.?\s*/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+const STATUS_ORDER: AppointmentStatus[] = [
+  "pending",
+  "confirmed",
+  "arrived",
+  "in_waiting",
+  "in_progress",
+  "done",
+  "absent",
+  "cancelled",
+];
+const ACTIVE_STATUSES: AppointmentStatus[] = [
+  "pending",
+  "confirmed",
+  "arrived",
+  "in_waiting",
+  "in_progress",
+];
 
-const doctorMatches = (a?: string, b?: string) => {
-  const na = normalizeDoctorName(a);
-  const nb = normalizeDoctorName(b);
-  if (!na || !nb) return false;
-  return na === nb || na.includes(nb) || nb.includes(na);
+const STATUS_ACTIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["arrived", "absent", "cancelled"],
+  arrived: ["in_waiting", "in_progress", "absent"],
+  in_waiting: ["in_progress", "absent"],
+  in_progress: [],
+  done: [],
+  absent: [],
+  cancelled: [],
 };
 
-// ─── Date helpers ─────────────────────────────────────────────
-const fmtDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const addDays = (d: Date, n: number) => {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
+const TYPE_LABELS: AppointmentType[] = [
+  "Consultation",
+  "Suivi",
+  "Première visite",
+  "Contrôle",
+  "Téléconsultation",
+  "Urgence",
+];
+
+const DURATION_PRESETS = [15, 20, 30, 45, 60, 90];
+
+const BLOCK_REASON_PRESETS: Record<BlockCalendarKind, string[]> = {
+  cabinet: ["Pause", "Réunion", "Formation", "Fermeture exceptionnelle"],
+  personal: ["Déjeuner", "Administratif", "Personnel", "Déplacement"],
 };
-const addMonths = (d: Date, n: number) => {
-  const r = new Date(d);
-  r.setMonth(r.getMonth() + n);
-  return r;
+
+const COLOR_STYLES: Record<AppointmentColorKey, string> = {
+  primary: "bg-primary/10 border-primary/25 text-primary",
+  accent: "bg-accent/10 border-accent/25 text-accent",
+  warning: "bg-warning/10 border-warning/25 text-warning",
+  destructive: "bg-destructive/10 border-destructive/25 text-destructive",
+  secondary: "bg-secondary border-secondary text-secondary-foreground",
+  muted: "bg-muted border-border text-muted-foreground",
 };
-const isToday = (s: string) => {
-  const d = new Date();
-  return s === `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const COLOR_OPTIONS: { key: AppointmentColorKey; label: string; className: string }[] = [
+  { key: "primary", label: "Bleu", className: "bg-primary/15 border-primary/30 text-primary" },
+  { key: "accent", label: "Vert", className: "bg-accent/15 border-accent/30 text-accent" },
+  { key: "warning", label: "Orange", className: "bg-warning/15 border-warning/30 text-warning" },
+  { key: "destructive", label: "Rouge", className: "bg-destructive/15 border-destructive/30 text-destructive" },
+  { key: "secondary", label: "Violet", className: "bg-secondary text-secondary-foreground border-secondary" },
+  { key: "muted", label: "Neutre", className: "bg-muted text-muted-foreground border-border" },
+];
+
+
+const TYPE_COLOR_STORAGE_KEY = "medicare_doctor_schedule_type_colors";
+
+const FILTER_OPTIONS: { value: "all" | AppointmentStatus; label: string }[] = [
+  { value: "all", label: "Tous" },
+  { value: "confirmed", label: "Confirmés" },
+  { value: "arrived", label: "Arrivés" },
+  { value: "in_waiting", label: "Salle d'attente" },
+  { value: "in_progress", label: "En consultation" },
+  { value: "done", label: "Terminés" },
+  { value: "cancelled", label: "Annulés" },
+  { value: "absent", label: "Absents" },
+];
+
+type ViewMode = "week" | "day" | "month" | "list";
+type DraftMode = "create" | "edit";
+
+type AppointmentDraft = {
+  date: string;
+  startTime: string;
+  duration: number;
+  type: AppointmentType;
+  motif: string;
+  teleconsultation: boolean;
+  assurance: string;
+  notes: string;
+  patientMode: "existing" | "new";
+  patientId: string;
+  patientName: string;
+  phone: string;
+  email: string;
 };
-const t2min = (t: string) => {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
+
+type BlockCalendarKind = "cabinet" | "personal";
+
+type BlockDraft = {
+  date: string;
+  startTime: string;
+  duration: number;
+  reason: string;
+  calendarKind: BlockCalendarKind;
 };
-const min2t = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-const endTime = (s: string, d: number) => min2t(t2min(s) + d);
-const apptTop = (t: string) => Math.max(0, (t2min(t) - DAY_START) * PX_PER_MIN);
-const apptH = (d: number) => Math.max(d * PX_PER_MIN, 22);
-const dow = (d: Date) => (d.getDay() === 0 ? 6 : d.getDay() - 1);
-function weekStart(d: Date): Date {
-  const r = new Date(d);
-  r.setHours(0, 0, 0, 0);
-  r.setDate(r.getDate() - dow(r));
-  return r;
-}
-const weekDays = (ws: Date) => Array.from({ length: 7 }, (_, i) => addDays(ws, i));
-function monthCells(y: number, m: number): (Date | null)[] {
-  const first = new Date(y, m, 1),
-    total = new Date(y, m + 1, 0).getDate(),
-    pad = dow(first);
-  return [...Array(pad).fill(null), ...Array.from({ length: total }, (_, i) => new Date(y, m, i + 1))];
+
+type SlotActionState = {
+  date: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  closedDay: boolean;
+  fromRange: boolean;
+};
+
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, (month || 1) - 1, day || 1, 12, 0, 0, 0);
 }
 
-// ─── Data now comes from shared stores ────────────────────────
-
-// ═══════════════════════════════════════════════════════════════════
-// SUB-COMPONENTS
-// ═══════════════════════════════════════════════════════════════════
-
-// ─── Appointment card (click → action, pas hover) ─────────────
-function ApptCard({
-  apt,
-  height,
-  colorKey,
-  onClick,
-}: {
-  apt: Appt;
-  height: number;
-  colorKey: ColorKey;
-  onClick: () => void;
-}) {
-  const s = colorStyle(colorKey);
-  const tiny = height < 30;
-  const small = height < 58;
-  const large = height >= 96;
-  const faded = ["cancelled", "absent", "done"].includes(apt.status);
-
-  return (
-    <div
-      onClick={onClick}
-      className={`h-full w-full rounded-md border border-l-[3px] overflow-hidden cursor-pointer
-        transition-all hover:shadow-md select-none relative group
-        ${s.bg} ${s.border} ${STATUS_LEFT[apt.status]} ${faded ? "opacity-40" : ""}`}
-    >
-      <div className="px-2 py-1 h-full flex flex-col min-h-0 overflow-hidden">
-        <div className="flex items-center gap-1 min-w-0">
-          <span className={`font-semibold truncate leading-tight ${tiny ? "text-[9px]" : "text-[11px]"} ${s.text}`}>
-            {apt.patient}
-          </span>
-          {apt.teleconsultation && <Video className="h-2.5 w-2.5 shrink-0 text-primary" />}
-          {apt.isNew && !tiny && <span className="h-1.5 w-1.5 rounded-full bg-warning shrink-0" />}
-          {apt.status === "pending" && !tiny && (
-            <span className="h-1.5 w-1.5 rounded-full bg-warning shrink-0 animate-pulse" />
-          )}
-          {apt.status === "arrived" && !tiny && <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
-          {apt.status === "in_progress" && !tiny && (
-            <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0 animate-pulse" />
-          )}
-        </div>
-        {!small && <p className="text-[9px] text-muted-foreground truncate mt-0.5">{apt.motif}</p>}
-        {large && (
-          <div className="flex items-center gap-1 mt-auto">
-            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${s.pill}`}>{apt.type}</span>
-            <span className="text-[9px] text-muted-foreground">
-              {apt.startTime}–{endTime(apt.startTime, apt.duration)}
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function formatDateKey(date: Date) {
+  const y = date.getFullYear();
+  const m = `${date.getMonth() + 1}`.padStart(2, "0");
+  const d = `${date.getDate()}`.padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-// ─── Blocked slot card ────────────────────────────────────────
-function BlockCard({ block, height, onClick }: { block: BlockedSlot; height: number; onClick: () => void }) {
-  const tiny = height < 26;
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      className="h-full w-full rounded-md border border-dashed border-muted-foreground/40 bg-muted/50 overflow-hidden select-none cursor-pointer group hover:bg-muted/70 hover:border-muted-foreground/60 transition-colors"
-    >
-      <div className="px-2 py-1 flex items-center gap-1.5 h-full">
-        <Lock
-          className={`shrink-0 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors ${tiny ? "h-2.5 w-2.5" : "h-3 w-3"}`}
-        />
-        {!tiny && <span className="text-[10px] text-muted-foreground/80 font-medium truncate">{block.reason}</span>}
-      </div>
-    </div>
-  );
+function toTimeLabel(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
 }
 
-// ─── Current time line ────────────────────────────────────────
-function NowLine() {
-  const calc = () => (new Date().getHours() * 60 + new Date().getMinutes() - DAY_START) * PX_PER_MIN;
-  const [top, setTop] = useState(calc);
-  useEffect(() => {
-    const id = setInterval(() => setTop(calc()), 30000);
-    return () => clearInterval(id);
-  }, []);
-  if (top < 0 || top > GRID_H) return null;
-  return (
-    <div className="absolute left-0 right-0 z-20 pointer-events-none flex items-center" style={{ top }}>
-      <div className="h-2.5 w-2.5 rounded-full bg-destructive -ml-1 shrink-0" />
-      <div className="flex-1 h-px bg-destructive opacity-60" />
-    </div>
-  );
+function getEndTimeLabel(startTime: string, duration: number) {
+  return toTimeLabel(timeToMinutes(startTime) + duration);
 }
 
-// ─── Slot popup (clic sur case vide) ─────────────────────────
-function SlotPopup({
-  ctx,
-  onRdv,
-  onBlock,
-  onClose,
-}: {
-  ctx: SlotCtx;
-  onRdv: () => void;
-  onBlock: () => void;
-  onClose: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState<React.CSSProperties>({ top: ctx.y + 8, left: ctx.x });
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    setTimeout(() => document.addEventListener("mousedown", h), 0);
-    return () => document.removeEventListener("mousedown", h);
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    const { innerWidth: W, innerHeight: H } = window;
-    const { offsetWidth: w, offsetHeight: h } = ref.current;
-    setStyle({
-      top: ctx.y + h + 8 > H ? Math.max(4, ctx.y - h - 4) : ctx.y + 8,
-      left: ctx.x + w > W ? Math.max(4, ctx.x - w) : ctx.x,
-    });
-  }, [ctx]);
-
-  const d = new Date(ctx.date + "T00:00:00");
-  const label = `${DAYS_SHORT[dow(d)]} ${d.getDate()} ${MONTHS_SH[d.getMonth()]} — ${ctx.time}`;
-
-  return (
-    <div
-      ref={ref}
-      className="fixed z-[60] w-52 rounded-xl border bg-card shadow-elevated overflow-hidden"
-      style={style}
-    >
-      <div className="px-3 py-2 border-b bg-muted/40">
-        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Créneau libre</p>
-        <p className="text-xs font-semibold text-foreground mt-0.5">{label}</p>
-      </div>
-      <div className="p-1.5 space-y-1">
-        <button
-          onClick={onRdv}
-          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium
-            text-foreground hover:bg-primary/8 hover:text-primary transition-colors text-left"
-        >
-          <Plus className="h-4 w-4 text-primary shrink-0" />
-          Nouveau rendez-vous
-        </button>
-        <button
-          onClick={onBlock}
-          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium
-            text-foreground hover:bg-muted/60 transition-colors text-left"
-        >
-          <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
-          Bloquer ce créneau
-        </button>
-      </div>
-    </div>
-  );
+function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
 }
 
-// ─── Unified Block Modal ──────────────────────────────────────
-// Utilisé depuis : toolbar "Bloquer" ET popup slot (date/heure pré-remplies)
-function UnifiedBlockModal({
-  initDate,
-  initTime,
-  onClose,
-  onBlock,
-}: {
-  initDate?: string;
-  initTime?: string;
-  onClose: () => void;
-  onBlock: (b: BlockedSlot) => void;
-}) {
-  const [reason, setReason] = useState("Pause");
-  const [date, setDate] = useState(initDate ?? fmtDate(new Date()));
-  const [time, setTime] = useState(initTime ?? "08:00");
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(30);
-  const REASONS = [
-    "Pause",
-    "Réunion",
-    "Déjeuner",
-    "Formation",
-    "Congé",
-    "Jour férié",
-    "Déplacement",
-    "Personnel",
-    "Autre",
-  ];
-  const totalMin = hours * 60 + minutes;
-  const endT = totalMin > 0 ? endTime(time, totalMin) : "—";
+function getWeekStart(date: Date) {
+  const copy = new Date(date);
+  const day = copy.getDay() === 0 ? 7 : copy.getDay();
+  copy.setDate(copy.getDate() - day + 1);
+  copy.setHours(12, 0, 0, 0);
+  return copy;
+}
 
-  const SHORTCUTS: [string, number, number][] = [
-    ["30 min", 0, 30],
-    ["1h", 1, 0],
-    ["2h", 2, 0],
-    ["4h", 4, 0],
-    ["Journée", 9, 0],
-  ];
+function addDays(date: Date, amount: number) {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + amount);
+  copy.setHours(12, 0, 0, 0);
+  return copy;
+}
 
-  const handle = () => {
-    if (totalMin < 15) {
-      toast({ title: "Durée minimum : 15 minutes", variant: "destructive" });
+function addMonths(date: Date, amount: number) {
+  const copy = new Date(date);
+  copy.setMonth(copy.getMonth() + amount);
+  copy.setHours(12, 0, 0, 0);
+  return copy;
+}
+
+function isSameDay(a: Date, b: Date) {
+  return formatDateKey(a) === formatDateKey(b);
+}
+
+function getWeekDays(anchor: Date) {
+  const start = getWeekStart(anchor);
+  return Array.from({ length: 7 }, (_, index) => addDays(start, index));
+}
+
+function getMonthMatrix(anchor: Date) {
+  const start = new Date(anchor.getFullYear(), anchor.getMonth(), 1, 12, 0, 0, 0);
+  const firstDay = start.getDay() === 0 ? 6 : start.getDay() - 1;
+  start.setDate(start.getDate() - firstDay);
+  return Array.from({ length: 42 }, (_, index) => addDays(start, index));
+}
+
+function isWithinRange(dateKey: string, start: Date, end: Date) {
+  const current = parseLocalDate(dateKey).getTime();
+  return current >= start.getTime() && current <= end.getTime();
+}
+
+function formatHumanDate(dateKey: string) {
+  const date = parseLocalDate(dateKey);
+  return `${WEEKDAY_LONG[date.getDay()]} ${date.getDate()} ${MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function getAvatar(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getStatusLabel(status: AppointmentStatus) {
+  return APPOINTMENT_STATUS_CONFIG[status]?.label || status;
+}
+
+function getStatusClasses(status: AppointmentStatus) {
+  return APPOINTMENT_STATUS_CONFIG[status]?.className || "bg-muted text-muted-foreground";
+}
+
+function getStatusMarkerClasses(status: AppointmentStatus) {
+  switch (status) {
+    case "confirmed":
+      return "bg-accent";
+    case "arrived":
+      return "bg-sky-500";
+    case "in_waiting":
+    case "pending":
+      return "bg-warning";
+    case "in_progress":
+      return "bg-primary";
+    case "done":
+      return "bg-slate-400";
+    case "absent":
+      return "bg-orange-500";
+    case "cancelled":
+      return "bg-destructive";
+    default:
+      return "bg-muted-foreground";
+  }
+}
+
+function getStatusActionIcon(status: AppointmentStatus) {
+  switch (status) {
+    case "confirmed":
+      return CheckCircle2;
+    case "arrived":
+      return UserRound;
+    case "in_waiting":
+      return Clock3;
+    case "in_progress":
+      return Stethoscope;
+    case "done":
+      return CheckCircle2;
+    case "absent":
+      return UserX;
+    case "cancelled":
+      return X;
+    default:
+      return CalendarClock;
+  }
+}
+
+function getTypeClasses(type: AppointmentType) {
+  return COLOR_STYLES[DEFAULT_TYPE_COLORS[type]];
+}
+
+function getStepIndex(status: AppointmentStatus) {
+  if (status === "pending" || status === "confirmed") return 0;
+  if (status === "arrived") return 1;
+  if (status === "in_waiting") return 2;
+  if (status === "in_progress") return 3;
+  return 4;
+}
+
+function statusActionLabel(status: AppointmentStatus) {
+  switch (status) {
+    case "confirmed":
+      return "Confirmer";
+    case "arrived":
+      return "Marquer arrivé";
+    case "in_waiting":
+      return "Mettre en attente";
+    case "in_progress":
+      return "Ouvrir la consultation";
+    case "done":
+      return "Clôturer depuis la consultation";
+    case "absent":
+      return "Patient absent";
+    case "cancelled":
+      return "Annuler";
+    default:
+      return status;
+  }
+}
+
+function getRecommendedNextStatus(status: AppointmentStatus): AppointmentStatus | null {
+  switch (status) {
+    case "pending":
+      return "confirmed";
+    case "confirmed":
+      return "arrived";
+    case "arrived":
+      return "in_waiting";
+    case "in_waiting":
+      return "in_progress";
+    case "in_progress":
+      return null;
+    default:
+      return null;
+  }
+}
+
+function getWorkflowHint(status: AppointmentStatus) {
+  switch (status) {
+    case "pending":
+      return "Le rendez-vous doit être confirmé avant l'accueil du patient.";
+    case "confirmed":
+      return "Le patient est attendu. À son arrivée, passez-le à l'étape suivante.";
+    case "arrived":
+      return "Le patient est sur place. Vous pouvez le mettre en attente ou le prendre immédiatement.";
+    case "in_waiting":
+      return "Le patient attend d'être appelé. Lancez la consultation au bon moment.";
+    case "in_progress":
+      return "La consultation est en cours. La clôture se fait uniquement depuis la page Consultation.";
+    case "done":
+      return "Rendez-vous terminé. Le dossier patient et la consultation restent accessibles.";
+    case "absent":
+      return "Patient absent. Vous pouvez reprogrammer ce rendez-vous si besoin.";
+    case "cancelled":
+      return "Rendez-vous annulé. Vous pouvez créer un nouveau créneau si nécessaire.";
+    default:
+      return "Suivez les actions proposées pour garder un agenda cohérent.";
+  }
+}
+
+function createDraft(date?: string, time?: string): AppointmentDraft {
+  return {
+    date: date || formatDateKey(new Date()),
+    startTime: time || "09:00",
+    duration: 30,
+    type: "Consultation",
+    motif: "",
+    teleconsultation: false,
+    assurance: "",
+    notes: "",
+    patientMode: "existing",
+    patientId: "",
+    patientName: "",
+    phone: "",
+    email: "",
+  };
+}
+
+function createBlockDraft(date?: string, time?: string, calendarKind: BlockCalendarKind = "cabinet"): BlockDraft {
+  return {
+    date: date || formatDateKey(new Date()),
+    startTime: time || "12:00",
+    duration: 30,
+    reason: "Pause",
+    calendarKind,
+  };
+}
+
+function getConsultationHref(appointment: SharedAppointment) {
+  return `/dashboard/doctor/consultation/new?patient=${appointment.patientId ?? ""}&aptId=${appointment.id}${appointment.teleconsultation ? "&teleconsult=true" : ""}`;
+}
+
+function getDayNameFromDateKey(dateKey: string) {
+  const date = parseLocalDate(dateKey);
+  return WEEK_DAYS[(date.getDay() + 6) % 7];
+}
+
+function getBlockCalendarKind(reason: string | undefined): BlockCalendarKind {
+  return String(reason || "").startsWith("[Personnel]") ? "personal" : "cabinet";
+}
+
+function normalizeBlockReason(reason: string, calendarKind: BlockCalendarKind) {
+  const clean = String(reason || "").replace(/^\[Personnel\]\s*/, "").trim() || "Blocage";
+  return calendarKind === "personal" ? `[Personnel] ${clean}` : clean;
+}
+
+function displayBlockReason(reason: string | undefined) {
+  return String(reason || "").replace(/^\[Personnel\]\s*/, "").trim() || "Blocage";
+}
+
+function slotTop(time: string) {
+  return Math.max(0, (timeToMinutes(time) - DAY_START) * PX_PER_MINUTE);
+}
+
+function slotHeight(duration: number) {
+  return Math.max(28, duration * PX_PER_MINUTE);
+}
+
+function getCurrentTimeLineTop(date: Date) {
+  const now = new Date();
+  if (!isSameDay(date, now)) return null;
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  if (minutes < DAY_START || minutes > DAY_END) return null;
+  return Math.max(0, (minutes - DAY_START) * PX_PER_MINUTE);
+}
+
+function weekHeaderLabel(anchor: Date) {
+  const days = getWeekDays(anchor);
+  const start = days[0];
+  const end = days[6];
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.getDate()} – ${end.getDate()} ${MONTHS_LONG[start.getMonth()]} ${start.getFullYear()}`;
+  }
+  return `${start.getDate()} ${MONTHS_SHORT[start.getMonth()]} – ${end.getDate()} ${MONTHS_SHORT[end.getMonth()]} ${end.getFullYear()}`;
+}
+
+
+type AppointmentGroup = {
+  appointments: SharedAppointment[];
+  start: number;
+  end: number;
+};
+
+function buildAppointmentGroups(items: SharedAppointment[]): AppointmentGroup[] {
+  const sorted = [...items].sort((a, b) => {
+    const diff = timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+    if (diff !== 0) return diff;
+    return a.duration - b.duration;
+  });
+
+  const groups: AppointmentGroup[] = [];
+  let cluster: SharedAppointment[] = [];
+  let clusterEnd = -1;
+
+  const flushCluster = () => {
+    if (!cluster.length) return;
+    const start = Math.min(...cluster.map((item) => timeToMinutes(item.startTime)));
+    const end = Math.max(...cluster.map((item) => timeToMinutes(item.startTime) + item.duration));
+    groups.push({ appointments: [...cluster], start, end });
+    cluster = [];
+    clusterEnd = -1;
+  };
+
+  sorted.forEach((appointment) => {
+    const start = timeToMinutes(appointment.startTime);
+    const end = start + appointment.duration;
+    if (!cluster.length) {
+      cluster = [appointment];
+      clusterEnd = end;
       return;
     }
-    onBlock({ id: `blk-${Date.now()}`, date, startTime: time, duration: totalMin, reason, doctor: CURRENT_DOCTOR });
-    toast({ title: "Créneau bloqué", description: `${date} ${time}→${endT} · ${reason}` });
-    onClose();
-  };
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl border bg-card shadow-elevated mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Lock className="h-4 w-4 text-muted-foreground" />
-            {initTime ? "Bloquer ce créneau" : "Bloquer une période"}
-          </h3>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted/50"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="px-5 py-4 space-y-4">
-          {/* Date + heure début */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">Date</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 h-9" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Heure début</Label>
-              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 h-9" />
-            </div>
-          </div>
-
-          {/* Durée */}
-          <div>
-            <Label className="text-xs text-muted-foreground">Durée du blocage</Label>
-            <div className="flex items-end gap-2 mt-1.5">
-              <div className="flex-1">
-                <Input
-                  type="number"
-                  min={0}
-                  max={24}
-                  value={hours}
-                  onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
-                  className="h-9 text-center"
-                />
-                <p className="text-[10px] text-muted-foreground text-center mt-0.5">heures</p>
-              </div>
-              <span className="text-base font-bold text-muted-foreground pb-3">:</span>
-              <div className="flex-1">
-                <Input
-                  type="number"
-                  min={0}
-                  max={59}
-                  step={5}
-                  value={minutes}
-                  onChange={(e) => setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                  className="h-9 text-center"
-                />
-                <p className="text-[10px] text-muted-foreground text-center mt-0.5">minutes</p>
-              </div>
-              <div className="flex-1 text-center pb-0.5">
-                <p className="text-[10px] text-muted-foreground">Fin estimée</p>
-                <p className="text-sm font-semibold text-foreground">{endT}</p>
-              </div>
-            </div>
-            <div className="flex gap-1.5 mt-2">
-              {SHORTCUTS.map(([lbl, h, m]) => (
-                <button
-                  key={lbl}
-                  onClick={() => {
-                    setHours(h);
-                    setMinutes(m);
-                  }}
-                  className={`flex-1 rounded-lg border text-xs py-1.5 font-medium transition-colors
-                    ${
-                      hours === h && minutes === m
-                        ? "border-primary/50 bg-primary/8 text-primary"
-                        : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-                    }`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Motif */}
-          <div>
-            <Label className="text-xs text-muted-foreground">Motif</Label>
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {REASONS.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setReason(r)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors
-                    ${reason === r ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Résumé */}
-          {totalMin >= 15 && (
-            <div className="rounded-lg bg-muted/40 border px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Lock className="h-3 w-3 shrink-0" />
-              <span>
-                <span className="font-semibold text-foreground">{date}</span> · {time} → {endT} ·{" "}
-                <span className="font-semibold text-foreground">{reason}</span>
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="px-5 pb-4 flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button variant="destructive" className="flex-1" onClick={handle}>
-            <Lock className="h-3.5 w-3.5 mr-1.5" /> Bloquer
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Edit Block Modal ─────────────────────────────────────────
-function EditBlockModal({
-  block,
-  onClose,
-  onUpdate,
-  onDelete,
-}: {
-  block: BlockedSlot;
-  onClose: () => void;
-  onUpdate: (b: BlockedSlot) => void;
-  onDelete: (id: string) => void;
-}) {
-  const [reason, setReason] = useState(block.reason);
-  const [date, setDate] = useState(block.date);
-  const [time, setTime] = useState(block.startTime);
-  const [hours, setHours] = useState(Math.floor(block.duration / 60));
-  const [minutes, setMinutes] = useState(block.duration % 60);
-  const [askDel, setAskDel] = useState(false);
-  const REASONS = [
-    "Pause",
-    "Réunion",
-    "Déjeuner",
-    "Formation",
-    "Congé",
-    "Jour férié",
-    "Déplacement",
-    "Personnel",
-    "Autre",
-  ];
-  const totalMin = hours * 60 + minutes;
-  const endT = totalMin > 0 ? endTime(time, totalMin) : "—";
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl border bg-card shadow-elevated mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Lock className="h-4 w-4 text-muted-foreground" /> Modifier le blocage
-          </h3>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted/50"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="px-5 py-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">Date</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 h-9" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Heure début</Label>
-              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 h-9" />
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Durée</Label>
-            <div className="flex items-end gap-2 mt-1.5">
-              <div className="flex-1">
-                <Input
-                  type="number"
-                  min={0}
-                  max={24}
-                  value={hours}
-                  onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
-                  className="h-9 text-center"
-                />
-                <p className="text-[10px] text-muted-foreground text-center mt-0.5">h</p>
-              </div>
-              <span className="text-base font-bold text-muted-foreground pb-3">:</span>
-              <div className="flex-1">
-                <Input
-                  type="number"
-                  min={0}
-                  max={59}
-                  step={5}
-                  value={minutes}
-                  onChange={(e) => setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                  className="h-9 text-center"
-                />
-                <p className="text-[10px] text-muted-foreground text-center mt-0.5">min</p>
-              </div>
-              <div className="flex-1 text-center pb-0.5">
-                <p className="text-[10px] text-muted-foreground">Fin</p>
-                <p className="text-sm font-semibold text-foreground">{endT}</p>
-              </div>
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Motif</Label>
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {REASONS.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setReason(r)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors
-                    ${reason === r ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {askDel ? (
-          <div className="px-5 pb-4 space-y-2">
-            <p className="text-sm text-destructive font-medium">Confirmer la suppression ?</p>
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setAskDel(false)}>
-                Non
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={() => {
-                  onDelete(block.id);
-                  onClose();
-                  toast({ title: "Blocage supprimé" });
-                }}
-              >
-                Oui, supprimer
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="px-5 pb-4 flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive border-destructive/30 hover:bg-destructive/5"
-              onClick={() => setAskDel(true)}
-            >
-              <X className="h-3.5 w-3.5 mr-1" /> Supprimer
-            </Button>
-            <Button
-              className="flex-1 gradient-primary text-primary-foreground shadow-primary-glow"
-              onClick={() => {
-                if (totalMin < 15) {
-                  toast({ title: "Durée minimum : 15 minutes", variant: "destructive" });
-                  return;
-                }
-                onUpdate({ ...block, date, startTime: time, duration: totalMin, reason });
-                toast({ title: "Blocage modifié" });
-                onClose();
-              }}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Enregistrer
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Day column ───────────────────────────────────────────────
-function DayCol({
-  date,
-  apts,
-  blocks,
-  typeColors,
-  dayConfig,
-  leave,
-  onSlotClick,
-  onAptClick,
-  onBlockClick,
-}: {
-  date: Date;
-  apts: Appt[];
-  blocks: BlockedSlot[];
-  typeColors: Record<ApptType, ColorKey>;
-  dayConfig?: AvailabilityDay;
-  leave?: SharedLeave;
-  onSlotClick: (t: string, x: number, y: number) => void;
-  onAptClick: (a: Appt) => void;
-  onBlockClick: (b: BlockedSlot) => void;
-}) {
-  const ds = fmtDate(date);
-  // Occupied mins (apts + blocks)
-  const isOccupied = (slotMin: number) => {
-    const aptOcc = apts.some((a) => {
-      const st = t2min(a.startTime);
-      return slotMin >= st && slotMin < st + a.duration;
-    });
-    const blkOcc = blocks.some((b) => {
-      const st = t2min(b.startTime);
-      return slotMin >= st && slotMin < st + b.duration;
-    });
-    return aptOcc || blkOcc;
-  };
-
-  const isOpenByAvailability = (slotMin: number) => {
-    if (!dayConfig?.active || leave) return false;
-    const dayStart = t2min(dayConfig.start);
-    const dayEnd = t2min(dayConfig.end);
-    if (slotMin < dayStart || slotMin + 30 > dayEnd) return false;
-
-    if (dayConfig.breakStart && dayConfig.breakEnd) {
-      const breakStart = t2min(dayConfig.breakStart);
-      const breakEnd = t2min(dayConfig.breakEnd);
-      if (slotMin < breakEnd && slotMin + 30 > breakStart) return false;
+    if (start < clusterEnd) {
+      cluster.push(appointment);
+      clusterEnd = Math.max(clusterEnd, end);
+      return;
     }
 
-    return true;
-  };
+    flushCluster();
+    cluster = [appointment];
+    clusterEnd = end;
+  });
+
+  flushCluster();
+  return groups;
+}
+
+function getStripeClassFromColorClass(colorClass: string) {
+  if (colorClass.includes("destructive")) return "bg-destructive";
+  if (colorClass.includes("warning")) return "bg-warning";
+  if (colorClass.includes("accent")) return "bg-accent";
+  if (colorClass.includes("secondary")) return "bg-secondary";
+  if (colorClass.includes("muted")) return "bg-muted-foreground";
+  return "bg-primary";
+}
+
+
+function AppointmentCard({
+  appointment,
+  colorClass,
+  compact = false,
+  onClick,
+}: {
+  appointment: SharedAppointment;
+  colorClass: string;
+  compact?: boolean;
+  onClick: () => void;
+}) {
+  const isCancelled = appointment.status === "cancelled" || appointment.status === "absent";
+  const isDone = appointment.status === "done";
+  const stripeClass = getStripeClassFromColorClass(colorClass);
+  const surfaceClass = isCancelled
+    ? "border-red-200/70 bg-red-50/55 text-slate-700 opacity-[0.58]"
+    : isDone
+      ? "border-slate-200 bg-slate-100/80 text-slate-700 opacity-[0.60]"
+      : "border-slate-200 bg-white text-slate-800 shadow-sm";
 
   return (
-    <div className="relative flex-1 min-w-0" style={{ height: GRID_H }}>
-      {/* Grid lines */}
-      {HOUR_LABELS.map((_, i) => (
-        <div
-          key={i}
-          className={`absolute left-0 right-0 pointer-events-none border-t ${i % 2 === 0 ? "border-border/50" : "border-dashed border-border/25"}`}
-          style={{ top: i * SLOT_H }}
-        />
-      ))}
-      {/* Empty slot zones */}
-      {HOUR_LABELS.map((h, i) => {
-        const m = DAY_START + i * 30;
-        return isOccupied(m) ? null : (
-          <div
-            key={h}
-            className="absolute left-0 right-0 cursor-pointer hover:bg-primary/5 transition-colors group/slot z-0"
-            style={{ top: i * SLOT_H, height: SLOT_H }}
-            onClick={(e) => onSlotClick(h, e.clientX, e.clientY)}
-          >
-            <div className="opacity-0 group-hover/slot:opacity-100 absolute inset-0.5 rounded border border-dashed border-primary/30 flex items-center justify-center transition-opacity">
-              <Plus className="h-3 w-3 text-primary/40" />
-            </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group relative h-full w-full overflow-hidden rounded-lg border text-left transition-all hover:border-primary/30 hover:shadow-md ${surfaceClass}`}
+      title={`${appointment.patient} · ${appointment.startTime}`}
+    >
+      <div className={`absolute inset-y-0 left-0 w-1.5 ${stripeClass}`} />
+      <div className="flex h-full flex-col justify-between p-2 pl-3">
+        <div className="min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{appointment.startTime}</span>
+            {appointment.teleconsultation ? <Video className="h-3.5 w-3.5 shrink-0 text-primary" /> : null}
           </div>
-        );
-      })}
-      {/* Blocked slots */}
-      {blocks
-        .filter((b) => b.date === ds)
-        .map((b) => (
-          <div
-            key={b.id}
-            style={{
-              position: "absolute",
-              top: apptTop(b.startTime),
-              left: 2,
-              right: 2,
-              height: apptH(b.duration),
-              zIndex: 8,
-            }}
-          >
-            <BlockCard block={b} height={apptH(b.duration)} onClick={() => onBlockClick(b)} />
-          </div>
-        ))}
-      {/* Appointments */}
-      {apts.map((a) => (
-        <div
-          key={a.id}
-          style={{
-            position: "absolute",
-            top: apptTop(a.startTime),
-            left: 2,
-            right: 2,
-            height: apptH(a.duration),
-            zIndex: 10,
-          }}
-        >
-          <ApptCard apt={a} height={apptH(a.duration)} colorKey={typeColors[a.type]} onClick={() => onAptClick(a)} />
+          <p className={`mt-0.5 truncate font-bold ${compact ? "text-[11px]" : "text-xs"}`}>
+            {appointment.patient}
+          </p>
+          {!compact ? (
+            <p className="mt-0.5 truncate text-[10px] text-slate-500">
+              {appointment.motif || appointment.type}
+            </p>
+          ) : null}
         </div>
-      ))}
-      {isToday(ds) && <NowLine />}
+
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className="rounded-md bg-white/70 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600">
+            {appointment.type}
+          </span>
+          {!compact ? (
+            <span className="text-[10px] font-medium text-slate-500">{appointment.duration} min</span>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function EmptyPlanningState({ production }: { production: boolean }) {
+  return (
+    <div className="rounded-2xl border border-dashed bg-card p-12 text-center">
+      <CalendarClock className="mx-auto h-10 w-10 text-muted-foreground" />
+      <h3 className="mt-4 text-lg font-semibold">Aucun rendez-vous sur cette période</h3>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {production
+          ? "Supabase ne renvoie encore aucun rendez-vous pour ce praticien."
+          : "Ajoutez un rendez-vous ou changez la période pour remplir l'agenda."}
+      </p>
     </div>
   );
 }
 
-// ─── Week view ────────────────────────────────────────────────
-function WeekView({
-  days,
-  apts,
-  blocks,
-  typeColors,
-  getDayConfig,
-  getLeaveForDate,
-  onSlot,
-  onApt,
-  onBlock,
-}: {
-  days: Date[];
-  apts: Appt[];
-  blocks: BlockedSlot[];
-  typeColors: Record<ApptType, ColorKey>;
-  getDayConfig: (date: Date) => AvailabilityDay | undefined;
-  getLeaveForDate: (date: Date) => SharedLeave | undefined;
-  onSlot: (date: Date, t: string, x: number, y: number) => void;
-  onApt: (a: Appt) => void;
-  onBlock: (b: BlockedSlot) => void;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const n = new Date();
-    scrollRef.current?.scrollTo({
-      top: Math.max(0, (n.getHours() * 60 + n.getMinutes() - DAY_START) * PX_PER_MIN - 140),
-    });
-  }, []);
+export default function DoctorSchedule() {
+  const { user, loading: authLoading } = useAuth();
+  const [mode] = useAppMode();
+  const production = mode === "production";
+  const appointmentRepo = useMemo(() => getAppointmentRepo(), [mode]);
+  const patientRepo = useMemo(() => getPatientRepo(), [mode]);
+  const [availability] = useSharedAvailability();
+  const [blockedSlots] = useSharedBlockedSlots();
 
-  return (
-    <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-      <div className="flex border-b bg-card sticky top-0 z-30">
-        <div className="w-12 shrink-0" />
-        {days.map((d) => {
-          const ds = fmtDate(d);
-          const cnt = apts.filter((a) => a.date === ds && !["cancelled", "absent"].includes(a.status)).length;
-          const tod = isToday(ds);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [appointments, setAppointments] = useState<SharedAppointment[]>([]);
+  const [patients, setPatients] = useState<SharedPatient[]>([]);
+  const [view, setView] = useState<ViewMode>("week");
+  const [anchorDate, setAnchorDate] = useState(() => {
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    return today;
+  });
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | AppointmentStatus>("all");
+  const [selectedAppointment, setSelectedAppointment] = useState<SharedAppointment | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showBlock, setShowBlock] = useState(false);
+  const [slotAction, setSlotAction] = useState<SlotActionState | null>(null);
+  const [calendarFilter, setCalendarFilter] = useState<"all" | BlockCalendarKind>("all");
+  const [draftMode, setDraftMode] = useState<DraftMode>("create");
+  const [draft, setDraft] = useState<AppointmentDraft>(createDraft());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [blockDraft, setBlockDraft] = useState<BlockDraft>(createBlockDraft());
+  const [selectedBlock, setSelectedBlock] = useState<SharedBlockedSlot | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [showColors, setShowColors] = useState(false);
+  const [blockConflictAction, setBlockConflictAction] = useState<"keep" | "cancel">("keep");
+  const [blockRepeatWeeks, setBlockRepeatWeeks] = useState(1);
+  const [typeColors, setTypeColors] = useState<Record<AppointmentType, AppointmentColorKey>>(() => {
+    if (typeof window === "undefined") return { ...DEFAULT_TYPE_COLORS };
+    try {
+      const raw = window.localStorage.getItem(TYPE_COLOR_STORAGE_KEY);
+      if (!raw) return { ...DEFAULT_TYPE_COLORS };
+      return { ...DEFAULT_TYPE_COLORS, ...(JSON.parse(raw) as Partial<Record<AppointmentType, AppointmentColorKey>>) };
+    } catch {
+      return { ...DEFAULT_TYPE_COLORS };
+    }
+  });
+
+  const loadSchedule = async (silent = false) => {
+    if (!user?.id) {
+      setAppointments([]);
+      setPatients([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (silent) setRefreshing(true);
+      else setLoading(true);
+
+      const [apts, pts] = await Promise.all([
+        appointmentRepo.listByDoctor(user.id),
+        patientRepo.listByDoctor(user.id),
+      ]);
+
+      const normalized = [...apts].sort((a, b) => {
+        const aDateTime = `${a.date} ${a.startTime}`;
+        const bDateTime = `${b.date} ${b.startTime}`;
+        return aDateTime.localeCompare(bDateTime);
+      });
+
+      setAppointments(normalized);
+      setPatients(pts);
+
+      if (selectedAppointment) {
+        const updatedSelection = normalized.find((item) => item.id === selectedAppointment.id) || null;
+        setSelectedAppointment(updatedSelection);
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Erreur agenda",
+        description: "Impossible de charger les rendez-vous du praticien.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading) {
+      loadSchedule();
+    }
+  }, [authLoading, user?.id, mode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(TYPE_COLOR_STORAGE_KEY, JSON.stringify(typeColors));
+  }, [typeColors]);
+
+  const resolveTypeClasses = (type: AppointmentType) => COLOR_STYLES[typeColors[type] || DEFAULT_TYPE_COLORS[type]];
+
+  const weekDays = useMemo(() => getWeekDays(anchorDate), [anchorDate]);
+  const monthDays = useMemo(() => getMonthMatrix(anchorDate), [anchorDate]);
+  const todayKey = formatDateKey(new Date());
+
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((appointment) => {
+      const matchStatus = statusFilter === "all" ? true : appointment.status === statusFilter;
+      const haystack = [
+        appointment.patient,
+        appointment.motif,
+        appointment.type,
+        appointment.phone,
+        appointment.assurance,
+      ]
+        .join(" ")
+        .toLowerCase();
+      const matchQuery = !query.trim() || haystack.includes(query.trim().toLowerCase());
+      return matchStatus && matchQuery;
+    });
+  }, [appointments, query, statusFilter]);
+
+  const visibleAppointments = useMemo(() => {
+    if (view === "day") {
+      return filteredAppointments.filter((item) => item.date === formatDateKey(anchorDate));
+    }
+
+    if (view === "week") {
+      const start = weekDays[0];
+      const end = weekDays[6];
+      return filteredAppointments.filter((item) => isWithinRange(item.date, start, end));
+    }
+
+    if (view === "month") {
+      const start = monthDays[0];
+      const end = monthDays[monthDays.length - 1];
+      return filteredAppointments.filter((item) => isWithinRange(item.date, start, end));
+    }
+
+    return filteredAppointments;
+  }, [filteredAppointments, view, anchorDate, weekDays, monthDays]);
+
+  const stats = useMemo(() => {
+    const todayAppointments = appointments.filter((item) => item.date === todayKey);
+    return {
+      today: todayAppointments.length,
+      waiting: todayAppointments.filter((item) => item.status === "arrived" || item.status === "in_waiting").length,
+      teleconsultation: todayAppointments.filter((item) => item.teleconsultation).length,
+      active: todayAppointments.filter((item) => ACTIVE_STATUSES.includes(item.status)).length,
+    };
+  }, [appointments, todayKey]);
+
+  const createAvailableSlots = useMemo(
+    () => getAvailableSlots(draft.date, draft.duration, editingId),
+    [draft.date, draft.duration, editingId, appointments, blockedSlots, availability],
+  );
+
+  const blockAvailableSlots = useMemo(
+    () => getBlockStartOptions(blockDraft.date, blockDraft.duration),
+    [blockDraft.date, blockDraft.duration, blockedSlots, availability],
+  );
+
+  const conflictingBlockAppointments = useMemo(
+    () => getAppointmentsOverlappingRange(blockDraft.date, blockDraft.startTime, blockDraft.duration),
+    [blockDraft.date, blockDraft.startTime, blockDraft.duration, appointments],
+  );
+
+  const rescheduleSuggestions = useMemo(() => {
+    if (!selectedAppointment) return [] as Array<{ date: string; startTime: string }>;
+    const suggestions: Array<{ date: string; startTime: string }> = [];
+    const baseDate = parseLocalDate(selectedAppointment.date);
+    for (let offset = 0; offset < 14 && suggestions.length < 8; offset += 1) {
+      const date = addDays(baseDate, offset);
+      const dateKey = formatDateKey(date);
+      const slots = getAvailableSlots(dateKey, selectedAppointment.duration, selectedAppointment.id)
+        .filter((slot) => !(dateKey === selectedAppointment.date && slot === selectedAppointment.startTime))
+        .slice(0, offset === 0 ? 2 : 3);
+      slots.forEach((slot) => {
+        if (suggestions.length < 8) suggestions.push({ date: dateKey, startTime: slot });
+      });
+    }
+    return suggestions;
+  }, [selectedAppointment, appointments, blockedSlots, availability]);
+
+  const isClosedDay = (dateKey: string) => {
+    const dayName = getDayNameFromDateKey(dateKey);
+    return !availability.days?.[dayName]?.active;
+  };
+
+  function getAvailableSlots(dateKey: string, duration = SLOT_MINUTES, ignoreAppointmentId?: string | null) {
+    const dayName = getDayNameFromDateKey(dateKey);
+    const dayConfig = availability.days?.[dayName];
+    if (!dayConfig?.active) return [] as string[];
+    const start = timeToMinutes(dayConfig.start || "08:00");
+    const end = timeToMinutes(dayConfig.end || "18:00");
+    const breakStart = dayConfig.breakStart ? timeToMinutes(dayConfig.breakStart) : null;
+    const breakEnd = dayConfig.breakEnd ? timeToMinutes(dayConfig.breakEnd) : null;
+    const dayAppointments = appointments.filter((item) => item.date === dateKey && item.id !== ignoreAppointmentId && item.status !== "cancelled" && item.status !== "absent");
+    const dayBlocks = blockedSlots.filter((item) => item.date === dateKey);
+    const slots: string[] = [];
+    for (let t = start; t + duration <= end; t += SLOT_MINUTES) {
+      const slotEnd = t + duration;
+      const overlapsBreak = breakStart !== null && breakEnd !== null && t < breakEnd && slotEnd > breakStart;
+      if (overlapsBreak) continue;
+      const appointmentConflict = dayAppointments.some((item) => {
+        const itemStart = timeToMinutes(item.startTime);
+        const itemEnd = itemStart + item.duration;
+        return t < itemEnd && slotEnd > itemStart;
+      });
+      if (appointmentConflict) continue;
+      const blockConflict = dayBlocks.some((item) => {
+        const itemStart = timeToMinutes(item.startTime);
+        const itemEnd = itemStart + item.duration;
+        return t < itemEnd && slotEnd > itemStart;
+      });
+      if (blockConflict) continue;
+      slots.push(toTimeLabel(t));
+    }
+    return slots;
+  }
+
+  function getBlockStartOptions(dateKey: string, duration = SLOT_MINUTES) {
+    const dayName = getDayNameFromDateKey(dateKey);
+    const dayConfig = availability.days?.[dayName];
+    const start = dayConfig?.start ? timeToMinutes(dayConfig.start) : DAY_START;
+    const end = dayConfig?.end ? timeToMinutes(dayConfig.end) : DAY_END;
+    const breakStart = dayConfig?.breakStart ? timeToMinutes(dayConfig.breakStart) : null;
+    const breakEnd = dayConfig?.breakEnd ? timeToMinutes(dayConfig.breakEnd) : null;
+    const dayBlocks = blockedSlots.filter((item) => item.date === dateKey);
+    const slots: string[] = [];
+    for (let t = start; t + duration <= end; t += SLOT_MINUTES) {
+      const slotEnd = t + duration;
+      const overlapsBreak = breakStart !== null && breakEnd !== null && t < breakEnd && slotEnd > breakStart;
+      if (overlapsBreak) continue;
+      const blockConflict = dayBlocks.some((item) => {
+        const itemStart = timeToMinutes(item.startTime);
+        const itemEnd = itemStart + item.duration;
+        return t < itemEnd && slotEnd > itemStart;
+      });
+      if (blockConflict) continue;
+      slots.push(toTimeLabel(t));
+    }
+    return slots;
+  }
+
+  function getAppointmentsOverlappingRange(dateKey: string, startTime: string, duration = SLOT_MINUTES) {
+    const start = timeToMinutes(startTime);
+    const end = start + duration;
+    return appointments.filter((item) => {
+      if (item.date !== dateKey) return false;
+      if (item.status === "cancelled" || item.status === "absent") return false;
+      const itemStart = timeToMinutes(item.startTime);
+      const itemEnd = itemStart + item.duration;
+      return start < itemEnd && end > itemStart;
+    });
+  }
+
+  useEffect(() => {
+    if (!showCreate) return;
+    if (!createAvailableSlots.length) return;
+    if (createAvailableSlots.includes(draft.startTime)) return;
+    setDraft((prev) => ({ ...prev, startTime: createAvailableSlots[0] }));
+  }, [showCreate, draft.startTime, createAvailableSlots]);
+
+  useEffect(() => {
+    if (!showBlock) return;
+    if (!blockAvailableSlots.length) return;
+    if (blockAvailableSlots.includes(blockDraft.startTime)) return;
+    setBlockDraft((prev) => ({ ...prev, startTime: blockAvailableSlots[0] }));
+  }, [showBlock, blockDraft.startTime, blockAvailableSlots]);
+
+  const openSlotActions = (date: string, time: string) => {
+    setSelectedAppointment(null);
+    setSelectedBlock(null);
+    setSlotAction({
+      date,
+      startTime: time,
+      endTime: getEndTimeLabel(time, SLOT_MINUTES),
+      duration: SLOT_MINUTES,
+      closedDay: isClosedDay(date),
+      fromRange: false,
+    });
+  };
+
+  const openCreate = (date?: string, time?: string, duration = SLOT_MINUTES) => {
+    setSlotAction(null);
+    setDraftMode("create");
+    setEditingId(null);
+    const next = createDraft(date, time);
+    next.duration = duration;
+    setDraft(next);
+    setShowCreate(true);
+  };
+
+  const openEdit = (appointment: SharedAppointment) => {
+    setSlotAction(null);
+    setDraftMode("edit");
+    setEditingId(appointment.id);
+    setDraft({
+      date: appointment.date,
+      startTime: appointment.startTime,
+      duration: appointment.duration,
+      type: appointment.type,
+      motif: appointment.motif,
+      teleconsultation: Boolean(appointment.teleconsultation),
+      assurance: appointment.assurance,
+      notes: appointment.notes || "",
+      patientMode: appointment.patientId ? "existing" : "new",
+      patientId: appointment.patientId ? String(appointment.patientId) : "",
+      patientName: appointment.patient,
+      phone: appointment.phone,
+      email: "",
+    });
+    setShowCreate(true);
+  };
+
+  const openBlock = (date?: string, time?: string, calendarKind: BlockCalendarKind = "cabinet", duration = SLOT_MINUTES) => {
+    setSlotAction(null);
+    setSelectedBlock(null);
+    setBlockConflictAction("keep");
+    setBlockRepeatWeeks(1);
+    const next = createBlockDraft(date, time, calendarKind);
+    next.duration = duration;
+    setBlockDraft(next);
+    setShowBlock(true);
+  };
+
+  const goToPrev = () => {
+    setAnchorDate((current) => {
+      if (view === "day") return addDays(current, -1);
+      if (view === "month") return addMonths(current, -1);
+      return addDays(current, -7);
+    });
+  };
+
+  const goToNext = () => {
+    setAnchorDate((current) => {
+      if (view === "day") return addDays(current, 1);
+      if (view === "month") return addMonths(current, 1);
+      return addDays(current, 7);
+    });
+  };
+
+  const goToday = () => {
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    setAnchorDate(today);
+  };
+
+  const updateStatus = async (appointment: SharedAppointment, status: AppointmentStatus) => {
+    try {
+      setSaving(true);
+      await appointmentRepo.updateStatus(appointment.id, status, {
+        status,
+        waitTime: status === "arrived" || status === "in_waiting" ? appointment.waitTime || 0 : appointment.waitTime,
+      });
+      toast({ title: `Rendez-vous ${getStatusLabel(status).toLowerCase()}` });
+      await loadSchedule(true);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Impossible de mettre à jour le statut", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSubmitAppointment = async () => {
+    try {
+      setSaving(true);
+
+      let patientId: number | null = draft.patientMode === "existing" ? Number(draft.patientId || 0) || null : null;
+      let patientName = draft.patientName.trim();
+      let phone = draft.phone.trim();
+      let assurance = draft.assurance.trim();
+
+      if (draft.patientMode === "existing") {
+        const selectedPatient = patients.find((item) => item.id === patientId);
+        if (!selectedPatient) {
+          toast({ title: "Sélectionnez un patient", variant: "destructive" });
+          return;
+        }
+        patientName = selectedPatient.name;
+        phone = selectedPatient.phone;
+        assurance = draft.assurance.trim() || selectedPatient.assurance;
+      } else {
+        if (!patientName) {
+          toast({ title: "Nom du patient requis", variant: "destructive" });
+          return;
+        }
+
+        const createdPatient = await patientRepo.create({
+          name: patientName,
+          phone,
+          email: draft.email,
+          avatar: getAvatar(patientName),
+          dob: "",
+          assurance,
+          numAssure: "",
+          doctor: user?.doctorName || "",
+          gouvernorat: "Tunis",
+          lastVisit: "",
+          nextAppointment: null,
+          balance: 0,
+          notes: draft.notes,
+          history: [],
+        });
+        patientId = createdPatient.id;
+      }
+
+      const baseAppointment = {
+        date: draft.date,
+        startTime: draft.startTime,
+        duration: draft.duration,
+        patient: patientName,
+        patientId,
+        avatar: getAvatar(patientName),
+        phone,
+        motif: draft.motif || draft.type,
+        type: draft.type,
+        status: draftMode === "create" ? "confirmed" : (selectedAppointment?.status || "confirmed"),
+        assurance,
+        doctor: user?.doctorName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+        doctorId: user?.id,
+        teleconsultation: draft.teleconsultation,
+        notes: draft.notes,
+        createdBy: "doctor" as const,
+      };
+
+      if (draftMode === "create") {
+        const created = await appointmentRepo.create(baseAppointment);
+        toast({ title: "Rendez-vous créé", description: `${created.patient} · ${created.date} à ${created.startTime}` });
+        setSelectedAppointment(created);
+      } else if (editingId) {
+        await appointmentRepo.updateStatus(editingId, baseAppointment.status, {
+          ...baseAppointment,
+          endTime: computeEndTime(baseAppointment.startTime, baseAppointment.duration),
+        });
+        toast({ title: "Rendez-vous mis à jour" });
+      }
+
+      setShowCreate(false);
+      await loadSchedule(true);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erreur lors de l'enregistrement", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateBlock = async () => {
+    try {
+      setSaving(true);
+      let cancelledCount = 0;
+      let keptConflictCount = 0;
+      for (let weekOffset = 0; weekOffset < blockRepeatWeeks; weekOffset += 1) {
+        const blockDate = formatDateKey(addDays(parseLocalDate(blockDraft.date), weekOffset * 7));
+        const conflicts = getAppointmentsOverlappingRange(blockDate, blockDraft.startTime, blockDraft.duration);
+        if (conflicts.length && blockConflictAction === "cancel") {
+          await Promise.all(conflicts.map((item) => appointmentRepo.cancel(item.id)));
+          cancelledCount += conflicts.length;
+        } else {
+          keptConflictCount += conflicts.length;
+        }
+        await addBlockedSlot({
+          date: blockDate,
+          startTime: blockDraft.startTime,
+          duration: blockDraft.duration,
+          reason: normalizeBlockReason(blockDraft.reason, blockDraft.calendarKind),
+          doctor: user?.doctorName || "",
+        });
+      }
+      toast({
+        title: blockDraft.calendarKind === "personal" ? "Événement personnel ajouté" : "Créneau bloqué",
+        description:
+          blockRepeatWeeks > 1
+            ? `${blockRepeatWeeks} semaines créées${cancelledCount ? ` · ${cancelledCount} rendez-vous annulés` : keptConflictCount ? ` · ${keptConflictCount} rendez-vous conservés` : ""}`
+            : cancelledCount
+              ? `${cancelledCount} rendez-vous concernés ont été annulés.`
+              : keptConflictCount
+                ? `${keptConflictCount} rendez-vous restent conservés sur la plage bloquée.`
+                : undefined,
+      });
+      setShowBlock(false);
+      await loadSchedule(true);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Impossible de bloquer le créneau", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteBlock = async (blockId: string) => {
+    try {
+      await removeBlockedSlot(blockId);
+      toast({ title: "Blocage supprimé" });
+      setSelectedBlock(null);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Impossible de supprimer le blocage", variant: "destructive" });
+    }
+  };
+
+  const handleQuickReschedule = async (appointment: SharedAppointment, date: string, startTime: string) => {
+    try {
+      setSaving(true);
+      await appointmentRepo.updateStatus(appointment.id, appointment.status, {
+        ...appointment,
+        date,
+        startTime,
+        endTime: computeEndTime(startTime, appointment.duration),
+      });
+      toast({ title: "Rendez-vous reprogrammé", description: `${formatHumanDate(date)} · ${startTime}` });
+      await loadSchedule(true);
+      const refreshed = appointments.find((item) => item.id === appointment.id);
+      if (refreshed) {
+        setSelectedAppointment({ ...refreshed, date, startTime, endTime: computeEndTime(startTime, refreshed.duration) });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Impossible de reprogrammer", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDuplicateAppointment = (appointment: SharedAppointment) => {
+    setDraftMode("create");
+    setEditingId(null);
+    setDraft({
+      date: appointment.date,
+      startTime: appointment.startTime,
+      duration: appointment.duration,
+      type: appointment.type,
+      motif: appointment.motif,
+      teleconsultation: Boolean(appointment.teleconsultation),
+      assurance: appointment.assurance,
+      notes: appointment.notes || "",
+      patientMode: appointment.patientId ? "existing" : "new",
+      patientId: appointment.patientId ? String(appointment.patientId) : "",
+      patientName: appointment.patient,
+      phone: appointment.phone,
+      email: "",
+    });
+    setShowCreate(true);
+  };
+
+  const handleCopySms = (appointment: SharedAppointment) => {
+    const message = `Bonjour ${appointment.patient}, votre rendez-vous est prévu le ${appointment.date} à ${appointment.startTime} avec ${appointment.doctor}.`;
+    navigator.clipboard.writeText(message).then(() => {
+      toast({ title: "Message copié" });
+    });
+  };
+
+  const selectedSlotPreview = slotAction
+    ? { date: slotAction.date, startTime: slotAction.startTime, endTime: slotAction.endTime }
+    : null;
+
+  const periodLabel =
+    view === "day"
+      ? formatHumanDate(formatDateKey(anchorDate))
+      : view === "month"
+        ? `${MONTHS_LONG[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`
+        : weekHeaderLabel(anchorDate);
+
+  const renderDayGrid = (date: Date) => {
+    const dateKey = formatDateKey(date);
+    const dayAppointments = visibleAppointments.filter((item) => item.date === dateKey);
+    const appointmentGroups = buildAppointmentGroups(dayAppointments);
+    const dayBlocks = blockedSlots
+      .filter((item) => item.date === dateKey)
+      .filter((item) => calendarFilter === "all" || calendarFilter === getBlockCalendarKind(item.reason));
+    const closedDay = isClosedDay(dateKey);
+    const currentTimeLineTop = getCurrentTimeLineTop(date);
+
+    return (
+      <div className="relative flex-1 border-l border-border/70 bg-background">
+        {Array.from({ length: (DAY_END - DAY_START) / SLOT_MINUTES }).map((_, index) => {
+          const startMinutes = DAY_START + index * SLOT_MINUTES;
+          const timeLabel = toTimeLabel(startMinutes);
+          const isSelectedRange = selectedSlotPreview?.date === dateKey
+            && startMinutes >= timeToMinutes(selectedSlotPreview.startTime)
+            && startMinutes < timeToMinutes(selectedSlotPreview.endTime);
+          return (
+            <button
+              key={`${dateKey}-${timeLabel}`}
+              type="button"
+              onClick={() => openSlotActions(dateKey, timeLabel)}
+              className={`absolute left-0 right-0 border-t border-border/70 transition ${closedDay ? "hover:bg-muted/50" : "hover:bg-primary/5"} ${isSelectedRange ? "bg-primary/8" : ""}`}
+              style={{ top: index * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+              aria-label={`Gérer le créneau du ${dateKey} à ${timeLabel}`}
+            />
+          );
+        })}
+
+        {currentTimeLineTop !== null ? (
+          <div
+            className="pointer-events-none absolute left-0 right-0 z-20"
+            style={{ top: currentTimeLineTop }}
+            aria-hidden="true"
+          >
+            <div className="relative h-0">
+              <span className="absolute -left-1.5 -top-1.5 h-3 w-3 rounded-full bg-red-500 shadow-sm ring-2 ring-background" />
+              <div className="h-px w-full bg-red-500/90 shadow-[0_0_0_1px_rgba(239,68,68,0.08)]" />
+            </div>
+          </div>
+        ) : null}
+
+        {closedDay ? <div className="pointer-events-none absolute inset-0 bg-muted/25" /> : null}
+
+        {dayBlocks.map((block) => {
+          const kind = getBlockCalendarKind(block.reason);
+          const blockClass = kind === "personal"
+            ? "border-violet-300/70 bg-violet-50 text-violet-700"
+            : "border-muted-foreground/35 bg-muted/70 text-muted-foreground";
+          return (
+            <button
+              key={block.id}
+              type="button"
+              onClick={() => setSelectedBlock(block)}
+              className={`absolute left-1 right-1 rounded-xl border px-2 py-1 text-left shadow-sm ${blockClass}`}
+              style={{ top: slotTop(block.startTime), height: slotHeight(block.duration) }}
+            >
+              <div className="flex items-center gap-1 text-xs font-medium">
+                <Lock className="h-3 w-3" />
+                <span className="truncate">{displayBlockReason(block.reason)}</span>
+              </div>
+              <p className="mt-1 text-[10px] opacity-80">
+                {block.startTime} · {block.duration} min · {kind === "personal" ? "Personnel" : "Cabinet"}
+              </p>
+            </button>
+          );
+        })}
+
+        {appointmentGroups.map((group) => {
+          const naturalHeight = Math.max(52, (group.end - group.start) * PX_PER_MINUTE);
+          const top = Math.max(0, (group.start - DAY_START) * PX_PER_MINUTE);
+          const isConflictGroup = group.appointments.length > 1;
+
+          if (!isConflictGroup) {
+            const appointment = group.appointments[0];
+            return (
+              <div
+                key={appointment.id}
+                className="absolute"
+                style={{
+                  top,
+                  height: Math.max(44, slotHeight(appointment.duration) - 2),
+                  left: 4,
+                  width: "calc(100% - 8px)",
+                  zIndex: 30,
+                }}
+              >
+                <AppointmentCard
+                  appointment={appointment}
+                  colorClass={resolveTypeClasses(appointment.type)}
+                  compact={appointment.duration <= 25}
+                  onClick={() => setSelectedAppointment(appointment)}
+                />
+              </div>
+            );
+          }
+
           return (
             <div
-              key={ds}
-              className={`flex-1 min-w-0 py-2.5 px-1 text-center border-l border-border/40 ${tod ? "bg-primary/5" : ""}`}
+              key={`${dateKey}-${group.start}-${group.end}`}
+              className="absolute overflow-hidden rounded-xl border border-primary/20 bg-white/95 shadow-sm backdrop-blur-sm"
+              style={{
+                top,
+                height: naturalHeight,
+                left: 4,
+                width: "calc(100% - 8px)",
+                zIndex: 34,
+              }}
             >
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {DAYS_SHORT[dow(d)]}
-              </p>
-              <div
-                className={`mx-auto mt-0.5 h-7 w-7 flex items-center justify-center rounded-full text-sm font-bold
-                ${tod ? "bg-primary text-primary-foreground" : "text-foreground"}`}
-              >
-                {d.getDate()}
+              <div className="flex items-center justify-between border-b border-primary/10 bg-primary/5 px-2 py-1">
+                <span className="text-[10px] font-semibold text-primary">
+                  {group.appointments.length} rendez-vous en conflit
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {toTimeLabel(group.start)} → {toTimeLabel(group.end)}
+                </span>
               </div>
-              <p className="text-[9px] text-muted-foreground mt-0.5">{cnt > 0 ? `${cnt} rdv` : "—"}</p>
+              <div className="h-[calc(100%-30px)] space-y-1 overflow-y-auto p-1">
+                {group.appointments.map((appointment) => (
+                  <div key={appointment.id} className="h-14">
+                    <AppointmentCard
+                      appointment={appointment}
+                      colorClass={resolveTypeClasses(appointment.type)}
+                      compact={false}
+                      onClick={() => setSelectedAppointment(appointment)}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           );
         })}
       </div>
-      <div ref={scrollRef} className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 330px)" }}>
-        <div className="flex">
-          <div className="w-12 shrink-0 relative select-none" style={{ height: GRID_H }}>
-            {HOUR_LABELS.map(
-              (h, i) =>
-                i % 2 === 0 && (
-                  <div
-                    key={h}
-                    className="absolute right-1.5 text-[9px] text-muted-foreground -translate-y-2.5 leading-none"
-                    style={{ top: i * SLOT_H }}
-                  >
-                    {h}
-                  </div>
-                ),
-            )}
+    );
+  };
+
+  const dayColumnLabel = (date: Date) => {
+    const isTodayColumn = isSameDay(date, new Date());
+    return (
+      <div className={`border-b border-border/70 px-3 py-3 text-center ${isTodayColumn ? "bg-primary/5" : "bg-muted/20"}`}>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1]}
+        </p>
+        <p className={`mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${isTodayColumn ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>
+          {date.getDate()}
+        </p>
+      </div>
+    );
+  };
+
+  const renderWeekView = () => (
+    <div className="overflow-hidden rounded-2xl border bg-card">
+      <div className="grid" style={{ gridTemplateColumns: "72px repeat(7, minmax(0,1fr))" }}>
+        <div className="border-b border-border/70 bg-muted/20" />
+        {weekDays.map((day) => (
+          <div key={formatDateKey(day)}>{dayColumnLabel(day)}</div>
+        ))}
+      </div>
+
+      <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 172px)" }}>
+        <div className="grid" style={{ gridTemplateColumns: "72px repeat(7, minmax(0,1fr))" }}>
+          <div className="relative border-r border-border/70 bg-card" style={{ height: GRID_HEIGHT }}>
+            {Array.from({ length: (DAY_END - DAY_START) / SLOT_MINUTES }).map((_, index) => {
+              const startMinutes = DAY_START + index * SLOT_MINUTES;
+              const timeLabel = toTimeLabel(startMinutes);
+              return index % 2 === 0 ? (
+                <div
+                  key={timeLabel}
+                  className="absolute right-2 text-[11px] text-muted-foreground"
+                  style={{ top: index * SLOT_HEIGHT - 8 }}
+                >
+                  {timeLabel}
+                </div>
+              ) : null;
+            })}
           </div>
-          {days.map((d) => (
-            <div
-              key={fmtDate(d)}
-              className={`flex-1 min-w-[70px] border-l border-border/40 relative ${isToday(fmtDate(d)) ? "bg-primary/[0.015]" : ""}`}
-            >
-              <DayCol
-                date={d}
-                apts={apts.filter((a) => a.date === fmtDate(d))}
-                blocks={blocks.filter((b) => b.date === fmtDate(d))}
-                typeColors={typeColors}
-                dayConfig={getDayConfig(d)}
-                leave={getLeaveForDate(d)}
-                onSlotClick={(t, x, y) => onSlot(d, t, x, y)}
-                onAptClick={onApt}
-                onBlockClick={onBlock}
-              />
+
+          {weekDays.map((day) => (
+            <div key={formatDateKey(day)} style={{ height: GRID_HEIGHT }}>
+              {renderDayGrid(day)}
             </div>
           ))}
         </div>
       </div>
     </div>
   );
-}
 
-// ─── Day view ─────────────────────────────────────────────────
-function DayView({
-  date,
-  apts,
-  blocks,
-  typeColors,
-  onSlot,
-  onApt,
-  onBlock,
-}: {
-  date: Date;
-  apts: Appt[];
-  blocks: BlockedSlot[];
-  typeColors: Record<ApptType, ColorKey>;
-  onSlot: (t: string, x: number, y: number) => void;
-  onApt: (a: Appt) => void;
-  onBlock: (b: BlockedSlot) => void;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const n = new Date();
-    scrollRef.current?.scrollTo({
-      top: Math.max(0, (n.getHours() * 60 + n.getMinutes() - DAY_START) * PX_PER_MIN - 140),
-    });
-  }, []);
-  const ds = fmtDate(date);
-  const dayA = apts.filter((a) => a.date === ds);
-  const dayB = blocks.filter((b) => b.date === ds);
-  const cnt = dayA.filter((a) => !["cancelled", "absent"].includes(a.status)).length;
-  return (
-    <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-      <div
-        className={`px-5 py-3.5 border-b flex items-center justify-between ${isToday(ds) ? "bg-primary/5" : "bg-muted/20"}`}
-      >
-        <div>
-          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
-            {DAYS_SHORT[dow(date)]}
-          </p>
-          <h2 className="text-lg font-bold text-foreground mt-0.5">
-            {date.getDate()} {MONTHS_LONG[date.getMonth()]} {date.getFullYear()}
-            {isToday(ds) && (
-              <span className="ml-2 text-xs font-normal text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                Aujourd'hui
-              </span>
-            )}
-          </h2>
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold text-foreground">{cnt}</p>
-          <p className="text-xs text-muted-foreground">RDV prévus</p>
-        </div>
+  const renderDayView = () => (
+    <div className="overflow-hidden rounded-2xl border bg-card">
+      <div className="border-b border-border/70 bg-muted/20 px-4 py-3">
+        <h3 className="text-lg font-semibold">{formatHumanDate(formatDateKey(anchorDate))}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {visibleAppointments.length} rendez-vous sur cette journée
+        </p>
       </div>
-      <div ref={scrollRef} className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 330px)" }}>
-        <div className="flex">
-          <div className="w-12 shrink-0 relative select-none" style={{ height: GRID_H }}>
-            {HOUR_LABELS.map(
-              (h, i) =>
-                i % 2 === 0 && (
-                  <div
-                    key={h}
-                    className="absolute right-1.5 text-[9px] text-muted-foreground -translate-y-2.5 leading-none"
-                    style={{ top: i * SLOT_H }}
-                  >
-                    {h}
-                  </div>
-                ),
-            )}
-          </div>
-          <div className="flex-1 border-l border-border/40 relative">
-            <DayCol
-              date={date}
-              apts={dayA}
-              blocks={dayB}
-              typeColors={typeColors}
-              onSlotClick={onSlot}
-              onAptClick={onApt}
-              onBlockClick={onBlock}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Month view ───────────────────────────────────────────────
-function MonthView({
-  year,
-  month,
-  apts,
-  typeColors,
-  onDayClick,
-  onAptClick,
-}: {
-  year: number;
-  month: number;
-  apts: Appt[];
-  typeColors: Record<ApptType, ColorKey>;
-  onDayClick: (d: Date) => void;
-  onAptClick: (a: Appt) => void;
-}) {
-  const cells = monthCells(year, month),
-    todS = fmtDate(new Date());
-  return (
-    <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-      <div className="grid grid-cols-7 border-b bg-muted/20">
-        {DAYS_SHORT.map((d) => (
-          <div
-            key={d}
-            className="py-2.5 text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
-          >
-            {d}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 divide-x divide-y divide-border/30">
-        {cells.map((d, i) => {
-          if (!d) return <div key={`e-${i}`} className="min-h-[90px] bg-muted/10" />;
-          const ds = fmtDate(d),
-            da = apts.filter((a) => a.date === ds && !["cancelled", "absent"].includes(a.status));
-          const isT = ds === todS;
-          return (
-            <div
-              key={ds}
-              onClick={() => onDayClick(d)}
-              className={`min-h-[90px] p-1.5 cursor-pointer hover:bg-muted/20 transition-colors ${isT ? "bg-primary/3" : ""}`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span
-                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold
-                  ${isT ? "bg-primary text-primary-foreground" : "text-foreground"}`}
-                >
-                  {d.getDate()}
-                </span>
-                {da.length > 0 && <span className="text-[9px] text-muted-foreground">{da.length}</span>}
-              </div>
-              <div className="space-y-0.5">
-                {da.slice(0, 3).map((a) => {
-                  const s = colorStyle(typeColors[a.type]);
-                  return (
-                    <div
-                      key={a.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAptClick(a);
-                      }}
-                      className={`flex items-center gap-1 rounded px-1 py-0.5 text-[9px] truncate cursor-pointer hover:opacity-70 ${s.bg} ${s.text}`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${s.dot}`} />
-                      <span className="font-semibold">{a.startTime}</span>
-                      <span className="truncate opacity-80">{a.patient.split(" ")[0]}</span>
-                    </div>
-                  );
-                })}
-                {da.length > 3 && <p className="text-[9px] font-semibold text-primary px-1">+{da.length - 3} autres</p>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── List view ────────────────────────────────────────────────
-function ListView({
-  apts,
-  typeColors,
-  onAptClick,
-}: {
-  apts: Appt[];
-  typeColors: Record<ApptType, ColorKey>;
-  onAptClick: (a: Appt) => void;
-}) {
-  const sorted = [...apts]
-    .filter((a) => !["cancelled", "absent"].includes(a.status))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
-  const groups = sorted.reduce<Record<string, Appt[]>>((acc, a) => {
-    (acc[a.date] ??= []).push(a);
-    return acc;
-  }, {});
-  if (!sorted.length)
-    return (
-      <div className="rounded-xl border bg-card p-12 text-center">
-        <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm text-muted-foreground">Aucun RDV sur cette période</p>
-      </div>
-    );
-  return (
-    <div className="space-y-3">
-      {Object.entries(groups).map(([ds, da]) => {
-        const d = new Date(ds + "T00:00:00"),
-          it = isToday(ds);
-        return (
-          <div key={ds} className="rounded-xl border bg-card shadow-sm overflow-hidden">
-            <div className={`flex items-center gap-3 px-4 py-3 border-b ${it ? "bg-primary/5" : "bg-muted/20"}`}>
-              <div
-                className={`h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0
-                ${it ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}
-              >
-                {d.getDate()}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground capitalize">
-                  {DAYS_SHORT[dow(d)]} {d.getDate()} {MONTHS_LONG[d.getMonth()]}
-                  {it && <span className="ml-2 text-xs font-normal text-primary">Aujourd'hui</span>}
-                </p>
-                <p className="text-xs text-muted-foreground">{da.length} rendez-vous</p>
-              </div>
-            </div>
-            <div className="divide-y divide-border/40">
-              {da.map((a) => {
-                const s = colorStyle(typeColors[a.type]);
-                return (
-                  <div
-                    key={a.id}
-                    onClick={() => onAptClick(a)}
-                    className="group flex items-center gap-3 px-4 py-3 hover:bg-muted/30 cursor-pointer transition-colors"
-                  >
-                    <div className="w-12 shrink-0">
-                      <p className="text-sm font-semibold text-foreground">{a.startTime}</p>
-                      <p className="text-[10px] text-muted-foreground">{a.duration} min</p>
-                    </div>
-                    <div
-                      className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.bg} ${s.text}`}
-                    >
-                      {a.avatar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-semibold text-foreground">{a.patient}</p>
-                        {a.teleconsultation && <Video className="h-3 w-3 text-primary shrink-0" />}
-                        {a.isNew && (
-                          <span className="text-[9px] font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded-full">
-                            Nouveau
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{a.motif}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${s.pill}`}>{a.type}</span>
-                      <span
-                        className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_CLS[a.status]}`}
-                      >
-                        {STATUS_LABEL[a.status]}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── RDV Panel ────────────────────────────────────────────────
-function RdvPanel({
-  apt,
-  typeColors,
-  onClose,
-  onAction,
-  tcSessions,
-  reschApts,
-  reschBlocks,
-}: {
-  apt: Appt;
-  typeColors: Record<ApptType, ColorKey>;
-  onClose: () => void;
-  onAction: (action: string, id: string, payload?: Record<string, string>) => void;
-  tcSessions: ReturnType<typeof useTeleconsultSessions>;
-  reschApts: Appt[];
-  reschBlocks: BlockedSlot[];
-}) {
-  const [resched, setResched] = useState(false);
-  const [nDate, setNDate] = useState(apt.date);
-  const [nTime, setNTime] = useState(apt.startTime);
-  const [confirm, setConfirm] = useState<null | {
-    action: string;
-    title: string;
-    desc: string;
-    variant?: "danger" | "warning";
-  }>(null);
-
-  const s = colorStyle(typeColors[apt.type]);
-  const d = new Date(apt.date + "T00:00:00");
-  const faded = ["cancelled", "absent"].includes(apt.status);
-  const STEPS: ApptStatus[] = ["confirmed", "arrived", "in_progress", "done"];
-  const step = STEPS.indexOf(apt.status);
-  const tcSess = tcSessions.find((ts) => ts.patientName === apt.patient);
-
-  const ask = (action: string, title: string, desc: string, variant?: "danger" | "warning") => {
-    setConfirm({ action, title, desc, variant });
-  };
-
-  const doAction = (action: string) => {
-    onAction(action, apt.id);
-    setConfirm(null);
-  };
-
-  return (
-    <>
-      <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm" onClick={onClose}>
-        <div
-          className="absolute right-0 top-0 h-full w-full max-w-[400px] bg-card border-l shadow-2xl flex flex-col"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className={`px-5 py-4 border-b ${s.bg}`}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
+      <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 215px)" }}>
+        <div className="grid" style={{ gridTemplateColumns: "72px minmax(0,1fr)" }}>
+          <div className="relative border-r" style={{ height: GRID_HEIGHT }}>
+            {Array.from({ length: (DAY_END - DAY_START) / SLOT_MINUTES }).map((_, index) => {
+              const startMinutes = DAY_START + index * SLOT_MINUTES;
+              const timeLabel = toTimeLabel(startMinutes);
+              return index % 2 === 0 ? (
                 <div
-                  className={`h-11 w-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${s.bg} ${s.text} border ${s.border}`}
+                  key={timeLabel}
+                  className="absolute right-2 text-[11px] text-muted-foreground"
+                  style={{ top: index * SLOT_HEIGHT - 8 }}
                 >
-                  {apt.avatar}
+                  {timeLabel}
                 </div>
-                <div className="min-w-0">
-                  <h3 className="text-base font-bold text-foreground truncate">{apt.patient}</h3>
-                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_CLS[apt.status]}`}
-                    >
-                      {STATUS_LABEL[apt.status]}
-                    </span>
-                    {apt.teleconsultation && (
-                      <span className="text-[10px] font-medium text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Video className="h-2.5 w-2.5" /> Vidéo
-                      </span>
-                    )}
-                    {apt.isNew && (
-                      <span className="text-[10px] font-medium text-warning bg-warning/10 border border-warning/20 px-2 py-0.5 rounded-full">
-                        Nouveau patient
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted/40 shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+              ) : null;
+            })}
           </div>
-
-          <div className="flex-1 overflow-y-auto min-h-0">
-            {/* Infos */}
-            <div className="px-5 py-4 border-b grid grid-cols-2 gap-2.5">
-              <div className="rounded-lg bg-muted/30 px-3 py-2.5">
-                <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">Date</p>
-                <p className="text-sm font-semibold text-foreground">
-                  {DAYS_SHORT[dow(d)]} {d.getDate()} {MONTHS_SH[d.getMonth()]}
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted/30 px-3 py-2.5">
-                <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">Heure</p>
-                <p className="text-sm font-semibold text-foreground">
-                  {apt.startTime}
-                  <span className="text-xs font-normal text-muted-foreground"> ({apt.duration} min)</span>
-                </p>
-              </div>
-              <div className="col-span-2 rounded-lg bg-muted/30 px-3 py-2.5">
-                <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">Motif</p>
-                <p className="text-sm font-semibold text-foreground">{apt.motif}</p>
-              </div>
-              <div className="rounded-lg bg-muted/30 px-3 py-2.5">
-                <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide mb-1.5">Type</p>
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${s.pill}`}>{apt.type}</span>
-              </div>
-              <div className="rounded-lg bg-muted/30 px-3 py-2.5">
-                <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">Assurance</p>
-                <p className="text-xs font-semibold text-foreground">{apt.assurance}</p>
-              </div>
-              <div className="col-span-2 rounded-lg bg-muted/30 px-3 py-2.5 flex items-center justify-between">
-                <div>
-                  <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide mb-0.5">
-                    Téléphone
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">{apt.phone || "—"}</p>
-                </div>
-                {apt.phone && (
-                  <a
-                    href={`tel:${apt.phone}`}
-                    className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent hover:bg-accent/20 transition-colors"
-                  >
-                    <Phone className="h-3.5 w-3.5" />
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Progression */}
-            {!faded && step >= 0 && (
-              <div className="px-5 py-4 border-b">
-                <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide mb-4">
-                  Progression
-                </p>
-                <div className="flex items-start">
-                  {STEPS.map((st, i) => (
-                    <div key={st} className={`flex flex-col items-center ${i < STEPS.length - 1 ? "flex-1" : ""}`}>
-                      <div className="flex items-center w-full">
-                        <div
-                          className={`h-6 w-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold shrink-0 transition-all
-                          ${
-                            i < step
-                              ? "border-accent bg-accent text-accent-foreground"
-                              : i === step
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-muted bg-muted/50 text-muted-foreground"
-                          }`}
-                        >
-                          {i < step ? "✓" : i + 1}
-                        </div>
-                        {i < STEPS.length - 1 && (
-                          <div className={`flex-1 h-0.5 ${i < step ? "bg-accent" : "bg-muted"}`} />
-                        )}
-                      </div>
-                      <span
-                        className={`text-[9px] font-medium mt-1 text-center whitespace-nowrap
-                        ${i === step ? "text-primary" : i < step ? "text-accent" : "text-muted-foreground"}`}
-                      >
-                        {STATUS_LABEL[st]}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Reporter avec créneaux disponibles */}
-            {resched && (
-              <div className="px-5 py-4 border-b bg-warning/5 space-y-3">
-                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <CalendarClock className="h-4 w-4 text-warning" /> Reporter le RDV
-                </p>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Nouvelle date</Label>
-                  <Input type="date" value={nDate} onChange={(e) => setNDate(e.target.value)} className="mt-1 h-9" />
-                </div>
-                {/* Créneaux disponibles pour la date choisie */}
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-2 block">Créneaux disponibles — {nDate}</Label>
-                  <div className="grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto">
-                    {HOUR_LABELS.map((slot) => {
-                      const slotMin = t2min(slot);
-                      const taken = reschApts.some((a) => {
-                        if (a.id === apt.id || ["cancelled", "absent"].includes(a.status) || a.date !== nDate)
-                          return false;
-                        const st = t2min(a.startTime);
-                        return slotMin >= st && slotMin < st + a.duration;
-                      });
-                      const blocked = reschBlocks.some((b) => {
-                        if (b.date !== nDate) return false;
-                        const st = t2min(b.startTime);
-                        return slotMin >= st && slotMin < st + b.duration;
-                      });
-                      const unavail = taken || blocked;
-                      return (
-                        <button
-                          key={slot}
-                          disabled={unavail}
-                          onClick={() => setNTime(slot)}
-                          className={`rounded-lg border py-2 text-xs font-medium transition-all
-                            ${
-                              unavail
-                                ? "opacity-30 cursor-not-allowed border-border bg-muted/30 text-muted-foreground"
-                                : nTime === slot
-                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                  : "border-border hover:border-primary/50 hover:bg-primary/5 text-foreground"
-                            }`}
-                        >
-                          {slot}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {nTime && (
-                    <p className="text-xs text-primary font-medium mt-2">
-                      Sélectionné : {nTime} ({apt.duration} min)
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => setResched(false)}>
-                    Annuler
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1 gradient-primary text-primary-foreground"
-                    disabled={!nTime}
-                    onClick={() => {
-                      onAction("reschedule", apt.id, { newDate: nDate, newTime: nTime });
-                      setResched(false);
-                    }}
-                  >
-                    <CalendarClock className="h-3.5 w-3.5 mr-1.5" /> Confirmer
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="px-5 py-4 space-y-2">
-              {apt.status === "pending" && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-10"
-                  onClick={() =>
-                    ask(
-                      "confirm",
-                      "Confirmer ce RDV ?",
-                      `Confirmer le rendez-vous de ${apt.patient} le ${apt.date} à ${apt.startTime}.`,
-                    )
-                  }
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2.5 text-accent" /> Confirmer le RDV
-                </Button>
-              )}
-              {apt.status === "confirmed" && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-10"
-                  onClick={() =>
-                    ask("arrived", "Marquer comme arrivé ?", `${apt.patient} est arrivé en salle d'attente.`)
-                  }
-                >
-                  <UserCheck className="h-4 w-4 mr-2.5 text-primary" /> Marquer arrivé
-                </Button>
-              )}
-              {["confirmed", "arrived"].includes(apt.status) && !apt.teleconsultation && (
-                <Link to={`/dashboard/doctor/consultation/new?patient=${apt.patientId ?? 1}`}>
-                  <Button
-                    className="w-full justify-start h-10 gradient-primary text-primary-foreground mb-1"
-                    onClick={onClose}
-                  >
-                    <Activity className="h-4 w-4 mr-2.5" /> Démarrer la consultation
-                  </Button>
-                </Link>
-              )}
-              {apt.teleconsultation && tcSess && <DoctorJoinTeleconsultButton sessionId={tcSess.id} />}
-              {apt.status === "in_progress" && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-10"
-                  onClick={() => ask("done", "Terminer la consultation ?", "Marquer ce RDV comme terminé.")}
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2.5 text-accent" /> Marquer terminé
-                </Button>
-              )}
-
-              <div className="flex gap-2 pt-1">
-                <Button variant="outline" className="flex-1 h-9 text-xs" onClick={() => setResched((v) => !v)}>
-                  <RefreshCw className="h-3.5 w-3.5 mr-1.5 text-warning" /> Reporter
-                </Button>
-                <Link to="/dashboard/doctor/messages" className="flex-1">
-                  <Button variant="outline" className="w-full h-9 text-xs">
-                    <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-primary" /> Message
-                  </Button>
-                </Link>
-                <Button variant="outline" className="flex-1 h-9 text-xs" onClick={() => {
-                  toast({ title: "Impression en cours", description: `Fiche RDV de ${apt.patient} — ${apt.date} à ${apt.startTime}` });
-                  window.print();
-                }}>
-                  <Printer className="h-3.5 w-3.5 mr-1.5" /> Imprimer
-                </Button>
-              </div>
-
-              {!faded && (
-                <>
-                  <div className="border-t pt-2 space-y-1.5">
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start h-10 text-warning border-warning/30 hover:bg-warning/5"
-                      onClick={() =>
-                        ask(
-                          "absent",
-                          "Marquer le patient absent ?",
-                          `${apt.patient} n'est pas venu à son rendez-vous.`,
-                          "warning",
-                        )
-                      }
-                    >
-                      <UserX className="h-4 w-4 mr-2.5" /> Patient absent
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start h-10 text-destructive border-destructive/30 hover:bg-destructive/5"
-                      onClick={() =>
-                        ask("cancel", "Annuler ce RDV ?", `Le rendez-vous de ${apt.patient} sera annulé.`, "danger")
-                      }
-                    >
-                      <X className="h-4 w-4 mr-2.5" /> Annuler le RDV
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Confirm dialogs */}
-      {confirm && (
-        <ConfirmDialog
-          open={true}
-          title={confirm.title}
-          description={confirm.desc}
-          confirmLabel="Confirmer"
-          cancelLabel="Annuler"
-          variant={confirm.variant ?? "default"}
-          onConfirm={() => doAction(confirm.action)}
-          onCancel={() => setConfirm(null)}
-        />
-      )}
-    </>
-  );
-}
-
-// ─── Create RDV modal ─────────────────────────────────────────
-function CreateModal({
-  defDate,
-  defTime,
-  typeColors,
-  onClose,
-  onCreate,
-}: {
-  defDate?: string;
-  defTime?: string;
-  typeColors: Record<ApptType, ColorKey>;
-  onClose: () => void;
-  onCreate: (a: Appt) => void;
-}) {
-  const [mode, setMode] = useState<"registered" | "new">("registered");
-  const [q, setQ] = useState("");
-  const [patient, setPatient] = useState<{ name: string; id: number | null; avatar: string; phone: string; assurance: string } | null>(null);
-  // Nouveau patient
-  const [nom, setNom] = useState("");
-  const [prenom, setPrenom] = useState("");
-  const [tel, setTel] = useState("");
-  const [assur, setAssur] = useState("");
-  // RDV
-  const [date, setDate] = useState(defDate ?? fmtDate(new Date()));
-  const [time, setTime] = useState(defTime ?? "09:00");
-  const [type, setType] = useState<ApptType>("Consultation");
-  const [duration, setDuration] = useState(30);
-  const [motif, setMotif] = useState("");
-  const [notes, setNotes] = useState("");
-  const [tele, setTele] = useState(false);
-  const [showDrop, setShowDrop] = useState(false);
-
-  const [sharedPats] = useSharedPatients();
-  const allPats = useMemo(() => {
-    return sharedPats.map(p => ({
-      name: p.name,
-      id: p.id,
-      avatar: p.avatar,
-      phone: p.phone,
-      assurance: p.assurance,
-    }));
-  }, [sharedPats]);
-
-  const filtered =
-    q.length > 0 ? allPats.filter((p) => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6) : [];
-
-  const TYPES: ApptType[] = ["Consultation", "Suivi", "Première visite", "Contrôle", "Urgence", "Téléconsultation"];
-
-  const canSubmit = mode === "registered" ? !!patient : nom.trim().length > 0 && prenom.trim().length > 0;
-
-  const handleCreate = () => {
-    if (!canSubmit) return;
-    const isNew = mode === "new";
-    const finalPatient = isNew
-      ? {
-          name: `${prenom.trim()} ${nom.trim()}`,
-          id: null,
-          avatar: `${prenom[0]}${nom[0]}`.toUpperCase(),
-          phone: tel,
-          assurance: assur || "—",
-        }
-      : patient!;
-    const a: Appt = {
-      id: `new-${Date.now()}`,
-      date,
-      startTime: time,
-      endTime: computeEndTime(time, duration),
-      duration,
-      patient: finalPatient.name,
-      patientId: finalPatient.id,
-      avatar: finalPatient.avatar,
-      phone: finalPatient.phone,
-      motif: motif || type,
-      type,
-      status: "confirmed",
-      assurance: finalPatient.assurance,
-      doctor: CURRENT_DOCTOR,
-      teleconsultation: tele || type === "Téléconsultation",
-      notes,
-      isNew,
-    };
-    onCreate(a);
-    toast({ title: "RDV créé", description: `${finalPatient.name} — ${date} à ${time}` });
-    onClose();
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border bg-card shadow-elevated mx-4 max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <CalIcon className="h-4 w-4 text-primary" /> Nouveau rendez-vous
-          </h3>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted/50"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="px-5 py-4 space-y-4">
-          {/* Toggle patient inscrit / nouveau */}
-          <div className="flex rounded-lg border bg-muted/30 p-0.5 gap-0.5">
-            <button
-              onClick={() => setMode("registered")}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium transition-colors
-                ${mode === "registered" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <User className="h-3.5 w-3.5" /> Patient inscrit
-            </button>
-            <button
-              onClick={() => setMode("new")}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium transition-colors
-                ${mode === "new" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <UserPlus className="h-3.5 w-3.5" /> Nouveau patient
-            </button>
-          </div>
-
-          {/* Recherche patient inscrit */}
-          {mode === "registered" && (
-            <div>
-              <Label className="text-xs text-muted-foreground">Patient *</Label>
-              {patient ? (
-                <div className="mt-1.5 flex items-center gap-2.5 rounded-lg border bg-muted/20 px-3 py-2.5">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-                    {patient.avatar}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-foreground">{patient.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{patient.phone}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setPatient(null);
-                      setQ("");
-                    }}
-                    className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="relative mt-1.5">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    value={q}
-                    onChange={(e) => {
-                      setQ(e.target.value);
-                      setShowDrop(true);
-                    }}
-                    onFocus={() => setShowDrop(true)}
-                    placeholder="Rechercher un patient…"
-                    className="pl-9 h-9"
-                  />
-                  {showDrop && filtered.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border bg-card shadow-elevated overflow-hidden">
-                      {filtered.map((p) => (
-                        <button
-                          key={p.id}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left"
-                          onClick={() => {
-                            setPatient(p);
-                            setQ("");
-                            setShowDrop(false);
-                          }}
-                        >
-                          <div className="h-7 w-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-                            {p.avatar}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{p.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{p.phone}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Nouveau patient libre */}
-          {mode === "new" && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Prénom *</Label>
-                  <Input
-                    value={prenom}
-                    onChange={(e) => setPrenom(e.target.value)}
-                    placeholder="Prénom"
-                    className="mt-1 h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Nom *</Label>
-                  <Input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom" className="mt-1 h-9" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Téléphone</Label>
-                <Input
-                  value={tel}
-                  onChange={(e) => setTel(e.target.value)}
-                  placeholder="+216 XX XXX XXX"
-                  className="mt-1 h-9"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Assurance</Label>
-                <Input
-                  value={assur}
-                  onChange={(e) => setAssur(e.target.value)}
-                  placeholder="CNAM, CNSS, Privée…"
-                  className="mt-1 h-9"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Date & heure */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">Date *</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 h-9" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Heure *</Label>
-              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 h-9" />
-            </div>
-          </div>
-
-          {/* Type */}
-          <div>
-            <Label className="text-xs text-muted-foreground">Type</Label>
-            <div className="grid grid-cols-3 gap-1.5 mt-1.5">
-              {TYPES.map((t) => {
-                const cs = colorStyle(typeColors[t]);
-                return (
-                  <button
-                    key={t}
-                    onClick={() => {
-                      setType(t);
-                      if (t === "Téléconsultation") setTele(true);
-                    }}
-                    className={`rounded-lg border px-2 py-2 text-xs font-medium transition-all text-center
-                      ${type === t ? `${cs.bg} ${cs.border} ${cs.text}` : "border-border text-muted-foreground hover:bg-muted/30"}`}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Durée */}
-          <div>
-            <Label className="text-xs text-muted-foreground">Durée</Label>
-            <select
-              value={duration}
-              onChange={(e) => setDuration(+e.target.value)}
-              className="mt-1 w-full rounded-lg border bg-background px-3 h-9 text-sm focus:outline-none"
-            >
-              {[15, 20, 30, 45, 60, 90].map((d) => (
-                <option key={d} value={d}>
-                  {d} min
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Motif */}
-          <div>
-            <Label className="text-xs text-muted-foreground">Motif</Label>
-            <Input
-              value={motif}
-              onChange={(e) => setMotif(e.target.value)}
-              placeholder="Ex : Suivi diabète, Renouvellement Rx…"
-              className="mt-1 h-9"
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label className="text-xs text-muted-foreground">Notes internes</Label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="Visible uniquement par le médecin…"
-              className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none focus:outline-none"
-            />
-          </div>
-
-          {/* Téléconsultation */}
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div
-              className={`relative h-5 w-9 rounded-full transition-colors ${tele ? "bg-primary" : "bg-muted-foreground/30"}`}
-              onClick={() => setTele((v) => !v)}
-            >
-              <div
-                className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${tele ? "translate-x-4" : "translate-x-0.5"}`}
-              />
-            </div>
-            <span className="text-sm text-foreground">
-              Téléconsultation
-              <span className="text-xs text-muted-foreground font-normal ml-1">
-                (le patient se connecte à distance)
-              </span>
-            </span>
-          </label>
-        </div>
-
-        <div className="px-5 pb-4 flex gap-2 pt-2 border-t">
-          <Button variant="outline" className="flex-1" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button
-            disabled={!canSubmit}
-            className="flex-1 gradient-primary text-primary-foreground shadow-primary-glow"
-            onClick={handleCreate}
-          >
-            <CheckCircle2 className="h-4 w-4 mr-1.5" /> Créer le RDV
-          </Button>
+          <div style={{ height: GRID_HEIGHT }}>{renderDayGrid(anchorDate)}</div>
         </div>
       </div>
     </div>
   );
-}
 
-// ─── Couleurs modal (médecin configure) ──────────────────────
-function ColorsModal({
-  typeColors,
-  onChange,
-  onClose,
-}: {
-  typeColors: Record<ApptType, ColorKey>;
-  onChange: (t: ApptType, c: ColorKey) => void;
-  onClose: () => void;
-}) {
-  const TYPES: ApptType[] = ["Consultation", "Suivi", "Première visite", "Contrôle", "Urgence", "Téléconsultation"];
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-lg rounded-2xl border bg-card shadow-elevated mx-4 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Palette className="h-4 w-4 text-primary" /> Couleurs des étiquettes
-          </h3>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted/50"
-          >
-            <X className="h-4 w-4" />
-          </button>
+  const renderMonthView = () => {
+    const monthKey = `${anchorDate.getFullYear()}-${anchorDate.getMonth()}`;
+    return (
+      <div className="overflow-hidden rounded-2xl border bg-card">
+        <div className="grid grid-cols-7 border-b bg-muted/20">
+          {DAYS_SHORT.map((day) => (
+            <div key={`${monthKey}-${day}`} className="px-3 py-3 text-center text-xs font-semibold text-muted-foreground">
+              {day}
+            </div>
+          ))}
         </div>
-        <div className="px-5 py-4 space-y-5">
-          <p className="text-xs text-muted-foreground">
-            Choisissez la couleur pour chaque type de RDV. Les couleurs s'appliquent immédiatement dans l'agenda.
-          </p>
-          {TYPES.map((t) => {
-            const current = typeColors[t];
-            const cs = colorStyle(current);
+        <div className="grid grid-cols-7 divide-x divide-y">
+          {monthDays.map((day) => {
+            const dayKey = formatDateKey(day);
+            const sameMonth = day.getMonth() === anchorDate.getMonth();
+            const dayAppointments = visibleAppointments.filter((item) => item.date === dayKey);
             return (
-              <div key={t} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className={`h-3 w-3 rounded-full shrink-0 ${cs.dot}`} />
-                  <p className="text-xs font-semibold text-foreground">{t}</p>
-                  <span className={`ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full ${cs.pill}`}>
-                    {cs.label}
+              <button
+                key={dayKey}
+                type="button"
+                onClick={() => {
+                  setAnchorDate(day);
+                  setView("day");
+                }}
+                className={`min-h-[130px] px-2 py-2 text-left transition hover:bg-muted/30 ${sameMonth ? "bg-background" : "bg-muted/15 text-muted-foreground"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold ${dayKey === todayKey ? "bg-primary text-primary-foreground" : ""}`}>
+                    {day.getDate()}
                   </span>
+                  {dayAppointments.length > 0 && <span className="text-[10px] text-muted-foreground">{dayAppointments.length} RDV</span>}
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  {COLOR_OPTIONS.map((c) => (
-                    <button
-                      key={c.key}
-                      onClick={() => onChange(t, c.key)}
-                      className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all
-                        ${
-                          current === c.key
-                            ? `${c.bg} ${c.border} ${c.text} ring-1 ring-offset-1 ring-primary/30`
-                            : "border-border text-muted-foreground hover:bg-muted/40"
-                        }`}
-                    >
-                      <span className={`h-3 w-3 rounded-full shrink-0 ${c.dot}`} />
-                      {c.label}
-                      {current === c.key && <CheckCircle2 className="h-3 w-3 ml-0.5" />}
-                    </button>
+                <div className="mt-2 space-y-1">
+                  {dayAppointments.slice(0, 3).map((appointment) => (
+                    <div key={appointment.id} className={`rounded-lg border px-2 py-1 text-[11px] ${resolveTypeClasses(appointment.type)} ${appointment.status === "done" ? "opacity-[0.60]" : appointment.status === "cancelled" || appointment.status === "absent" ? "opacity-[0.58]" : ""}`}>
+                      <div className="flex items-center gap-1 truncate">
+                        <span className="font-semibold">{appointment.startTime}</span>
+                        <span className="truncate">{appointment.patient}</span>
+                      </div>
+                    </div>
                   ))}
+                  {dayAppointments.length > 3 && (
+                    <p className="text-[11px] font-medium text-primary">+{dayAppointments.length - 3} autres</p>
+                  )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
-        <div className="px-5 pb-5 border-t pt-4">
-          <Button
-            className="w-full gradient-primary text-primary-foreground shadow-primary-glow"
-            onClick={() => {
-              toast({ title: "Couleurs enregistrées ✓" });
-              onClose();
-            }}
-          >
-            <CheckCircle2 className="h-4 w-4 mr-1.5" /> Enregistrer et fermer
-          </Button>
-        </div>
       </div>
-    </div>
-  );
-}
-
-// ─── Disponibilités modal ─────────────────────────────────────
-function AvailModal({ onClose }: { onClose: () => void }) {
-  type DC = { on: boolean; start: string; end: string };
-  const [cfg, setCfg] = useState<Record<string, DC>>({
-    Lun: { on: true, start: "08:00", end: "18:00" },
-    Mar: { on: true, start: "08:00", end: "18:00" },
-    Mer: { on: true, start: "08:00", end: "18:00" },
-    Jeu: { on: true, start: "08:00", end: "18:00" },
-    Ven: { on: true, start: "08:00", end: "18:00" },
-    Sam: { on: false, start: "08:00", end: "13:00" },
-    Dim: { on: false, start: "09:00", end: "12:00" },
-  });
-  const [slot, setSlot] = useState(30);
-  const toggle = (d: string) => setCfg((p) => ({ ...p, [d]: { ...p[d], on: !p[d].on } }));
-  const update = (d: string, k: "start" | "end", v: string) => setCfg((p) => ({ ...p, [d]: { ...p[d], [k]: v } }));
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border bg-card shadow-elevated mx-4 max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Repeat className="h-4 w-4 text-primary" /> Disponibilités récurrentes
-          </h3>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted/50"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="px-5 py-4 space-y-2">
-          {DAYS_SHORT.map((d) => (
-            <div
-              key={d}
-              className={`rounded-lg border px-4 py-3 transition-all ${cfg[d]?.on ? "border-primary/30 bg-primary/3" : "opacity-50"}`}
-            >
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2.5 cursor-pointer select-none w-16 shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={!!cfg[d]?.on}
-                    onChange={() => toggle(d)}
-                    className="rounded border-input"
-                  />
-                  <span className="text-sm font-medium text-foreground">{d}</span>
-                </label>
-                {cfg[d]?.on ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <Input
-                      type="time"
-                      value={cfg[d].start}
-                      onChange={(e) => update(d, "start", e.target.value)}
-                      className="h-8 text-xs flex-1"
-                    />
-                    <span className="text-xs text-muted-foreground">→</span>
-                    <Input
-                      type="time"
-                      value={cfg[d].end}
-                      onChange={(e) => update(d, "end", e.target.value)}
-                      className="h-8 text-xs flex-1"
-                    />
-                  </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Fermé</span>
-                )}
-              </div>
-            </div>
-          ))}
-          <div className="pt-2">
-            <Label className="text-xs text-muted-foreground">Durée par créneau</Label>
-            <select
-              value={slot}
-              onChange={(e) => setSlot(+e.target.value)}
-              className="mt-1 w-full rounded-lg border bg-background px-3 h-9 text-sm"
-            >
-              {[15, 20, 30, 45, 60].map((d) => (
-                <option key={d} value={d}>
-                  {d} min
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button
-              className="flex-1 gradient-primary text-primary-foreground shadow-primary-glow"
-              onClick={() => {
-                toast({ title: "Disponibilités enregistrées" });
-                onClose();
-              }}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-1.5" /> Enregistrer
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Stats bar ────────────────────────────────────────────────
-function StatsBar({ apts }: { apts: Appt[] }) {
-  const todS = fmtDate(new Date()),
-    todA = apts.filter((a) => a.date === todS);
-  const active = todA.filter((a) => !["cancelled", "absent"].includes(a.status)).length;
-  const inRoom = todA.filter((a) => ["arrived", "in_progress"].includes(a.status)).length;
-  const pend = todA.filter((a) => a.status === "pending").length;
-  const week = apts.filter((a) => !["cancelled", "absent"].includes(a.status)).length;
-  const items = [
-    { label: "Aujourd'hui", val: active, icon: CalendarDays, cls: "text-primary" },
-    { label: "En salle", val: inRoom, icon: Timer, cls: "text-primary" },
-    { label: "À confirmer", val: pend, icon: Clock, cls: "text-warning" },
-    { label: "Cette semaine", val: week, icon: Activity, cls: "text-accent" },
-  ];
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {items.map((it) => (
-        <div key={it.label} className="rounded-xl border bg-card shadow-sm px-4 py-3 flex items-center gap-3">
-          <div className={`h-8 w-8 rounded-lg bg-muted/40 flex items-center justify-center shrink-0 ${it.cls}`}>
-            <it.icon className="h-4 w-4" />
-          </div>
-          <div>
-            <p className="text-xl font-bold text-foreground leading-none">{it.val}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{it.label}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Search overlay ───────────────────────────────────────────
-function SearchOverlay({
-  apts,
-  typeColors,
-  onSelect,
-  onClose,
-}: {
-  apts: Appt[];
-  typeColors: Record<ApptType, ColorKey>;
-  onSelect: (a: Appt) => void;
-  onClose: () => void;
-}) {
-  const [q, setQ] = useState("");
-  const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    setTimeout(() => ref.current?.focus(), 30);
-  }, []);
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
-  const res =
-    q.length > 1
-      ? apts
-          .filter(
-            (a) => a.patient.toLowerCase().includes(q.toLowerCase()) || a.motif.toLowerCase().includes(q.toLowerCase()),
-          )
-          .slice(0, 8)
-      : [];
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-foreground/25 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-lg mx-4 rounded-2xl border bg-card shadow-elevated overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 px-4 py-3 border-b">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <input
-            ref={ref}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Rechercher un patient ou un motif…"
-            className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
-          />
-          <kbd className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border">Esc</kbd>
-        </div>
-        <div className="max-h-72 overflow-y-auto">
-          {res.length > 0 ? (
-            res.map((a) => {
-              const s = colorStyle(typeColors[a.type]);
-              const d = new Date(a.date + "T00:00:00");
-              return (
-                <button
-                  key={a.id}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left border-b last:border-0"
-                  onClick={() => {
-                    onSelect(a);
-                    onClose();
-                  }}
-                >
-                  <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.bg} ${s.text}`}
-                  >
-                    {a.avatar}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{a.patient}</p>
-                    <p className="text-xs text-muted-foreground truncate">{a.motif}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-semibold text-foreground">
-                      {d.getDate()} {MONTHS_SH[d.getMonth()]}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">{a.startTime}</p>
-                  </div>
-                </button>
-              );
-            })
-          ) : (
-            <p className="p-6 text-center text-sm text-muted-foreground">
-              {q.length > 1 ? `Aucun résultat pour « ${q} »` : "Tapez pour rechercher…"}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════
-// MAIN PAGE
-// ═══════════════════════════════════════════════════════════════
-const DoctorSchedule = () => {
-  const tcSessions = useTeleconsultSessions();
-
-  const [view, setView] = useState<ViewMode>("week");
-  const [current, setCurrent] = useState(() => new Date());
-  const [allApts, , { isLoading: aptsLoading }] = useSharedAppointments();
-  const [allBlocks] = useSharedBlockedSlots();
-  const [availConfig] = useSharedAvailability();
-  const [allLeaves] = useSharedLeaves();
-  // In production, RLS already filters by doctor_id — skip name filter
-  const apts = useMemo(() => isProductionMode() ? allApts : allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
-  const blocks = useMemo(() => isProductionMode() ? allBlocks : allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
-
-  const getDayConfig = useCallback((date: Date): AvailabilityDay | undefined => {
-    const DAYS_MAP = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-    const dayName = DAYS_MAP[date.getDay()];
-    return availConfig.days[dayName];
-  }, [availConfig]);
-
-  const getLeaveForDate = useCallback((date: Date): SharedLeave | undefined => {
-    const ds = fmtDate(date);
-    return allLeaves.find(l => l.status === "upcoming" && ds >= l.startDate && ds <= l.endDate);
-  }, [allLeaves]);
-  const [typeColors, setTypeColors] = useState<Record<ApptType, ColorKey>>(DEFAULT_TYPE_COLORS);
-
-  // Modal state
-  const [selApt, setSelApt] = useState<Appt | null>(null);
-  const [slotCtx, setSlotCtx] = useState<SlotCtx | null>(null);
-  const [blockModal, setBlockModal] = useState<{ initDate?: string; initTime?: string } | null>(null);
-  const [editBlock, setEditBlock] = useState<BlockedSlot | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [defDate, setDefDate] = useState<string | undefined>();
-  const [defTime, setDefTime] = useState<string | undefined>();
-  const [showAvail, setShowAvail] = useState(false);
-  const [showColors, setShowColors] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-
-  // Ctrl+K
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setShowSearch(true);
-      }
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, []);
-
-  const ws = useMemo(() => weekStart(current), [current]);
-  const wds = useMemo(() => weekDays(ws), [ws]);
-
-  const nav = (dir: -1 | 1) =>
-    setCurrent((d) => (view === "day" ? addDays(d, dir) : view === "month" ? addMonths(d, dir) : addDays(d, dir * 7)));
-
-  const rangeLabel = useMemo(() => {
-    if (view === "week") {
-      const e = wds[6];
-      return ws.getMonth() === e.getMonth()
-        ? `${ws.getDate()} – ${e.getDate()} ${MONTHS_LONG[ws.getMonth()]} ${ws.getFullYear()}`
-        : `${ws.getDate()} ${MONTHS_SH[ws.getMonth()]} – ${e.getDate()} ${MONTHS_SH[e.getMonth()]} ${ws.getFullYear()}`;
-    }
-    if (view === "day")
-      return `${DAYS_SHORT[dow(current)]} ${current.getDate()} ${MONTHS_LONG[current.getMonth()]} ${current.getFullYear()}`;
-    return `${MONTHS_LONG[current.getMonth()]} ${current.getFullYear()}`;
-  }, [view, current, ws, wds]);
-
-  const handleAction = useCallback(
-    (action: string, id: string, payload?: Record<string, string>) => {
-      // Write to shared store
-      switch (action) {
-        case "confirm": updateAppointmentStatus(id, "confirmed"); break;
-        case "arrived": updateAppointmentStatus(id, "arrived"); break;
-        case "start": updateAppointmentStatus(id, "in_progress"); break;
-        case "done": updateAppointmentStatus(id, "done"); break;
-        case "cancel": updateAppointmentStatus(id, "cancelled"); break;
-        case "absent": updateAppointmentStatus(id, "absent"); break;
-        case "reschedule":
-          if (payload) rescheduleAppointment(id, payload.newDate, payload.newTime);
-          break;
-      }
-      // Status is already synced via sharedAppointmentsStore — no need for separate waitingRoom sync
-      const MSGS: Record<string, string> = {
-        confirm: "RDV confirmé", arrived: "Patient arrivé", start: "Consultation démarrée",
-        done: "Consultation terminée", cancel: "RDV annulé", absent: "Patient marqué absent",
-        reschedule: "RDV reporté",
-      };
-      toast({ title: MSGS[action] ?? "Mise à jour" });
-      if (action === "reschedule" && payload)
-        setSelApt((p) => (p ? { ...p, date: payload.newDate, startTime: payload.newTime, endTime: computeEndTime(payload.newTime, p.duration) } : p));
-    },
-    [apts],
-  );
-
-  const listApts = useMemo(() => {
-    const s = fmtDate(ws),
-      e = fmtDate(addDays(ws, 6));
-    return apts.filter((a) => a.date >= s && a.date <= e);
-  }, [apts, ws]);
-
-  const handleSlotClick = (date: Date, time: string, x: number, y: number) => {
-    setSlotCtx({ date: fmtDate(date), time, x, y });
+    );
   };
 
-  if (aptsLoading) {
+  const renderListView = () => {
+    const grouped = visibleAppointments.reduce<Record<string, SharedAppointment[]>>((acc, appointment) => {
+      acc[appointment.date] ??= [];
+      acc[appointment.date].push(appointment);
+      return acc;
+    }, {});
+
+    const keys = Object.keys(grouped).sort();
+
+    if (!keys.length) return <EmptyPlanningState production={production} />;
+
+    return (
+      <div className="space-y-4">
+        {keys.map((dateKey) => (
+          <div key={dateKey} className="overflow-hidden rounded-2xl border bg-card">
+            <div className="border-b bg-muted/20 px-4 py-3">
+              <h3 className="font-semibold">{formatHumanDate(dateKey)}</h3>
+              <p className="text-xs text-muted-foreground">{grouped[dateKey].length} rendez-vous</p>
+            </div>
+            <div className="divide-y">
+              {grouped[dateKey]
+                .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                .map((appointment) => (
+                  <button
+                    key={appointment.id}
+                    type="button"
+                    onClick={() => setSelectedAppointment(appointment)}
+                    className={`flex w-full items-center gap-4 px-4 py-3 text-left transition hover:bg-muted/20 ${appointment.status === "done" ? "opacity-[0.60]" : appointment.status === "cancelled" || appointment.status === "absent" ? "opacity-[0.58]" : ""}`}
+                  >
+                    <div className="w-20 shrink-0">
+                      <p className="font-semibold">{appointment.startTime}</p>
+                      <p className="text-xs text-muted-foreground">{appointment.duration} min</p>
+                    </div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      {appointment.avatar || getAvatar(appointment.patient)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate font-semibold">{appointment.patient}</p>
+                        <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <span className={`h-2 w-2 rounded-full ${getStatusMarkerClasses(appointment.status)}`} />
+                          {getStatusLabel(appointment.status)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {appointment.type} · {appointment.motif || "Sans motif"}
+                      </p>
+                    </div>
+                    <span className={`rounded-full border px-2 py-1 text-[11px] font-medium ${resolveTypeClasses(appointment.type)}`}>
+                      {appointment.type}
+                    </span>
+                  </button>
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderPlanning = () => {
+    if (!visibleAppointments.length && view === "list") {
+      return <EmptyPlanningState production={production} />;
+    }
+
+    if (view === "day") return renderDayView();
+    if (view === "month") return renderMonthView();
+    if (view === "list") return renderListView();
+    return renderWeekView();
+  };
+
+  if (authLoading || loading) {
     return (
       <DashboardLayout role="doctor" title="Planning">
-        <LoadingSkeleton type="dashboard" />
+        <LoadingSkeleton lines={12} />
       </DashboardLayout>
     );
   }
@@ -2399,256 +1548,946 @@ const DoctorSchedule = () => {
   return (
     <DashboardLayout role="doctor" title="Planning">
       <div className="space-y-4">
-        {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => nav(-1)}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => nav(1)}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs" onClick={() => setCurrent(new Date())}>
-              Aujourd'hui
-            </Button>
-            <span className="text-base font-semibold text-foreground hidden md:block ml-1">{rangeLabel}</span>
-          </div>
-
-          {/* View toggle */}
-          <div className="flex gap-1 rounded-lg border bg-card p-0.5">
-            {(
-              [
-                ["month", "Mois", CalIcon],
-                ["week", "Semaine", LayoutGrid],
-                ["day", "Jour", ListIcon],
-                ["list", "Liste", ListIcon],
-              ] as const
-            ).map(([v, lbl, Icon]) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors
-                  ${view === v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{lbl}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              title="Rechercher (Ctrl+K)"
-              onClick={() => setShowSearch(true)}
-              className="h-9 w-9 rounded-lg border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <Search className="h-3.5 w-3.5" />
-            </button>
-            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => setShowColors(true)}>
-              <Palette className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Couleurs</span>
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => setShowAvail(true)}>
-              <Repeat className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Disponibilités</span>
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => setBlockModal({})}>
-              <Ban className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Bloquer</span>
-            </Button>
-            <Button
-              size="sm"
-              className="gradient-primary text-primary-foreground shadow-primary-glow text-xs h-9"
-              onClick={() => {
-                setDefDate(undefined);
-                setDefTime(undefined);
-                setShowCreate(true);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Nouveau RDV
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile label */}
-        <p className="text-sm font-semibold text-foreground md:hidden">{rangeLabel}</p>
-
-        {/* Stats */}
-        <StatsBar apts={apts} />
-
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-          {(Object.entries(typeColors) as [ApptType, ColorKey][]).map(([t, ck]) => {
-            const s = colorStyle(ck);
-            return (
-              <div key={t} className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-                {t}
+        <div className="rounded-2xl border bg-card px-4 py-2 shadow-sm sm:px-5">
+          <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-[22px] font-bold tracking-tight">Planning</h1>
+                  <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${production ? "border-accent/30 bg-accent/10 text-accent" : "border-primary/30 bg-primary/10 text-primary"}`}>
+                    {production ? "Supabase" : "Démo"}
+                  </span>
+                  <span className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">Auj. {stats.today}</span>
+                  <span className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">Attente {stats.waiting}</span>
+                  <span className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">Visio {stats.teleconsultation}</span>
+                                  </div>
               </div>
-            );
-          })}
-          <div className="flex items-center gap-1.5 pl-3 border-l">
-            <div className="w-3 h-px bg-destructive" />
-            Heure actuelle
-          </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground/60">
-            <Lock className="h-2.5 w-2.5" />
-            Créneau bloqué
+
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => loadSchedule(true)} disabled={refreshing}>
+                  {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcw className="mr-2 h-4 w-4" />}
+                  Actualiser
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowColors(true)}>
+                  <Palette className="mr-2 h-4 w-4" /> Couleurs
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => openBlock(undefined, undefined, "cabinet")}>
+                  <Lock className="mr-2 h-4 w-4" /> Bloquer cabinet
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => openBlock(undefined, undefined, "personal")}>
+                  <CalendarClock className="mr-2 h-4 w-4" /> Indispo perso
+                </Button>
+                <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => openCreate()}>
+                  <Plus className="mr-2 h-4 w-4" /> Créer un rendez-vous
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="icon" onClick={goToPrev}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={goToNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" onClick={goToday}>Aujourd'hui</Button>
+                <div className="ml-1">
+                  <p className="text-base font-semibold leading-none sm:text-lg">{periodLabel}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-end">
+                <div className="relative min-w-[220px] flex-1 xl:max-w-sm">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    className="pl-9"
+                    placeholder="Rechercher un patient, motif, téléphone..."
+                  />
+                </div>
+
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
+                  <SelectTrigger className="w-full xl:w-[160px]">
+                    <SelectValue placeholder="Statut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FILTER_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="inline-flex rounded-xl border bg-muted/20 p-1">
+                  {[
+                    { key: "all", label: "Tous" },
+                    { key: "cabinet", label: "Cabinet" },
+                    { key: "personal", label: "Personnel" },
+                  ].map((item) => {
+                    const active = calendarFilter === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setCalendarFilter(item.key as typeof calendarFilter)}
+                        className={`rounded-lg px-3 py-2 text-sm font-medium transition ${active ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="inline-flex rounded-xl border bg-muted/20 p-1">
+                  {[
+                    { key: "week", label: "Semaine", icon: LayoutGrid },
+                    { key: "day", label: "Journée", icon: CalendarDays },
+                    { key: "month", label: "Mois", icon: MoonStar },
+                    { key: "list", label: "Liste", icon: List },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const active = view === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setView(item.key as ViewMode)}
+                        className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Views */}
-        {view === "week" && (
-          <WeekView
-            days={wds}
-            apts={apts}
-            blocks={blocks}
-            typeColors={typeColors}
-            getDayConfig={getDayConfig}
-            getLeaveForDate={getLeaveForDate}
-            onSlot={handleSlotClick}
-            onApt={setSelApt}
-            onBlock={setEditBlock}
-          />
-        )}
-        {view === "day" && (
-          <DayView
-            date={current}
-            apts={apts}
-            blocks={blocks}
-            typeColors={typeColors}
-            onSlot={(t, x, y) => handleSlotClick(current, t, x, y)}
-            onApt={setSelApt}
-            onBlock={setEditBlock}
-          />
-        )}
-        {view === "month" && (
-          <MonthView
-            year={current.getFullYear()}
-            month={current.getMonth()}
-            apts={apts}
-            typeColors={typeColors}
-            onDayClick={(d) => {
-              setCurrent(d);
-              setView("day");
-            }}
-            onAptClick={setSelApt}
-          />
-        )}
-        {view === "list" && <ListView apts={listApts} typeColors={typeColors} onAptClick={setSelApt} />}
-
-        <UpgradeBanner
-          feature="Statistiques avancées"
-          description="Analysez vos taux de remplissage, no-show et revenus avec le plan Pro."
-        />
+        {renderPlanning()}
       </div>
 
-      {/* Slot popup */}
-      {slotCtx && (
-        <SlotPopup
-          ctx={slotCtx}
-          onRdv={() => {
-            setDefDate(slotCtx.date);
-            setDefTime(slotCtx.time);
-            setSlotCtx(null);
-            setShowCreate(true);
-          }}
-          onBlock={() => {
-            setBlockModal({ initDate: slotCtx.date, initTime: slotCtx.time });
-            setSlotCtx(null);
-          }}
-          onClose={() => setSlotCtx(null)}
-        />
-      )}
+      <Sheet open={Boolean(selectedAppointment)} onOpenChange={(open) => !open && setSelectedAppointment(null)}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+          {selectedAppointment && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-3">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-base font-bold text-primary">
+                    {selectedAppointment.avatar || getAvatar(selectedAppointment.patient)}
+                  </span>
+                  <span>
+                    <span className="block text-lg sm:text-xl">{selectedAppointment.patient}</span>
+                    <span className={`mt-1 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-medium ${getStatusClasses(selectedAppointment.status)}`}>
+                      {(() => {
+                        const StatusIcon = getStatusActionIcon(selectedAppointment.status);
+                        return <StatusIcon className="h-3.5 w-3.5" />;
+                      })()}
+                      <span>{getStatusLabel(selectedAppointment.status)}</span>
+                    </span>
+                  </span>
+                </SheetTitle>
+                <SheetDescription>
+                  {selectedAppointment.type} · {selectedAppointment.motif || "Sans motif"}
+                </SheetDescription>
+              </SheetHeader>
 
-      {/* Unified block modal (toolbar + slot popup → même modal) */}
-      {blockModal !== null && (
-        <UnifiedBlockModal
-          initDate={blockModal.initDate}
-          initTime={blockModal.initTime}
-          onClose={() => setBlockModal(null)}
-          onBlock={(b) => {
-            addBlockedSlot({ date: b.date, startTime: b.startTime, duration: b.duration, reason: b.reason, doctor: CURRENT_DOCTOR });
-            setBlockModal(null);
-          }}
-        />
-      )}
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Date</p>
+                  <p className="mt-2 text-lg font-semibold">{formatHumanDate(selectedAppointment.date)}</p>
+                </div>
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Heure</p>
+                  <p className="mt-2 text-lg font-semibold">
+                    {selectedAppointment.startTime} · {selectedAppointment.duration} min
+                  </p>
+                </div>
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Assurance</p>
+                  <p className="mt-2 text-sm font-medium">{selectedAppointment.assurance || "—"}</p>
+                </div>
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Téléphone</p>
+                  <p className="mt-2 text-sm font-medium">{selectedAppointment.phone || "—"}</p>
+                </div>
+              </div>
 
-      {/* Edit / delete existing block */}
-      {editBlock && (
-        <EditBlockModal
-          block={editBlock}
-          onClose={() => setEditBlock(null)}
-          onUpdate={(b) => {
-            storeUpdateBlock(b.id, { date: b.date, startTime: b.startTime, duration: b.duration, reason: b.reason });
-            setEditBlock(null);
-          }}
-          onDelete={(id) => {
-            removeBlockedSlot(id);
-            setEditBlock(null);
-          }}
-        />
-      )}
+              <div className="mt-5 rounded-2xl border p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-semibold">Progression du rendez-vous</h3>
+                  <span className="text-xs text-muted-foreground">source réelle : {selectedAppointment.date} · {selectedAppointment.startTime}</span>
+                </div>
+                <div className="mt-4 grid grid-cols-5 gap-2">
+                  {[
+                    "Confirmé",
+                    "Arrivé",
+                    "Salle d'attente",
+                    "Consultation",
+                    "Terminé",
+                  ].map((step, index) => {
+                    const active = index <= getStepIndex(selectedAppointment.status);
+                    return (
+                      <div key={step} className="space-y-2 text-center">
+                        <div className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {index + 1}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">{step}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-      {/* RDV panel */}
-      {selApt && (
-        <RdvPanel
-          apt={selApt}
-          typeColors={typeColors}
-          onClose={() => setSelApt(null)}
-          onAction={handleAction}
-          tcSessions={tcSessions}
-          reschApts={apts}
-          reschBlocks={blocks}
-        />
-      )}
+              <div className="mt-5 space-y-4">
+                <div className="rounded-2xl border bg-primary/5 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Étape recommandée</p>
+                      <h3 className="mt-1 font-semibold text-foreground">
+                        {getRecommendedNextStatus(selectedAppointment.status)
+                          ? statusActionLabel(getRecommendedNextStatus(selectedAppointment.status) as AppointmentStatus)
+                          : "Aucune transition immédiate"}
+                      </h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{getWorkflowHint(selectedAppointment.status)}</p>
+                    </div>
+                    <CalendarClock className="mt-0.5 h-5 w-5 text-primary" />
+                  </div>
+                  {selectedAppointment.status === "in_progress" ? (
+                    <Button asChild className="mt-4 w-full gradient-primary text-primary-foreground">
+                      <Link to={getConsultationHref(selectedAppointment)}>
+                        <Stethoscope className="mr-2 h-4 w-4" />
+                        Revenir à la consultation
+                      </Link>
+                    </Button>
+                  ) : getRecommendedNextStatus(selectedAppointment.status) ? (
+                    <Button
+                      className="mt-4 w-full gradient-primary text-primary-foreground"
+                      disabled={saving}
+                      onClick={() => updateStatus(selectedAppointment, getRecommendedNextStatus(selectedAppointment.status) as AppointmentStatus)}
+                    >
+                      {(() => {
+                        const ActionIcon = getStatusActionIcon(getRecommendedNextStatus(selectedAppointment.status) as AppointmentStatus);
+                        return <ActionIcon className="mr-2 h-4 w-4" />;
+                      })()}
+                      {statusActionLabel(getRecommendedNextStatus(selectedAppointment.status) as AppointmentStatus)}
+                    </Button>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Actions du rendez-vous</h3>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {STATUS_ACTIONS[selectedAppointment.status].map((nextStatus) => {
+                      const ActionIcon = getStatusActionIcon(nextStatus);
+                      return (
+                        <Button
+                          key={nextStatus}
+                          variant={nextStatus === "cancelled" || nextStatus === "absent" ? "outline" : "default"}
+                          className={nextStatus === "cancelled" || nextStatus === "absent" ? "justify-start" : "justify-start gradient-primary text-primary-foreground"}
+                          disabled={saving}
+                          onClick={() => updateStatus(selectedAppointment, nextStatus)}
+                        >
+                          <ActionIcon className="mr-2 h-4 w-4" />
+                          {statusActionLabel(nextStatus)}
+                        </Button>
+                      );
+                    })}
+                    <Button variant="outline" className="justify-start" onClick={() => openEdit(selectedAppointment)}>
+                      <Clock3 className="mr-2 h-4 w-4" /> Modifier / reprogrammer
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => window.print()}>
+                      <Printer className="mr-2 h-4 w-4" /> Imprimer la fiche
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => handleCopySms(selectedAppointment)}>
+                      <MessageSquare className="mr-2 h-4 w-4" /> Copier le rappel
+                    </Button>
+                    <Button asChild variant="outline" className="justify-start">
+                      <a href={`tel:${selectedAppointment.phone}`}>
+                        <Phone className="mr-2 h-4 w-4" /> Appeler le patient
+                      </a>
+                    </Button>
+                    {selectedAppointment.patientId ? (
+                      <Button asChild variant="outline" className="justify-start">
+                        <Link to={`/dashboard/doctor/patients/${selectedAppointment.patientId}`}>
+                          <UserRound className="mr-2 h-4 w-4" /> Ouvrir le dossier patient
+                        </Link>
+                      </Button>
+                    ) : null}
+                    <Button asChild variant="outline" className="justify-start">
+                      <Link to={getConsultationHref(selectedAppointment)}>
+                        {selectedAppointment.teleconsultation ? <Video className="mr-2 h-4 w-4" /> : <Stethoscope className="mr-2 h-4 w-4" />}
+                        {selectedAppointment.teleconsultation ? "Rejoindre la téléconsultation" : "Ouvrir la consultation"}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
-      {/* Create */}
-      {showCreate && (
-        <CreateModal
-          defDate={defDate}
-          defTime={defTime}
-          typeColors={typeColors}
-          onClose={() => {
-            setShowCreate(false);
-            setDefDate(undefined);
-            setDefTime(undefined);
-          }}
-          onCreate={(a) => {
-            storeCreateAppointment({
-              date: a.date, startTime: a.startTime, duration: a.duration,
-              patient: a.patient, patientId: a.patientId, avatar: a.avatar,
-              phone: a.phone, motif: a.motif, type: a.type, status: a.status,
-              assurance: a.assurance, doctor: CURRENT_DOCTOR,
-              teleconsultation: a.teleconsultation, notes: a.notes, isNew: a.isNew,
-            });
-          }}
-        />
-      )}
+              <div className="mt-6 rounded-2xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">Créneaux suggérés</h3>
+                    <p className="text-sm text-muted-foreground">2 créneaux proches.</p>
+                  </div>
+                  <RefreshCcw className="h-4 w-4 text-muted-foreground" />
+                </div>
+                {rescheduleSuggestions.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {rescheduleSuggestions.slice(0, 2).map((slot) => (
+                      <button
+                        key={`${slot.date}-${slot.startTime}`}
+                        type="button"
+                        onClick={() => handleQuickReschedule(selectedAppointment, slot.date, slot.startTime)}
+                        className="rounded-full border px-3 py-2 text-left text-sm transition hover:border-primary/35 hover:bg-primary/5"
+                        disabled={saving}
+                      >
+                        {formatHumanDate(slot.date)} · {slot.startTime}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">Aucun créneau compatible trouvé.</p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" className="justify-start" onClick={() => openEdit(selectedAppointment)}>
+                    <RefreshCcw className="mr-2 h-4 w-4" /> Plus de créneaux
+                  </Button>
+                  <Button variant="ghost" size="sm" className="justify-start" onClick={() => handleDuplicateAppointment(selectedAppointment)}>
+                    <Plus className="mr-2 h-4 w-4" /> Dupliquer
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
-      {/* Couleurs */}
-      {showColors && (
-        <ColorsModal
-          typeColors={typeColors}
-          onChange={(t, c) => setTypeColors((p) => ({ ...p, [t]: c }))}
-          onClose={() => setShowColors(false)}
-        />
-      )}
+      <Sheet open={showCreate} onOpenChange={setShowCreate}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
+          <div className="-mx-6 border-b bg-background px-6 pb-4 pt-6">
+            <SheetHeader>
+              <SheetTitle>{draftMode === "create" ? "Nouveau rendez-vous" : "Modifier le rendez-vous"}</SheetTitle>
+              <SheetDescription>
+                Création rapide : créneau réel, patient existant ou nouveau patient.
+              </SheetDescription>
+            </SheetHeader>
 
-      {showAvail && <AvailModal onClose={() => setShowAvail(false)} />}
-      {showSearch && (
-        <SearchOverlay
-          apts={apts}
-          typeColors={typeColors}
-          onSelect={(a) => {
-            setSelApt(a);
-            setCurrent(new Date(a.date + "T00:00:00"));
-          }}
-          onClose={() => setShowSearch(false)}
-        />
-      )}
+            <div className="mt-4 rounded-2xl border bg-muted/10 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Créneau retenu</p>
+                  <p className="mt-1 text-lg font-semibold leading-tight">
+                    {formatHumanDate(draft.date)}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {draft.startTime} → {getEndTimeLabel(draft.startTime, draft.duration)} · {draft.duration} min
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                    {draft.teleconsultation ? "Visio" : "Cabinet"}
+                  </span>
+                  <span className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                    Auto-confirmé
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-[1.1fr,0.9fr]">
+                <div>
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={draft.date}
+                    onChange={(event) => setDraft((prev) => ({ ...prev, date: event.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Durée</Label>
+                  <Select
+                    value={String(draft.duration)}
+                    onValueChange={(value) => setDraft((prev) => ({ ...prev, duration: Number(value) }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Durée" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[15, 20, 30, 45, 60, 90].map((duration) => (
+                        <SelectItem key={duration} value={String(duration)}>
+                          {duration} minutes
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {DURATION_PRESETS.map((duration) => (
+                  <button
+                    key={duration}
+                    type="button"
+                    onClick={() => setDraft((prev) => ({ ...prev, duration }))}
+                    className={`rounded-full border px-3 py-1.5 text-sm transition ${draft.duration === duration ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background hover:border-primary/40 hover:text-foreground"}`}
+                  >
+                    {duration} min
+                  </button>
+                ))}
+                {createAvailableSlots[0] ? (
+                  <button
+                    type="button"
+                    onClick={() => setDraft((prev) => ({ ...prev, startTime: createAvailableSlots[0] }))}
+                    className="rounded-full border border-dashed px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+                  >
+                    Premier libre · {createAvailableSlots[0]}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-2xl border p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">Horaires disponibles</h3>
+                  <p className="text-sm text-muted-foreground">Choisissez directement l'horaire utile. Le reste du formulaire s'adapte à ce créneau.</p>
+                </div>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{getDayNameFromDateKey(draft.date)}</span>
+              </div>
+              {isClosedDay(draft.date) ? (
+                <p className="mt-3 text-sm text-amber-600">Cabinet fermé ce jour. Ouvrez la plage depuis le planning ou passez en événement personnel.</p>
+              ) : createAvailableSlots.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {createAvailableSlots.slice(0, 24).map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setDraft((prev) => ({ ...prev, startTime: slot }))}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${draft.startTime === slot ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background hover:border-primary/40 hover:text-foreground"}`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">Aucun créneau libre sur cette durée pour cette date.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-5 px-0 pb-2 pt-5">
+            <div>
+              <Label>Type de rendez-vous</Label>
+              <Select
+                value={draft.type}
+                onValueChange={(value) =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    type: value as AppointmentType,
+                    teleconsultation: value === "Téléconsultation" ? true : prev.teleconsultation,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TYPE_LABELS.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+
+            <div className="rounded-2xl border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">Patient</h3>
+                  <p className="text-sm text-muted-foreground">Choisir un patient existant ou créer un nouveau dossier.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={draft.patientMode === "existing" ? "default" : "outline"}
+                    className={draft.patientMode === "existing" ? "gradient-primary text-primary-foreground" : ""}
+                    onClick={() => setDraft((prev) => ({ ...prev, patientMode: "existing" }))}
+                  >
+                    Patient existant
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={draft.patientMode === "new" ? "default" : "outline"}
+                    className={draft.patientMode === "new" ? "gradient-primary text-primary-foreground" : ""}
+                    onClick={() => setDraft((prev) => ({ ...prev, patientMode: "new" }))}
+                  >
+                    Nouveau patient
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                {draft.patientMode === "existing" ? (
+                  <>
+                    <Label>Patient</Label>
+                    <Select
+                      value={draft.patientId}
+                      onValueChange={(value) => {
+                        const found = patients.find((item) => String(item.id) === value);
+                        setDraft((prev) => ({
+                          ...prev,
+                          patientId: value,
+                          patientName: found?.name || "",
+                          phone: found?.phone || prev.phone,
+                          assurance: found?.assurance || prev.assurance,
+                        }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir un patient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {patients.map((patient) => (
+                          <SelectItem key={patient.id} value={String(patient.id)}>
+                            {patient.name} · {patient.phone || "sans téléphone"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {draft.patientId ? (() => {
+                      const selectedPatient = patients.find((item) => String(item.id) === draft.patientId);
+                      return selectedPatient ? (
+                        <div className="mt-3 rounded-2xl border bg-muted/10 p-3 text-sm">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-medium text-foreground">{selectedPatient.name}</p>
+                              <p className="mt-1 text-muted-foreground">{selectedPatient.phone || "Téléphone non renseigné"}</p>
+                              <p className="text-muted-foreground">{selectedPatient.assurance || "Assurance non renseignée"}</p>
+                            </div>
+                            <span className="rounded-full border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">Patient existant</span>
+                          </div>
+                        </div>
+                      ) : null;
+                    })() : null}
+                  </>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <Label>Nom du patient</Label>
+                      <Input
+                        value={draft.patientName}
+                        onChange={(event) => setDraft((prev) => ({ ...prev, patientName: event.target.value }))}
+                        placeholder="Nom et prénom"
+                      />
+                    </div>
+                    <div>
+                      <Label>Téléphone</Label>
+                      <Input
+                        value={draft.phone}
+                        onChange={(event) => setDraft((prev) => ({ ...prev, phone: event.target.value }))}
+                        placeholder="+216 ..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input
+                        value={draft.email}
+                        onChange={(event) => setDraft((prev) => ({ ...prev, email: event.target.value }))}
+                        placeholder="patient@email.tn"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label>Motif</Label>
+                <Input
+                  value={draft.motif}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, motif: event.target.value }))}
+                  placeholder="Motif médical ou administratif"
+                />
+              </div>
+              <div>
+                <Label>Assurance</Label>
+                <Input
+                  value={draft.assurance}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, assurance: event.target.value }))}
+                  placeholder="Assurance / mutuelle"
+                />
+              </div>
+              <div>
+                <Label>Canal</Label>
+                <Select
+                  value={draft.teleconsultation ? "oui" : "non"}
+                  onValueChange={(value) => setDraft((prev) => ({ ...prev, teleconsultation: value === "oui" }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="non">Cabinet</SelectItem>
+                    <SelectItem value="oui">Vidéo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Notes internes</Label>
+                <Textarea
+                  value={draft.notes}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, notes: event.target.value }))}
+                  placeholder="Instructions internes, documents à préparer, remarques de secrétariat..."
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border bg-muted/10 p-4 text-sm text-muted-foreground">
+              <p>
+                Le rendez-vous sera enregistré avec sa vraie date <strong className="text-foreground">{draft.date}</strong> et son vrai créneau <strong className="text-foreground">{draft.startTime} → {getEndTimeLabel(draft.startTime, draft.duration)}</strong>.
+                Le drawer du planning lira ensuite exactement cet objet, ce qui supprime les décalages visuels de date.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={() => setShowCreate(false)} disabled={saving}>
+                Annuler
+              </Button>
+              <Button className="gradient-primary text-primary-foreground" onClick={handleSubmitAppointment} disabled={saving}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                {draftMode === "create" ? "Créer le rendez-vous" : "Enregistrer les modifications"}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={showColors} onOpenChange={setShowColors}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Couleurs du planning</SheetTitle>
+            <SheetDescription>
+              Personnalisez la couleur des cartes par type de rendez-vous. Préférence enregistrée pour ce médecin sur ce navigateur.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-5">
+            {TYPE_LABELS.map((type) => (
+              <div key={type} className="rounded-2xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{type}</p>
+                    <p className="text-xs text-muted-foreground">Aperçu dans l'agenda</p>
+                  </div>
+                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${resolveTypeClasses(type)}`}>{type}</span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {COLOR_OPTIONS.map((option) => (
+                    <button
+                      key={`${type}-${option.key}`}
+                      type="button"
+                      onClick={() => setTypeColors((prev) => ({ ...prev, [type]: option.key }))}
+                      className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${typeColors[type] === option.key ? "ring-2 ring-primary/30" : "hover:border-primary/30"} ${option.className}`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full" onClick={() => setTypeColors({ ...DEFAULT_TYPE_COLORS })}>
+              Réinitialiser les couleurs
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={showBlock} onOpenChange={setShowBlock}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+          <div className="-mx-6 border-b bg-background px-6 pb-4 pt-6">
+            <SheetHeader>
+              <SheetTitle>{blockDraft.calendarKind === "personal" ? "Événement personnel" : "Bloquer un créneau"}</SheetTitle>
+              <SheetDescription>{blockDraft.calendarKind === "personal" ? "Déjeuner, administratif, déplacement ou agenda personnel visible dans le planning." : "Pause, réunion, formation, fermeture exceptionnelle ou créneau réservé."}</SheetDescription>
+            </SheetHeader>
+
+            <div className="mt-4 rounded-2xl border bg-muted/10 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Plage sélectionnée</p>
+              <p className="mt-1 text-base font-semibold">{formatHumanDate(blockDraft.date)} · {blockDraft.startTime} → {getEndTimeLabel(blockDraft.startTime, blockDraft.duration)}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Calendrier {blockDraft.calendarKind === "personal" ? "personnel" : "cabinet"} · durée {blockDraft.duration} min</p>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={blockDraft.date}
+                  onChange={(event) => setBlockDraft((prev) => ({ ...prev, date: event.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Durée libre (minutes)</Label>
+                <Input
+                  type="number"
+                  min={5}
+                  step={5}
+                  value={String(blockDraft.duration)}
+                  onChange={(event) =>
+                    setBlockDraft((prev) => ({
+                      ...prev,
+                      duration: Math.max(5, Number(event.target.value) || 5),
+                    }))
+                  }
+                  placeholder="Ex. 210"
+                />
+              </div>
+              <div>
+                <Label>Calendrier</Label>
+                <Select
+                  value={blockDraft.calendarKind}
+                  onValueChange={(value) => setBlockDraft((prev) => ({ ...prev, calendarKind: value as BlockCalendarKind, reason: BLOCK_REASON_PRESETS[value as BlockCalendarKind][0] }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cabinet">Cabinet</SelectItem>
+                    <SelectItem value="personal">Personnel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Motif</Label>
+                <Input
+                  value={blockDraft.reason}
+                  onChange={(event) => setBlockDraft((prev) => ({ ...prev, reason: event.target.value }))}
+                  placeholder={blockDraft.calendarKind === "personal" ? "Déjeuner, administratif, personnel..." : "Pause, réunion, fermeture exceptionnelle..."}
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {BLOCK_REASON_PRESETS[blockDraft.calendarKind].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setBlockDraft((prev) => ({ ...prev, reason: preset }))}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${blockDraft.reason === preset ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:border-primary/40 hover:text-foreground"}`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[15, 30, 45, 60, 90, 120, 180].map((duration) => (
+                    <button
+                      key={duration}
+                      type="button"
+                      onClick={() => setBlockDraft((prev) => ({ ...prev, duration }))}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${blockDraft.duration === duration ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:border-primary/40 hover:text-foreground"}`}
+                    >
+                      {duration >= 120 ? `${duration / 60}h` : `${duration} min`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">Répéter ce blocage</h3>
+                  <p className="text-sm text-muted-foreground">Utile pour une pause récurrente, une fermeture hebdomadaire ou un agenda personnel.</p>
+                </div>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">hebdomadaire</span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[1, 2, 4, 8].map((weeks) => (
+                  <button
+                    key={weeks}
+                    type="button"
+                    onClick={() => setBlockRepeatWeeks(weeks)}
+                    className={`rounded-full border px-3 py-1.5 text-sm transition ${blockRepeatWeeks === weeks ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary/40 hover:text-foreground"}`}
+                  >
+                    {weeks === 1 ? "Une seule fois" : `${weeks} semaines`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">Heure du blocage</h3>
+                  <p className="text-sm text-muted-foreground">Vous pouvez bloquer même s'il existe déjà des rendez-vous sur la plage. Les conflits seront gérés juste en dessous.</p>
+                </div>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{getDayNameFromDateKey(blockDraft.date)}</span>
+              </div>
+              {isClosedDay(blockDraft.date) ? (
+                <p className="mt-3 text-sm text-amber-600">Cabinet fermé ce jour. Utilisez ce blocage surtout pour l'agenda personnel ou une fermeture exceptionnelle visible dans l'agenda.</p>
+              ) : blockAvailableSlots.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {blockAvailableSlots.slice(0, 24).map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setBlockDraft((prev) => ({ ...prev, startTime: slot }))}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${blockDraft.startTime === slot ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background hover:border-primary/40 hover:text-foreground"}`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">Aucune plage libre compatible avec cette durée sur cette date.</p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">Rendez-vous concernés</h3>
+                  <p className="text-sm text-muted-foreground">Si la plage chevauche des rendez-vous, choisissez comment les gérer avant de bloquer.</p>
+                </div>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{conflictingBlockAppointments.length}</span>
+              </div>
+              {conflictingBlockAppointments.length ? (
+                <>
+                  <div className="mt-3 space-y-2">
+                    {conflictingBlockAppointments.map((appointment) => (
+                      <div key={appointment.id} className="flex items-center justify-between gap-3 rounded-xl border bg-muted/10 px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{appointment.patient}</p>
+                          <p className="text-xs text-muted-foreground">{appointment.startTime} · {appointment.duration} min · {appointment.type}</p>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 rounded-full border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground`}>
+                          <span className={`h-2 w-2 rounded-full ${getStatusMarkerClasses(appointment.status)}`} />
+                          {getStatusLabel(appointment.status)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => setBlockConflictAction("keep")}
+                      className={`rounded-xl border px-3 py-2 text-left text-sm transition ${blockConflictAction === "keep" ? "border-primary bg-primary/5 text-foreground" : "bg-background hover:border-primary/30"}`}
+                    >
+                      <p className="font-medium">Laisser les rendez-vous</p>
+                      <p className="mt-1 text-xs text-muted-foreground">La plage sera marquée bloquée mais les rendez-vous existants restent en place.</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBlockConflictAction("cancel")}
+                      className={`rounded-xl border px-3 py-2 text-left text-sm transition ${blockConflictAction === "cancel" ? "border-destructive bg-destructive/5 text-foreground" : "bg-background hover:border-destructive/30"}`}
+                    >
+                      <p className="font-medium">Annuler les rendez-vous</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Les rendez-vous concernés passeront en annulé au moment du blocage.</p>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">Aucun rendez-vous ne chevauche ce blocage.</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={() => setShowBlock(false)} disabled={saving}>
+                Annuler
+              </Button>
+              <Button variant="destructive" onClick={handleCreateBlock} disabled={saving}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
+                Bloquer le créneau
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={Boolean(slotAction)} onOpenChange={(open) => !open && setSlotAction(null)}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+          {slotAction && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{slotAction.fromRange ? "Plage sélectionnée" : "Créneau sélectionné"}</SheetTitle>
+                <SheetDescription>
+                  {formatHumanDate(slotAction.date)} · {slotAction.startTime} → {slotAction.endTime}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-3">
+                <div className="rounded-2xl border bg-muted/10 p-4 text-sm text-muted-foreground">
+                  <p>
+                    {slotAction.closedDay
+                      ? "Cabinet fermé ce jour. Vous pouvez quand même réserver cette plage ponctuellement ou la garder en personnel."
+                      : "Action centralisée : créez un rendez-vous ou transformez directement cette plage en blocage cabinet/personnel."}
+                  </p>
+                  <p className="mt-2 font-medium text-foreground">Durée sélectionnée : {slotAction.duration} min</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {DURATION_PRESETS.map((duration) => (
+                      <button
+                        key={duration}
+                        type="button"
+                        onClick={() => setSlotAction((prev) => prev ? ({ ...prev, duration, endTime: getEndTimeLabel(prev.startTime, duration) }) : prev)}
+                        className={`rounded-full border px-3 py-1.5 text-sm transition ${slotAction.duration === duration ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background hover:border-primary/40 hover:text-foreground"}`}
+                      >
+                        {duration} min
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Button className="w-full gradient-primary text-primary-foreground" onClick={() => openCreate(slotAction.date, slotAction.startTime, slotAction.duration)}>
+                  <Plus className="mr-2 h-4 w-4" /> Créer un rendez-vous
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => openBlock(slotAction.date, slotAction.startTime, "cabinet", slotAction.duration)}>
+                  <Lock className="mr-2 h-4 w-4" /> Bloquer en cabinet
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => openBlock(slotAction.date, slotAction.startTime, "personal", slotAction.duration)}>
+                  <CalendarClock className="mr-2 h-4 w-4" /> Bloquer en personnel
+                </Button>
+                <Button variant="ghost" className="w-full" onClick={() => { setSlotAction(null); }}>
+                  Effacer la sélection
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={Boolean(selectedBlock)} onOpenChange={(open) => !open && setSelectedBlock(null)}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+          {selectedBlock && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5" /> {displayBlockReason(selectedBlock.reason)}
+                </SheetTitle>
+                <SheetDescription>
+                  {formatHumanDate(selectedBlock.date)} · {selectedBlock.startTime} · {selectedBlock.duration} min
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-3">
+                <div className="rounded-2xl border bg-muted/10 p-4 text-sm text-muted-foreground">
+                  Type de calendrier : <strong className="text-foreground">{getBlockCalendarKind(selectedBlock.reason) === "personal" ? "Personnel" : "Cabinet"}</strong><br />
+                  Motif : <strong className="text-foreground">{displayBlockReason(selectedBlock.reason)}</strong>
+                </div>
+                <Button className="w-full gradient-primary text-primary-foreground" onClick={() => openCreate(selectedBlock.date, selectedBlock.startTime, selectedBlock.duration)}>
+                  <Plus className="mr-2 h-4 w-4" /> Créer un rendez-vous sur ce créneau
+                </Button>
+                <Button variant="destructive" className="w-full" onClick={() => handleDeleteBlock(selectedBlock.id)}>
+                  <X className="mr-2 h-4 w-4" /> Supprimer le blocage
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </DashboardLayout>
   );
-};
-
-export default DoctorSchedule;
+}
