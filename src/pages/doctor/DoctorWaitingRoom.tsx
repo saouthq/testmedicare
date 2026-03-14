@@ -49,8 +49,10 @@ const DoctorWaitingRoom = () => {
   const today = getTodayDate();
 
   // Today's appointments for current doctor = waiting room
-  const entries = useMemo(() =>
-    allAppointments.filter(a => a.date === today && a.doctor === getCurrentDoctor()),
+  const entries = useMemo(() => {
+    const isProduction = getAppMode() === "production";
+    return allAppointments.filter(a => a.date === today && (isProduction || a.doctor === getCurrentDoctor()));
+  },
     [allAppointments, today]
   );
 
