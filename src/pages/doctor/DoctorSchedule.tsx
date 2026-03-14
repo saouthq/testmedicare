@@ -2293,8 +2293,9 @@ const DoctorSchedule = () => {
   const [allBlocks] = useSharedBlockedSlots();
   const [availConfig] = useSharedAvailability();
   const [allLeaves] = useSharedLeaves();
-  const apts = useMemo(() => allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
-  const blocks = useMemo(() => allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
+  // In production, RLS already filters by doctor_id — skip name filter
+  const apts = useMemo(() => isProductionMode() ? allApts : allApts.filter(a => a.doctor === CURRENT_DOCTOR), [allApts]);
+  const blocks = useMemo(() => isProductionMode() ? allBlocks : allBlocks.filter(b => b.doctor === CURRENT_DOCTOR), [allBlocks]);
 
   const getDayConfig = useCallback((date: Date): AvailabilityDay | undefined => {
     const DAYS_MAP = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
