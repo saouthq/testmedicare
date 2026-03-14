@@ -2,17 +2,16 @@
  * Public Booking Page — Wizard en 6 étapes (Doctolib-style)
  * Ordre: type → motif+créneau → infos patient → OTP → récap/paiement → confirmation
  * Toutes les données passent par les stores centraux.
- *
- * // TODO BACKEND: Replace createAppointment with POST /api/appointments
+ * Production: queries Supabase for doctor-specific availability/slots.
  */
 import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockAssurances } from "@/data/mocks/common";
-import { mockDoctors } from "@/data/mocks/doctor";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
 import { bookAppointment, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
 import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
@@ -22,7 +21,8 @@ import { sharedPatientsStore } from "@/stores/sharedPatientsStore";
 import { doctorProfileStore, readDoctorProfile } from "@/stores/doctorProfileStore";
 import { useDoctorsDirectory } from "@/stores/directoryStore";
 import { validateBooking } from "@/lib/appointmentRules";
-import { getCurrentRole, readAuthUser } from "@/stores/authStore";
+import { getCurrentRole, readAuthUser, getAppMode } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar,
@@ -42,7 +42,7 @@ function minToTime(m: number): string {
 
 const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-// ─── Doctor Data Builder ────────────────────────────────────
+// ─── Doctor Data Builder (supports string/UUID IDs) ─────────
 const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsDirectory>) => {
   const fromDirectory = directoryDoctors.find(d => String(d.id) === String(id));
   const profile = readDoctorProfile();
@@ -54,7 +54,9 @@ const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsD
       name: fromDirectory.name,
       specialty: fromDirectory.specialty,
       address: fromDirectory.address,
-      initials: fromDirectory.avatar || fromDirectory.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+      initials: fromDirectory.avatar && fromDirectory.avatar.length <= 3
+        ? fromDirectory.avatar
+        : fromDirectory.name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase(),
       motifs: [
         { name: "Consultation", duration: 30, price: fromDirectory.price || 35 },
         { name: "Suivi", duration: 20, price: Math.round((fromDirectory.price || 35) * 0.75) },
@@ -65,55 +67,41 @@ const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsD
     };
   }
 
-  const numId = Number.parseInt(id, 10);
-  const found = mockDoctors.find(d => d.id === numId);
-
-  if (found) {
-    const motifs = numId === 1
-      ? profile.motifs.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 }))
-      : [
-          { name: "Consultation", duration: 30, price: found.price },
-          { name: "Suivi", duration: 20, price: Math.round(found.price * 0.7) },
-          { name: "Première visite", duration: 45, price: Math.round(found.price * 1.4) },
-        ];
-
-    return {
-      id: String(found.id),
-      doctorId: undefined,
-      name: found.name,
-      specialty: found.specialty,
-      address: found.address,
-      initials: found.avatar,
-      motifs,
-      teleconsultation: found.teleconsultation,
-      doctorRef: found.name,
-    };
-  }
-
+  // Fallback for demo mode only - use local profile
   return {
-    id: "1",
+    id: id,
     doctorId: undefined,
-    name: profile.name,
-    specialty: profile.specialty,
-    address: profile.address,
-    initials: profile.initials,
-    motifs: profile.motifs.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 })),
+    name: profile.name || "Médecin",
+    specialty: profile.specialty || "",
+    address: profile.address || "",
+    initials: profile.initials || "DR",
+    motifs: profile.motifs?.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 })) || [
+      { name: "Consultation", duration: 30, price: 35 },
+    ],
     teleconsultation: true,
-    doctorRef: profile.name,
+    doctorRef: profile.name || "Médecin",
   };
 };
 
 // ─── Day Generation (checks availability + leaves + blocked slots) ───
-const generateDays = (weekOffset: number, doctorRef: string) => {
+// Now accepts pre-fetched data for production mode
+interface AvailData {
+  days: Record<string, { active: boolean; start: string; end: string; breakStart: string; breakEnd: string }>;
+  slotDuration: number;
+}
+
+const generateDaysWithData = (
+  weekOffset: number,
+  doctorRef: string,
+  availability: AvailData,
+  leaves: Array<{ startDate: string; endDate: string; motif?: string; status?: string }>,
+  blockedSlots: Array<{ date: string; startTime: string; duration: number; reason?: string; doctor?: string }>,
+) => {
   const today = new Date();
   const start = new Date(today);
   start.setDate(today.getDate() + (weekOffset * 7));
   if (weekOffset === 0 && today.getHours() >= 16) start.setDate(start.getDate() + 1);
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-
-  const availability = sharedAvailabilityStore.read();
-  const leaves = sharedLeavesStore.read().filter(l => l.doctor === doctorRef);
-  const blockedSlots = sharedBlockedSlotsStore.read().filter(b => b.doctor === doctorRef);
 
   const d: { day: number; month: number; year: number; name: string; available: boolean; label: string; dateStr: string; frDayName: string; leaveReason?: string }[] = [];
 
@@ -126,7 +114,7 @@ const generateDays = (weekOffset: number, doctorRef: string) => {
 
     const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
     const isPast = dateStr < todayStr;
-    const leave = leaves.find(l => l.status !== "past" && dateStr >= l.startDate && dateStr <= l.endDate);
+    const leave = leaves.find(l => (l.status || "") !== "past" && dateStr >= l.startDate && dateStr <= l.endDate);
     const fullDayBlock = blockedSlots.find(b => b.date === dateStr && b.duration >= 480);
 
     const isAvailable = !isPast && (dayConfig ? dayConfig.active : false) && !leave && !fullDayBlock;
@@ -151,11 +139,112 @@ type Step = "type" | "motif" | "info" | "otp" | "confirm" | "payment" | "done" |
 
 type ConsultType = "cabinet" | "teleconsultation";
 
+// ─── Map Supabase rows to local format ──────────────────────
+const mapAvailRows = (rows: any[]): AvailData => {
+  const defaultDay = { active: false, start: "08:00", end: "18:00", breakStart: "", breakEnd: "" };
+  const days: Record<string, typeof defaultDay> = {
+    Lundi: { ...defaultDay }, Mardi: { ...defaultDay }, Mercredi: { ...defaultDay },
+    Jeudi: { ...defaultDay }, Vendredi: { ...defaultDay }, Samedi: { ...defaultDay },
+    Dimanche: { ...defaultDay },
+  };
+  let slotDuration = 30;
+  for (const r of rows) {
+    const name = r.day_name;
+    if (days[name]) {
+      days[name] = {
+        active: r.active ?? true,
+        start: r.start_time?.slice(0, 5) || "08:00",
+        end: r.end_time?.slice(0, 5) || "18:00",
+        breakStart: r.break_start?.slice(0, 5) || "",
+        breakEnd: r.break_end?.slice(0, 5) || "",
+      };
+    }
+    if (r.slot_duration) slotDuration = r.slot_duration;
+  }
+  return { days, slotDuration };
+};
+
 const PublicBooking = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
   const doctorsDirectory = useDoctorsDirectory();
   const doctor = useMemo(() => buildDoctor(doctorId || "1", doctorsDirectory), [doctorId, doctorsDirectory]);
+  const isProductionMode = getAppMode() === "production";
+
+  // ── Production: fetch doctor-specific data from Supabase ──
+  const resolvedDoctorId = doctor.doctorId || doctorId || "";
+
+  const { data: supaAvailability } = useQuery({
+    queryKey: ["booking_availability", resolvedDoctorId],
+    queryFn: async () => {
+      const { data } = await (supabase.from as any)("doctor_availability")
+        .select("*")
+        .eq("doctor_id", resolvedDoctorId);
+      return data || [];
+    },
+    enabled: isProductionMode && !!resolvedDoctorId,
+  });
+
+  const { data: supaBlockedSlots } = useQuery({
+    queryKey: ["booking_blocked", resolvedDoctorId],
+    queryFn: async () => {
+      const { data } = await (supabase.from as any)("blocked_slots")
+        .select("*")
+        .eq("doctor_id", resolvedDoctorId);
+      return (data || []).map((b: any) => ({
+        date: b.date,
+        startTime: b.start_time?.slice(0, 5) || "00:00",
+        duration: b.duration || 30,
+        reason: b.reason || "",
+        doctor: b.doctor_name || "",
+      }));
+    },
+    enabled: isProductionMode && !!resolvedDoctorId,
+  });
+
+  const { data: supaAppointments } = useQuery({
+    queryKey: ["booking_appointments", resolvedDoctorId],
+    queryFn: async () => {
+      const { data } = await (supabase.from as any)("appointments")
+        .select("*")
+        .eq("doctor_id", resolvedDoctorId);
+      return (data || []).map((a: any) => ({
+        date: a.date,
+        startTime: a.start_time?.slice(0, 5) || "00:00",
+        duration: a.duration || 30,
+        status: a.status || "pending",
+      }));
+    },
+    enabled: isProductionMode && !!resolvedDoctorId,
+  });
+
+  // ── Resolve availability data (production vs demo) ──
+  const availability: AvailData = useMemo(() => {
+    if (isProductionMode && supaAvailability) {
+      return mapAvailRows(supaAvailability);
+    }
+    const local = sharedAvailabilityStore.read();
+    return { days: local.days, slotDuration: local.slotDuration };
+  }, [isProductionMode, supaAvailability]);
+
+  const resolvedLeaves = useMemo(() => {
+    if (isProductionMode) return []; // doctor_leaves not readable by anon
+    return sharedLeavesStore.read().filter(l => l.doctor === doctor.doctorRef);
+  }, [isProductionMode, doctor.doctorRef]);
+
+  const resolvedBlocked = useMemo(() => {
+    if (isProductionMode && supaBlockedSlots) return supaBlockedSlots;
+    return sharedBlockedSlotsStore.read().filter(b => b.doctor === doctor.doctorRef);
+  }, [isProductionMode, supaBlockedSlots, doctor.doctorRef]);
+
+  const resolvedExistingApts = useMemo(() => {
+    if (isProductionMode && supaAppointments) return supaAppointments;
+    return sharedAppointmentsStore.read().filter(a => {
+      if (["cancelled", "absent"].includes(a.status)) return false;
+      if (doctor.doctorId) return a.doctorId === doctor.doctorId || a.doctor === doctor.doctorRef;
+      return a.doctor === doctor.doctorRef;
+    }).map(a => ({ date: a.date, startTime: a.startTime, duration: a.duration, status: a.status }));
+  }, [isProductionMode, supaAppointments, doctor.doctorId, doctor.doctorRef]);
 
   // Check if user is logged in
   const authUser = readAuthUser();
@@ -191,19 +280,17 @@ const PublicBooking = () => {
   // Payment state
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  const days = generateDays(weekOffset, doctor.doctorRef);
+  const days = useMemo(() => generateDaysWithData(weekOffset, doctor.doctorRef, availability, resolvedLeaves, resolvedBlocked), [weekOffset, doctor.doctorRef, availability, resolvedLeaves, resolvedBlocked]);
   const isTeleconsult = consultType === "teleconsultation";
   const selectedMotifData = doctor.motifs.find(m => m.name === selectedMotif);
 
-  // Generate filtered slots (checks availability + blocked + leaves + existing apts)
+  // Generate filtered slots using resolved data
   const filteredSlots = useMemo(() => {
     if (!selectedDayDateStr || !selectedDayFr) return [];
-    const availability = sharedAvailabilityStore.read();
     const dayConfig = availability.days[selectedDayFr];
     if (!dayConfig || !dayConfig.active) return [];
 
-    const leaves = sharedLeavesStore.read().filter(l => l.doctor === doctor.doctorRef);
-    const isOnLeave = leaves.some(l => l.status !== "past" && selectedDayDateStr >= l.startDate && selectedDayDateStr <= l.endDate);
+    const isOnLeave = resolvedLeaves.some(l => (l.status || "") !== "past" && selectedDayDateStr >= l.startDate && selectedDayDateStr <= l.endDate);
     if (isOnLeave) return [];
 
     const slotDuration = selectedMotifData?.duration || availability.slotDuration || 30;
@@ -212,31 +299,23 @@ const PublicBooking = () => {
     const breakStartMin = dayConfig.breakStart ? timeToMin(dayConfig.breakStart) : -1;
     const breakEndMin = dayConfig.breakEnd ? timeToMin(dayConfig.breakEnd) : -1;
 
-    const existingApts = sharedAppointmentsStore.read().filter(a => {
-      if (a.date !== selectedDayDateStr || ["cancelled", "absent"].includes(a.status)) return false;
-      if (doctor.doctorId) return a.doctorId === doctor.doctorId || a.doctor === doctor.doctorRef;
-      return a.doctor === doctor.doctorRef;
-    });
+    const existingApts = resolvedExistingApts.filter(a => a.date === selectedDayDateStr && !["cancelled", "absent"].includes(a.status));
 
-    const blockedSlots = sharedBlockedSlotsStore.read()
-      .filter(b => b.date === selectedDayDateStr && b.doctor === doctor.doctorRef);
+    const blocked = resolvedBlocked.filter(b => b.date === selectedDayDateStr);
 
     const slots: string[] = [];
     const now = new Date();
     const isToday = selectedDayDateStr === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
     for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
-      // Skip break time
       if (breakStartMin >= 0 && breakEndMin >= 0 && m >= breakStartMin && m < breakEndMin) continue;
 
-      // Skip past slots if today
       if (isToday) {
         const slotHour = Math.floor(m / 60);
         const slotMin = m % 60;
         if (slotHour < now.getHours() || (slotHour === now.getHours() && slotMin <= now.getMinutes())) continue;
       }
 
-      // Check overlap with existing appointments
       const isBooked = existingApts.some(a => {
         const aptStart = timeToMin(a.startTime);
         const aptEnd = aptStart + a.duration;
@@ -244,8 +323,7 @@ const PublicBooking = () => {
       });
       if (isBooked) continue;
 
-      // Check overlap with blocked slots
-      const isBlocked = blockedSlots.some(b => {
+      const isBlocked = blocked.some(b => {
         const bStart = timeToMin(b.startTime);
         const bEnd = bStart + b.duration;
         return m < bEnd && (m + slotDuration) > bStart;
@@ -255,7 +333,7 @@ const PublicBooking = () => {
       slots.push(minToTime(m));
     }
     return slots;
-  }, [selectedDayDateStr, selectedDayFr, selectedMotifData, doctor.doctorRef]);
+  }, [selectedDayDateStr, selectedDayFr, selectedMotifData, availability, resolvedLeaves, resolvedBlocked, resolvedExistingApts]);
 
   // ─── Handlers ─────────────────────────────────────────────
 
@@ -415,12 +493,14 @@ const PublicBooking = () => {
           </div>
         </div>
 
-        {/* Demo banner */}
+        {/* Demo banner - only in demo mode */}
+        {!isProductionMode && (
         <div className="rounded-lg bg-warning/5 border border-warning/20 p-2.5 mb-5">
           <p className="text-[11px] text-muted-foreground text-center">
             🔒 <span className="font-medium text-foreground">Mode démo</span> — OTP : <span className="font-mono font-bold text-foreground">123456</span> • Paiements simulés • Aucune donnée réelle transmise.
           </p>
         </div>
+        )}
 
         {/* Progress indicator */}
         {!["done", "create-account", "payment"].includes(step) && (

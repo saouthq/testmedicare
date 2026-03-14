@@ -6,38 +6,74 @@ import {
   ChevronLeft, ChevronRight, CheckCircle, MessageSquare, Globe, Award,
   Video, Heart, Share2, Navigation, GraduationCap, ThumbsUp, Users,
   Building2, Briefcase, ChevronDown, ChevronUp, FileText, Verified,
-  AlertCircle, User,
+  AlertCircle, User, Loader2,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDoctorsDirectory } from "@/stores/directoryStore";
 import { getReviewsForDoctor } from "@/stores/reviewsStore";
 import { useFavoriteDoctors, addFavoriteDoctor, removeFavoriteDoctor } from "@/stores/favoriteDoctorsStore";
 import {
-  mockDoctorProfile as defaultProfile,
   mockAvailableSlots as availableSlots,
   mockFaqItems as faqItems,
 } from "@/data/mockData";
 import { ReportButton } from "@/components/shared/ReportButton";
 import PublicHeader from "@/components/public/PublicHeader";
+import { getAppMode } from "@/lib/appConfig";
 
-// Build profile variants for different doctor IDs
+// Default profile data for fields not available from directory
+const defaultProfileExtras = {
+  subSpecialties: [] as string[],
+  experience: "—",
+  registrationYear: 2020,
+  orderNumber: "—",
+  presentation: "Ce praticien n'a pas encore complété sa présentation.",
+  diplomas: [] as { title: string; school: string; year: string }[],
+  consultationDuration: 30,
+  convention: "Conventionné",
+  horaires: [
+    { day: "Lundi", hours: "08:00 - 18:00", open: true },
+    { day: "Mardi", hours: "08:00 - 18:00", open: true },
+    { day: "Mercredi", hours: "08:00 - 12:00", open: true },
+    { day: "Jeudi", hours: "08:00 - 18:00", open: true },
+    { day: "Vendredi", hours: "08:00 - 17:00", open: true },
+    { day: "Samedi", hours: "08:00 - 13:00", open: true },
+    { day: "Dimanche", hours: "Fermé", open: false },
+  ],
+  actes: [] as string[],
+  motifs: [
+    { name: "Consultation", price: "—", duration: "30 min" },
+  ],
+  memberships: [] as string[],
+  accessInfo: { parking: false, handicap: false, elevator: false, publicTransport: "" },
+};
+
+// Build profile from directory doctor data (works with any ID type: numeric or UUID)
 const buildProfileForDoctor = (id: string, doctors: any[]) => {
-  const numId = parseInt(id);
-  const doctor = doctors.find(d => d.id === numId);
-  if (!doctor || numId === 1) return defaultProfile;
+  const doctor = doctors.find(d => String(d.id) === String(id));
+  if (!doctor) return null;
+
+  const initials = doctor.avatar && doctor.avatar.length <= 3
+    ? doctor.avatar
+    : doctor.name.split(" ").filter(Boolean).map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+
   return {
-    ...defaultProfile,
+    ...defaultProfileExtras,
     name: doctor.name,
     specialty: doctor.specialty,
-    initials: doctor.avatar,
-    address: doctor.address,
-    phone: doctor.phone,
-    reviewCount: doctor.reviewCount,
-    verifiedReviewCount: Math.round(doctor.reviewCount * 0.9),
-    price: `${doctor.price} DT`,
-    priceRange: { ...defaultProfile.priceRange, consultation: doctor.price },
+    initials,
+    address: doctor.address || "",
+    phone: doctor.phone || "",
+    reviewCount: doctor.reviewCount || 0,
+    verifiedReviewCount: Math.round((doctor.reviewCount || 0) * 0.9),
+    price: `${doctor.price || 0} DT`,
+    priceRange: { consultation: doctor.price || 0, suivi: Math.round((doctor.price || 0) * 0.75), premiere: Math.round((doctor.price || 0) * 1.35), certificat: 20 },
     languages: doctor.languages || ["Français", "Arabe"],
-    teleconsultation: doctor.teleconsultation,
+    teleconsultation: doctor.teleconsultation || false,
+    motifs: [
+      { name: "Consultation", price: `${doctor.price || 0} DT`, duration: "30 min" },
+      { name: "Suivi", price: `${Math.round((doctor.price || 0) * 0.75)} DT`, duration: "20 min" },
+      { name: "Première visite", price: `${Math.round((doctor.price || 0) * 1.35)} DT`, duration: "45 min" },
+    ],
   };
 };
 
@@ -52,9 +88,11 @@ const DoctorPublicProfile = () => {
   const [openSection, setOpenSection] = useState<string | null>("presentation");
   const isMobile = useIsMobile();
 
-  // Reviews from store
-  const numId = parseInt(id || "1");
-  const storeReviews = useMemo(() => getReviewsForDoctor(numId), [numId]);
+  // Reviews from store (use string ID for lookup)
+  const storeReviews = useMemo(() => {
+    const numId = parseInt(id || "0");
+    return isNaN(numId) ? [] : getReviewsForDoctor(numId);
+  }, [id]);
   const reviews = storeReviews.map(r => ({
     author: r.patientName,
     text: r.text,
@@ -65,13 +103,15 @@ const DoctorPublicProfile = () => {
 
   // Favorites
   const [favorites] = useFavoriteDoctors();
-  const isFavorite = useMemo(() => favorites.some(f => f.id === numId), [favorites, numId]);
+  const isFavorite = useMemo(() => favorites.some(f => String(f.id) === String(id)), [favorites, id]);
   const handleToggleFavorite = () => {
+    if (!doctorData) return;
+    const numId = parseInt(id || "0");
     if (isFavorite) {
-      removeFavoriteDoctor(numId);
+      removeFavoriteDoctor(isNaN(numId) ? 0 : numId);
     } else {
       addFavoriteDoctor({
-        id: numId,
+        id: isNaN(numId) ? 0 : numId,
         name: doctorData.name,
         specialty: doctorData.specialty,
         avatar: doctorData.initials,
@@ -79,9 +119,21 @@ const DoctorPublicProfile = () => {
       });
     }
   };
-  
-  const doctorExists = numId === 1 || doctors.some(d => d.id === numId);
-  if (!doctorExists) {
+
+  // Loading state: doctors list is still loading
+  if (doctors.length === 0 && getAppMode() === "production") {
+    return (
+      <div className="min-h-screen bg-background">
+        <PublicHeader />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!doctorData) {
     return (
       <div className="min-h-screen bg-background">
         <PublicHeader />
