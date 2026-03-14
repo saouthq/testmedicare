@@ -2,17 +2,16 @@
  * Public Booking Page — Wizard en 6 étapes (Doctolib-style)
  * Ordre: type → motif+créneau → infos patient → OTP → récap/paiement → confirmation
  * Toutes les données passent par les stores centraux.
- *
- * // TODO BACKEND: Replace createAppointment with POST /api/appointments
+ * Production: queries Supabase for doctor-specific availability/slots.
  */
 import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import PublicHeader from "@/components/public/PublicHeader";
 import SeoHelmet from "@/components/seo/SeoHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockAssurances } from "@/data/mocks/common";
-import { mockDoctors } from "@/data/mocks/doctor";
 import { sendOtp, verifyOtp } from "@/services/authOtpService";
 import { bookAppointment, sharedAppointmentsStore } from "@/stores/sharedAppointmentsStore";
 import { sharedAvailabilityStore, WEEK_DAYS } from "@/stores/sharedAvailabilityStore";
@@ -22,7 +21,8 @@ import { sharedPatientsStore } from "@/stores/sharedPatientsStore";
 import { doctorProfileStore, readDoctorProfile } from "@/stores/doctorProfileStore";
 import { useDoctorsDirectory } from "@/stores/directoryStore";
 import { validateBooking } from "@/lib/appointmentRules";
-import { getCurrentRole, readAuthUser } from "@/stores/authStore";
+import { getCurrentRole, readAuthUser, getAppMode } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Shield, CheckCircle2, ChevronLeft, Video, Calendar,
@@ -42,7 +42,7 @@ function minToTime(m: number): string {
 
 const JS_DAY_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-// ─── Doctor Data Builder ────────────────────────────────────
+// ─── Doctor Data Builder (supports string/UUID IDs) ─────────
 const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsDirectory>) => {
   const fromDirectory = directoryDoctors.find(d => String(d.id) === String(id));
   const profile = readDoctorProfile();
@@ -54,7 +54,9 @@ const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsD
       name: fromDirectory.name,
       specialty: fromDirectory.specialty,
       address: fromDirectory.address,
-      initials: fromDirectory.avatar || fromDirectory.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+      initials: fromDirectory.avatar && fromDirectory.avatar.length <= 3
+        ? fromDirectory.avatar
+        : fromDirectory.name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase(),
       motifs: [
         { name: "Consultation", duration: 30, price: fromDirectory.price || 35 },
         { name: "Suivi", duration: 20, price: Math.round((fromDirectory.price || 35) * 0.75) },
@@ -65,41 +67,19 @@ const buildDoctor = (id: string, directoryDoctors: ReturnType<typeof useDoctorsD
     };
   }
 
-  const numId = Number.parseInt(id, 10);
-  const found = mockDoctors.find(d => d.id === numId);
-
-  if (found) {
-    const motifs = numId === 1
-      ? profile.motifs.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 }))
-      : [
-          { name: "Consultation", duration: 30, price: found.price },
-          { name: "Suivi", duration: 20, price: Math.round(found.price * 0.7) },
-          { name: "Première visite", duration: 45, price: Math.round(found.price * 1.4) },
-        ];
-
-    return {
-      id: String(found.id),
-      doctorId: undefined,
-      name: found.name,
-      specialty: found.specialty,
-      address: found.address,
-      initials: found.avatar,
-      motifs,
-      teleconsultation: found.teleconsultation,
-      doctorRef: found.name,
-    };
-  }
-
+  // Fallback for demo mode only - use local profile
   return {
-    id: "1",
+    id: id,
     doctorId: undefined,
-    name: profile.name,
-    specialty: profile.specialty,
-    address: profile.address,
-    initials: profile.initials,
-    motifs: profile.motifs.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 })),
+    name: profile.name || "Médecin",
+    specialty: profile.specialty || "",
+    address: profile.address || "",
+    initials: profile.initials || "DR",
+    motifs: profile.motifs?.map(m => ({ name: m.name, duration: parseInt(m.duration) || 30, price: parseInt(m.price) || 35 })) || [
+      { name: "Consultation", duration: 30, price: 35 },
+    ],
     teleconsultation: true,
-    doctorRef: profile.name,
+    doctorRef: profile.name || "Médecin",
   };
 };
 

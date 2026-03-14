@@ -40,19 +40,23 @@ export function useDirectory() {
 // ─── Dual-mode directory hooks ──────────────────────────────
 
 function mapDoctorRow(row: any): Doctor {
+  const firstName = row.first_name || "";
+  const lastName = row.last_name || "";
+  const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "DR";
   return {
     id: row.id,
-    name: `Dr. ${row.first_name || ""} ${row.last_name || ""}`.trim() || row.id,
+    name: `Dr. ${firstName} ${lastName}`.trim() || row.id,
     specialty: row.specialty || "",
-    avatar: row.photo_url || "",
-    address: row.address || "",
+    avatar: row.photo_url || initials,
+    address: row.address || row.city || "",
     phone: row.phone || "",
-    reviewCount: 0,
+    reviewCount: row.rating ? Math.round(row.rating * 20) : 0,
     price: row.consultation_price || 0,
     languages: row.languages || ["Français", "Arabe"],
     teleconsultation: row.teleconsultation || false,
     acceptsInsurance: true,
     nextSlot: "",
+    distance: "",
     availAM: [true, true, true, true, true, true, false],
     availPM: [true, true, false, true, true, false, false],
   };
