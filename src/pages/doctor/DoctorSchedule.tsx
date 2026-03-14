@@ -1,4 +1,4 @@
-DoctorSchedule — Agenda médecin complet
+// DoctorSchedule — Agenda médecin complet
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -1540,7 +1540,7 @@ export default function DoctorSchedule() {
   if (authLoading || loading) {
     return (
       <DashboardLayout role="doctor" title="Planning">
-        <LoadingSkeleton lines={12} />
+        <LoadingSkeleton type="table" />
       </DashboardLayout>
     );
   }
