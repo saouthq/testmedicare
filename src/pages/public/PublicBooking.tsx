@@ -493,12 +493,14 @@ const PublicBooking = () => {
           </div>
         </div>
 
-        {/* Demo banner */}
+        {/* Demo banner - only in demo mode */}
+        {!isProductionMode && (
         <div className="rounded-lg bg-warning/5 border border-warning/20 p-2.5 mb-5">
           <p className="text-[11px] text-muted-foreground text-center">
             🔒 <span className="font-medium text-foreground">Mode démo</span> — OTP : <span className="font-mono font-bold text-foreground">123456</span> • Paiements simulés • Aucune donnée réelle transmise.
           </p>
         </div>
+        )}
 
         {/* Progress indicator */}
         {!["done", "create-account", "payment"].includes(step) && (
